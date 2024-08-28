@@ -2,6 +2,7 @@ name: rke2-product-docs
 title: RKE2
 version: main
 # display_version: 'v1.30'
-start_page: ROOT:introduction.adoc
+start_page: en:introduction.adoc
 nav:
-- modules/ROOT/nav.adoc
+- modules/en/nav.adoc
+- modules/zh/nav.adoc
