@@ -301,7 +301,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.16+rke2r1:
+=== Changes since v1.24.16+rke2r1
 
 * Sync Felix and calico-node datastore https://github.com/rancher/rke2/pull/4578[(#4578)]
 * Update Calico and Flannel on Canal https://github.com/rancher/rke2/pull/4566[(#4566)]
@@ -322,8 +322,6 @@ cat /var/lib/rancher/rke2/server/token
  ** Added a new `--tls-san-security` option. This flag defaults to false, but can be set to true to disable automatically adding SANs to the server's TLS certificate to satisfy any hostname requested by a client.
 * Add additional static pod cleanup during cluster reset https://github.com/rancher/rke2/pull/4727[(#4727)]
 
-
-
 == Release v1.24.16+rke2r1
 
 // v1.24.16+rke2r1
@@ -341,7 +339,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.15+rke2r1:
+=== Changes since v1.24.15+rke2r1
 
 * Update Calico to v3.26.1 https://github.com/rancher/rke2/pull/4426[(#4426)]
 * Update multus version https://github.com/rancher/rke2/pull/4434[(#4434)]
@@ -351,8 +349,6 @@ cat /var/lib/rancher/rke2/server/token
 * Add support for cni none on windows and initial windows-bgp backend https://github.com/rancher/rke2/pull/4462[(#4462)]
 * Updated Calico crd on Canal https://github.com/rancher/rke2/pull/4469[(#4469)]
 * Update to v1.24.16 https://github.com/rancher/rke2/pull/4497[(#4497)]
-
-
 
 == Release v1.24.15+rke2r1
 
@@ -371,7 +367,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.14+rke2r1:
+=== Changes since v1.24.14+rke2r1
 
 * Update canal chart https://github.com/rancher/rke2/pull/4345[(#4345)]
 * Bump K3s version for v1.24 https://github.com/rancher/rke2/pull/4359[(#4359)]
@@ -379,8 +375,6 @@ cat /var/lib/rancher/rke2/server/token
 * Bump harvester cloud provider 0.2.2 https://github.com/rancher/rke2/pull/4374[(#4374)]
 * Preserve mode when extracting runtime data https://github.com/rancher/rke2/pull/4380[(#4380)]
 * Use our own file copy logic instead of continuity https://github.com/rancher/rke2/pull/4391[(#4391)]
-
-
 
 == Release v1.24.14+rke2r1
 
@@ -390,18 +384,20 @@ This https://github.com/rancher/rke2/releases/tag/v1.24.14+rke2r1[v1.24.14+rke2r
 
 === Important Notes
 
-. If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
-
+--
+* If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
++
 You may retrieve the token value from any server already joined to the cluster:
-
++
 [,bash]
 ----
 cat /var/lib/rancher/rke2/server/token
 ----
++
+* Many systems have updated their packages with newer version of container-selinux (> v2.191.0) which is incompatible with our rke2-selinux policy and require a change in policy. We have updated our policy; you will notice the rke2-selinux package being upgraded from version v0.11.1 to newer version v0.12.0.
+--
 
-. Many systems have updated their packages with newer version of container-selinux (> v2.191.0) which is incompatible with our rke2-selinux policy and require a change in policy. We have updated our policy; you will notice the rke2-selinux package being upgraded from version v0.11.1 to newer version v0.12.0.
-
-=== Changes since v1.24.13+rke2r1:
+=== Changes since v1.24.13+rke2r1
 
 * Fix drone dispatch step https://github.com/rancher/rke2/pull/4150[(#4150)]
 * Update Cilium to v1.13.2 https://github.com/rancher/rke2/pull/4177[(#4177)]
@@ -417,8 +413,6 @@ cat /var/lib/rancher/rke2/server/token
 * V1.24.14+rke2r1 https://github.com/rancher/rke2/pull/4262[(#4262)]
 * Bump vsphere csi/cpi charts https://github.com/rancher/rke2/pull/4274[(#4274)]
 * Bump vsphere csi to remove duplicate CSI deployment. https://github.com/rancher/rke2/pull/4298[(#4298)]
-
-
 
 == Release v1.24.13+rke2r1
 
@@ -437,7 +431,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.12+rke2r1:
+=== Changes since v1.24.12+rke2r1
 
 * Update whereabouts to v0.6.1 https://github.com/rancher/rke2/pull/4084[(#4084)]
 * Updated Calico chart to add crd missing values https://github.com/rancher/rke2/pull/4049[(#4049)]
@@ -445,8 +439,6 @@ cat /var/lib/rancher/rke2/server/token
 * Bump k3s and component versions for 2023-04 release https://github.com/rancher/rke2/pull/4100[(#4100)]
 * Automatically add volume mount for audit-log-path dir if set https://github.com/rancher/rke2/pull/4110[(#4110)]
 * Update Kubernetes to v1.24.13 https://github.com/rancher/rke2/pull/4117[(#4117)]
-
-
 
 == Release v1.24.12+rke2r1
 
@@ -465,7 +457,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.11+rke2r1:
+=== Changes since v1.24.11+rke2r1
 
 * Update Flannel version to v0.21.3 on Canal https://github.com/rancher/rke2/pull/3984[(#3984)]
 * Remove Root debug + Remove unmounts https://github.com/rancher/rke2/pull/3987[(#3987)]
@@ -476,8 +468,6 @@ cat /var/lib/rancher/rke2/server/token
 * Bump k3s and containerd https://github.com/rancher/rke2/pull/4016[(#4016)]
 * Improve uninstallation on RHEL based OS https://github.com/rancher/rke2/pull/4020[(#4020)]
 * Update 1.24 and Go https://github.com/rancher/rke2/pull/4030[(#4030)]
-
-
 
 == Release v1.24.11+rke2r1
 
@@ -496,7 +486,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.10+rke2r1:
+=== Changes since v1.24.10+rke2r1
 
 * Don't handle kube-proxy in static pod cleanup https://github.com/rancher/rke2/pull/3836[(#3836)]
 * Bump cilium images https://github.com/rancher/rke2/pull/3826[(#3826)]
@@ -513,8 +503,6 @@ cat /var/lib/rancher/rke2/server/token
 * Bump K3s commit https://github.com/rancher/rke2/pull/3907[(#3907)]
 * Add bootstrap token auth handler https://github.com/rancher/rke2/pull/3922[(#3922)]
 * Update to kubernetes v1.24.11 https://github.com/rancher/rke2/pull/3950[(#3950)]
-
-
 
 == Release v1.24.10+rke2r1
 
@@ -533,7 +521,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.9+rke2r2:
+=== Changes since v1.24.9+rke2r2
 
 * Update multus to v3.9.3 and whereabouts to v0.6 https://github.com/rancher/rke2/pull/3792[(#3792)]
 * Bump vSphere CPI chart to v1.24.3 https://github.com/rancher/rke2/pull/3763[(#3763)]
@@ -541,8 +529,6 @@ cat /var/lib/rancher/rke2/server/token
 * Bump harvester cloud provider and harvester csi driver https://github.com/rancher/rke2/pull/3784[(#3784)]
 * Bump containerd to v1.6.15-k3s1 https://github.com/rancher/rke2/pull/3779[(#3779)]
 * Bump K3s version for tls-cipher-suites fix https://github.com/rancher/rke2/pull/3798[(#3798)]
-
-
 
 == Release v1.24.9+rke2r2
 
@@ -561,13 +547,11 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.9+rke2r1:
+=== Changes since v1.24.9+rke2r1
 
 * Bump containerd to v1.6.14-k3s1 https://github.com/rancher/rke2/pull/3747[(#3747)]
  ** The embedded containerd version has been bumped to v1.6.14-k3s1. This includes a backported fix for https://github.com/containerd/containerd/issues/7843[containerd/7843] which caused pods to lose their CNI info when containerd was restarted, which in turn caused the kubelet to recreate the pod.
  ** Windows agents now use the k3s fork of containerd, which includes support for registry rewrites.
-
-
 
 == Release v1.24.9+rke2r1
 
@@ -591,7 +575,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.8+rke2r1:
+=== Changes since v1.24.8+rke2r1
 
 * Add more tests to the windows env https://github.com/rancher/rke2/pull/3606[(#3606)]
 * Update Canal version https://github.com/rancher/rke2/pull/3626[(#3626)]
@@ -605,8 +589,6 @@ cat /var/lib/rancher/rke2/server/token
 * Bump K3s and containerd version for v1.24 https://github.com/rancher/rke2/pull/3676[(#3676)]
 * [Backport v1.24] Fixed cilium chart when enabled hubble images https://github.com/rancher/rke2/pull/3689[(#3689)]
 * Bump ingress-nginx https://github.com/rancher/rke2/pull/3705[(#3705)]
-
-
 
 == Release v1.24.8+rke2r1
 
@@ -625,7 +607,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.7+rke2r1:
+=== Changes since v1.24.7+rke2r1
 
 * Remove the CNI plugin dir when uninstalling rke2 https://github.com/rancher/rke2/pull/3503[(#3503)]
 * Update Cilium to 1.12.3 and use portmap as default https://github.com/rancher/rke2/pull/3511[(#3511)]
@@ -634,8 +616,6 @@ cat /var/lib/rancher/rke2/server/token
 * Update Calico chart to support PSP for CIS 1.6 https://github.com/rancher/rke2/pull/3536[(#3536)]
 * Bump vsphere charts https://github.com/rancher/rke2/pull/3538[(#3538)]
 * Use the Cilium chart that fixes the portmap issue with system_default... https://github.com/rancher/rke2/pull/3554[(#3554)]
-
-
 
 == Release v1.24.7+rke2r1
 
@@ -654,7 +634,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.6+rke2r1:
+=== Changes since v1.24.6+rke2r1
 
 * Upgrade Calico version on Windows https://github.com/rancher/rke2/pull/3396[(#3396)]
 * Bump vsphere csi/cpi charts and images https://github.com/rancher/rke2/pull/3358[(#3358)]
@@ -662,8 +642,6 @@ cat /var/lib/rancher/rke2/server/token
 * K3s pull-through and backports from master https://github.com/rancher/rke2/pull/3435[(#3435)]
 * Update canal to v3.24.1 https://github.com/rancher/rke2/pull/3447[(#3447)]
 * Bump CCM image tag  https://github.com/rancher/rke2/pull/3466[(#3466)]
-
-
 
 == Release v1.24.6+rke2r1
 
@@ -682,7 +660,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.4+rke2r1:
+=== Changes since v1.24.4+rke2r1
 
 * Update Cilium version and remove startup-script https://github.com/rancher/rke2/pull/3274[(#3274)]
 * Update channel server stable to 1.24.4 https://github.com/rancher/rke2/pull/3269[(#3269)]
@@ -697,8 +675,6 @@ cat /var/lib/rancher/rke2/server/token
 * [Release 1.24] Update calico to v3.24.1 https://github.com/rancher/rke2/pull/3343[(#3343)]
 * Update for 1.24 patches https://github.com/rancher/rke2/pull/3351[(#3351)]
 * Update k8s to 1.24.6 https://github.com/rancher/rke2/pull/3370[(#3370)]
-
-
 
 == Release v1.24.4+rke2r1
 
@@ -717,7 +693,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.3+rke2r1:
+=== Changes since v1.24.3+rke2r1
 
 * Updating stable to 1.23.9 https://github.com/rancher/rke2/pull/3179[(#3179)]
 * Updated cilium to v1.12.0 https://github.com/rancher/rke2/pull/3185[(#3185)]
@@ -739,8 +715,6 @@ cat /var/lib/rancher/rke2/server/token
 * Document ingress in CIS mode issue https://github.com/rancher/rke2/pull/3264[(#3264)]
 * Bump K3s version for v1.24 https://github.com/rancher/rke2/pull/3265[(#3265)]
 
-
-
 == Release v1.24.3+rke2r1
 
 // v1.24.3+rke2r1
@@ -758,7 +732,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.2+rke2r1:
+=== Changes since v1.24.2+rke2r1
 
 * Update channels https://github.com/rancher/rke2/pull/3135[(#3135)]
 * Bump ingress-nginx to 4.1.004 https://github.com/rancher/rke2/pull/3131[(#3131)]
@@ -768,8 +742,6 @@ cat /var/lib/rancher/rke2/server/token
 * Add a readme to explain our implementation of ADRs https://github.com/rancher/rke2/pull/3154[(#3154)]
 * Bump CRI timeout to 34 minutes https://github.com/rancher/rke2/pull/3158[(#3158)]
 * Consolidate staticPod timeout to static 30 minutes https://github.com/rancher/rke2/pull/3166[(#3166)]
-
-
 
 == Release v1.24.2+rke2r1
 
@@ -788,7 +760,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.24.1+rke2r2:
+=== Changes since v1.24.1+rke2r2
 
 * Adding tolerations for master nodes https://github.com/rancher/rke2/pull/2884[(#2884)]
 * Remove kube-ipvs0 interface when cleaning up https://github.com/rancher/rke2/pull/3018[(#3018)]
@@ -811,8 +783,6 @@ cat /var/lib/rancher/rke2/server/token
 * Double number of steps for criBackoff
 * Bump K3s version for cluster upgrade egress-selector-mode fix https://github.com/rancher/rke2/pull/3122[(#3122)]
 
-
-
 == Release v1.24.1+rke2r2
 
 // v1.24.1+rke2r2
@@ -834,7 +804,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.23.6+rke2r2:
+=== Changes since v1.23.6+rke2r2
 
 * Bump upgrade controller version and improve readability https://github.com/rancher/rke2/pull/2818[(#2818)]
 * Updating the vSphere CPI chart version. https://github.com/rancher/rke2/pull/2868[(#2868)]
@@ -873,5 +843,3 @@ cat /var/lib/rancher/rke2/server/token
 * Remove cni-based egress-selector config and bump k3s https://github.com/rancher/rke2/pull/3025[(#3025)]
 * May release v1.24.1+rke2r2 https://github.com/rancher/rke2/pull/3030[(#3030)]
 * Unconditionally set egress-selector-mode to disabled https://github.com/rancher/rke2/pull/3035[(#3035)]
-
-

@@ -1,7 +1,7 @@
 = Introduction
 
 // Add logo image
-image::logo-horizontal-rke2.svg[block]
+image::logo-horizontal-rke2 (1).svg[block]
 
 RKE2, also known as RKE Government, is Rancher's next-generation Kubernetes distribution.
 
