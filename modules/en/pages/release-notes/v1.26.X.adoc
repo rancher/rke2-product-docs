@@ -303,7 +303,7 @@ https://projectcalico.docs.tigera.io/archive/v3.24/release-notes/#v3245[Calico v
 
 // v1.26.15+rke2r1
 
-This release updates Kubernetes to v1.26.15.
+This https://github.com/rancher/rke2/releases/tag/v1.26.15+rke2r1[v1.26.15+rke2r1] release updates Kubernetes to v1.26.15.
 
 === Important Notes
 
@@ -395,7 +395,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.14+rke2r1
 
-This release updates Kubernetes to v1.26.14.
+This https://github.com/rancher/rke2/releases/tag/v1.26.14+rke2r1[v1.26.14+rke2r1] release updates Kubernetes to v1.26.14.
 
 === Important Notes
 
@@ -484,7 +484,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.13+rke2r1
 
-This release updates Kubernetes to v1.26.13.
+This https://github.com/rancher/rke2/releases/tag/v1.26.13+rke2r1[v1.26.13+rke2r1] release updates Kubernetes to v1.26.13.
 
 === Important Notes
 
@@ -570,7 +570,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.12+rke2r1
 
-This release updates Kubernetes to v1.26.12.
+This https://github.com/rancher/rke2/releases/tag/v1.26.12+rke2r1[v1.26.12+rke2r1] release updates Kubernetes to v1.26.12.
 
 === Important Notes
 
@@ -642,7 +642,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.11+rke2r1
 
-This release updates Kubernetes to v1.26.11.
+This https://github.com/rancher/rke2/releases/tag/v1.26.11+rke2r1[v1.26.11+rke2r1] release updates Kubernetes to v1.26.11.
 
 === Important Notes
 
@@ -729,7 +729,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.10+rke2r2
 
-This release fixes an issue with identifying additional container runtimes.
+This https://github.com/rancher/rke2/releases/tag/v1.26.10+rke2r2[v1.26.10+rke2r2] release fixes an issue with identifying additional container runtimes.
 
 === Important Notes
 
@@ -756,7 +756,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.10+rke2r1
 
-This release updates Kubernetes to v1.26.10.
+This https://github.com/rancher/rke2/releases/tag/v1.26.10+rke2r1[v1.26.10+rke2r1] release updates Kubernetes to v1.26.10.
 
 === Important Notes
 
@@ -805,7 +805,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.9+rke2r1
 
-This release updates Kubernetes to v1.26.9.
+This https://github.com/rancher/rke2/releases/tag/v1.26.9+rke2r1[v1.26.9+rke2r1] release updates Kubernetes to v1.26.9.
 
 === Important Notes
 
@@ -827,7 +827,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.8+rke2r1
 
-This release updates Kubernetes to v1.26.8, and fixes a number of issues.
+This https://github.com/rancher/rke2/releases/tag/v1.26.8+rke2r1[v1.26.8+rke2r1] release updates Kubernetes to v1.26.8, and fixes a number of issues.
 
 === Important Notes
 
@@ -877,7 +877,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.7+rke2r1
 
-This release updates Kubernetes to v1.26.7, and fixes a number of issues.
+This https://github.com/rancher/rke2/releases/tag/v1.26.7+rke2r1[v1.26.7+rke2r1] release updates Kubernetes to v1.26.7, and fixes a number of issues.
 
 === Important Notes
 
@@ -905,7 +905,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.6+rke2r1
 
-This release updates Kubernetes to v1.26.6, and fixes a number of issues.
+This https://github.com/rancher/rke2/releases/tag/v1.26.6+rke2r1[v1.26.6+rke2r1] release updates Kubernetes to v1.26.6, and fixes a number of issues.
 
 === Important Notes
 
@@ -931,11 +931,11 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.5+rke2r1
 
-This release updates Kubernetes to v1.26.5, and fixes a number of issues.
+This https://github.com/rancher/rke2/releases/tag/v1.26.5+rke2r1[v1.26.5+rke2r1] release updates Kubernetes to v1.26.5, and fixes a number of issues.
 
 === Important Notes
 --
-. If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
+* If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 +
 You may retrieve the token value from any server already joined to the cluster:
 +
@@ -944,7 +944,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 +
-. Many systems have updated their packages with newer version of container-selinux (> v2.191.0) which is incompatible with our rke2-selinux policy and require a change in policy. We have updated our policy; you will notice the rke2-selinux package being upgraded from version v0.11.1 to newer version v0.12.0.
+* Many systems have updated their packages with newer version of container-selinux (> v2.191.0) which is incompatible with our rke2-selinux policy and require a change in policy. We have updated our policy; you will notice the rke2-selinux package being upgraded from version v0.11.1 to newer version v0.12.0.
 --
 
 === Changes since v1.26.4+rke2r1
@@ -969,7 +969,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.4+rke2r1
 
-This release updates Kubernetes to v1.26.4, and fixes a number of issues.
+This https://github.com/rancher/rke2/releases/tag/v1.26.4+rke2r1[v1.26.4+rke2r1] release updates Kubernetes to v1.26.4, and fixes a number of issues.
 
 === Important Notes
 
@@ -1002,7 +1002,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.3+rke2r1
 
-This release updates Kubernetes to v1.26.3, and fixes a number of issues.
+This https://github.com/rancher/rke2/releases/tag/v1.26.3+rke2r1[v1.26.3+rke2r1] release updates Kubernetes to v1.26.3, and fixes a number of issues.
 
 === Important Notes
 
@@ -1036,7 +1036,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.2+rke2r1
 
-This release updates Kubernetes to v1.26.2, and fixes a number of issues.
+This https://github.com/rancher/rke2/releases/tag/v1.26.2+rke2r1[v1.26.2+rke2r1] release updates Kubernetes to v1.26.2, and fixes a number of issues.
 
 === Important Notes
 
@@ -1077,7 +1077,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.1+rke2r1
 
-This release updates Kubernetes to v1.26.1 to backport registry changes and fix two critical issues.
+This https://github.com/rancher/rke2/releases/tag/v1.26.1+rke2r1[v1.26.1+rke2r1] release updates Kubernetes to v1.26.1 to backport registry changes and fix two critical issues.
 
 === Important Notes
 
@@ -1106,7 +1106,7 @@ cat /var/lib/rancher/rke2/server/token
 
 // v1.26.0+rke2r2
 
-This release updates containerd to v1.6.14 to resolve an issue where pods would lose their CNI information when containerd was restarted.
+This https://github.com/rancher/rke2/releases/tag/v1.26.0+rke2r2[v1.26.0+rke2r2] release updates containerd to v1.6.14 to resolve an issue where pods would lose their CNI information when containerd was restarted.
 
 === Changes since v1.26.0+rke2r1
 
@@ -1118,7 +1118,7 @@ This release updates containerd to v1.6.14 to resolve an issue where pods would 
 
 // v1.26.0+rke2r1
 
-This release is RKE2's first in the v1.26 line. This release updates Kubernetes to v1.26.0.
+This https://github.com/rancher/rke2/releases/tag/v1.26.0+rke2r1[v1.26.0+rke2r1] release is RKE2's first in the v1.26 line. This release updates Kubernetes to v1.26.0.
 
 Before upgrading from earlier releases, be sure to read the Kubernetes https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.26.md#urgent-upgrade-notes[Urgent Upgrade Notes].
 

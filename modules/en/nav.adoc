@@ -61,5 +61,6 @@
 ** xref:release-notes/v1.28.X.adoc[]
 ** xref:release-notes/v1.29.X.adoc[]
 ** xref:release-notes/v1.30.X.adoc[]
+** xref:release-notes/v1.31.X.adoc[]
 
 * xref:known_issues.adoc[]
