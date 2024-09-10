@@ -1,7 +1,5 @@
 = 介绍
 
-image::logo-horizontal-rke2 (1).svg[block]
-
 RKE2，也称为 RKE Government，是 Rancher 的下一代 Kubernetes 发行版。
 
 它是一个https://landscape.cncf.io/card-mode?selected=rke-government[完全合规的 Kubernetes 发行版]，专注于安全和合规性。
