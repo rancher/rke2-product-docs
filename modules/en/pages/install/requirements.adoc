@@ -255,6 +255,114 @@ The VXLAN port on nodes should not be exposed to the world as it opens up your c
 | Flannel CNI with VXLAN
 |===
 
+==== CNI Specific Inbound Network Rules
+
+[tabs]
+====
+
+Tab Canal::
++
+|===
+| Port | Protocol | Source | Destination | Description
+
+| 8472
+| UDP
+| All RKE2 nodes
+| All RKE2 nodes
+| Canal CNI with VXLAN
+
+| 9099
+| TCP
+| All RKE2 nodes
+| All RKE2 nodes
+| Canal CNI health checks
+
+| 51820
+| UDP
+| All RKE2 nodes
+| All RKE2 nodes
+| Canal CNI with WireGuard IPv4
+
+| 51821
+| UDP
+| All RKE2 nodes
+| All RKE2 nodes
+| Canal CNI with WireGuard IPv6/dual-stack
+|===
+
+Tab Cilium::
++
+|===
+| Port | Protocol | Source | Destination | Description
+
+| 8/0
+| ICMP
+| All RKE2 nodes
+| All RKE2 nodes
+| Cilium CNI health checks
+
+| 4240
+| TCP
+| All RKE2 nodes
+| All RKE2 nodes
+| Cilium CNI health checks
+
+| 8472
+| UDP
+| All RKE2 nodes
+| All RKE2 nodes
+| Cilium CNI with VXLAN
+|===
+
+Tab Calico::
++
+|===
+| Port | Protocol | Source | Destination | Description
+
+| 179
+| TCP
+| All RKE2 nodes
+| All RKE2 nodes
+| Calico CNI with BGP
+
+| 4789
+| UDP
+| All RKE2 nodes
+| All RKE2 nodes
+| Calico CNI with VXLAN
+
+| 5473
+| TCP
+| All RKE2 nodes
+| All RKE2 nodes
+| Calico CNI with Typha
+
+| 9098
+| TCP
+| All RKE2 nodes
+| All RKE2 nodes
+| Calico Typha health checks
+
+| 9099
+| TCP
+| All RKE2 nodes
+| All RKE2 nodes
+| Calico health checks
+|===
+
+Tab Flannel::
++
+|===
+| Port | Protocol | Source | Destination | Description
+
+| 4789
+| UDP
+| All RKE2 nodes
+| All RKE2 nodes
+| Flannel CNI with VXLAN
+|===
+====
+
 === Windows Specific Inbound Network Rules
 
 |===
