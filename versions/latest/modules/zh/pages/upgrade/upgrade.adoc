@@ -1,0 +1,7 @@
+= 升级 RKE2 集群
+
+本节将介绍如何升级 RKE2 集群。
+
+xref:./manual_upgrade.adoc[手动升级]描述了手动升级集群的几种方法。它也可以作为通过第三方基础设施即代码工具（如 https://www.terraform.io/[Terraform]）进行升级的基础。
+
+xref:./automated_upgrade.adoc[自动升级]描述了如何使用 Rancher 的 https://github.com/rancher/system-upgrade-controller[system-upgrade-controller] 执行 Kubernetes 原生的自动升级。
