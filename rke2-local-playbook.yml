@@ -1,20 +1,14 @@
 site:
   title: RKE2 Documentation
   url: /
-  start_page: main@rke2-product-docs:en:introduction.adoc
+  start_page: v1.3.1@rke2:en:introduction.adoc
 
 content:
   sources:
   - url: ./
     branches: [main]
+    start_paths: [docs/version-1.3.1]
 
-#ui:
-#  bundle:
-#    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
-#    snapshot: true
-#  supplemental_files: ./susecom-2023
-
-# Description: SUSE UI bundle which needs to be configured
 ui:
   bundle:
     url: https://github.com/rancher/product-docs-ui/blob/main/build/ui-bundle.zip?raw=true
