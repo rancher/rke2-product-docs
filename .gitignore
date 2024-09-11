@@ -1,5 +1,5 @@
+build/
+node_modules/
 tmp/
 .vscode/
-node_modules/
-build/
-.DS_Store/
+**/.DS_Store
