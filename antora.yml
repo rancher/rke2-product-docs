@@ -1,8 +1,0 @@
-name: rke2
-title: RKE2
-version: main
-display_version: 'v1.31'
-start_page: en:introduction.adoc
-nav:
-- modules/en/nav.adoc
-- modules/zh/nav.adoc
