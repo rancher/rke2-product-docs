@@ -1,24 +1,23 @@
 site:
   title: RKE2 Documentation
   url: /
-  start_page: v1.3.1@rke2:en:introduction.adoc
-
+  start_page: latest@rke2:en:introduction.adoc
+  robots: disallow
 content:
   sources:
-  - url: ./
-    branches: [main]
-    start_paths: [docs/version-1.3.1]
-
+  - url: .
+    start_path: versions/latest
 ui:
   bundle:
     url: https://github.com/rancher/product-docs-ui/blob/main/build/ui-bundle.zip?raw=true
     snapshot: true
   supplemental_files: ./product-docs-supplemental-files
-
 asciidoc:
+  attributes:
+    page-pagination: ''
+    tabs-sync-option: ''
   extensions:
     - '@asciidoctor/tabs'
-
 antora:
   extensions:
     - require: '@sntke/antora-mermaid-extension' # <1>

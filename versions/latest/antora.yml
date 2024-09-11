@@ -1,7 +1,7 @@
 name: rke2
 title: RKE2
-version: v1.3.1
-display_version: 'v1.3.1'
+version: latest
+display_version: 'Latest'
 start_page: en:introduction.adoc
 nav:
 - modules/en/nav.adoc
