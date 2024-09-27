@@ -1,6 +1,6 @@
-= 升级 RKE2 集群
+= 升级 {product-name} 集群
 
-本节将介绍如何升级 RKE2 集群。
+本节将介绍如何升级 {product-name} 集群。
 
 xref:./manual_upgrade.adoc[手动升级]描述了手动升级集群的几种方法。它也可以作为通过第三方基础设施即代码工具（如 https://www.terraform.io/[Terraform]）进行升级的基础。
 
