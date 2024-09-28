@@ -1,5 +1,5 @@
 name: rke2
-title: SUSE® Rancher Prime RKE2
+title: RKE2
 version: latest
 display_version: 'Latest'
 start_page: en:introduction.adoc
