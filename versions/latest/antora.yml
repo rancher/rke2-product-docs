@@ -5,8 +5,8 @@ display_version: 'Latest'
 start_page: en:introduction.adoc
 asciidoc:
   attributes:
-    product-name: SUSE® Rancher Prime RKE2
-    k3s-product-name: SUSE® Rancher Prime K3S
+    product-name: "SUSE® Rancher Prime: RKE2"
+    k3s-product-name: "SUSE® Rancher Prime: K3S"
     rancher-product-name: SUSE® Rancher Prime
 nav:
 - modules/en/nav.adoc
