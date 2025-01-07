@@ -30,3 +30,4 @@ antora:
     script_stem: header-scripts # <3>
     mermaid_initialize_options: # <4>
       start_on_load: true
+  - require: '@springio/antora-xref-extension'
