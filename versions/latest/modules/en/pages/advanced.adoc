@@ -79,7 +79,7 @@ Agent nodes are registered via a websocket connection initiated by the `rke2 age
 
 Agents register with the server using the cluster secret portion of the join token, along with a randomly generated node-specific password, which is stored on the agent at `/etc/rancher/node/password`. The server will store the passwords for individual nodes as Kubernetes secrets, and any subsequent attempts must use the same password. Node password secrets are stored in the `kube-system` namespace with names using the template `<host>.node-password.rke2`. These secrets are deleted when the corresponding Kubernetes node is deleted.
 
-[NOTE] 
+[NOTE]
 ====
 Prior to RKE2 v1.20.2 servers stored passwords on disk at `/var/lib/rancher/rke2/server/cred/node-passwd`.
 ====
@@ -321,16 +321,16 @@ Depending on the underlying OS, some steps need to be fulfilled
 SLES::
 +
 --
-The NVIDIA operator cannot automatically install kernel drivers on SLES. NVIDIA drivers must be manually installed on all GPU nodes before deploying the operator in the cluster. It can be done with the following steps: 
+The NVIDIA operator cannot automatically install kernel drivers on SLES. NVIDIA drivers must be manually installed on all GPU nodes before deploying the operator in the cluster. It can be done with the following steps:
 
 [,bash]
 ----
 # Assuming you are using sle15sp5, if different, change the url accordingly sudo zypper addrepo --refresh 'https://download.nvidia.com/suse/sle15sp5' NVIDIA sudo zypper --gpg-auto-import-keys refresh sudo zypper install -y ---auto-agree-with-licenses nvidia-gl-G06 nvidia-video-G06 nvidia-compute-utils-G06
 ----
 
-Then reboot. 
+Then reboot.
 
-If everything worked correctly, after the reboot, you should see the NVRM and GCC version of the driver when executing the command: 
+If everything worked correctly, after the reboot, you should see the NVRM and GCC version of the driver when executing the command:
 
 [,bash]
 ----
@@ -340,23 +340,23 @@ cat /proc/driver/nvidia/version
 Finally, create the symlink:
 [,bash]
 ----
-sudo ln -s /sbin/ldconfig /sbin/ldconfig.real ``` 
+sudo ln -s /sbin/ldconfig /sbin/ldconfig.real
 ----
 --
 
 Ubuntu::
 +
 --
-The NVIDIA operator can automatically install kernel drivers on Ubuntu using the `nvidia-driver-daemonset`, although not all versions are supported. You can also pre-install them manually and the operator will detect them: 
+The NVIDIA operator can automatically install kernel drivers on Ubuntu using the `nvidia-driver-daemonset`, although not all versions are supported. You can also pre-install them manually and the operator will detect them:
 
 [,bash]
 ----
 sudo apt install nvidia-driver-535-server
 ----
 
-Then reboot. 
+Then reboot.
 
-If everything worked correctly, after the reboot, you should see a correct output when executing the command: 
+If everything worked correctly, after the reboot, you should see a correct output when executing the command:
 
 [,bash]
 ----
@@ -370,7 +370,7 @@ RHEL::
 The NVIDIA operator can automatically install kernel drivers on RHEL using the `nvidia-driver-daemonset`. You would only need to create the symlink:
 
 [,bash]
----- 
+----
 sudo ln -s /sbin/ldconfig /sbin/ldconfig.real
 ----
 --
