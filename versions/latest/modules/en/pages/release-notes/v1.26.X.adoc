@@ -166,7 +166,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.26[Calico v3.26.1]
 | https://github.com/k3s-io/helm-controller/releases/tag/v0.15.2[v0.15.2]
 | https://github.com/flannel-io/flannel/releases/tag/v0.22.0[Flannel v0.22.0] +
 https://projectcalico.docs.tigera.io/archive/v3.25/release-notes/#v3251[Calico v3.25.1]
-| https://projectcalico.docs.tigera.io/archive/v3.26/release-notes/#v3261[v3.26.1]
+| https://archive-os-3-26.netlify.app/calico/3.26/release-notes/#v3.26.1[v3.26.1]
 | https://github.com/cilium/cilium/releases/tag/v1.13.2[v1.13.2]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
 
