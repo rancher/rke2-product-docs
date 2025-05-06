@@ -121,7 +121,7 @@ disable:
 
 [CAUTION]
 ====
-It is the cluster operator's responsibility to ensure that components are disabled or replaced with care, as the server charts play important roles in cluster operability.  Refer to the link:./architecture.adoc#server-charts[architecture overview] for more information on the individual system charts role within the cluster.
+It is the cluster operator's responsibility to ensure that components are disabled or replaced with care, as the server charts play important roles in cluster operability.  Refer to the xref:./architecture.adoc#_server-charts[architecture overview] for more information on the individual system charts role within the cluster.
 ====
 
 == Installation on classified AWS regions or networks with custom AWS API endpoints
