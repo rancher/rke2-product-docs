@@ -22,7 +22,7 @@ The `with-node-id` parameter is available starting with the 2023-05 releases (v1
 
 === Linux
 
-See the https://www.suse.com/suse-rke2/support-matrix/all-supported-versions[RKE2 Support Matrix] for all the OS versions that have been validated with RKE2. In general, RKE2 should work on any Linux distribution that uses systemd and iptables.
+See the https://www.suse.com/suse-rke2/support-matrix/all-supported-versions/rke2-v1-30[RKE2 Support Matrix] for all the OS versions that have been validated with RKE2. In general, RKE2 should work on any Linux distribution that uses systemd and iptables.
 
 === Windows
 
