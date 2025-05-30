@@ -204,7 +204,7 @@ RKE2 支持向具有 S3 兼容 API 的系统写入 etcd 快照和从系统中恢
 
 [,bash]
 ----
-rke2 etcd-snapshot \
+rke2 etcd-snapshot save \
   --s3 \
   --s3-bucket=<S3-BUCKET-NAME> \
   --s3-access-key=<S3-ACCESS-KEY> \
