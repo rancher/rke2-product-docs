@@ -6,8 +6,6 @@ Containerd 可以配置为连接到私有镜像仓库，并使用仓库在每个
 
 请注意，server 节点默认是可以调度的。如果你没有在 server 节点上设置污点，而且希望在 server 节点上运行工作负载，请确保在每个 server 节点上创建 `registries.yaml` 文件。
 
-*注意*：在 RKE2 v1.20 之前，初始 RKE2 节点引导不支持 containerd 镜像仓库配置，仅可用于节点加入集群后启动的 Kubernetes 工作负载。如果你计划使用此 containerd 镜像仓库功能来引导节点，请参阅xref:./airgap.adoc[离线安装文档]。
-
 Containerd 中的配置可以用于通过 TLS 连接到私有镜像仓库，也可以与启用验证的镜像仓库连接。下一节将解释 `registries.yaml` 文件，并给出在 RKE2 中使用私有镜像仓库配置的不同例子。
 
 == 镜像仓库配置文件
