@@ -310,15 +310,15 @@ kube-apiserver-extra-env:
 kube-scheduler-extra-env: "TZ=America/Los_Angeles"
 ----
 
-== Deploy NVIDIA Operator
+== Deploy NVIDIA operator
 
 The https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html[NVIDIA operator] allows administrators of Kubernetes clusters to manage GPUs just like CPUs. It includes everything needed for pods to be able to operate GPUs.
 
-=== Host OS Requirements
+=== Host OS requirements
 
 To expose the GPU to the pod correctly, the NVIDIA kernel drivers and the `libnvidia-ml` library must be correctly installed in the host OS. The NVIDIA Operator can automatically install drivers and libraries on some operating systems; check the NVIDIA documentation for information on https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html#supported-operating-systems-and-kubernetes-platforms[supported operating system releases]. Installation of the NVIDIA components on your host OS is out of the scope of this document; reference the NVIDIA documentation for instructions.
 
-The following three commands should return a correct output if the kernel driver was correctly installed.
+The following three commands should return a correct output if the kernel driver is correctly installed.
 
 . `lsmod | grep nvidia` returns a list of Nvidia kernel modules. For example:
 +
@@ -349,7 +349,7 @@ GCC version:  gcc version 7.5.0 (SUSE Linux)
 +
 This library is used by Kubernetes components to interact with the kernel driver.
 
-=== Operator Installation
+=== Operator installation
 
 Once the OS is ready and RKE2 is running, install the GPU Operator with the following yaml manifest.
 
@@ -379,14 +379,14 @@ The NVIDIA operator restarts containerd with a hangup call which restarts RKE2.
 
 After one minute approximately, you can make the following checks to verify that everything works as expected.
 
-. Assuming the drivers and `libnvidia-ml.so` library were previously installed, check if the operator detects them correctly.
+. Assuming the drivers and `libnvidia-ml.so` library are installed, check if the operator detects them correctly.
 +
 [,bash]
 ----
 kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | grep "nvidia.com/gpu.deploy.driver"
 ----
 +
-You should see the value `pre-installed`. If you see `true`, the drivers were not correctly installed. If the <<Host OS Requirements, pre-requirements>> were correct, it is possible that you forgot to reboot the node after installing all packages.
+You should see the value `pre-installed`. If you see `true`, the drivers are not correctly installed. If the <<Host OS requirements, pre-requirements>> are correct, it is possible that you forgot to reboot the node after installing all packages.
 +
 You can also check other driver labels with:
 +
@@ -453,7 +453,6 @@ Available as of October 2024 releases: v1.28.15+rke2r1, v1.29.10+rke2r1, v1.30.6
 ====
 
 RKE2 will now use `PATH` to find alternative container runtimes, in addition to checking the default paths used by the container runtime packages. In order to use this feature, you must modify the RKE2 service's PATH environment variable to add the directories containing the container runtime binaries.
-Add commentMore actions
 It's recommended that you modify one of this two environment files:
 
 * /etc/default/rke2-server # or rke2-agent
@@ -461,9 +460,10 @@ It's recommended that you modify one of this two environment files:
 
 This example adds the `PATH` in `/etc/default/rke2-server`:
 
-```bash
+[,bash]
+----
 echo PATH=$PATH >> /etc/default/rke2-server
-```
+----
 
 [WARNING]
 ====
