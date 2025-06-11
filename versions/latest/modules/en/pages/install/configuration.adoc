@@ -44,12 +44,6 @@ Finally, the location of the config file can be changed either through the cli a
 
 === Multiple Config Files
 
-[IMPORTANT]
-.Version Gate
-====
-Available as of https://github.com/rancher/rke2/releases/tag/v1.21.2%2Brke2r1[v1.21.2+rke2r1].
-====
-
 Multiple configuration files are supported. By default, configuration files are read from `/etc/rancher/rke2/config.yaml` and `/etc/rancher/rke2/config.yaml.d/*.yaml` in alphabetical order.
 
 By default, the last value found for a given key will be used. A `+` can be appended to the key to append the value to the existing string or slice, instead of replacing it. All occurrences of this key in subsequent files will also require a `+` to prevent overwriting the accumulated value.

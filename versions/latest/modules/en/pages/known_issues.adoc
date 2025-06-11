@@ -65,19 +65,6 @@ spec:
 
 For more information regarding exact failures with detailed logs when not following these steps, please see https://github.com/rancher/rke2/issues/504[Issue 504].
 
-== Control Groups V2
-
-RKE2 v1.19.5+ ships with `containerd` v1.4.x or later, hence should run on cgroups v2 capable systems. +
-Older versions (< 1.19.5) are shipped with containerd 1.3.x fork (with back-ported SELinux commits from 1.4.x) which does not support cgroups v2 and requires a little up-front configuration:
-
-Assuming a `systemd`-based system, setting the https://www.freedesktop.org/software/systemd/man/systemd.html#systemd.unified_cgroup_hierarchy[systemd.unified_cgroup_hierarchy=0] kernel parameter will indicate to systemd that it should run with hybrid (cgroups v1 + v2) support. Combined with the above, setting the https://www.freedesktop.org/software/systemd/man/systemd.html#systemd.legacy_systemd_cgroup_controller[systemd.legacy_systemd_cgroup_controller] kernel parameter will indicate to systemd that it should run with legacy (cgroups v1) support. As these are kernel command-line arguments they must be set in the system bootloader so that they will be passed to `systemd` as PID 1 at `/sbin/init`.
-
-See:
-
-* https://www.gnu.org/software/grub/manual/grub/grub.html#linux[grub2 manual]
-* https://www.freedesktop.org/software/systemd/man/systemd.html#Kernel%20Command%20Line[systemd manual]
-* https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html[cgroups v2]
-
 == Calico with vxlan encapsulation
 
 Calico hits a kernel bug when using vxlan encapsulation and the checksum offloading of the vxlan interface is on. The issue is described in the https://github.com/projectcalico/calico/issues/4865[calico project] and in https://github.com/rancher/rke2/issues/1541[rke2 project]. The workaround we are applying is disabling the checksum offloading by default by applying the value `ChecksumOffloadBroken=true` in the https://github.com/rancher/rke2-charts/blob/main/charts/rke2-calico/rke2-calico/v3.25.001/values.yaml#L75-L76[calico helm chart].

@@ -10,7 +10,7 @@ ____
 
 * 确保你的环境满足xref:../install/requirements.adoc[要求]。
  如果你的主机安装并启用了 NetworkManager，请xref:../known_issues.adoc#_networkmanager[确保将其配置为忽略 CNI 管理的接口]。
-* 对于 {product-name} 1.21 及更高版本，如果主机内核支持 https://apparmor.net/[AppArmor]，则在安装 {product-name} 之前还必须具有 AppArmor 工具（通常可通过 `apparmor-parser` 包获得）。
+* If the host kernel supports https://apparmor.net/[AppArmor], the AppArmor tools (usually available via the `apparmor-parser` package) must also be present prior to installing RKE2.
 * 必须以 root 用户或通过 `sudo` 执行 {product-name} 安装。
 
 == Server 节点安装

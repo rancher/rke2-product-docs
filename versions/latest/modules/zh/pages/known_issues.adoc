@@ -65,21 +65,6 @@ spec:
 
 有关不遵循这些步骤时故障的详细日志，请参阅 https://github.com/rancher/rke2/issues[issue 504]。
 
-== Control Groups V2
-
-RKE2 v1.19.5+ 内置 `containerd` v1.4.x 或更高版本，因此应该在支持 cgroups v2 的系统上运行。 +
-旧版本 (< 1.19.5) 内置 containerd 1.3.x 分支（从 1.4.x 向后移植 SELinux commits），它不支持 cgroups v2，需要一些前期配置：
-
-假设使用基于 `systemd` 的系统，设置 https://www.freedesktop.org/software/systemd/man/systemd.html#systemd.unified_cgroup_hierarchy[systemd.unified_cgroup_hierarchy=0] 内核参数将向 systemd 表明它应该以混合 (cgroups v1 + v2) 方式运行。
-结合上述情况，设置 https://www.freedesktop.org/software/systemd/man/systemd.html#systemd.legacy_systemd_cgroup_controller[systemd.legacy_systemd_cgroup_controller] 内核参数将向 systemd 表明它应该以旧版（cgroups v1）的方式运行。
-由于这些参数是内核命令行参数，因此必须在系统引导程序中设置，以便在 `/sbin/init` 作为 PID 1 传递给 `systemd`。
-
-参阅：
-
-* https://www.gnu.org/software/grub/manual/grub/grub.html#linux[grub2 手册]
-* https://www.freedesktop.org/software/systemd/man/systemd.html#Kernel%20Command%20Line[systemd 手册]
-* https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html[cgroups v2]
-
 == Calico 与 vxlan 封装
 
 在使用 vxlan 封装以及启用了 vxlan 接口的校验和卸载时，Calico 遇到了一个内核错误。
