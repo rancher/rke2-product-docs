@@ -385,6 +385,7 @@ kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | jq | grep "nvidia.
 ----
 +
 You should see labels specifying driver and GPU (e.g. `nvidia.com/gpu.machine` or `nvidia.com/cuda.driver.major`).
+
 . Check if the gpu was added (by nvidia-device-plugin-daemonset) as an allocatable resource in the node.
 +
 [,bash]
@@ -400,12 +401,14 @@ You should see `"nvidia.com/gpu":` followed by the number of gpus in the node.
 ----
 ls /usr/local/nvidia/toolkit/nvidia-container-runtime
 ----
+
 . Verify if containerd config was updated to include the nvidia container runtime.
 +
 [,bash]
 ----
 grep nvidia /etc/containerd/config.toml
 ----
+
 . Run a pod to verify that the GPU resource can successfully be scheduled on a pod and the pod can detect it.
 +
 [,yaml]
