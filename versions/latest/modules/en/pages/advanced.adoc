@@ -312,71 +312,46 @@ kube-scheduler-extra-env: "TZ=America/Los_Angeles"
 
 == Deploy NVIDIA operator
 
-The https://github.com/NVIDIA/gpu-operator[NVIDIA operator] allows administrators of Kubernetes clusters to manage GPUs just like CPUs. It includes everything needed for pods to be able to operate GPUs.
+The https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html[NVIDIA operator] allows administrators of Kubernetes clusters to manage GPUs just like CPUs. It includes everything needed for pods to be able to operate GPUs.
 
-Depending on the underlying OS, some steps need to be fulfilled
+=== Host OS requirements
 
-[tabs,sync-group-id=GPU Operating System]
-====
-SLES::
+To expose the GPU to the pod correctly, the NVIDIA kernel drivers and the `libnvidia-ml` library must be correctly installed in the host OS. The NVIDIA Operator can automatically install drivers and libraries on some operating systems; check the NVIDIA documentation for information on https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html#supported-operating-systems-and-kubernetes-platforms[supported operating system releases]. Installation of the NVIDIA components on your host OS is out of the scope of this document; reference the NVIDIA documentation for instructions.
+
+The following three commands should return a correct output if the kernel driver is correctly installed.
+
+. `lsmod | grep nvidia` returns a list of Nvidia kernel modules. For example:
 +
---
-The NVIDIA operator cannot automatically install kernel drivers on SLES. NVIDIA drivers must be manually installed on all GPU nodes before deploying the operator in the cluster. It can be done with the following steps:
-
 [,bash]
 ----
-# Assuming you are using sle15sp5, if different, change the url accordingly sudo zypper addrepo --refresh 'https://download.nvidia.com/suse/sle15sp5' NVIDIA sudo zypper --gpg-auto-import-keys refresh sudo zypper install -y ---auto-agree-with-licenses nvidia-gl-G06 nvidia-video-G06 nvidia-compute-utils-G06
+nvidia_uvm           2129920  0
+nvidia_drm            131072  0
+nvidia_modeset       1572864  1 nvidia_drm
+video                  77824  1 nvidia_modeset
+nvidia               9965568  2 nvidia_uvm,nvidia_modeset
+ecc                    45056  1 nvidia
 ----
 
-Then reboot.
-
-If everything worked correctly, after the reboot, you should see the NVRM and GCC version of the driver when executing the command:
-
-[,bash]
-----
-cat /proc/driver/nvidia/version
-----
-
-Finally, create the symlink:
-[,bash]
-----
-sudo ln -s /sbin/ldconfig /sbin/ldconfig.real
-----
---
-
-Ubuntu::
+. `cat /proc/driver/nvidia/version` returns the NVRM and GCC version of the driver. For example:
 +
---
-The NVIDIA operator can automatically install kernel drivers on Ubuntu using the `nvidia-driver-daemonset`, although not all versions are supported. You can also pre-install them manually and the operator will detect them:
-
 [,bash]
 ----
-sudo apt install nvidia-driver-535-server
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  555.42.06  Release Build  (abuild@host)  Thu Jul 11 12:00:00 UTC 2024
+GCC version:  gcc version 7.5.0 (SUSE Linux)
 ----
 
-Then reboot.
-
-If everything worked correctly, after the reboot, you should see a correct output when executing the command:
-
-[,bash]
-----
-cat /proc/driver/nvidia/version
-----
---
-
-RHEL::
+. `find /usr/ -iname libnvidia-ml.so` returns a path to the `libnvidia-ml.so` library. For example:
 +
---
-The NVIDIA operator can automatically install kernel drivers on RHEL using the `nvidia-driver-daemonset`. You would only need to create the symlink:
-
 [,bash]
 ----
-sudo ln -s /sbin/ldconfig /sbin/ldconfig.real
+/usr/lib64/libnvidia-ml.so
 ----
---
-====
++
+This library is used by Kubernetes components to interact with the kernel driver.
 
-Once the OS is ready and RKE2 is running, install the GPU Operator with the following yaml manifest:
+=== Operator installation
+
+Once the OS is ready and RKE2 is running, install the GPU Operator with the following yaml manifest.
 
 [,yaml]
 ----
@@ -402,18 +377,27 @@ spec:
 The NVIDIA operator restarts containerd with a hangup call which restarts RKE2.
 ====
 
-After one minute approximately, you can make the following checks to verify that everything worked as expected:
+After one minute approximately, you can make the following checks to verify that everything works as expected.
 
-. Check if the operator detected the driver and GPU correctly:
+. Assuming the drivers and `libnvidia-ml.so` library are installed, check if the operator detects them correctly.
++
+[,bash]
+----
+kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | grep "nvidia.com/gpu.deploy.driver"
+----
++
+You should see the value `pre-installed`. If you see `true`, the drivers are not correctly installed. If the <<Host OS requirements, pre-requirements>> are correct, it is possible that you forgot to reboot the node after installing all packages.
++
+You can also check other driver labels with:
 +
 [,bash]
 ----
 kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | jq | grep "nvidia.com"
 ----
 +
-You should see labels specifying driver and GPU (e.g. nvidia.com/gpu.machine or nvidia.com/cuda.driver.major).
-+
-. Check if the gpu was added (by nvidia-device-plugin-daemonset) as an allocatable resource in the node:
+You should see labels specifying driver and GPU (e.g. `nvidia.com/gpu.machine` or `nvidia.com/cuda.driver.major`).
+
+. Check if the gpu was added (by nvidia-device-plugin-daemonset) as an allocatable resource in the node.
 +
 [,bash]
 ----
@@ -421,21 +405,21 @@ kubectl get node $NODENAME -o jsonpath='{.status.allocatable}' | jq
 ----
 +
 You should see `"nvidia.com/gpu":` followed by the number of gpus in the node.
-+
+
 . Check that the container runtime binary was installed by the operator (in particular by the `nvidia-container-toolkit-daemonset`):
 +
 [,bash]
 ----
 ls /usr/local/nvidia/toolkit/nvidia-container-runtime
 ----
-+
-. Verify if containerd config was updated to include the nvidia container runtime:
+
+. Verify if containerd config was updated to include the nvidia container runtime.
 +
 [,bash]
 ----
 grep nvidia /etc/containerd/config.toml
 ----
-+
+
 . Run a pod to verify that the GPU resource can successfully be scheduled on a pod and the pod can detect it.
 +
 [,yaml]
@@ -459,5 +443,30 @@ spec:
     - name: NVIDIA_VISIBLE_DEVICES
       value: all
     - name: NVIDIA_DRIVER_CAPABILITIES
-      value: all
+      value: compute,utility
 ----
+
+[NOTE]
+.Version Gate
+====
+Available as of October 2024 releases: v1.28.15+rke2r1, v1.29.10+rke2r1, v1.30.6+rke2r1, v1.31.2+rke2r1.
+====
+
+RKE2 will now use `PATH` to find alternative container runtimes, in addition to checking the default paths used by the container runtime packages. In order to use this feature, you must modify the RKE2 service's PATH environment variable to add the directories containing the container runtime binaries.
+
+It's recommended that you modify one of this two environment files:
+
+* /etc/default/rke2-server # or rke2-agent
+* /etc/sysconfig/rke2-server # or rke2-agent
+
+This example adds the `PATH` in `/etc/default/rke2-server`:
+
+[,bash]
+----
+echo PATH=$PATH >> /etc/default/rke2-server
+----
+
+[WARNING]
+====
+`PATH` changes should be done with care to avoid placing untrusted binaries in the path of services that run as root.
+====
