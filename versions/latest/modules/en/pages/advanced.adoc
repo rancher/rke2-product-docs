@@ -453,6 +453,7 @@ Available as of October 2024 releases: v1.28.15+rke2r1, v1.29.10+rke2r1, v1.30.6
 ====
 
 RKE2 will now use `PATH` to find alternative container runtimes, in addition to checking the default paths used by the container runtime packages. In order to use this feature, you must modify the RKE2 service's PATH environment variable to add the directories containing the container runtime binaries.
+
 It's recommended that you modify one of this two environment files:
 
 * /etc/default/rke2-server # or rke2-agent
