@@ -1,6 +1,6 @@
 = Air-Gap Install
 
-{product-name} can be installed in an air-gapped environment with two different methods. You can either deploy via the `rke2-airgap-images` tarball release artifact, or by using a private registry.
+{product-name} can be installed in an air-gapped environment with two different methods. You can either deploy via the `rke2-airgap-images` tarball artifact, or by using a private registry.
 
 [IMPORTANT]
 ====
@@ -61,7 +61,7 @@ RKE2 can be installed either by running the <<RKE2 Binary Install,binary>> direc
 . Obtain the RKE2 binary file `rke2.linux-<ARCH>.tar.gz`.
 . Ensure the binary is named `rke2` and place it in `/usr/local/bin`. Ensure it is executable.
 . Run the binary with the desired parameters.
-* If you are using the Rancher Prime registry, set the following values in `config.yaml`.
+* If you are using the Rancher Prime registry, set the following values in `config.yaml`:
 .. Set `system-default-registry: registry.rancher.com`.
 .. If you are not using the default CNI, Canal, set `cni: <CNI>`.
 +
@@ -70,7 +70,7 @@ RKE2 can be installed either by running the <<RKE2 Binary Install,binary>> direc
 system-default-registry: registry.rancher.com
 cni: <CNI>
 ----
-* If using the Private Registry Method, your config file would have the following:
+* If using the Private Registry Method, set the following values in `config.yaml`:
 +
 [,yaml]
 ----
