@@ -1,6 +1,6 @@
 = Air-Gap Install
 
-{product-name} can be installed in an air-gapped environment with two different methods. You can either deploy via the `rke2-airgap-images` tarball artifact, or by using a private registry.
+{product-name} can be installed in an air-gapped environment with two different methods. You can either deploy via the `rke2-airgap-images` tarball artifact or by using a private registry.
 
 [IMPORTANT]
 ====
@@ -9,16 +9,16 @@ You can use any RKE2 Prime version listed on the Prime Artifacts URL for the ass
 
 == Prerequisites
 
-Make sure the following prerequsites are met based on your enviroment before proceeding. All the steps listed on this page must be run as the root user or through `sudo`.
+Ensure you meet the following prerequisites based on your environment before proceeding. All the steps listed on this page must be run as the root user or through `sudo`.
 
 [CAUTION]
 ====
-If your node has NetworkManager installed and enabled, xref:../known_issues.adoc#_networkmanager[ensure that it is configured to ignore CNI-managed interfaces].
+If your node has NetworkManager installed and enabled, xref:../known_issues.adoc#_networkmanager[ensure you configure NetworkManager to ignore CNI-managed interfaces].
 ====
 
 * If running on an air-gapped node with SELinux enabled, you must manually install the necessary SELinux policy RPM before performing these steps. See our xref:./methods.adoc#_rpm[RPM Documentation] to determine what you need.
 * If running on an air-gapped node with SELinux enabled, the following are required dependencies for SLES, CentOS, or RHEL 8 when doing an xref:./methods.adoc#_rpm[RPM install]: `container-selinux iptables libnetfilter_conntrack libnfnetlink libnftnl policycoreutils-python-utils rke2-common rke2-selinux`
-* If your nodes do not have an interface with a default route, a default route must be configured; even a black-hole route via a dummy interface will suffice. RKE2 requires a default route in order to auto-detect the node's primary IP, and for kube-proxy ClusterIP routing to function properly. To add a dummy route, do the following:
+* If your nodes do not have an interface with a default route, a default route must be configured; even a black-hole route via a dummy interface will suffice.  RKE2 requires a default route to auto-detect the node's primary IP and for kube-proxy ClusterIP routing to function correctly. To add a dummy route, do the following:
 +
 [,bash]
 ----
@@ -33,7 +33,7 @@ ip route add default via 203.0.113.255 dev dummy0 metric 1000
 . Download the air-gap images tarballs from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] for the RKE2 version, CNI, and platform you are using.
  ** `rke2-images.linux-<ARCH>.tar.zst`, or `rke2-images-core.linux-<ARCH>.tar.gz`. This tarball contains the core container images required for RKE2 Prime to function. Zstandard offers better compression ratios and faster decompression speeds compared to gzip.
  ** `rke2-images-<CNI>.linux-<ARCH>.tar.gz`: This tarball specifically contains the container images for your Container Network Interface (CNI). The default CNI in RKE2 is Canal.
- *** If you are using the default CNI, Canal (`--cni=canal`), you can use either the `rke2-image` legacy archive as described above, or the `rke2-images-core` and `rke2-images-canal` archives.
+ *** If you are using the default CNI, Canal (`--cni=canal`), you can use either the `rke2-image` legacy archive as described above or the `rke2-images-core` and `rke2-images-canal` archives.
  *** If you are using the alternative CNI, Cilium (`--cni=cilium`), you must download the `rke2-images-core` and `rke2-images-cilium` archives.
  *** If using your own CNI (`--cni=none`), download only the `rke2-images-core` archive.
  ** If enabling the vSphere CPI/CSI charts (`--cloud-provider-name=rancher-vsphere`), you must also download the `rke2-images-vsphere` archive.
@@ -42,12 +42,9 @@ ip route add default via 203.0.113.255 dev dummy0 metric 1000
 
 == Private Registry Method
 
-As of RKE2 v1.20, private registry support honors all settings from the xref:./containerd_registry_configuration.adoc[containerd registry configuration]. This includes endpoint override and transport protocol (HTTP/HTTPS), authentication, certificate verification, etc.
+Private registry support honors all settings from the xref:./containerd_registry_configuration.adoc[containerd registry configuration], including endpoint override, transport protocol (HTTP/HTTPS), authentication, certificate verification, and more.
 
-Prior to RKE2 v1.20, private registries must use TLS, with a cert trusted by the host CA bundle. If the registry is using a self-signed cert, you can add the cert to the host CA bundle with `update-ca-certificates`. The registry must also allow anonymous (unauthenticated) access.
-
-. Add all the required system images to your private registry. A list of images can be obtained from the `.txt` file corresponding to each tarball referenced above, or you may `docker load` the airgap image tarballs, then tag and push the loaded images.
-. If using a private or self-signed certificate on the registry, add the registry's CA cert to the containerd registry configuration, or operating system's trusted certs for releases prior to v1.20.
+. Add all the required system images to your private registry. A list of images can be obtained from the `.txt` file corresponding to each tarball referenced above. Alternatively, you can `docker load` the airgap image tarballs, then tag and push the loaded images.
 . <<Install RKE2>> using the `system-default-registry` parameter, or use the xref:./containerd_registry_configuration.adoc[containerd registry configuration] to use your registry as a mirror for docker.io.
 
 == Install RKE2
@@ -84,7 +81,7 @@ The `system-default-registry` parameter must specify only valid RFC 3986 URI aut
 
 === RKE2 Install.sh Script Install
 
-`install.sh` may be used in an offline mode by setting the `INSTALL_RKE2_ARTIFACT_PATH` variable to a path containing pre-downloaded artifacts. This will run though a normal install, including creating systemd units.
+`install.sh` may be used in an offline mode by setting the `INSTALL_RKE2_ARTIFACT_PATH` variable to a path containing pre-downloaded artifacts. This will run through a standard install, including creating systemd units.
 
 . Download the install script, RKE2 binaires, RKE2 images, and SHA256 checksums archives from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] into the `/rke2-artifacts` directory, as in the example below:
 +
