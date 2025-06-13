@@ -88,9 +88,9 @@ The `system-default-registry` parameter must specify only valid RFC 3986 URI aut
 [,bash]
 ----
 mkdir /rke2-artifacts && cd /rke2-artifacts/
-curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2-images.linux-amd64.tar.zst
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2-images.linux-<ARCH>.tar.zst
 curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2.linux-<ARCH>.tar.gz
-curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/sha256sum-amd64.txt
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/sha256sum-<ARCH>.txt
 curl -sfL https://get.rke2.io --output install.sh
 ----
 
