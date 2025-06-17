@@ -149,6 +149,7 @@ $env:PATH+=";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin"
 [,powershell]
 ----
 c:\usr\local\bin\rke2.exe agent service --add
+Start-Service rke2
 ----
 +
 * If you are using the Rancher Prime registry, set the following values in `config.yaml`:
