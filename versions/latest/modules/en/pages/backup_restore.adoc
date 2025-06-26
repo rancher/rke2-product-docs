@@ -80,7 +80,7 @@ When RKE2 resets the cluster, it creates an empty file at `/var/lib/rancher/rke2
 
 === Restoring a Snapshot to New Nodes
 
-. Back up the token server: `/var/lib/rancher/rke2/server/token` in case you will not use the same one. Token server is used to decrypt the bootstrap data inside the snapshot
+. Back up the token server: `/var/lib/rancher/rke2/server/token` in case you will not use the same one. The token server is used to decrypt the bootstrap data inside the snapshot.
 . Stop RKE2 service on all server nodes if it is enabled and initiate the restore from snapshot on the first server node with the following commands:
 +
 ----
@@ -99,7 +99,7 @@ systemctl start rke2-server
 +
 [WARNING]
 ====
-The node where the snapshot was taken will appear as NotReady
+The node where the snapshot was taken will appear as `NotReady`.
 ====
 
 . You can continue to add new server and worker nodes to cluster per standard link:../install/ha.md#3-launch-additional-server-nodes[RKE2 HA installation documentation].
