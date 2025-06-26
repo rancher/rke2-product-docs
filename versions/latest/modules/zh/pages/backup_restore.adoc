@@ -102,7 +102,7 @@ systemctl start rke2-server
 The node where the snapshot was taken will appear as NotReady
 ====
 
-. You can continue to add new server and worker nodes to cluster per standard link:../install/ha.md#3-launch-additional-server-nodes[RKE2 HA installation documentation].
+. You can continue to add new server and worker nodes to cluster per standard xref:install/ha.adoc#_3-launch-additional-server-nodes[RKE2 HA installation documentation].
 
 === 恢复快照的其他注意事项
 
