@@ -83,7 +83,7 @@ The `system-default-registry` parameter must specify only valid RFC 3986 URI aut
 
 `install.sh` may be used in an offline mode by setting the `INSTALL_RKE2_ARTIFACT_PATH` variable to a path containing pre-downloaded artifacts. This will run through a standard install, including creating systemd units.
 
-. Download the install script, RKE2 binaires, RKE2 images, and SHA256 checksums archives from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] into the `/rke2-artifacts` directory, as in the example below:
+. Download the install script, RKE2 binaries, RKE2 images, and SHA256 checksums archives from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] into the `/rke2-artifacts` directory, as in the example below:
 +
 [,bash]
 ----
