@@ -46,7 +46,7 @@ You can extend the RKE2 base template instead of copy-pasting the complete stock
 
 [,toml]
 ----
-#/var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmplAdd commentMore actions
+#/var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmpl
 
 {{ template "base" . }}
 
