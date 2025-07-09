@@ -8,7 +8,7 @@
 
 如果证书已经过期或剩余的时间不足 90 天，则在 RKE2 重启时轮换证书。
 
-从 v1.21.8+rke2r1 开始，你可以手动轮换证书。为此，建议先停止 rke2-server 进程，然后轮换证书，最后再次启动该进程：
+你可以手动轮换证书。为此，建议先停止 rke2-server 进程，然后轮换证书，最后再次启动该进程：
 
 [,sh]
 ----
@@ -31,7 +31,23 @@ RKE2 会在 `/var/lib/rancher/rke2/agent/etc/containerd/config.toml` 中为 cont
 
 如果要对这个文件进行高级定制，你可以在同一目录中创建另一个名为 `config.toml.tmpl` 的文件，此文件将会代替默认设置。
 
-`config.toml.tmpl` 是一个 Go 模板文件，并且 `config.Node` 结构会被传递给模板。有关如何使用该结构自定义配置文件的示例，请参见link:https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go#L16-L32[此模板]。
+`config.toml.tmpl` 是一个 Go 模板文件，并且 `config.Node` 结构会被传递给模板。有关如何使用该结构自定义配置文件的示例，请参见link:https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates_linux.go#L10-L104[此模板]。
+
+=== Base Template
+
+You can extend the RKE2 base template instead of copy-pasting the complete stock template out of the source code. This is useful if you need to build on the existing configuration, and add a few extra lines at the end.
+
+[,toml]
+----
+#/var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmpl
+
+{{ template "base" . }}
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom"]
+  runtime_type = "io.containerd.runc.v2"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom".options]
+  BinaryName = "/usr/bin/custom-container-runtime"
+----
 
 == 配置 HTTP 代理
 
@@ -71,8 +87,6 @@ RKE2 Agent 可以通过 `node-label` 和 `node-taint` 选项来配置，它们�
 Agent 节点通过 `rke2 agent` 进程发起的 WebSocket 连接进行注册，连接由作为 agent 进程一部分运行的客户端负载均衡器维护。
 
 Agent 将使用 join token 的集群 Secret 以及随机生成的节点密码注册到 Server，密码存储在 `/etc/rancher/node/password` 中。Server 会将各个节点的密码存储为 Kubernetes Secret，后续的任何尝试都必须使用相同的密码。节点密码 Secret 存储在 `kube-system` 命名空间中，名称使用 `<host>.node-password.rke2` 模板。当相应的 Kubernetes 节点被删除时，这些 Secret 也会被删除。
-
-注意：在 RKE2 v1.20.2 之前，Server 将密码存储在磁盘上的 `/var/lib/rancher/rke2/server/cred/node-passwd` 中。
 
 如果 Agent 的 `/etc/rancher/node` 目录被删除，你需要在启动前为 Agent 重新创建密码文件，或者从 Server 或 Kubernetes 集群中删除该条目（取决于 RKE2版本）。
 

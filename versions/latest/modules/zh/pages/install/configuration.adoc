@@ -45,13 +45,6 @@ rke2 server \
 
 === 多个配置文件
 
-[IMPORTANT]
-.版本
-====
-从 https://github.com/rancher/rke2/releases/tag/v1.21.2%2Brke2r1[v1.21.2+rke2r1] 起可用
-====
-
-
 支持多个配置文件。默认情况下，配置从 `/etc/rancher/rke2/config.yaml` 和 `/etc/rancher/rke2/config.yaml.d/*.yaml` 按字母顺序加载。将使用给定键的最后一个值。切片会被替换。
 
 多个配置文件的示例如下：

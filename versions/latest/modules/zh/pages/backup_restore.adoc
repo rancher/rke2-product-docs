@@ -80,62 +80,34 @@ RKE2 重置集群时会在 `/var/lib/rancher/rke2/server/db/reset-flag` 中创�
 
 === 将快照恢复到新节点
 
-*警告*：对于 rke2 v.1.20.9 及之前的所有版本，由于存在一个已知问题，即引导数据可能无法在恢复时保存（步骤 1 -下面的 3 假定了这种情况），因此你需要先备份和恢复证书。请参阅下面的xref:backup_restore.adoc#_恢复快照的其他注意事项[注意事项]，了解特定版本的恢复注意事项。
-
-. 备份 `/var/lib/rancher/rke2/server/cred`、`/var/lib/rancher/rke2/server/tls`、`/var /lib/rancher/rke2/server/token` 和 `/etc/rancher`
-. 将上面步骤 1 中的证书恢复到第一个新 Server 节点。
-. 在第一个新 Server 节点上安装 rke2 v1.20.8+rke2r1，如下所示：
+. Back up the token server: `/var/lib/rancher/rke2/server/token` in case you will not use the same one. Token server is used to decrypt the bootstrap data inside the snapshot
+. Stop RKE2 service on all server nodes if it is enabled and initiate the restore from snapshot on the first server node with the following commands:
 +
-[,bash]
-----
-curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION="v1.20.8+rke2r1" sh -
-----
-
-. 如果 RKE2 已启用，请停止所有 Server 节点上的 RKE2 服务，并使用以下命令在第一个 Server 节点上启动快照恢复：
-+
-[,bash]
 ----
 systemctl stop rke2-server
 rke2 server \
   --cluster-reset \
   --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+  --token=<BACKED-UP-TOKEN-VALUE>
 ----
 
-. 恢复完成后，在第一个 Server 节点上启动 rke2-server 服务，如下所示：
+. Once the restore process is complete, start the rke2-server service on the first server node as follows:
 +
-[,bash]
 ----
 systemctl start rke2-server
 ----
++
+[WARNING]
+====
+The node where the snapshot was taken will appear as NotReady
+====
 
-. 你可以根据标准 xref:install/ha.adoc#_3_启动其他_server_节点[RKE2 HA 安装文档]继续向集群添加新的 Server 和 Worker 节点。
+. You can continue to add new server and worker nodes to cluster per standard xref:install/ha.adoc#_3_launch_additional_server_nodes[RKE2 HA installation documentation].
 
 === 恢复快照的其他注意事项
 
 * 执行备份恢复时，用户不需要使用创建快照时使用的 RKE2 版本。用户可以使用更新的版本进行恢复。如果你在恢复时更改版本，请注意正在使用哪个 etcd 版本。
 * 快照默认启用，并且每 12 小时获取一次。快照写入到 `+${data-dir}/server/db/snapshots+`，默认 `+${data-dir}+` 为 `/var/lib/rancher /rke2`。
-
-==== rke2 v1.20.11+rke2r1 的要求
-
-* 使用备份将 RKE2 恢复到使用 rke2 v1.20.11+rke2r1 的新节点时，请运行 `rke2-killall.sh` 确保所有 pod 在初始恢复后已停止，如下所示：
-+
-[,bash]
-----
- curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=v1.20.11+rke2r1
- rke2 server \
- --cluster-reset \
- --cluster-reset-restore-path=<PATH-TO-SNAPSHOT> \
- --token=<token used in the original cluster>
- rke2-killall.sh
-----
-
-* 恢复完成后，在第一个 Server 节点上启动 rke2-server 服务，如下所示：
-+
-[,bash]
-----
- systemctl enable rke2-server
- systemctl start rke2-server
-----
 
 === 选项
 
@@ -204,7 +176,7 @@ RKE2 支持向具有 S3 兼容 API 的系统写入 etcd 快照和从系统中恢
 
 [,bash]
 ----
-rke2 etcd-snapshot \
+rke2 etcd-snapshot save \
   --s3 \
   --s3-bucket=<S3-BUCKET-NAME> \
   --s3-access-key=<S3-ACCESS-KEY> \

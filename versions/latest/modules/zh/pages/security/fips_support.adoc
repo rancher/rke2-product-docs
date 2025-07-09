@@ -40,11 +40,11 @@ RKE2 系统的大部分组件都是使用 GoBoring Go 编译器实现静态编�
 
 == CNI
 
-从 v1.21.2 开始，RKE2 支持通过 `--cni` 标志选择不同的 CNI，并绑定了多个 CNI，包括 Canal（默认）、Calico、Cilium 和 Multus。其中，只有 Canal（默认）是为符合 FIPS 标准而重建的。
+RKE2 supports selecting a different CNI via the `--cni` flag and comes bundled with several CNIs including Canal (default), Calico, Cilium, and Multus. Of these, only Canal (the default) is rebuilt for FIPS compliance.
 
 == Ingress
 
-RKE2 附带了 NGINX 作为其默认的 ingress provider。从 v1.21+ 开始，此组件符合 FIPS 标准。NGINX ingress 有两个主要的子组件：
+RKE2 ships with FIPS compliant NGINX as its default ingress provider. There are two primary sub-components for NGINX ingress:
 
 * controller - 负责监控/更新 Kubernetes 资源并相应地配置 server
 * server - 负责接收和路由流量

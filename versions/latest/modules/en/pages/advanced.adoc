@@ -8,7 +8,7 @@ By default, certificates in RKE2 expire in 12 months.
 
 If the certificates are expired or have fewer than 90 days remaining before they expire, the certificates are rotated when RKE2 is restarted.
 
-As of v1.21.8+rke2r1, certificates can also be rotated manually. To do this, it is best to stop the rke2-server process, rotate the certificates, then start the process up again:
+Certificates can also be rotated manually. To do this, it is best to stop the rke2-server process, rotate the certificates, then start the process up again:
 
 [,bash]
 ----
@@ -38,7 +38,23 @@ RKE2 will generate the `config.toml` for containerd in `/var/lib/rancher/rke2/ag
 
 For advanced customization of this file you can create another file called `config.toml.tmpl` in the same directory and it will be used instead.
 
-The `config.toml.tmpl` will be treated as a Go template file, and the `config.Node` structure is being passed to the template. See https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go#L16-L32[this template] for an example of how to use the structure to customize the configuration file.
+The `config.toml.tmpl` will be treated as a Go template file, and the `config.Node` structure is being passed to the template. See https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates_linux.go#L10-L104[this template] for an example of how to use the structure to customize the configuration file.
+
+=== Base Template
+
+You can extend the RKE2 base template instead of copy-pasting the complete stock template out of the source code. This is useful if you need to build on the existing configuration, and add a few extra lines at the end.
+
+[,toml]
+----
+#/var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmpl
+
+{{ template "base" . }}
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom"]
+  runtime_type = "io.containerd.runc.v2"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom".options]
+  BinaryName = "/usr/bin/custom-container-runtime"
+----
 
 == Configuring an HTTP proxy
 
@@ -78,11 +94,6 @@ If you want to change node labels and taints after node registration you should 
 Agent nodes are registered via a websocket connection initiated by the `rke2 agent` process, and the connection is maintained by a client-side load balancer running as part of the agent process.
 
 Agents register with the server using the cluster secret portion of the join token, along with a randomly generated node-specific password, which is stored on the agent at `/etc/rancher/node/password`. The server will store the passwords for individual nodes as Kubernetes secrets, and any subsequent attempts must use the same password. Node password secrets are stored in the `kube-system` namespace with names using the template `<host>.node-password.rke2`. These secrets are deleted when the corresponding Kubernetes node is deleted.
-
-[NOTE]
-====
-Prior to RKE2 v1.20.2 servers stored passwords on disk at `/var/lib/rancher/rke2/server/cred/node-passwd`.
-====
 
 If the `/etc/rancher/node` directory of an agent is removed, the password file should be recreated for the agent prior to startup, or the entry removed from the server or Kubernetes cluster (depending on the RKE2 version).
 
@@ -417,7 +428,7 @@ ls /usr/local/nvidia/toolkit/nvidia-container-runtime
 +
 [,bash]
 ----
-grep nvidia /etc/containerd/config.toml
+grep nvidia /var/lib/rancher/rke2/agent/etc/containerd/config.toml
 ----
 
 . Run a pod to verify that the GPU resource can successfully be scheduled on a pod and the pod can detect it.
