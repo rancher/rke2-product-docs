@@ -10,7 +10,7 @@ If the certificates are expired or have fewer than 90 days remaining before they
 
 Certificates can also be rotated manually. To do this, it is best to stop the rke2-server process, rotate the certificates, then start the process up again:
 
-[,bash]
+[,sh]
 ----
 systemctl stop rke2-server
 rke2 certificate rotate
@@ -19,7 +19,7 @@ systemctl start rke2-server
 
 To renew agent certificates, restart rke2-agent in agent nodes. Agent certificates are renewed every time the agent starts.
 
-[,bash]
+[,sh]
 ----
 systemctl restart rke2-agent
 ----
@@ -34,11 +34,23 @@ For information about deploying Helm charts using the manifests directory, refer
 
 == Configuring containerd
 
-RKE2 will generate the `config.toml` for containerd in `/var/lib/rancher/rke2/agent/etc/containerd/config.toml`.
+[NOTE]
+.Version Gate
+====
+RKE2 includes containerd 2.0 as of the February 2025 releases: v1.31.6+rke2r1 and v1.32.2+rke2r1. +
+Be aware that containerd 2.0 prefers config version 3, while containerd 1.7 prefers config version 2.
+====
 
-For advanced customization of this file you can create another file called `config.toml.tmpl` in the same directory and it will be used instead.
+RKE2 will generate a configuration file for containerd at `/var/lib/rancher/rke2/agent/etc/containerd/config.toml`, using values specific to the current cluster and node configuration.
 
-The `config.toml.tmpl` will be treated as a Go template file, and the `config.Node` structure is being passed to the template. See https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates_linux.go#L10-L104[this template] for an example of how to use the structure to customize the configuration file.
+For advanced customization, you can create a containerd config template in the same directory:
+
+* For containerd 2.0, place a version 3 configuration template in `config-v3.toml.tmpl`. See the https://github.com/containerd/containerd/blob/release/2.0/docs/cri/config.md[containerd 2.0 documentation] for more information.
+* For containerd 1.7 and earlier, place a version 2 configuration template in `config.toml.tmpl`. See the https://github.com/containerd/containerd/blob/release/1.7/docs/cri/config.md[containerd 1.7 documentation] for more information.
+
+Containerd 2.0 is backwards compatible with prior config versions, and RKE2 will continue to render legacy version 2 configuration from `config.toml.tmpl` if `config-v3.toml.tmpl` is not found.
+
+The template file is rendered into the containerd config using the https://pkg.go.dev/text/template[`text/template`] library. See `ContainerdConfigTemplateV3` and `ContainerdConfigTemplate` in https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go[`templates.go`] for the default template content. The template is executed with a https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go#L22-L33[`ContainerdConfig`] struct as its dot value (data argument).
 
 === Base Template
 
@@ -46,15 +58,21 @@ You can extend the RKE2 base template instead of copy-pasting the complete stock
 
 [,toml]
 ----
-#/var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmpl
+#/var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.tmpl
 
 {{ template "base" . }}
 
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom"]
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'custom']
   runtime_type = "io.containerd.runc.v2"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom".options]
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'custom'.options]
   BinaryName = "/usr/bin/custom-container-runtime"
+  SystemdCgroup = true
 ----
+
+[WARNING]
+====
+For best results, do NOT simply copy a prerendered `config.toml` into the template and make your desired changes. Use the base template, or provide a full template based on the defaults linked above.
+====
 
 == Configuring an HTTP proxy
 
@@ -67,7 +85,7 @@ Add the necessary `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` variables to the en
 
 RKE2 will automatically add the cluster internal Pod and Service IP ranges and cluster DNS domain to the list of `NO_PROXY` entries. You should ensure that the IP address ranges used by the Kubernetes nodes themselves (i.e. the public and private IPs of the nodes) are included in the `NO_PROXY` list, or that the nodes can be reached through the proxy.
 
-[,bash]
+[,sh]
 ----
 HTTP_PROXY=http://your-proxy.example.com:8888
 HTTPS_PROXY=http://your-proxy.example.com:8888
@@ -76,7 +94,7 @@ NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 
 If you want to configure the proxy settings for containerd without affecting RKE2 and the Kubelet, you can prefix the variables with `CONTAINERD_`:
 
-[,bash]
+[,sh]
 ----
 CONTAINERD_HTTP_PROXY=http://your-proxy.example.com:8888
 CONTAINERD_HTTPS_PROXY=http://your-proxy.example.com:8888
@@ -105,7 +123,7 @@ When running with systemd, logs will be created in `/var/log/syslog` and viewed 
 
 An example of installing with the install script:
 
-[,bash]
+[,sh]
 ----
 curl -sfL https://get.rke2.io | sh -
 systemctl enable rke2-server
@@ -114,7 +132,7 @@ systemctl start rke2-server
 
 == Disabling Server Charts
 
-The server charts bundled with `rke2` deployed during cluster bootstrapping can be disabled and replaced with alternatives.  A common use case is replacing the bundled `rke2-ingress-nginx` chart with an alternative.
+The server charts bundled with `rke2` deployed during cluster bootstrapping can be disabled and replaced with alternatives. A common use case is replacing the bundled `rke2-ingress-nginx` chart with an alternative.
 
 To disable any of the bundled system charts, set the `disable` parameter in the config file before bootstrapping. An example of disabling all available system charts is:
 
@@ -146,8 +164,8 @@ cloud-provider-name: aws
 ----
 
 When installing RKE2 on classified regions (such as SC2S or C2S), there are a few additional pre-requisites to be aware of to ensure RKE2 knows how and where to securely communicate with the appropriate AWS endpoints:
---
-. Ensure all the common AWS cloud-provider https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[prerequisites] are met.  These are independent of regions and are always required.
+
+. Ensure all the common AWS cloud-provider https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[prerequisites] are met. These are independent of regions and are always required.
 . Ensure RKE2 knows where to send API requests for `ec2` and `elasticloadbalancing` services by creating a `cloud.conf` file, the below is an example for the `us-iso-east-1` (C2S) region:
 +
 [,yaml]
@@ -167,16 +185,16 @@ When installing RKE2 on classified regions (such as SC2S or C2S), there are a fe
 ----
 +
 Alternatively, if you are using https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-services-overview.html[private AWS endpoints], ensure the appropriate `URL` is used for each of the private endpoints.
-+
+
 . Ensure the appropriate AWS CA bundle is loaded into the system's root ca trust store.  This may already be done for you depending on the AMI you are using.
 +
-[,bash]
+[,sh]
 ----
 # on CentOS/RHEL 7/8
 cp <ca.pem> /etc/pki/ca-trust/source/anchors/
 update-ca-trust
 ----
-+
+
 . Configure RKE2 to use the `aws` cloud-provider with the custom `cloud.conf` created in step 1:
 +
 [,yaml]
@@ -187,16 +205,15 @@ cloud-provider-name: aws
 cloud-provider-config: "/etc/rancher/rke2/cloud.conf"
 ...
 ----
-+
-. xref:install/methods.adoc[Install] RKE2 normally (most likely in an xref:install/airgap.adoc[airgapped] capacity)
-. Validate successful installation by confirming the existence of AWS metadata on cluster node labels with `kubectl get nodes --show-labels`
---
+
+. xref:install/methods.adoc[Install] RKE2 normally (most likely in an xref:install/airgap.adoc[airgapped] capacity).
+. Validate successful installation by confirming the existence of AWS metadata on cluster node labels with `kubectl get nodes --show-labels`.
 
 == Control Plane Component Resource Requests/Limits
 
 The following options are available under the `server` sub-command for RKE2. The options allow for specifying CPU requests and limits for the control plane components within RKE2.
 
-[,bash]
+[,sh]
 ----
    --control-plane-resource-requests value       (components) Control Plane resource requests [$RKE2_CONTROL_PLANE_RESOURCE_REQUESTS]
    --control-plane-resource-limits value         (components) Control Plane resource limits [$RKE2_CONTROL_PLANE_RESOURCE_LIMITS]
@@ -235,27 +252,27 @@ The following options are available under the `server` sub-command for RKE2. The
 |===
 | Flag | ENV VAR |
 
-| `--kube-apiserver-extra-mount`
+| kube-apiserver-extra-mount
 | RKE2_KUBE_APISERVER_EXTRA_MOUNT
 | kube-apiserver extra volume mounts
 
-| `--kube-scheduler-extra-mount`
+| kube-scheduler-extra-mount
 | RKE2_KUBE_SCHEDULER_EXTRA_MOUNT
 | kube-scheduler extra volume mounts
 
-| `--kube-controller-manager-extra-mount`
+| kube-controller-manager-extra-mount
 | RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT
 |
 
-| `--kube-proxy-extra-mount`
+| kube-proxy-extra-mount
 | RKE2_KUBE_PROXY_EXTRA_MOUNT
 |
 
-| `--etcd-extra-mount`
+| etcd-extra-mount
 | RKE2_ETCD_EXTRA_MOUNT
 |
 
-| `--cloud-controller-manager-extra-mount`
+| cloud-controller-manager-extra-mount
 | RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT
 |
 |===
@@ -286,27 +303,27 @@ kube-apiserver-extra-mount:
 
 == Extra Control Plane Component Environment Variables
 
-The following options are available under the `server` sub-command for RKE2. These options specify additional environment variables in standard format i.e. `KEY=VALUE` for the static pod component that corresponds to the prefixed name.
+The following configuration options are available to the `server` sub-command for RKE2. These options specify additional environment variables in standard format i.e. `KEY=VALUE` for the static pod component that corresponds to the prefixed name.
 
 |===
 | Flag | ENV VAR
 
-| `--kube-apiserver-extra-env`
+| kube-apiserver-extra-env
 | RKE2_KUBE_APISERVER_EXTRA_ENV
 
-| `--kube-scheduler-extra-env`
+| kube-scheduler-extra-env
 | RKE2_KUBE_SCHEDULER_EXTRA_ENV
 
-| `--kube-controller-manager-extra-env`
+| kube-controller-manager-extra-env
 | RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV
 
-| `--kube-proxy-extra-env`
+| kube-proxy-extra-env
 | RKE2_KUBE_PROXY_EXTRA_ENV
 
-| `--etcd-extra-env`
+| etcd-extra-env
 | RKE2_ETCD_EXTRA_ENV
 
-| `--cloud-controller-manager-extra-env`
+| cloud-controller-manager-extra-env
 | RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
 |===
 
@@ -333,7 +350,7 @@ The following three commands should return a correct output if the kernel driver
 
 . `lsmod | grep nvidia` returns a list of Nvidia kernel modules. For example:
 +
-[,bash]
+[,sh]
 ----
 nvidia_uvm           2129920  0
 nvidia_drm            131072  0
@@ -345,7 +362,7 @@ ecc                    45056  1 nvidia
 
 . `cat /proc/driver/nvidia/version` returns the NVRM and GCC version of the driver. For example:
 +
-[,bash]
+[,sh]
 ----
 NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  555.42.06  Release Build  (abuild@host)  Thu Jul 11 12:00:00 UTC 2024
 GCC version:  gcc version 7.5.0 (SUSE Linux)
@@ -353,7 +370,7 @@ GCC version:  gcc version 7.5.0 (SUSE Linux)
 
 . `find /usr/ -iname libnvidia-ml.so` returns a path to the `libnvidia-ml.so` library. For example:
 +
-[,bash]
+[,sh]
 ----
 /usr/lib64/libnvidia-ml.so
 ----
@@ -383,7 +400,7 @@ spec:
         value: /run/k3s/containerd/containerd.sock
 ----
 
-[CAUTION]
+[WARNING]
 ====
 The NVIDIA operator restarts containerd with a hangup call which restarts RKE2.
 ====
@@ -392,7 +409,7 @@ After one minute approximately, you can make the following checks to verify that
 
 . Assuming the drivers and `libnvidia-ml.so` library are installed, check if the operator detects them correctly.
 +
-[,bash]
+[,sh]
 ----
 kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | grep "nvidia.com/gpu.deploy.driver"
 ----
@@ -401,7 +418,7 @@ You should see the value `pre-installed`. If you see `true`, the drivers are not
 +
 You can also check other driver labels with:
 +
-[,bash]
+[,sh]
 ----
 kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | jq | grep "nvidia.com"
 ----
@@ -410,7 +427,7 @@ You should see labels specifying driver and GPU (e.g. `nvidia.com/gpu.machine` o
 
 . Check if the gpu was added (by nvidia-device-plugin-daemonset) as an allocatable resource in the node.
 +
-[,bash]
+[,sh]
 ----
 kubectl get node $NODENAME -o jsonpath='{.status.allocatable}' | jq
 ----
@@ -419,14 +436,14 @@ You should see `"nvidia.com/gpu":` followed by the number of gpus in the node.
 
 . Check that the container runtime binary was installed by the operator (in particular by the `nvidia-container-toolkit-daemonset`):
 +
-[,bash]
+[,sh]
 ----
 ls /usr/local/nvidia/toolkit/nvidia-container-runtime
 ----
 
 . Verify if containerd config was updated to include the nvidia container runtime.
 +
-[,bash]
+[,sh]
 ----
 grep nvidia /var/lib/rancher/rke2/agent/etc/containerd/config.toml
 ----
@@ -472,7 +489,7 @@ It's recommended that you modify one of this two environment files:
 
 This example adds the `PATH` in `/etc/default/rke2-server`:
 
-[,bash]
+[,sh]
 ----
 echo PATH=$PATH >> /etc/default/rke2-server
 ----
