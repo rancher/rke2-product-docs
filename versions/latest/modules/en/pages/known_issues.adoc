@@ -1,10 +1,10 @@
 = Known Issues and Limitations
 
-This section contains current known issues and limitations with rke2. If you come across issues with rke2 not documented here, please open a new issue https://github.com/rancher/rke2/issues[here].
+This section contains current known issues and limitations with {product-name}. If you come across issues with {product-name} not documented here, please open a new issue https://github.com/rancher/rke2/issues[here].
 
 == Firewalld conflicts with default networking
 
-Firewalld conflicts with RKE2's default Canal (Calico + Flannel) networking stack. To avoid unexpected behavior, firewalld should be disabled on systems running RKE2.
+Firewalld conflicts with RKE2's default Canal (Calico + Flannel) networking stack. To avoid unexpected behavior, firewalld should be disabled on systems running RKE2. Disabling firewalld does not remove the kernel's firewall (iptables/nftables) which Canal uses to manage necessary rules. Custom firewall rules can be implemented through Calico resources.
 
 == NetworkManager
 
@@ -13,7 +13,7 @@ NetworkManager manipulates the routing table for interfaces in the default netwo
 [,bash]
 ----
 [keyfile]
-unmanaged-devices=interface-name:cali*;interface-name:flannel*
+unmanaged-devices=interface-name:flannel*;interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico;interface-name:vxlan-v6.calico;interface-name:wireguard.cali;interface-name:wg-v6.cali
 ----
 
 If you have not yet installed RKE2, a simple `systemctl reload NetworkManager` will suffice to install the configuration. If performing this configuration change on a system that already has RKE2 installed, a reboot of the node is necessary to effectively apply the changes.
@@ -28,7 +28,7 @@ In some operating systems like RHEL 8.4, NetworkManager includes two extra servi
 
 == Istio in Selinux Enforcing System Fails by Default
 
-This is due to just-in-time kernel module loading of rke2, which is disallowed under Selinux unless the container is privileged. To allow Istio to run under these conditions, it requires two steps:
+This is due to just-in-time kernel module loading of RKE2, which is disallowed under Selinux unless the container is privileged. To allow Istio to run under these conditions, it requires two steps:
 
 . https://istio.io/latest/docs/setup/additional-setup/cni/[Enable CNI] as part of the Istio install. Please note that this https://istio.io/latest/about/feature-stages/[feature] is still in Alpha state at the time of this writing.
 Ensure `values.cni.cniBinDir=/opt/cni/bin` and `values.cni.cniConfDir=/etc/cni/net.d`
@@ -73,7 +73,7 @@ This issue has been observed in Ubuntu 18.04, Ubuntu 20.04 and openSUSE Leap 15.
 
 == Wicked
 
-Wicked configures the networking settings of the host based on the sysctl configuration files (e.g. under /etc/sysctl.d/ directory). Even though rke2 is setting parameters such as `/net/ipv4/conf/all/forwarding` to 1, that configuration could be reverted by Wicked whenever it reapplies the network configuration (there are several events that result in reapplying the network configuration as well as rcwicked restart during updates). Consequently, it is very important to enable ipv4 (and ipv6 in case of dual-stack) forwarding in sysctl configuration files. For example, it is recommended to create a file with the name `/etc/sysctl.d/90-rke2.conf` containing these parameters (ipv6 only needed in case of dual-stack):
+Wicked configures the networking settings of the host based on the sysctl configuration files (e.g. under /etc/sysctl.d/ directory). Even though RKE2 is setting parameters such as `/net/ipv4/conf/all/forwarding` to 1, that configuration could be reverted by Wicked whenever it reapplies the network configuration (there are several events that result in reapplying the network configuration as well as rcwicked restart during updates).Consequently, it is very important to enable ipv4 (and ipv6 in case of dual-stack) forwarding in sysctl configuration files. For example, it is recommended to create a file with the name `/etc/sysctl.d/90-rke2.conf` containing these parameters (ipv6 only needed in case of dual-stack):
 
 [,bash]
 ----
@@ -93,7 +93,6 @@ plugin type="portmap" failed (add): failed to open iptables: exec: "iptables": e
 ----
 +
 Please install iptables or xtables-nft package to resolve this problem
-+
 
 . By default Canal keeps track of pod IPs by creating a lock file for each IP in `/var/lib/cni/networks/k8s-pod-network`. Each IP belongs to a single pod and will be deleted as soon as the pod is removed. However, in the unlikely event that containerd loses track of the running pods, lock files may be leaked and Canal will not be able to reuse those IPs anymore. If this occurs, you may experience IP exhaustion errors, for example:
 +
@@ -102,7 +101,7 @@ Please install iptables or xtables-nft package to resolve this problem
 failed to allocate for range 0: no IP addresses available in range set
 ----
 
-There are two ways to resolve this. You can either manually remove unused IPs from that directory or drain the node, run rke2-killall.sh, start the rke2 systemd service and uncordon the node. If you need to undertake any of these actions, please report the problem via GitHub, making sure to specify how it was triggered.
+There are two ways to resolve this. You can either manually remove unused IPs from that directory or drain the node, run rke2-killall.sh, start the RKE2 systemd service and uncordon the node. If you need to undertake any of these actions, please report the problem via GitHub, making sure to specify how it was triggered.
 
 == Ingress in CIS Mode
 
@@ -136,7 +135,7 @@ For more information, refer to comments on https://github.com/rancher/rke2/issue
 Kubernetes removed PodSecurityPolicy from v1.25 in favor of Pod Security Standards. You can read more about PSS in the https://kubernetes.io/docs/concepts/security/pod-security-standards/[upstream documentation]. For RKE2, there are some manual steps that must be taken if the `profile` flag has been set on the nodes.
 
 . On all nodes, update the `profile` value to `cis-1.23`, but do not restart or upgrade RKE2 yet.
-. Perform the upgrade as normal. If using xref:./upgrade/automated_upgrade.adoc[Automated Upgrades], ensure that the namespace where the `system-upgrade-controller` pod is running in is setup to be privileged in accordance with the https://kubernetes.io/docs/concepts/security/pod-security-admission/#pod-security-levels[Pod Security levels]:
+. Perform the upgrade as normal. If using xref:upgrade/automated_upgrade.adoc[Automated Upgrades], ensure that the namespace where the `system-upgrade-controller` pod is running in is setup to be privileged in accordance with the https://kubernetes.io/docs/concepts/security/pod-security-admission/#pod-security-levels[Pod Security levels]:
 +
 [,yaml]
 ----
