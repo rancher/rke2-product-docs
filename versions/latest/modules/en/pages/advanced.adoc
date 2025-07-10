@@ -34,11 +34,23 @@ For information about deploying Helm charts using the manifests directory, refer
 
 == Configuring containerd
 
-RKE2 will generate the `config.toml` for containerd in `/var/lib/rancher/rke2/agent/etc/containerd/config.toml`.
+[NOTE]
+.Version Gate
+====
+RKE2 includes containerd 2.0 as of the February 2025 releases: v1.31.6+rke2r1 and v1.32.2+rke2r1. +
+Be aware that containerd 2.0 prefers config version 3, while containerd 1.7 prefers config version 2.
+====
 
-For advanced customization of this file you can create another file called `config.toml.tmpl` in the same directory and it will be used instead.
+RKE2 will generate a configuration file for containerd at `/var/lib/rancher/rke2/agent/etc/containerd/config.toml`, using values specific to the current cluster and node configuration.
 
-The `config.toml.tmpl` will be treated as a Go template file, and the `config.Node` structure is being passed to the template. See https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates_linux.go#L10-L104[this template] for an example of how to use the structure to customize the configuration file.
+For advanced customization, you can create a containerd config template in the same directory:
+
+* For containerd 2.0, place a version 3 configuration template in `config-v3.toml.tmpl`. See the https://github.com/containerd/containerd/blob/release/2.0/docs/cri/config.md[containerd 2.0 documentation] for more information.
+* For containerd 1.7 and earlier, place a version 2 configuration template in `config.toml.tmpl`. See the https://github.com/containerd/containerd/blob/release/1.7/docs/cri/config.md[containerd 1.7 documentation] for more information.
+
+Containerd 2.0 is backwards compatible with prior config versions, and RKE2 will continue to render legacy version 2 configuration from `config.toml.tmpl` if `config-v3.toml.tmpl` is not found.
+
+The template file is rendered into the containerd config using the https://pkg.go.dev/text/template[`text/template`] library. See `ContainerdConfigTemplateV3` and `ContainerdConfigTemplate` in https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go[`templates.go`] for the default template content. The template is executed with a https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go#L22-L33[`ContainerdConfig`] struct as its dot value (data argument).
 
 === Base Template
 
@@ -55,6 +67,11 @@ You can extend the RKE2 base template instead of copy-pasting the complete stock
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom".options]
   BinaryName = "/usr/bin/custom-container-runtime"
 ----
+
+[WARNING]
+====
+For best results, do NOT simply copy a prerendered `config.toml` into the template and make your desired changes. Use the base template, or provide a full template based on the defaults linked above.
+====
 
 == Configuring an HTTP proxy
 
@@ -114,7 +131,7 @@ systemctl start rke2-server
 
 == Disabling Server Charts
 
-The server charts bundled with `rke2` deployed during cluster bootstrapping can be disabled and replaced with alternatives.  A common use case is replacing the bundled `rke2-ingress-nginx` chart with an alternative.
+The server charts bundled with `rke2` deployed during cluster bootstrapping can be disabled and replaced with alternatives. A common use case is replacing the bundled `rke2-ingress-nginx` chart with an alternative.
 
 To disable any of the bundled system charts, set the `disable` parameter in the config file before bootstrapping. An example of disabling all available system charts is:
 
@@ -146,8 +163,8 @@ cloud-provider-name: aws
 ----
 
 When installing RKE2 on classified regions (such as SC2S or C2S), there are a few additional pre-requisites to be aware of to ensure RKE2 knows how and where to securely communicate with the appropriate AWS endpoints:
---
-. Ensure all the common AWS cloud-provider https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[prerequisites] are met.  These are independent of regions and are always required.
+
+. Ensure all the common AWS cloud-provider https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[prerequisites] are met. These are independent of regions and are always required.
 . Ensure RKE2 knows where to send API requests for `ec2` and `elasticloadbalancing` services by creating a `cloud.conf` file, the below is an example for the `us-iso-east-1` (C2S) region:
 +
 [,yaml]
@@ -167,7 +184,7 @@ When installing RKE2 on classified regions (such as SC2S or C2S), there are a fe
 ----
 +
 Alternatively, if you are using https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-services-overview.html[private AWS endpoints], ensure the appropriate `URL` is used for each of the private endpoints.
-+
+
 . Ensure the appropriate AWS CA bundle is loaded into the system's root ca trust store.  This may already be done for you depending on the AMI you are using.
 +
 [,bash]
@@ -176,7 +193,7 @@ Alternatively, if you are using https://docs.aws.amazon.com/vpc/latest/privateli
 cp <ca.pem> /etc/pki/ca-trust/source/anchors/
 update-ca-trust
 ----
-+
+
 . Configure RKE2 to use the `aws` cloud-provider with the custom `cloud.conf` created in step 1:
 +
 [,yaml]
@@ -187,10 +204,9 @@ cloud-provider-name: aws
 cloud-provider-config: "/etc/rancher/rke2/cloud.conf"
 ...
 ----
-+
-. xref:install/methods.adoc[Install] RKE2 normally (most likely in an xref:install/airgap.adoc[airgapped] capacity)
-. Validate successful installation by confirming the existence of AWS metadata on cluster node labels with `kubectl get nodes --show-labels`
---
+
+. xref:install/methods.adoc[Install] RKE2 normally (most likely in an xref:install/airgap.adoc[airgapped] capacity).
+. Validate successful installation by confirming the existence of AWS metadata on cluster node labels with `kubectl get nodes --show-labels`.
 
 == Control Plane Component Resource Requests/Limits
 
@@ -383,7 +399,7 @@ spec:
         value: /run/k3s/containerd/containerd.sock
 ----
 
-[CAUTION]
+[WARNING]
 ====
 The NVIDIA operator restarts containerd with a hangup call which restarts RKE2.
 ====
