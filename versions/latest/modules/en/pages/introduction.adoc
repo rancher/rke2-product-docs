@@ -1,16 +1,16 @@
 = Introduction
 
-// Add logo image
+image::logo-horizontal-rke2.svg[RKE2 Logo, 346,111]
 
-{product-name}, also known as RKE Government, is Rancher's next-generation Kubernetes distribution.
+{product-name}, is Rancher's enterprise-ready next-generation Kubernetes distribution. It has also been known as RKE Government.
 
 It is a fully https://landscape.cncf.io/?group=projects-and-products&view-mode=card&item=platform--certified-kubernetes-distribution--rke-government#app-definition-and-development--application-definition-image-build[conformant Kubernetes distribution] that focuses on security and compliance within the U.S. Federal Government sector.
 
 To meet these goals, {product-name} does the following:
 
-* Provides xref:security/hardening_guide.adoc[defaults and configuration options] that allow clusters to pass the CIS Kubernetes Benchmark xref:security/cis_self_assessment16.adoc[v1.6] or xref:security/cis_self_assessment123.adoc[v1.23] with minimal operator intervention
-* Enables xref:security/fips_support.adoc[FIPS 140-2 compliance]
-* Regularly scans components for CVEs using https://github.com/aquasecurity/trivy[trivy] in our build pipeline
+* Provides xref:security/hardening_guide.adoc[defaults and configuration options] that allow clusters to pass the CIS Kubernetes Benchmark xref:security/cis_self_assessment16.adoc[v1.6] or xref:security/cis_self_assessment123.adoc[v1.23] with minimal operator intervention.
+* Enables xref:security/fips_support.adoc[FIPS 140-2 compliance].
+* Regularly scans components for CVEs using https://github.com/aquasecurity/trivy[trivy] in our build pipeline.
 
 == How is this different from RKE or {k3s-product-name}?
 
@@ -26,7 +26,7 @@ Importantly, {product-name} does not rely on Docker as RKE1 does. RKE1 leveraged
 
 It is known as {product-name} as it is the next iteration of the Rancher Kubernetes Engine for datacenter use cases. The distribution runs standalone or integrated into Rancher. Automated provisioning of new {product-name} clusters is available in Rancher v2.6+.
 
-It is also known as RKE Government in order to convey another use case and sector it currently targets.
+It has also been known as RKE Government as it was designed to target sectors with heightened security requirements.
 
 == Security
 
