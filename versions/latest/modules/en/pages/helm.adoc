@@ -19,7 +19,7 @@ Ensure that all files within the manifests directory (or within any subdirectori
 
 An example of an error that would be reported if the file name contains underscores:
 
-[,bash]
+[,sh]
 ----
 `Failed to process config: failed to process /var/lib/rancher/rke2/server/manifests/example_manifest.yaml:
    Addon.k3s.cattle.io "example_manifest" is invalid: metadata.name: Invalid value: "example_manifest":
