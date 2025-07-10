@@ -9,7 +9,7 @@ Some tools, such as kubectl, are installed by default into `/var/lib/rancher/rke
 
 Leverage the KUBECONFIG environment variable:
 
-[,bash]
+[,sh]
 ----
 export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
 kubectl get pods --all-namespaces
@@ -18,7 +18,7 @@ helm ls --all-namespaces
 
 Or specify the location of the kubeconfig file in the command:
 
-[,bash]
+[,sh]
 ----
 kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods --all-namespaces
 helm --kubeconfig /etc/rancher/rke2/rke2.yaml ls --all-namespaces
