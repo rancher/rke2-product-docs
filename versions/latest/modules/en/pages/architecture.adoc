@@ -18,7 +18,7 @@ RKE2 brings together a number of Open Source technologies to make this all work:
  ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-proxy[Proxy]
 * https://etcd.io[etcd]
 * https://github.com/opencontainers/runc[runc]
-* https://containerd.io[containerd]/https://github.com/kubernetes/cri-api[cri]
+* https://containerd.io[containerd]/link:https://github.com/kubernetes/cri-api[cri]
 * https://github.com/containernetworking/cni[CNI]: Canal (https://docs.tigera.io/calico/latest/about[Calico] & https://github.com/coreos/flannel[Flannel]), https://cilium.io[Cilium] or https://docs.tigera.io/calico/latest/about[Calico]
 * https://coredns.io[CoreDNS]
 * https://kubernetes.github.io/ingress-nginx[Ingress NGINX Controller]
