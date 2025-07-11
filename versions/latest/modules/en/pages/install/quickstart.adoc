@@ -7,45 +7,43 @@ ____
 
 == Prerequisites
 
-* Make sure your environment fulfills the xref:./requirements.adoc[requirements].
-If NetworkManager is installed and enabled on your hosts, xref:../known_issues.adoc#_networkmanager[ensure that it is configured to ignore CNI-managed interfaces.]
+* Make sure your environment fulfills the xref:./requirements.adoc[requirements]. If NetworkManager is installed and enabled on your hosts, xref:../known_issues.adoc#_networkmanager[ensure that it is configured to ignore CNI-managed interfaces].
 * If the host kernel supports https://apparmor.net/[AppArmor], the AppArmor tools (usually available via the `apparmor-parser` package) must also be present prior to installing RKE2.
 * The {product-name} installation process must be run as the root user or through `sudo`.
 
 == Server Node Installation
 
 {product-name} provides an installation script that is a convenient way to install it as a service on systemd based systems. This script is available at https://get.rke2.io. To install {product-name} using this method do the following:
---
-. Run the installer
+
+. Run the installer.
 +
 [,sh]
 ----
 curl -sfL https://get.rke2.io | sh -
 ----
 +
-This will install the `rke2-server` service and the `rke2` binary onto your machine. Due to its nature, It will fail unless it runs as the root user or through `sudo`.
+This will install the `rke2-server` service and the `rke2` binary onto your machine. Due to its nature, it will fail unless it runs as the root user or through `sudo`.
 
-. Enable the rke2-server service
+. Enable the rke2-server service.
 +
 [,sh]
 ----
 systemctl enable rke2-server.service
 ----
 
-. Start the service
+. Start the service.
 +
 [,sh]
 ----
 systemctl start rke2-server.service
 ----
 +
-. Follow the logs, if you like
+. Follow the logs with the following command:
 +
 [,sh]
 ----
 journalctl -u rke2-server -f
 ----
---
 
 After running this installation:
 
@@ -56,7 +54,7 @@ After running this installation:
  ** `/opt/rke2/bin` for read-only and brtfs file systems
  ** `INSTALL_RKE2_TAR_PREFIX/bin` if `INSTALL_RKE2_TAR_PREFIX` is set
 * A https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig] file will be written to `/etc/rancher/rke2/rke2.yaml`.
-* A token that can be used to register other server or agent nodes will be created at `/var/lib/rancher/rke2/server/node-token`
+* A token that can be used to register other server or agent nodes will be created at `/var/lib/rancher/rke2/server/node-token`.
 
 [NOTE]
 ====
@@ -66,24 +64,24 @@ If you are adding additional server nodes, you must have an odd number in total.
 == Linux Agent (Worker) Node Installation
 
 The steps on this section requires root level access or `sudo` to work.
---
-. Run the installer
+
+. Run the installer.
 +
 [,sh]
 ----
 curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
 ----
 +
-This will install the `rke2-agent` service and the `rke2` binary onto your machine. Due to its nature, It will fail unless it runs as the root user or through `sudo`.
+This will install the `rke2-agent` service and the `rke2` binary onto your machine. Due to its nature, it will fail unless it runs as the root user or through `sudo`.
 
-. Enable the rke2-agent service
+. Enable the rke2-agent service.
 +
 [,sh]
 ----
 systemctl enable rke2-agent.service
 ----
 
-. Configure the rke2-agent service
+. Configure the rke2-agent service.
 +
 [,sh]
 ----
@@ -104,46 +102,44 @@ token: <token from server node>
 The `rke2 server` process listens on port `9345` for new nodes to register. The Kubernetes API is still served on port `6443`, as normal.
 ====
 
-. Start the service
+. Start the service.
 +
 [,sh]
 ----
 systemctl start rke2-agent.service
 ----
 +
-Follow the logs, if you like
+. Follow the logs with the following command:
 +
 [,sh]
 ----
 journalctl -u rke2-agent -f
 ----
---
 
 [NOTE]
 ====
-Each machine must have a unique hostname. If your machines do not have unique hostnames, set the `node-name` parameter in the `config.yaml` file and provide a value with a valid and unique hostname for each node. To read more about the config.yaml file, see the xref:./configuration.adoc#configuration-file[Install Options documentation].
+Each machine must have a unique hostname. If your machines do not have unique hostnames, set the `node-name` parameter in the `config.yaml` file and provide a value with a valid and unique hostname for each node. To learn more about the config.yaml file, refer to the xref:./configuration.adoc#_configuration-file[Configuration Options documentation].
 ====
 
 == Windows Agent (Worker) Node Installation
 
-Windows Support works with Calico or Flannel as the CNI for the RKE2 cluster
+Windows Support works with Calico or Flannel as the CNI for the RKE2 cluster.
 
---
-. Prepare the Windows Agent Node
+. Prepare the Windows Agent Node.
 +
 [NOTE]
 ====
 The Windows Server Containers feature needs to be enabled for the RKE2 agent to work.
 ====
 +
-Open a new Powershell window with Administrator privileges
+.. Open a new Powershell window with Administrator privileges.
 +
 [,powershell]
 ----
 powershell -Command "Start-Process PowerShell -Verb RunAs"
 ----
 +
-In the new Powershell window, run the following command to install the containers feature.
+.. In the new Powershell window, run the following command to install the containers feature.
 +
 [,powershell]
 ----
@@ -152,7 +148,7 @@ Enable-WindowsOptionalFeature -Online -FeatureName containers –All
 +
 This will require a reboot for the `Containers` feature to properly function.
 +
-. Download the Install Script
+. Download the install script.
 +
 [,powershell]
 ----
@@ -161,7 +157,7 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/ins
 +
 This script will download the `rke2.exe` Windows binary onto your machine.
 
-. Configure the rke2-agent for Windows
+. Configure the rke2-agent for Windows.
 +
 [,powershell]
 ----
@@ -172,9 +168,9 @@ token: <token from server node>
 "@
 ----
 +
-To read more about the config.yaml file, see the xref:./configuration.adoc#_configuration-file[Install Options documentation].
+To learn more about the config.yaml file, refer to the xref:./configuration.adoc#_configuration-file[Configuration Options documentation].
 
-. Configure PATH
+. Configure the PATH.
 +
 [,powershell]
 ----
@@ -186,20 +182,19 @@ $env:PATH+=";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin"
     [EnvironmentVariableTarget]::Machine)
 ----
 
-. Run the Installer
+. Run the installer.
 +
 [,powershell]
 ----
 ./install.ps1
 ----
 
-. Start the Windows RKE2 Service
+. Start the Windows RKE2 Service.
 +
 [,powershell]
 ----
 rke2.exe agent service --add
 ----
---
 
 [NOTE] 
 ====
