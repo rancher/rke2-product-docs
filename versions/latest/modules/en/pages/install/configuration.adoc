@@ -86,6 +86,7 @@ node-taint:
   - alice=bob:NoExecute
   - charlie=delta:NoSchedule
 ----
+
 == Kubelet Configuration
 
 [NOTE]
