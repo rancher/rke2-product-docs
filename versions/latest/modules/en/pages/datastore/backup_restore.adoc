@@ -1,12 +1,12 @@
-= Etcd Backup and Restore
+
+= Backup and Restore
 :revdate: 2025-07-09
 :page-revdate: {revdate}
 
-In this section, you'll learn how to create backups of the RKE2 cluster data and to restore the cluster from backup.
-
-[NOTE]
+[WARNING]
+.If using external databases or SQLite
 ====
-/var/lib/rancher/rke2 is the default data directory for RKE2, it is configurable however via `data-dir` parameter.
+Snapshots are for embedded etcd only, if you use another datastore with `datastore-endpoint` config go to <<External DB Backups (Experimental),Experimental>>.
 ====
 
 == Creating Snapshots
@@ -15,7 +15,7 @@ Snapshots are enabled by default.
 
 The snapshot directory defaults to `/var/lib/rancher/rke2/server/db/snapshots`.
 
-To configure the snapshot interval or the number of retained snapshots, refer to the <<Options,options.>>
+To configure the snapshot interval or the number of retained snapshots, refer to the <<Options,options>>.
 
 In RKE2, snapshots are stored on each etcd node. If you have multiple etcd or etcd + control-plane nodes, you will have multiple copies of local etcd snapshots.
 
@@ -109,6 +109,7 @@ The node where the snapshot was taken will appear as `NotReady`.
 === Other Notes on Restoring a Snapshot
 
 * When performing a restore from backup, users do not need to restore a snapshot using the same version of RKE2 with which the snapshot was created. Users may restore using a more recent version. Be aware when changing versions at restore which etcd version is in use.
+* If an etcd-s3 backup configuration is defined within the RKE2 xref:install/configuration.adoc[config file], the rke2 restore will attempt to pull the snapshot file from the configured S3 bucket. In this instance only the snapshot filename should be passed in the argument `--cluster-reset-restore-path`. To restore from a local snapshot file, where an etcd-s3 backup configuration is present, add the argument `--etcd-s3=false` and pass the full path to the local snapshot file in the argument `--cluster-reset-restore-path`.
 * By default, snapshots are enabled and are scheduled to be taken every 12 hours. The snapshots are written to `+${data-dir}/server/db/snapshots+` with the default `+${data-dir}+` being `/var/lib/rancher/rke2`.
 
 == S3 Compatible API Support
@@ -160,7 +161,6 @@ The arguments below exist for both the `server` and `etcd-snapshot` subcommands.
 For the `etcd-snapshot` subcommand, the `--etcd-s3` flags are aliased to `--s3`.
 ====
 
-
 To perform an on-demand etcd snapshot and save it to S3:
 
 [,bash]
@@ -189,7 +189,7 @@ rke2 server \
 
 === Options
 
-These options can be set in the xref:./install/configuration.adoc[configuration file]:
+These options can be set in the xref:install/configuration.adoc[configuration file]:
 
 |===
 | Options | Description
@@ -228,7 +228,7 @@ You can manually prune "on-demand" snapshots down to a smaller amount using the 
 
 [,bash]
 ----
-rke2 etcd-snapshot prune --snapshot-retention <NUM-OF-SNAPSHOTS-TO-RETAIN>
+rke2 etcd-snapshot prune --etcd-snapshot-retention <NUM-OF-SNAPSHOTS-TO-RETAIN>
 ----
 
 You can manually prune "scheduled" snapshots down to a smaller amount using the following command:
@@ -237,3 +237,29 @@ You can manually prune "scheduled" snapshots down to a smaller amount using the 
 ----
 rke2 etcd-snapshot prune --name etcd-snapshot --etcd-snapshot-retention <NUM-OF-SNAPSHOTS-TO-RETAIN>
 ----
+
+== External DB Backups (Experimental)
+
+[WARNING]
+====
+In addition to backing up the datastore itself, you must also back up the server token file at `/var/lib/rancher/rke2/server/token`. You must restore this file, or pass its value into the `token` option, when restoring from backup. If you do not use the same token value when restoring, the snapshot will be unusable, as the token is used to encrypt confidential data within the datastore itself.
+====
+
+=== Backup and Restore with SQLite
+
+No special commands are required to back up or restore the SQLite datastore.
+
+* To back up the SQLite datastore, take a copy of `/var/lib/rancher/rke2/server/db/`.
+* To restore the SQLite datastore, restore the contents of `/var/lib/rancher/rke2/server/db` (and the token, as discussed above).
+
+=== Backup and Restore with External Datastore
+
+When an external datastore is used, backup and restore operations are handled outside of RKE2. The database administrator will need to back up the external database, or restore it from a snapshot or dump.
+
+We recommend configuring the database to take recurring snapshots.
+
+For details on taking database snapshots and restoring your database from them, refer to the official database documentation:
+
+* https://dev.mysql.com/doc/refman/8.0/en/replication-snapshot-method.html[Official MySQL documentation]
+* https://www.postgresql.org/docs/8.3/backup-dump.html[Official PostgreSQL documentation]
+* https://etcd.io/docs/latest/op-guide/recovery/[Official etcd documentation]
