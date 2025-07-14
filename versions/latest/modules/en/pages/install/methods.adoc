@@ -42,11 +42,11 @@ When the install script is executed, it makes a determination of what type of sy
 
 Next, the installation script downloads the tarball, verifies it by comparing SHA256 hashes, and lastly, extracts the contents to `/usr/local`. An operator is free to move the files after installation if desired. This operation simply extracts the tarball and no other system modifications are made.
 
-Tarball structure / contents
+Tarball structure / contents:
 
-* bin - contains the RKE2 executable as well as the `rke2-killall.sh` and `rke2-uninstall.sh` scripts
-* lib - contains server and agent systemd unit files
-* share - contains the RKE2 license as well as a sysctl configuration file used for when RKE2 is ran in CIS mode
+* bin - contains the RKE2 executable as well as the `rke2-killall.sh` and `rke2-uninstall.sh` scripts.
+* lib - contains server and agent systemd unit files.
+* share - contains the RKE2 license as well as a sysctl configuration file used for when RKE2 is ran in CIS mode.
 
 To configure the system any further, you'll want to reference either the xref:reference/server_config.adoc[server] or xref:reference/linux_agent_config.adoc[agent] documentation.
 

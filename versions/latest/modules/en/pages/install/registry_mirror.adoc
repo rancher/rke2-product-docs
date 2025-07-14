@@ -122,7 +122,7 @@ Users with access to push images into the containerd image store on one node may
 
 Images sharing is controlled based on the source registry. Images loaded directly into containerd via xref:install/airgap.adoc#_airgap_load_images=Manually+Deploy+Images[air-gap tarballs], xref:import_images.adoc#_pre_import_images[pre-imported] or loaded directly into containerd's image store using the `ctr` command line tool, will be shared between nodes if they are tagged as being from a registry that is enabled for mirroring.
 
-Note that the upstream registry that the images appear to come from does not actually have to exist or be reachable. For example, you could tag images as being from a fictitious upstream registry, and import those images into containerd's image store. You would then be able to pull those images from all cluster members, as long as that registry is listed in `registries.yaml`
+Note that the upstream registry that the images appear to come from does not actually have to exist or be reachable. For example, you could tag images as being from a fictitious upstream registry, and import those images into containerd's image store. You would then be able to pull those images from all cluster members, as long as that registry is listed in `registries.yaml`.
 
 == Pushing Images
 

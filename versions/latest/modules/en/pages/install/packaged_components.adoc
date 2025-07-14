@@ -18,8 +18,7 @@ You may place additional files in the manifests directory for deployment as an `
 
 ==== File Naming Requirements
 
-The `AddOn` name for each file in the manifest directory is derived from the file basename. Ensure that all files within the manifests directory (or within any subdirectories) have names that are unique, and adhere to Kubernetes https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[object naming restrictions].
-Care should also be taken not to conflict with names in use by the default RKE2 packaged components, even if those components are disabled.
+The `AddOn` name for each file in the manifest directory is derived from the file basename. Ensure that all files within the manifests directory (or within any subdirectories) have names that are unique, and adhere to Kubernetes https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[object naming restrictions]. Care should also be taken not to conflict with names in use by the default RKE2 packaged components, even if those components are disabled.
 
 [CAUTION]
 ====

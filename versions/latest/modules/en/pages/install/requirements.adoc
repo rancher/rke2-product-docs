@@ -8,8 +8,8 @@ Two RKE2 nodes cannot have the same node name. By default, the node name is take
 
 If two or more of your machines have the same hostname, you must do one of the following:
 
-* Update the hostname to a unique value
-* Set the `node-name` parameter in the config file to a unique value
+* Update the hostname to a unique value.
+* Set the `node-name` parameter in the config file to a unique value.
 * Set the `with-node-id` parameter in the config file to `true` to append a randomly generated ID number to the hostname.
 
 [IMPORTANT]
@@ -45,7 +45,7 @@ The RKE2 Windows Node (Worker) agent has been tested and validated on the follow
 * Windows Server 2019 LTSC (amd64) (OS Build 17763.2061)
 * Windows Server 2022 LTSC (amd64) (OS Build 20348.169)
 
-Open a new Powershell window with Administrator privileges
+Open a new Powershell window with Administrator privileges.
 
 [,powershell]
 ----

@@ -54,7 +54,7 @@ $ProgressPreference = 'SilentlyContinue'
 Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2.windows-amd64.tar.gz -OutFile /var/lib/rancher/rke2/agent/images/rke2.windows-amd64.tar.gz
 ----
 +
-** * Windows Server 2019 LTSC (amd64) (OS Build 17763.2061)*
+** *Windows Server 2019 LTSC (amd64) (OS Build 17763.2061)*
 +
 [,powershell]
 ----

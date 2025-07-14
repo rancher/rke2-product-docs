@@ -12,8 +12,7 @@ please ensure you also create the `registries.yaml` file on each server as well.
 
 == Default Endpoint Fallback
 
-Containerd has an implicit "default endpoint" for all registries. The default endpoint is always tried as a last resort, even if there are other endpoints listed for that registry in `registries.yaml`.
-Rewrites are not applied to pulls against the default endpoint. For example, when pulling `registry.example.com:5000/rancher/mirrored-pause:3.6`, containerd will use a default endpoint of `+https://registry.example.com:5000/v2+`.
+Containerd has an implicit "default endpoint" for all registries. The default endpoint is always tried as a last resort, even if there are other endpoints listed for that registry in `registries.yaml`. Rewrites are not applied to pulls against the default endpoint. For example, when pulling `registry.example.com:5000/rancher/mirrored-pause:3.6`, containerd will use a default endpoint of `+https://registry.example.com:5000/v2+`.
 
 * The default endpoint for `docker.io` is `+https://index.docker.io/v2+`.
 * The default endpoint for all other registries is `\https://<REGISTRY>/v2`, where `<REGISTRY>` is the registry hostname and optional port.
