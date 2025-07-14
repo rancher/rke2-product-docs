@@ -105,7 +105,7 @@ RKE2 uses a default kubelet configuration which is stored under `/var/lib/ranche
 
 == Configuring the Linux Installation Script
 
-As mentioned in the xref:./quickstart.adoc[Quick Start Guide], you can use the installation script available at https://get.rke2.io to install RKE2 as a service.
+As mentioned in the xref:install/quickstart.adoc[Quick Start Guide], you can use the installation script available at https://get.rke2.io to install RKE2 as a service.
 
 The simplest form of this command is running, as root user or through `sudo`, as follows:
 
@@ -149,7 +149,7 @@ Windows Support requires choosing Calico or Flannel as the CNI for the RKE2 clus
 ====
 
 
-As mentioned in the xref:./quickstart.adoc[Quick-Start Guide], you can use the installation script available at https://github.com/rancher/rke2/blob/master/install.ps1 to install RKE2 on a Windows Agent Node.
+As mentioned in the xref:install/quickstart.adoc[Quick-Start Guide], you can use the installation script available at https://github.com/rancher/rke2/blob/master/install.ps1 to install RKE2 on a Windows Agent Node.
 
 The simplest form of this command is as follows:
 
@@ -215,8 +215,8 @@ As stated, the installation script is primarily concerned with configuring RKE2 
 
 == More Info
 
-For details on configuring the RKE2 server, refer to the xref:../reference/server_config.adoc[server configuration reference.]
+For details on configuring the RKE2 server, refer to the xref:reference/server_config.adoc[server configuration reference.]
 
-For details on configuring the RKE2 agent, refer to the xref:../reference/linux_agent_config.adoc[agent configuration reference.]
+For details on configuring the RKE2 agent, refer to the xref:reference/linux_agent_config.adoc[agent configuration reference.]
 
-For details on configuring the RKE2 Windows agent, refer to the xref:../reference/windows_agent_config.adoc[Windows agent configuration reference.]
+For details on configuring the RKE2 Windows agent, refer to the xref:reference/windows_agent_config.adoc[Windows agent configuration reference.]

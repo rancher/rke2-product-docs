@@ -113,7 +113,7 @@ RKE2 performance depends on the performance of the database, and since RKE2 runs
 
 [IMPORTANT]
 ====
-If your node has NetworkManager installed and enabled, xref:../known_issues.adoc#_networkmanager[ensure that it is configured to ignore CNI-managed interfaces]. If your node has Wicked installed and enabled, xref:../known_issues.adoc#_wicked[ensure that the forwarding sysctl config is enabled].
+If your node has NetworkManager installed and enabled, xref:known_issues.adoc#_networkmanager[ensure that it is configured to ignore CNI-managed interfaces]. If your node has Wicked installed and enabled, xref:known_issues.adoc#_wicked[ensure that the forwarding sysctl config is enabled].
 ====
 
 The RKE2 server needs port 6443 and 9345 to be accessible by other nodes in the cluster.
