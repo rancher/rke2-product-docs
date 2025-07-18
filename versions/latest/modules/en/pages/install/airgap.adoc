@@ -101,4 +101,4 @@ curl -sfL https://get.rke2.io --output install.sh
 INSTALL_RKE2_ARTIFACT_PATH=/rke2-artifacts sh install.sh
 ----
 
-. Enable and run the service as outlined xref:install/quickstart.adoc#_2_enable_the_rke2_server_service[here].
+. Enable and run the service as outlined xref:install/quickstart.adoc[here].

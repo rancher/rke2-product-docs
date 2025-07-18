@@ -100,9 +100,9 @@ This data was retrieved under specific test conditions. It will vary depending u
 
 . Monitor resources on grafana using prometheus data source.
 . Deploy workloads in such a way to simulate continuous cluster activity:
- ** A basic workload that scales up and down continuously
- ** A workload that is deleted and recreated in a loop
- ** A constant workload that contains multiple other resources including CRDs.
+** A basic workload that scales up and down continuously
+** A workload that is deleted and recreated in a loop
+** A constant workload that contains multiple other resources including CRDs.
 . Join agent nodes in batches of 30-50 at a time.
 
 ==== Disks

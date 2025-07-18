@@ -12,9 +12,9 @@ please ensure you also create the `registries.yaml` file on each server as well.
 
 == Default Endpoint Fallback
 
-Containerd has an implicit "default endpoint" for all registries. The default endpoint is always tried as a last resort, even if there are other endpoints listed for that registry in `registries.yaml`. Rewrites are not applied to pulls against the default endpoint. For example, when pulling `registry.example.com:5000/rancher/mirrored-pause:3.6`, containerd will use a default endpoint of `+https://registry.example.com:5000/v2+`.
+Containerd has an implicit "default endpoint" for all registries. The default endpoint is always tried as a last resort, even if there are other endpoints listed for that registry in `registries.yaml`. Rewrites are not applied to pulls against the default endpoint. For example, when pulling `registry.example.com:5000/rancher/mirrored-pause:3.6`, containerd will use a default endpoint of `\https://registry.example.com:5000/v2`.
 
-* The default endpoint for `docker.io` is `+https://index.docker.io/v2+`.
+* The default endpoint for `docker.io` is `\https://index.docker.io/v2`.
 * The default endpoint for all other registries is `\https://<REGISTRY>/v2`, where `<REGISTRY>` is the registry hostname and optional port.
 
 In order to be recognized as a registry, the first component of the image name must contain at least one period or colon. For historical reasons, images without a registry specified in their name are implicitly identified as being from `docker.io`.
@@ -113,7 +113,7 @@ Rewrites are no longer applied to the Default Endpoint as of the February 2024 r
 
 If you want to apply rewrites when pulling directly from a registry - when it is not being used as a mirror for a different upstream registry - you must provide a mirror endpoint that does not match the default endpoint. Mirror endpoints in `registries.yaml` that match the default endpoint are ignored; the default endpoint is always tried last with no rewrites, if fallback has not been disabled.
 
-For example, if you have a registry at `+https://registry.example.com/+`, and want to apply rewrites when explicitly pulling `registry.example.com/rancher/rke2-runtime:v1.30.1-rke2r1`, you can add a mirror endpoint with the port listed. Because the mirror endpoint does not match the default endpoint - *`+"https://registry.example.com:443/v2" != "https://registry.example.com/v2"+`* - the endpoint is accepted as a mirror and rewrites are applied, despite it being effectively the same as the default.
+For example, if you have a registry at `\https://registry.example.com/`, and want to apply rewrites when explicitly pulling `registry.example.com/rancher/rke2-runtime:v1.30.1-rke2r1`, you can add a mirror endpoint with the port listed. Because the mirror endpoint does not match the default endpoint - *`"\https://registry.example.com:443/v2" != "\https://registry.example.com/v2"`* - the endpoint is accepted as a mirror and rewrites are applied, despite it being effectively the same as the default.
 
 [,yaml]
 ----
