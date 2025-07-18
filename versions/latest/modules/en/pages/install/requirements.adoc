@@ -179,7 +179,7 @@ The VXLAN port on nodes should not be exposed to the world as it opens up your c
 ==== CNI Specific Inbound Network Rules
 
 [tabs]
-====
+======
 
 Canal::
 +
@@ -289,7 +289,7 @@ Flannel::
 | All RKE2 nodes
 | Flannel CNI with VXLAN
 |===
-====
+======
 
 === Windows Specific Inbound Network Rules
 

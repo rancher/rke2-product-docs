@@ -196,7 +196,7 @@ configs:
 Below are examples showing how you may configure `/etc/rancher/rke2/registries.yaml` on each node when using TLS.
 
 [tabs]
-====
+======
 
 With Authentication::
 +
@@ -235,14 +235,14 @@ configs:
       insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
 ----
 
-====
+======
 
 === Without TLS
 
 Below are examples showing how you may configure `/etc/rancher/rke2/registries.yaml` on each node when _not_ using TLS.
 
 [tabs]
-====
+======
 
 With Authentication::
 +
@@ -269,7 +269,8 @@ mirrors:
       - "http://registry.example.com:5000"
 ----
 
-====
+======
+
 ____
 If using a registry using plaintext HTTP without TLS, you need to specify `http://` as the endpoint URI scheme, otherwise it will default to `https://`.
 ____
