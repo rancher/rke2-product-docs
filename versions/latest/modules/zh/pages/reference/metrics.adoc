@@ -35,14 +35,14 @@ Metrics exposed by the RKE2 supervisor process include:
 Remaining lifetime in seconds of the certificate, labeled by certificate subject and usages.
 
 * Type: Gauge
-* Labels: `*subject*` `*usage*`
+* Labels: `*subject*`, `*usage*`
 
 === rke2_loadbalancer_server_connections
 
 Count of current connections to the loadbalancer server, labeled by loadbalancer name and server address.
 
 * Type: Gauge
-* Labels: `*name*` `*server*`
+* Labels: `*name*`, `*server*`
 
 === rke2_loadbalancer_server_health
 
@@ -51,14 +51,14 @@ Current health state of loadbalancer backend servers, labeled by loadbalancer na
 State is enum of 0=INVALID, 1=FAILED, 2=STANDBY, 3=UNCHECKED, 4=RECOVERING, 5=HEALTHY, 6=PREFERRED, 7=ACTIVE.
 
 * Type: Gauge
-* Labels: `*name*` `*server*`
+* Labels: `*name*`, `*server*`
 
 === rke2_loadbalancer_dial_duration_seconds
 
 Time in seconds taken to dial a connection to a backend server, labeled by loadbalancer name and success/failure status.
 
 * Type: Histogram
-* Labels: `*name*` `*status*`
+* Labels: `*name*`, `*status*`
 
 === rke2_etcd_snapshot_save_duration_seconds
 
