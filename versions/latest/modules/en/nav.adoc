@@ -6,10 +6,13 @@
 ** xref:install/configuration.adoc[]
 ** xref:install/ha.adoc[] 
 ** xref:install/methods.adoc[]
+** xref:install/private_registry.adoc[]
+** xref:install/registry_mirror.adoc[]
 ** xref:install/containerd_registry_configuration.adoc[]
 ** xref:install/airgap.adoc[]
 ** xref:install/windows_airgap.adoc[]
 ** xref:install/server_roles.adoc[]
+** xref:install/packaged_components.adoc[]
 ** xref:install/uninstall.adoc[]
 
 * Upgrades
@@ -33,6 +36,8 @@
 * xref:architecture.adoc[Architecture]
 
 * xref:cluster_access.adoc[]
+
+* xref:import_images.adoc[]
 
 * xref:backup_restore.adoc[]
 
