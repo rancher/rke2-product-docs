@@ -43,14 +43,14 @@ Remaining lifetime in seconds of the certificate, labeled by certificate subject
 
 === rke2_loadbalancer_server_connections
 
-Count of current connections to the loadbalancer server, labeled by loadbalancer name and server address.
+Count of current connections to the load balancer server, labeled by the load balancer name and server address.
 
 * Type: Gauge
 * Labels: `*name*`, `*server*`
 
 === rke2_loadbalancer_server_health
 
-Current health state of loadbalancer backend servers, labeled by loadbalancer name and server address.
+Current health state of the load balancer backend servers, labeled by the load balancer name and server address.
 
 State is enum of 0=INVALID, 1=FAILED, 2=STANDBY, 3=UNCHECKED, 4=RECOVERING, 5=HEALTHY, 6=PREFERRED, 7=ACTIVE.
 
@@ -59,7 +59,7 @@ State is enum of 0=INVALID, 1=FAILED, 2=STANDBY, 3=UNCHECKED, 4=RECOVERING, 5=HE
 
 === rke2_loadbalancer_dial_duration_seconds
 
-Time in seconds taken to dial a connection to a backend server, labeled by loadbalancer name and success/failure status.
+Time in seconds taken to dial a connection to a backend server, labeled by the load balancer name and success/failure status.
 
 * Type: Histogram
 * Labels: `*name*`, `*status*`
