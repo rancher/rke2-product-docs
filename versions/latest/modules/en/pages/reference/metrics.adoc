@@ -20,13 +20,17 @@ When you start RKE2 with `supervisor-metrics: true`, the RKE2 supervisor exposes
 kubectl get --server https://NODENAME:9345 --raw /metrics
 ----
 
-Metrics exposed by the RKE2 supervisor process include:
+The RKE2 supervisor process exposes the following metrics:
 
 * <<RKE2 Cluster Management Metrics>>
 * https://github.com/rancher/lasso/blob/main/README.md#lasso-controller[Lasso controller metrics]
 * https://github.com/kubernetes/client-go/blob/master/README.md[Kubernetes client and workqueue metrics]
 * https://pkg.go.dev/runtime/metrics#hdr-Supported_metrics[Go runtime metrics]
-* If the RKE2 embedded registry is enabled, https://spegel.dev/docs/metrics/[Spegel metrics] and https://github.com/libp2p/go-libp2p/blob/master/README.md[libp2p metrics]
+
+If the RKE2 embedded registry is enabled, the RKE2 supervisor process also exposes the following metrics:
+
+* https://spegel.dev/docs/metrics/[Spegel metrics]
+* https://github.com/libp2p/go-libp2p/blob/master/README.md[libp2p metrics]
 
 == RKE2 Cluster Management Metrics
 
