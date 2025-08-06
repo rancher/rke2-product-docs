@@ -30,7 +30,7 @@ For example:
 +
 [,bash]
 ----
-bash mkdir /var/lib/rancher/rke2/agent/images 
+mkdir /var/lib/rancher/rke2/agent/images 
 cp example.txt /var/lib/rancher/rke2/agent/images
 ----
 +
@@ -53,7 +53,7 @@ For example:
 +
 [,bash]
 ----
-bash mkdir /var/lib/rancher/rke2/agent/images 
+mkdir /var/lib/rancher/rke2/agent/images 
 curl https://github.com/rancher/rke2/releases/download/v1.33.1%2Brke2r1/rke2-images.linux-amd64.tar.zst -O /var/lib/rancher/rke2/agent/images/rke2-images-amd64.tar.zst
 ----
 +
