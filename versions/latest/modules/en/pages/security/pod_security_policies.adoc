@@ -5,7 +5,7 @@ This document describes how RKE2 configures `PodSecurityPolicies` and `NetworkPo
 [IMPORTANT]
 .Version Gate
 ====
-This document applies to RKE2 v1.24 and older, please refer to the xref:./pod_security_standards.adoc[Pod Security Standards Documentation] for the default policy information for RKE2 v1.25 and higher.
+This document applies to RKE2 v1.24 and older, please refer to the xref:security/pod_security_standards.adoc[Pod Security Standards Documentation] for the default policy information for RKE2 v1.25 and higher.
 ====
 
 == Pod Security Policies
