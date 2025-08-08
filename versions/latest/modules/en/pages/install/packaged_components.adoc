@@ -1,4 +1,6 @@
 = Managing Packaged Components
+:revdate: 2025-08-06
+:page-revdate: {revdate}
 
 == Auto-Deploying Manifests (AddOns)
 

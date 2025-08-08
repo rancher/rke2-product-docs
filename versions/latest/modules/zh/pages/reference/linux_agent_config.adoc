@@ -1,4 +1,6 @@
 = Agent 配置参考
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 本文提供了可用于配置 RKE2 Agent 的所有参数的参考。请注意，这些内容引用了命令行参数，但配置 RKE2 的最佳方法是使用xref:../install/configuration.adoc#配置文件[配置文件]。
 

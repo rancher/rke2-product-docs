@@ -1,4 +1,6 @@
 = 下一代 Kubernetes 发行版剖析
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 :sidebar_label: 架构
 :weight: 204
 

@@ -1,4 +1,6 @@
 = Metrics
+:revdate: 2025-07-22
+:page-revdate: {revdate}
 
 RKE2 provides metrics for monitoring the health and performance of the cluster.
 

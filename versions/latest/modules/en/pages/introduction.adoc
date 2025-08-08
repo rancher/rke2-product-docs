@@ -1,4 +1,6 @@
 = Introduction
+:revdate: 2025-07-10
+:page-revdate: {revdate}
 
 image::logo-horizontal-rke2.svg[RKE2 Logo, 346,111]
 

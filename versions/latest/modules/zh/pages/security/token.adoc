@@ -1,4 +1,6 @@
 = Token Management
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 == Server Token Rotation
 

@@ -1,4 +1,6 @@
 = Requirements
+:revdate: 2025-08-06
+:page-revdate: {revdate}
 
 RKE2 is very lightweight, but has some minimum requirements as outlined below.
 

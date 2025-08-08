@@ -1,4 +1,6 @@
 = Multus and SR-IOV
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 == Using Multus
 

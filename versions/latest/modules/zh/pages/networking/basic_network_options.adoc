@@ -1,4 +1,6 @@
 = Network Options
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 RKE2 requires a CNI plugin to connect pods and services. The Canal CNI plugin is the default but all CNI plugins are supported. All CNI
 plugins get installed via a helm chart after the main components are up and running and can be customized by modifying the helm chart options.

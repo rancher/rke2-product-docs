@@ -1,4 +1,6 @@
 = 高可用
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 本文介绍了如何安装高可用 (HA) 的 RKE2 集群。一个高可用的 RKE2 集群由以下部分组成：
 

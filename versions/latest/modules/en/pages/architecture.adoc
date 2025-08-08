@@ -1,4 +1,6 @@
 = Anatomy of a Next Generation Kubernetes Distribution
+:revdate: 2025-07-10
+:page-revdate: {revdate}
 
 == Architecture Overview
 

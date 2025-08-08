@@ -1,4 +1,6 @@
 = SELinux
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 RKE2 可以在支持 SELinux 的系统上运行，这是安装在 CentOS/RHEL 7 & 8 时的默认设置。
 支持该设置的link:https://github.com/rancher/rke2-selinux[策略]是 https://github.com/containers/container-selinux[container-selinux] 策略的一个特殊版本，用于 containerd。它解释了 containerd 安装在非标准位置的原因，以及为什么使用持久和短暂状态。

@@ -1,4 +1,6 @@
 = Quick Start
+:revdate: 2025-08-06
+:page-revdate: {revdate}
 
 This guide will help you quickly launch a cluster with default options.
 ____

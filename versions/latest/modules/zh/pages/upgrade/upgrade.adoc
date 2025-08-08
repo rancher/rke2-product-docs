@@ -1,4 +1,6 @@
 = 升级 {product-name} 集群
+:revdate: 2024-09-27
+:page-revdate: {revdate}
 
 本节将介绍如何升级 {product-name} 集群。
 

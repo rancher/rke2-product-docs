@@ -1,4 +1,6 @@
 = Networking Services
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 This page explains how CoreDNS and the Nginx-Ingress controller work within RKE2.
 

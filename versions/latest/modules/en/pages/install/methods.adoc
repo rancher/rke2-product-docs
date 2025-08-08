@@ -1,4 +1,6 @@
 = Installation Methods
+:revdate: 2025-08-06
+:page-revdate: {revdate}
 
 [IMPORTANT] 
 ====
