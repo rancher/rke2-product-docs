@@ -1,4 +1,6 @@
 = 子命令
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 RKE2 二进制文件包含多个子命令。本文将介绍它们的选项。
 

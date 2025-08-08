@@ -1,4 +1,6 @@
 = v1.24.X
+:revdate: 2025-05-06
+:page-revdate: {revdate}
 
 [CAUTION]
 .Upgrade Notice
