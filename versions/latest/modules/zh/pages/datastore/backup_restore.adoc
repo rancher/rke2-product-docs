@@ -1,4 +1,4 @@
-= Etcd 备份与恢复
+= 备份与恢复
 :revdate: 2025-07-09
 :page-revdate: {revdate}
 
@@ -15,7 +15,7 @@
 
 快照目录默认为 `/var/lib/rancher/rke2/server/db/snapshots`。
 
-要配置快照间隔或保留快照的数量，请参阅xref:backup_restore.adoc#_选项[选项]。
+要配置快照间隔或保留快照的数量，请参阅<<_选项,选项>>。
 
 在 RKE2 中，快照会存储在每个 etcd 节点上。如果你有多个 etcd 或 etcd + control plane 节点，你将拥有本地 etcd 快照的多个副本。
 

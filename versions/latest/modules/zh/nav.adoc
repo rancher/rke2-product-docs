@@ -33,13 +33,16 @@
 ** xref:security/certificates.adoc[]
 ** xref:security/token.adoc[]
 
+* Datastore
+** xref:datastore/embedded.adoc[]
+** xref:datastore/external.adoc[]
+** xref:datastore/backup_restore.adoc[]
+
 * xref:architecture.adoc[]
 
 * xref:cluster_access.adoc[]
 
 * xref:import_images.adoc[]
-
-* xref:backup_restore.adoc[]
 
 * Networking
 ** xref:networking/basic_network_options.adoc[]
