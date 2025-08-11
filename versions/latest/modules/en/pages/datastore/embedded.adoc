@@ -1,4 +1,6 @@
 = Embedded datastore
+:revdate: 2025-08-08
+:page-revdate: {revdate}
 
 Using an embedded datastore means leveraging a database that runs within the Kubernetes cluster, typically as a containerized service, e.g. etcd. This option simplifies deployment and could improve performance and security. The alternative is xref:datastore/external.adoc[external databases].
 

@@ -1,4 +1,6 @@
 = External Datastore
+:revdate: 2025-08-08
+:page-revdate: {revdate}
 
 Using an external datastore means leveraging a database that resides outside the Kubernetes cluster. Instead of being contained within the cluster, Kubernetes access the external datastore over the network. This approach could be common for organizations with existing database infrastructure or those who have more experience operating an enterprise-grade SQL database like MySQL or PostgreSQL. The project https://github.com/k3s-io/kine[kine] is used for SQL databases. The alternative to external datastore is xref:datastore/embedded.adoc[embedded datastore].
 
