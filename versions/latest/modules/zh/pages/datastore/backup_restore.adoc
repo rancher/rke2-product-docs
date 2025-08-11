@@ -1,6 +1,7 @@
 = 备份与恢复
 :revdate: 2025-07-09
 :page-revdate: {revdate}
+:page-aliases: backup_restore.adoc
 
 在本节中，你将学习如何创建 RKE2 集群数据的备份以及如何使用备份恢复集群。
 
