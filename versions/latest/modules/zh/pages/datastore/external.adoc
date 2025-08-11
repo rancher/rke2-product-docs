@@ -104,7 +104,7 @@ You will first need to create an external datastore for the cluster. See the <<D
 
 RKE2 requires two or more server nodes for this HA configuration. See the xref:install/requirements.adoc[Requirements] guide for minimum machine requirements.
 
-When starting the `rke2-server` service on these nodes, you must set the `datastore-endpoint` option in the config so that RKE2 knows how to connect to the external datastore. The `token` option can also be used to set a deterministic token when adding nodes. When empty, this token will be generated automatically for further use.
+When starting the `rke2-server` service on these nodes with `systemctl start rke2-server`, you must set the `datastore-endpoint` option in the config so that RKE2 knows how to connect to the external datastore. The `token` option can also be used to set a deterministic token when adding nodes. When empty, this token will be generated automatically for further use.
 
 For example, a `config.yaml` like the following could be used to configure RKE2 with a MySQL database as the external datastore and set a token:
 
@@ -129,7 +129,7 @@ Once you've started the `rke2-server` process on all server nodes, ensure that t
 
 === 3. Optional: Join Additional Server Nodes
 
-The same example config in step 2 can be used to join additional server nodes, where the token from the first node needs to be used.
+The same example config specified in step 2 can be used to join additional server nodes and the same token from the first node must be added to the config.
 
 If the first server node was started without the `token` option, the token value can be retrieved from any server already joined to the cluster:
 
@@ -138,7 +138,7 @@ If the first server node was started without the `token` option, the token value
 cat /var/lib/rancher/rke2/server/token
 ----
 
-then you can install the second server with the `server` address in the config with the step 2:
+Then you can join an additional server by adding the `server` address to the config and starting the the `rke2-server` process with `systemctl start rke2-server`.
 
 [,yaml]
 ----
