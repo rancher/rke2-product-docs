@@ -47,7 +47,7 @@ If you wish to use an external datastore such as PostgreSQL, MySQL, or etcd you 
 As mentioned, the format of the value passed to the `datastore-endpoint` parameter is dependent upon the datastore backend. The following details this format and functionality for each supported external datastore.
 
 [tabs]
-====
+======
 
 PostgreSQL::
 +
@@ -92,7 +92,7 @@ A typical `datastore-endpoint` option for etcd has the following format:
 
 The above assumes a typical three node etcd cluster. The parameter accepts comma separated etcd URLs.
 --
-====
+======
 
 == External database
 

@@ -92,7 +92,7 @@ A typical `datastore-endpoint` option for etcd has the following format:
 
 The above assumes a typical three node etcd cluster. The parameter accepts comma separated etcd URLs.
 --
-====
+======
 
 == External database
 
