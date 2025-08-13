@@ -261,6 +261,6 @@ We recommend configuring the database to take recurring snapshots.
 
 For details on taking database snapshots and restoring your database from them, refer to the official database documentation:
 
-* https://dev.mysql.com/doc/refman/8.0/en/replication-snapshot-method.html[Official MySQL documentation]
-* https://www.postgresql.org/docs/8.3/backup-dump.html[Official PostgreSQL documentation]
+* https://dev.mysql.com/doc/refman/en/replication-snapshot-method.html[Official MySQL documentation]
+* https://www.postgresql.org/docs/current/backup-dump.html[Official PostgreSQL documentation]
 * https://etcd.io/docs/latest/op-guide/recovery/[Official etcd documentation]
