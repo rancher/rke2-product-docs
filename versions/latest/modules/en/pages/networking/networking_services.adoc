@@ -126,7 +126,7 @@ To disable the NGINX ingress controller, start each server with the `disable: rk
 
 == Service Load Balancer
 
-Kubernetes Services can be of type LoadBalancer but it requires an external load balancer controller to implement things correctly and for example, provide the external-ip. RKE2 can optionally deploy a load balancer controller known as https://github.com/k3s-io/klipper-lb[ServiceLB] that uses available host ports. For more information, please read the following https://docs.k3s.io/networking/networking-services#service-load-balancer[link].
+Kubernetes Services can be of type LoadBalancer but it requires an external load balancer controller to implement things correctly and for example, provide the external-ip. RKE2 can optionally deploy a load balancer controller known as https://github.com/k3s-io/klipper-lb[ServiceLB] that uses available host ports. For more information, please read the following https://documentation.suse.com/cloudnative/k3s/latest/en/networking/networking-services.html#_service_load_balancer[link].
 
 [TIP]
 ====
