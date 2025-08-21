@@ -1,4 +1,6 @@
 = Windows Agent Configuration Reference
+:revdate: 2025-08-21
+:page-revdate: {revdate}
 
 This is a reference to all parameters that can be used to configure the Windows RKE2 agent. 
 
