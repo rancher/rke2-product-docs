@@ -7,7 +7,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Common
 
 |===
-| Flag | Description | Default | Enviroment Variable
+| Flag | Description | Default | Environment Variable
 
 | config
 | Path to config file
@@ -28,7 +28,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Cluster
 
 |===
-| Flag | Description | Enviroment Variable
+| Flag | Description | Environment Variable
 
 | token
 | Token to use for authentication
@@ -46,7 +46,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Node
 
 |===
-| Flag | Description | Default | Enviroment Variable
+| Flag | Description | Default | Environment Variable
 
 | node-name
 | Node name
@@ -128,7 +128,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Networking
 
 |===
-| Flag | Description | Enviroment Variable
+| Flag | Description | Environment Variable
 
 | node-ip
 | IPv4/IPv6 addresses to advertise for node
@@ -146,7 +146,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Components
 
 |===
-| Flag | Description | Enviroment Variable
+| Flag | Description | Environment Variable
 
 | kubelet-arg
 | Customized flag for kubelet process
@@ -220,7 +220,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Image
 
 |===
-| Flag | Description | Enviroment Variable
+| Flag | Description | Environment Variable
 
 | kube-apiserver-image
 | Override image to use for kube-apiserver
@@ -258,7 +258,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Cloud Provider
 
 |===
-| Flag | Description | Enviroment Variable
+| Flag | Description | Environment Variable
 
 | cloud-provider-name
 | Cloud provider name
@@ -272,7 +272,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Security
 
 |===
-| Flag | Description | Enviroment Variable
+| Flag | Description | Environment Variable
 
 | profile
 | Validate system configuration against the selected benchmark (valid items: cis, cis-1.23 (deprecated))
@@ -290,7 +290,7 @@ This is a reference to all parameters that can be used to configure the RKE2 age
 == Experimental
 
 |===
-| Flag | Description | Enviroment Variable
+| Flag | Description | Environment Variable
 
 | kubelet-path
 | Override kubelet binary path
