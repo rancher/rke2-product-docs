@@ -1,4 +1,7 @@
 = Network Options
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
 
 Kubernetes requires installation of one or more CNI Plugins to provide Pod networking. RKE2 bundles four primary CNI Plugins: Canal, Cilium, Calico, and Flannel. Only Calico and Flannel support Microsoft Windows. RKE2 also includes Multus as a secondary CNI Plugin, which must be enabled alongside a primary CNI Plugin. For more information, see the xref:networking/multus_sriov.adoc[Multus and SR-IOV] documentation.
 
