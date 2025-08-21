@@ -1,4 +1,6 @@
 = Windows 卸载
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 ____
 *注意*：卸载 RKE2 Windows Agent 会删除所有节点数据。

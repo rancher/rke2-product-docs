@@ -1,4 +1,6 @@
 = Upgrading {product-name} Clusters
+:revdate: 2024-09-27
+:page-revdate: {revdate}
 
 This section describes how to upgrade your {product-name} cluster.
 

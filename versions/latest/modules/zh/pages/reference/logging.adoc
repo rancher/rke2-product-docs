@@ -1,4 +1,6 @@
 = 日志
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 使用 systemd 运行的时候，日志将发送到 Journald，你可以使用 `journalctl -u rke2-server` 或 `journalctl -u rke2-agent` 进行查看。某些 systemd 配置也可能将组合日志写入 `/var/log/syslog`，在这种情况下，RKE2 日志也将在那里可用。
 

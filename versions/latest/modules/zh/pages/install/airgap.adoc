@@ -1,4 +1,6 @@
 = 离线安装
+:revdate: 2025-06-18
+:page-revdate: {revdate}
 
 {product-name} can be installed in an air-gapped environment with two different methods. You can either deploy via the `rke2-airgap-images` tarball artifact or by using a private registry.
 

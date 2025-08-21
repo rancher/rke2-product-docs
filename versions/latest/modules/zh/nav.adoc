@@ -6,10 +6,13 @@
 ** xref:install/configuration.adoc[]
 ** xref:install/ha.adoc[] 
 ** xref:install/methods.adoc[]
+** xref:install/private_registry.adoc[]
+** xref:install/registry_mirror.adoc[]
 ** xref:install/containerd_registry_configuration.adoc[]
 ** xref:install/airgap.adoc[]
 ** xref:install/windows_airgap.adoc[]
 ** xref:install/server_roles.adoc[]
+** xref:install/packaged_components.adoc[]
 ** xref:install/uninstall.adoc[]
 
 * Upgrades
@@ -30,11 +33,16 @@
 ** xref:security/certificates.adoc[]
 ** xref:security/token.adoc[]
 
+* Datastore
+** xref:datastore/embedded.adoc[]
+** xref:datastore/external.adoc[]
+** xref:datastore/backup_restore.adoc[]
+
 * xref:architecture.adoc[]
 
 * xref:cluster_access.adoc[]
 
-* xref:backup_restore.adoc[]
+* xref:import_images.adoc[]
 
 * Networking
 ** xref:networking/basic_network_options.adoc[]
@@ -49,6 +57,7 @@
 ** xref:reference/cli_tools.adoc[]
 ** xref:reference/linux_agent_config.adoc[]
 ** xref:reference/logging.adoc[]
+** xref:reference/metrics.adoc[]
 ** xref:reference/resource_profiling.adoc[]
 ** xref:reference/server_config.adoc[]
 ** xref:reference/windows_agent_config.adoc[]

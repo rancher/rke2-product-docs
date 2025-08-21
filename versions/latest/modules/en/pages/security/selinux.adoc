@@ -1,4 +1,6 @@
 = SELinux
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 RKE2 can be run on SELinux-enabled systems which is the default when installed on CentOS/RHEL 7 & 8. The https://github.com/rancher/rke2-selinux[policy] supporting this is a specialization of the https://github.com/containers/container-selinux[container-selinux] policy for containerd. It accounts for the non-standard location(s) which containerd is installed and places persistent and ephemeral state.
 

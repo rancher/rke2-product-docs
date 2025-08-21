@@ -1,4 +1,6 @@
 = CLI Tools
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 RKE2 ships several CLI tools to help with accessing and debugging the cluster. On startup they are extracted to `/var/lib/rancher/rke2/bin`.
 

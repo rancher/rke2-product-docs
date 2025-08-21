@@ -1,4 +1,6 @@
 = Advanced Options and Configuration
+:revdate: 2025-07-10
+:page-revdate: {revdate}
 
 This section contains advanced information describing the different ways you can run and manage RKE2.
 

@@ -1,4 +1,6 @@
 = Windows Agent 配置参考
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 本文提供了可用于配置 Windows RKE2 Agent 的所有参数的参考。
 
