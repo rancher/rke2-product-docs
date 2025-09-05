@@ -1,4 +1,6 @@
 = High Availability
+:revdate: 2025-08-06
+:page-revdate: {revdate}
 
 This section describes how to install a high availability (HA) RKE2 cluster. An HA RKE2 cluster consists of:
 
@@ -82,10 +84,9 @@ The NGINX Ingress and Metrics Server addons will *not* be deployed when all node
 Additional server nodes are launched much like the first, except that you must specify the `server` and `token` parameters so that they can successfully connect to the initial server node.
 
 [IMPORTANT]
-.Matching Flags
+.Matching Configuration
 ====
-It is important to match critical flags on your server nodes. For example, if you use the flag `--cluster-cidr=10.200.0.0/16` on your first server node, but don't set it on other server nodes, the nodes will fail to join. They will print errors such as: `failed to validate server configuration: critical configuration value mismatch.`
-See xref:../reference/server_config.adoc#_critical_configuration_values[Server Configuration] for more information on which flags must be set identically on server nodes.
+It is important to match critical flags on your server nodes. For example, if you use the flag `cluster-cidr: 10.200.0.0/16` on your first server node, but don't set it on other server nodes, the nodes will fail to join. They will print errors such as: `failed to validate server configuration: critical configuration value mismatch.` See xref:reference/server_config.adoc#_critical_configuration_values[Server Configuration] for more information on which flags must be set identically on server nodes.
 ====
 
 Example of RKE2 config file for additional server nodes:
@@ -101,7 +102,7 @@ tls-san:
 
 As mentioned previously, you must have an odd number of server nodes in total.
 
-If an etcd datastore is found on disk either because that node has either initialized or joined a cluster already, the argument `--server` is ignored.
+If an etcd datastore is found on disk either because that node has either initialized or joined a cluster already, the configuration `server: <XXX>` is ignored.
 
 == 4. Confirm cluster is functional
 
@@ -117,14 +118,14 @@ You should see your server nodes in the Ready state.
 
 [NOTE]
 ====
-By default, any `kubectl` command will require root user access, unless `RKE2_KUBECONFIG_MODE` override is provided. Read more about it in https://docs.rke2.io/cluster_access[cluster access page].
+By default, any `kubectl` command will require root user access, unless `RKE2_KUBECONFIG_MODE` override is provided. Read more about it in xref:cluster_access.adoc[cluster access page].
 ====
 
 == 5. Optional: Join Agent Nodes
 
 Because RKE2 server nodes are schedulable by default, the minimum number of nodes for an HA RKE2 server cluster is three server nodes and zero agent nodes. To add nodes designated to run your apps and services, join agent nodes to your cluster.
 
-Joining agent nodes in an HA cluster is the same as xref:./quickstart.adoc#_linux_agent_worker_node_installation[joining agent nodes in a single server cluster]. You just need to specify the URL the agent should register to and the token it should use.
+Joining agent nodes in an HA cluster is the same as xref:install/quickstart.adoc#_linux_agent_worker_node_installation[joining agent nodes in a single server cluster]. You just need to specify the URL the agent should register to and the token it should use.
 
 [,yaml]
 ----

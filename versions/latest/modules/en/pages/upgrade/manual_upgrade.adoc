@@ -1,4 +1,6 @@
 = Manual Upgrades
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 You can upgrade RKE2 by using the installation script, by manually installing the binary of the desired version, or by using rpm upgrades in case of rpm installation.
 

@@ -1,4 +1,6 @@
 = 自动升级
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 == 概述
 

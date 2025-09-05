@@ -1,4 +1,6 @@
 = 管理 Server 角色
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 默认情况下，启动 RKE2 将运行所有 control-plane 组件，包括 apiserver、controller-manager、scheduler 和 etcd。你可以通过禁用特定组件来将 control-plane 和 etcd 角色拆分到单独的节点上。
 

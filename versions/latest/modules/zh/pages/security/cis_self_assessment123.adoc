@@ -1,4 +1,6 @@
 = CIS 1.23 Self-Assessment Guide
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 == CIS Kubernetes Benchmark v1.23 - RKE2
 

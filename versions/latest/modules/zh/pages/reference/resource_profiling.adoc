@@ -1,4 +1,6 @@
 = Resource Profiling
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 This section captures the results of tests to determine minimum resource requirements for RKE2.
 

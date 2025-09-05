@@ -1,4 +1,6 @@
 = 要求
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 RKE2 非常轻量，但也有一些最低要求，如下所述。
 

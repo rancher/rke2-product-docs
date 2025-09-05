@@ -1,4 +1,6 @@
 = About Hardened Images
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 RKE2 hardened images are scanned for vulnerabilities at build time, and additional security protections have been added to decrease potential weaknesses:
 

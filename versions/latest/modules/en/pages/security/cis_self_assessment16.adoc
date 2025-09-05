@@ -1,4 +1,6 @@
 = CIS 1.6 Self-Assessment Guide
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 :doctype: book
 
 == CIS Kubernetes Benchmark v1.6 - RKE2 v1.20

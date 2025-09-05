@@ -1,13 +1,14 @@
 = Multus and SR-IOV
+:revdate: 2025-08-21
+:page-revdate: {revdate}
 
 == Using Multus
 
-https://github.com/k8snetworkplumbingwg/multus-cni[Multus CNI] is a CNI plugin that enables attaching multiple network interfaces to pods. Multus does not replace CNI plugins, instead it acts as a CNI plugin multiplexer. Multus is useful in certain use cases, especially when pods are network intensive and require extra network interfaces that support dataplane acceleration techniques such as SR-IOV.
+https://github.com/k8snetworkplumbingwg/multus-cni[Multus CNI] is a CNI Plugin that enables attaching multiple network interfaces to pods. Multus does not replace CNI Plugins, instead it acts as a CNI Plugin multiplexer. Multus is useful in certain use cases, especially when pods are network intensive and require extra network interfaces that support dataplane acceleration techniques such as SR-IOV.
 
-Multus can not be deployed standalone. It always requires at least one conventional CNI plugin that fulfills the Kubernetes cluster network requirements. That CNI plugin becomes the default for Multus, and will be used to provide the primary interface for all pods.
+Multus can not be deployed standalone. It always requires at least one conventional CNI Plugin that fulfills the Kubernetes cluster network requirements. That CNI Plugin becomes the default for Multus, and will be used to provide the primary interface for all pods.
 
-To enable Multus, add multus as the first list entry in the cni config key, followed by the name of the plugin you want to use alongside Multus (or `none` if you will provide your own default plugin). Note that multus must always be in the first position of the list. For example, to use Multus with canal as the default plugin you could specify:
-
+To enable Multus, specify `multus` as the first list entry in the `cni` configuration file key, followed by the name of the plugin you want to use alongside Multus (or `none` if you will provide your own default plugin). Note that multus must always be in the first position of the list. For example, to use Multus with Canal as the primary CNI Plugin:
 [,yaml]
 ----
 # /etc/rancher/rke2/config.yaml
@@ -15,8 +16,6 @@ cni:
 - multus
 - canal
 ----
-
-This can also be specified with command-line arguments, i.e. `--cni=multus,canal` or `--cni=multus --cni=canal`.
 
 For more information about Multus, refer to the https://github.com/k8snetworkplumbingwg/multus-cni/tree/master/docs[multus-cni] documentation.
 
@@ -42,9 +41,9 @@ spec:
 
 == Using Multus with the containernetworking plugins
 
-Any CNI plugin can be used as secondary CNI plugin for Multus to provide additional network interfaces attached to a pod. However, it is most common to use the CNI plugins maintained by the containernetworking team (bridge, host-device, macvlan, etc) as secondary CNI plugins for Multus. These containernetworking plugins are automatically deployed when installing Multus. For more information about these plugins, refer to the https://www.cni.dev/plugins/current[containernetworking plugins] documentation.
+Any CNI Plugin can be used as secondary CNI Plugin for Multus to provide additional network interfaces attached to a pod. However, it is most common to use the CNI Plugins maintained by the Kubernetes ContainerNetworking team (bridge, host-device, macvlan, etc) as secondary CNI Plugins for Multus. The Kubernetes ContainerNetworking team plugins are automatically deployed when installing Multus. For more information about these plugins, refer to the https://www.cni.dev/plugins/current[ContainerNetworking Plugins] documentation.
 
-To use any of these plugins, a proper NetworkAttachmentDefinition object will need to be created to define the configuration of the secondary network. The definition is then referenced by pod annotations, which Multus will use to provide extra interfaces to that pod. An example using the macvlan cni plugin with Multus is available https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md#storing-a-configuration-as-a-custom-resource[in the multus-cni repo].
+To use any of these plugins, a proper NetworkAttachmentDefinition object will need to be created to define the configuration of the secondary network. The definition is then referenced by pod annotations, which Multus will use to provide extra interfaces to that pod. An example using the `macvlan` CNI Pllugin with Multus is available https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md#storing-a-configuration-as-a-custom-resource[in the multus-cni repo].
 
 == Multus IPAM plugin options
 
@@ -57,7 +56,7 @@ host-local IPAM plugin allocates ip addresses out of a set of address ranges. It
 Multus DHCP daemon::
 +
 --
-Multus provides an optional daemonset to deploy the DHCP daemon required to run the https://www.cni.dev/plugins/current/ipam/dhcp/[DHCP IPAM plugin]. You can do this by using the following xref:../helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig]:
+Multus provides an optional daemonset to deploy the DHCP daemon required to run the https://www.cni.dev/plugins/current/ipam/dhcp/[DHCP IPAM plugin]. You can do this by using the following xref:helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig]:
 
 [,yaml]
 ----
@@ -85,7 +84,7 @@ You should write this file before starting RKE2.
 Whereabouts::
 +
 --
-https://github.com/k8snetworkplumbingwg/whereabouts[Whereabouts] is an IP Address Management (IPAM) CNI plugin that assigns IP addresses cluster-wide. RKE2 includes the option to use Whereabouts with Multus to manage the IP addresses of the additional interfaces created through Multus. In order to do this, you need to use xref:../helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig] to configure theMultus CNI to use Whereabouts. 
+https://github.com/k8snetworkplumbingwg/whereabouts[Whereabouts] is an IP Address Management (IPAM) CNI Plugin that assigns IP addresses cluster-wide. RKE2 includes the option to use Whereabouts with Multus to manage the IP addresses of the additional interfaces created through Multus. In order to do this, you need to use xref:helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig] to configure theMultus CNI to use Whereabouts. 
 
 You can do this by using the following HelmChartConfig:
 
@@ -115,13 +114,14 @@ You should write this file before starting RKE2.
 
 == Using Multus with SR-IOV
 
-Using the SR-IOV CNI with Multus can help with data-plane acceleration use cases, providing an extra interface in the pod that can achieve very high throughput. SR-IOV will not work in all environments, and there are several requirements that must be fulfilled to consider the node as SR-IOV capable:
+Using the SR-IOV CNI with Multus can help with data-plane acceleration use cases, providing an extra interface in the pod that can achieve very high throughput. SR-IOV will not work in all environments, and there are several requirements
+that must be fulfilled to consider the node as SR-IOV capable:
 
 * Physical NIC must support SR-IOV (e.g. by checking /sys/class/net/$NIC/device/sriov_totalvfs)
 * The host operating system must activate IOMMU virtualization
 * The host operating system includes drivers capable of doing sriov (e.g. i40e, vfio-pci, etc)
 
-The SR-IOV CNI plugin cannot be used as the default CNI plugin for Multus; it must be deployed alongside both Multus and a traditional CNI plugin. The SR-IOV CNI helm chart can be found in the `rancher-charts` Helm repo. For more information see https://ranchermanager.docs.rancher.com/pages-for-subheaders/helm-charts-in-rancher[Rancher Helm Charts documentation].
+The SR-IOV CNI Plugin cannot be used as the default CNI Plugin for Multus; it must be deployed alongside both Multus and a traditional CNI Plugin. The SR-IOV CNI helm chart can be found in the `rancher-charts` Helm repo. For more information see https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-admin/helm-charts-in-rancher/helm-charts-in-rancher.html[Rancher Helm Charts documentation].
 
 After installing the SR-IOV CNI chart, the SR-IOV operator will be deployed. Then, the user must specify what nodes in the cluster are SR-IOV capable by labeling them with `feature.node.kubernetes.io/network-sriov.capable=true`:
 
