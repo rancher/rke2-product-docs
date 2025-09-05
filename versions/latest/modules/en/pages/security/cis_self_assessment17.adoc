@@ -1817,7 +1817,7 @@ kube-scheduler-arg: - "bind-address=+++<IP>+++"
 
 == 2 Etcd Node Configuration
 
-==== 2.1 Ensure that the --cert-file and --key-file arguments are set as appropriate (Automated)
+=== 2.1 Ensure that the --cert-file and --key-file arguments are set as appropriate (Automated)
 
 **Result:** PASS
 
@@ -1841,7 +1841,7 @@ By default, RKE2 generates cert and key files for etcd. These are located in /va
 
 ======
 
-==== 2.2 Ensure that the --client-cert-auth argument is set to true (Automated)
+=== 2.2 Ensure that the --client-cert-auth argument is set to true (Automated)
 
 **Result:** PASS
 
@@ -1872,7 +1872,7 @@ By default, RKE2 sets the --client-cert-auth parameter to true. If this check fa
 
 ======
 
-==== 2.3 Ensure that the --auto-tls argument is not set to true (Automated)
+=== 2.3 Ensure that the --auto-tls argument is not set to true (Automated)
 
 **Result:** PASS
 
@@ -1903,7 +1903,7 @@ By default, RKE2 does not set the --auto-tls parameter. If this check fails, edi
 
 ======
 
-==== 2.4 Ensure that the --peer-cert-file and --peer-key-file arguments are set as appropriate (Automated)
+=== 2.4 Ensure that the --peer-cert-file and --peer-key-file arguments are set as appropriate (Automated)
 
 **Result:** PASS
 
@@ -1927,7 +1927,7 @@ By default, RKE2 generates peer cert and key files for etcd. These are located i
 
 ======
 
-==== 2.5 Ensure that the --peer-client-cert-auth argument is set to true (Automated)
+=== 2.5 Ensure that the --peer-client-cert-auth argument is set to true (Automated)
 
 **Result:** PASS
 
@@ -1958,7 +1958,7 @@ By default, RKE2 sets the --peer-cert-auth parameter to true. If this check fail
 
 ======
 
-==== 2.6 Ensure that the --peer-auto-tls argument is not set to true (Automated)
+=== 2.6 Ensure that the --peer-auto-tls argument is not set to true (Automated)
 
 **Result:** PASS
 
@@ -1989,7 +1989,7 @@ By default, RKE2 does not set the --peer-auto-tls parameter. If this check fails
 
 ======
 
-==== 2.7 Ensure that a unique Certificate Authority is used for etcd (Automated)
+=== 2.7 Ensure that a unique Certificate Authority is used for etcd (Automated)
 
 **Result:** PASS
 
