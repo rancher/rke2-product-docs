@@ -300,7 +300,7 @@ cat /var/lib/rancher/rke2/server/token
 * Use buildkit https://github.com/rancher/rke2/pull/7130[(#7130)]
 * Fix publish windows runtime https://github.com/rancher/rke2/pull/7144[(#7144)]
 
-== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -384,7 +384,7 @@ cat /var/lib/rancher/rke2/server/token
 * September K8s patch https://github.com/rancher/rke2/pull/6809[(#6809)]
 * Update cilium e2e test https://github.com/rancher/rke2/pull/6818[(#6818)]
 
-== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
