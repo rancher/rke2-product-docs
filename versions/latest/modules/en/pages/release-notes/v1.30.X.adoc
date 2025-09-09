@@ -286,7 +286,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.14+rke2r1:
+=== Changes since v1.30.14+rke2r1
 
 * Use custom golang setup for integration tests https://github.com/rancher/rke2/pull/8453[(#8453)]
 * Update Canal chart to latest version https://github.com/rancher/rke2/pull/8532[(#8532)]
@@ -373,7 +373,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.13+rke2r1:
+=== Changes since v1.30.13+rke2r1
 
 * June 2025 CNI bumps https://github.com/rancher/rke2/pull/8322[(#8322)]
 * Windows: Allow for silent/non confirmation use of uninstall.ps1 (#8147) https://github.com/rancher/rke2/pull/8344[(#8344)]
@@ -455,7 +455,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.12+rke2r1:
+=== Changes since v1.30.12+rke2r1
 
 * Upload prime ribs assets https://github.com/rancher/rke2/pull/8181[(#8181)]
 * Feat: bump harvester-cloud-provider to v0.2.10 https://github.com/rancher/rke2/pull/8185[(#8185)]
@@ -537,7 +537,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.11+rke2r1:
+=== Changes since v1.30.11+rke2r1
 
 * Bump multus version https://github.com/rancher/rke2/pull/7991[(#7991)]
 * Update CNI charts https://github.com/rancher/rke2/pull/7998[(#7998)]
@@ -618,7 +618,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.10+rke2r1:
+=== Changes since v1.30.10+rke2r1
 
 * Update to cilium `v1.17.1` https://github.com/rancher/rke2/pull/7851[(#7851)]
 * Bump coredns to v1.39.100 https://github.com/rancher/rke2/pull/7860[(#7860)]
@@ -695,7 +695,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.9+rke2r1:
+=== Changes since v1.30.9+rke2r1
 
 * Update to cilium `v1.16.6` https://github.com/rancher/rke2/pull/7682[(#7682)]
 * Charts: bump Harvester CSI Driver v0.1.23 https://github.com/rancher/rke2/pull/7669[(#7669)]
@@ -780,7 +780,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.8+rke2r1:
+=== Changes since v1.30.8+rke2r1
 
 * Charts: bump Harvester CSI Driver v0.1.22 https://github.com/rancher/rke2/pull/7472[(#7472)]
  ** Bump Harvester-csi-driver v0.1.22
@@ -865,7 +865,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.7+rke2r1:
+=== Changes since v1.30.7+rke2r1
 
 * Update to Cilium v1.16.4 https://github.com/rancher/rke2/pull/7326[(#7326)]
 * Updated Calico version to `v3.29.1` https://github.com/rancher/rke2/pull/7352[(#7352)]
@@ -942,7 +942,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.6+rke2r1:
+=== Changes since v1.30.6+rke2r1
 
 * Backport E2E GHA fixes https://github.com/rancher/rke2/pull/7176[(#7176)]
 * Bump multus, cilium and flannel charts https://github.com/rancher/rke2/pull/7199[(#7199)]
@@ -1033,7 +1033,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.5+rke2r1:
+=== Changes since v1.30.5+rke2r1
 
 * Fixed windows CNI setup in case cni none is configured https://github.com/rancher/rke2/pull/6832[(#6832)]
 * Fix e2e test bug in mixedosbgp https://github.com/rancher/rke2/pull/6844[(#6844)]
@@ -1130,7 +1130,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.30.4+rke2r1:
+=== Changes since v1.30.4+rke2r1
 
 * Update to cilium v1.16.1 https://github.com/rancher/rke2/pull/6653[(#6653)]
 * Bump canal to v3.28.1-build20240827 https://github.com/rancher/rke2/pull/6670[(#6670)]

@@ -270,7 +270,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.28.14+rke2r1:
+=== Changes since v1.28.14+rke2r1
 
 * Fixed windows CNI setup in case cni none is configured https://github.com/rancher/rke2/pull/6834[(#6834)]
 * Bump Calico v3.28.2 https://github.com/rancher/rke2/pull/6881[(#6881)]
@@ -365,7 +365,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
-=== Changes since v1.28.13+rke2r1:
+=== Changes since v1.28.13+rke2r1
 
 * Update cilium v1.16.1 https://github.com/rancher/rke2/pull/6651[(#6651)]
 * Bump canal to v3.28.1-build20240827 https://github.com/rancher/rke2/pull/6674[(#6674)]
