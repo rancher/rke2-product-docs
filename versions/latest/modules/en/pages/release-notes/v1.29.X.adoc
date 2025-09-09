@@ -915,7 +915,7 @@ cat /var/lib/rancher/rke2/server/token
 * Fixed Flannel chart to rightly disable nft https://github.com/rancher/rke2/pull/6608[(#6608)]
 * Bump ingress-nginx to v1.10.4-hardened2 https://github.com/rancher/rke2/pull/6612[(#6612)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -993,7 +993,7 @@ cat /var/lib/rancher/rke2/server/token
 * Add manifest pipeline for rke2-runtime docker image https://github.com/rancher/rke2/pull/6399[(#6399)]
 * Fix dispatch script https://github.com/rancher/rke2/pull/6407[(#6407)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1100,7 +1100,7 @@ cat /var/lib/rancher/rke2/server/token
 * Reinstate newest rke2-ingress-nginx https://github.com/rancher/rke2/pull/6254[(#6254)]
 * Update calico image to v3.28.0-build20240625 https://github.com/rancher/rke2/pull/6258[(#6258)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1181,7 +1181,7 @@ cat /var/lib/rancher/rke2/server/token
 * Windows changes https://github.com/rancher/rke2/pull/5919[(#5919)]
 * Cilium version bump to 1.15.5 https://github.com/rancher/rke2/pull/5940[(#5940)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1288,7 +1288,7 @@ cat /var/lib/rancher/rke2/server/token
 * Use the newer Flannel chart https://github.com/rancher/rke2/pull/5842[(#5842)]
 * Bump metrics-server chart to restore legacy label https://github.com/rancher/rke2/pull/5849[(#5849)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1381,7 +1381,7 @@ cat /var/lib/rancher/rke2/server/token
 * Update k8s to 1.29.3 and Go https://github.com/rancher/rke2/pull/5624[(#5624)]
 * Actually bump k8s https://github.com/rancher/rke2/pull/5627[(#5627)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1482,7 +1482,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump wharfie to v0.6.6 https://github.com/rancher/rke2/pull/5517[(#5517)]
  ** Bump wharfie to v0.6.6 to add support for bare hostname as endpoint, fix unnecessary namespace param inclusion
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1572,7 +1572,7 @@ cat /var/lib/rancher/rke2/server/token
 * Update base image https://github.com/rancher/rke2/pull/5305[(#5305)]
 * Bump K3s and runc versions for v1.29 https://github.com/rancher/rke2/pull/5349[(#5349)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1644,7 +1644,7 @@ for more information.
 * Bumped containerd/runc to v1.7.10/v1.1.10 (https://github.com/rancher/rke2/pull/5117[#5117])
 * Update stable channel to v1.26.11+rke2r1 (https://github.com/rancher/rke2/pull/5099[#5099])
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version

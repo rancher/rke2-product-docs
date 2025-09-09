@@ -1236,7 +1236,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump ingress-nginx to v1.10.4-hardened2 https://github.com/rancher/rke2/pull/6611[(#6611)]
 * Fix traefik netpol port names https://github.com/rancher/rke2/pull/6620[(#6620)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1317,7 +1317,7 @@ cat /var/lib/rancher/rke2/server/token
 * Fix dispatch script https://github.com/rancher/rke2/pull/6406[(#6406)]
 * Add traefik airgap image tarball https://github.com/rancher/rke2/pull/6441[(#6441)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1439,7 +1439,7 @@ cat /var/lib/rancher/rke2/server/token
 * Pass install_type as a string in the mixedos e2e test https://github.com/rancher/rke2/pull/6251[(#6251)]
 * Update calico image to v3.28.0-build20240625 https://github.com/rancher/rke2/pull/6257[(#6257)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1515,7 +1515,7 @@ cat /var/lib/rancher/rke2/server/token
 * Windows changes https://github.com/rancher/rke2/pull/5918[(#5918)]
 * Cilium version bump to 1.15.5 https://github.com/rancher/rke2/pull/5935[(#5935)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
@@ -1597,7 +1597,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump k3s to deprecate pod-infra-container-image https://github.com/rancher/rke2/pull/5900[(#5900)]
 * Fix mixedosbgp e2e test https://github.com/rancher/rke2/pull/5886[(#5886)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version

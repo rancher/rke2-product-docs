@@ -1314,7 +1314,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump K8s to v1.31.0-k3s3 https://github.com/rancher/rke2/pull/6665[(#6665)]
 * Feat: bump harvester-cloud-provider to v0.2.6 https://github.com/rancher/rke2/pull/6667[(#6667)]
 
-==== Charts Versions
+=== Charts Versions
 
 |===
 | Component | Version
