@@ -2,7 +2,7 @@
 
 == Client and Server Certificates
 
-RKE2 client and server certificates are valid for 365 days from their date of issuance. Any certificates that are expired or within 120 days to expire are automatically renewed every time RKE2 starts. This renewal extends the lifetime of the existing certs. If you require new certificates and keys, use the <<Rotating Client and Server Certificates Manually,RKE2 CLI>>.
+RKE2 client and server certificates are valid for 365 days from their date of issuance. Any certificates that are expired or within 120 days to expire are automatically renewed every time RKE2 starts. This renewal extends the lifetime of the existing certificates. If you require new certificates and keys, use the <<Rotating Client and Server Certificates Manually,RKE2 CLI>>.
 
 [NOTE] 
 .CERTIFICATE EXPIRATION WARNING
@@ -18,7 +18,7 @@ Output format is configurable as of the January 2025 releases: v1.32.0+rke2r1, v
 Prior to the May 2025 releases: v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1, alerts and rotation were triggered at 90 days, instead of 120 days.
 ====
 
-=== Checking Expiration Dsates
+=== Checking Expiration Dates
 
 [NOTE] 
 .Version Gate
@@ -52,13 +52,14 @@ In case of unexpected output, please use `--debug` flag to get more information 
 
 === Rotating Client and Server Certificates Manually
 
-When rotating client and server certificates manually, rotate certs on each node in the following order:
+When rotating client and server certificates manually, rotate certificates on each node in the following order:
 
 * etcd servers
 * control-plane servers
 * agents
 
-For each node, stop the server, use the `rke2 certificate rotate` subcommand to rotate the certs, then start the server once more; as in the following example:
+For each node, stop the server, use the `rke2 certificate rotate` subcommand to rotate the certificates, then start the server once more; as in the following example:
+
 [,bash]
 ----
 # Stop RKE2
