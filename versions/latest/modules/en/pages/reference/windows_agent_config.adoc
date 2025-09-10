@@ -85,7 +85,6 @@ This Windows Agent Configuration Reference was last updated using the v1.22.5+rk
 rke2-windows-amd64.exe version v1.22.5+rke2r2 (b61d4b3cb989b0380aae97fceb9a3e45a35ee2b9)
 go version go1.16.10b7
 ----
-
 ====
 
 == Windows RKE2 Agent Calico env variables

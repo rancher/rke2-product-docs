@@ -26,7 +26,7 @@ The resource tests were intended to address the following problem statements:
 
 The tested components are:
 
-* RKE2 v1.27.12 with all packaged components enabled, canal as the CNI
+* RKE2 v1.27.12 with all packaged components enabled, Canal as the CNI
 * https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[Kubernetes Example Nginx Deployment]
 
 === Methodology
