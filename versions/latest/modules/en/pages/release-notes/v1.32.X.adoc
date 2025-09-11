@@ -242,7 +242,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== v1.32.7+rke2r1
+== Release v1.32.7+rke2r1
 
 // v1.32.7+rke2r1
 
@@ -652,7 +652,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== v1.32.2+rke2r1
+== Release v1.32.2+rke2r1
 
 // v1.32.2+rke2r1
 
@@ -741,7 +741,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== v1.32.1+rke2r1
+== Release v1.32.1+rke2r1
 
 // v1.32.1+rke2r1
 
