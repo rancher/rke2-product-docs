@@ -1,11 +1,13 @@
 = 默认 Pod 安全标准
+:revdate: 2025-07-17
+:page-revdate: {revdate}
 
 本文档描述了 RKE2 如何配置 `PodSecurityStandards` 和 `NetworkPolicies` 来确保默认安全，同时还为操作人员提供了最大的配置灵活性。
 
 [IMPORTANT]
 .版本
 ====
-本文档适用于 RKE2 v1.25 及更新版本，请参阅 xref:./pod_security_policies.adoc[Pod 安全策略文档]了解 RKE2 v1.24 及更低版本的默认策略。
+本文档适用于 RKE2 v1.25 及更新版本，请参阅 xref:security/pod_security_policies.adoc[Pod 安全策略文档]了解 RKE2 v1.24 及更低版本的默认策略。
 ====
 
 

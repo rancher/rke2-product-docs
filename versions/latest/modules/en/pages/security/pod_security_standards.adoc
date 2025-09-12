@@ -1,4 +1,6 @@
 = Default Pod Security Standards
+:revdate: 2025-07-17
+:page-revdate: {revdate}
 
 This document describes how RKE2 configures `PodSecurityStandards` and `NetworkPolicies` in order to be secure-by-default while also providing operators with maximum configuration flexibility.
 

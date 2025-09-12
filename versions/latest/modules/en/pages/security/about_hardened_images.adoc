@@ -1,4 +1,6 @@
 = About Hardened Images
+:revdate: 2025-07-17
+:page-revdate: {revdate}
 
 {product-name} hardened images are scanned for vulnerabilities at build time, and additional security protections have been added to decrease potential weaknesses:
 

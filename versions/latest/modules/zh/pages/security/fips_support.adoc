@@ -1,4 +1,6 @@
 = FIPS 140-2 启用
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 FIPS 140-2 是美国联邦政府的安全标准，用于批准加密模块。本文解释了如何使用 FIPS 验证的加密库构建 RKE2。
 

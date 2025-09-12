@@ -1,4 +1,6 @@
 = CIS Hardening Guide
+:revdate: 2025-07-17
+:page-revdate: {revdate}
 
 This document provides prescriptive guidance for hardening a production installation of {product-name}. It outlines the configurations and controls required to address Kubernetes benchmark controls from the Center for Internet Security (CIS).
 

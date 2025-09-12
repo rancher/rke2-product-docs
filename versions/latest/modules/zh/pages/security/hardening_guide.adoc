@@ -1,8 +1,14 @@
 = CIS Hardening Guide
+:revdate: 2025-07-17
+:page-revdate: {revdate}
 
-This document provides prescriptive guidance for hardening a production installation of RKE2. It outlines the configurations and controls required to address Kubernetes benchmark controls from the Center for Internet Security (CIS).
+This document provides prescriptive guidance for hardening a production installation of {product-name}. It outlines the configurations and controls required to address Kubernetes benchmark controls from the Center for Internet Security (CIS).
 
-For more details about evaluating a hardened cluster against the official CIS benchmark, refer to the CIS Benchmark xref:./cis_self_assessment123.adoc[Self-Assessment Guide v1.23], or xref:./cis_self_assessment16.adoc[Self-Assessment Guide v1.6] for RKE2 versions prior to v1.25.
+For more details about evaluating a hardened cluster against the official CIS benchmark, refer to the appropriate CIS Self-Assessment Guide:
+
+* xref:security/cis_self_assessment18.adoc[CIS Self-Assessment Guide v1.8] for RKE2 v1.27 and newer
+* xref:security/cis_self_assessment18.adoc[CIS Self-Assessment Guide v1.8] for RKE2 v1.26
+* xref:security/cis_self_assessment17.adoc[CIS Self-Assessment Guide v1.7] for RKE2 v1.25
 
 RKE2 is designed to be "hardened by default" and pass the majority of the Kubernetes CIS controls without modification. There are a few notable exceptions to this that require manual intervention to fully pass the CIS Benchmark:
 
@@ -75,85 +81,98 @@ On some Linux distributions, the `useradd` command will not create a group. The 
 sudo useradd -r -c "etcd user" -s /sbin/nologin -M etcd -U
 ----
 
-== RKE2 configuration
+[NOTE]
+====
+The `etcd` user and group must be defined in the traditional database files at /etc/passwd and /etc/group. Golang's stdlib `os/user` package does not support external user databases such as NSS or systemd userdb (varlink).
+====
+
+== RKE2 Configuration
 
 [tabs]
-=====
+======
 v1.25 and Newer::
 +
+--
 *Generic CIS configuration*
-+
+
 [NOTE]
 ==== 
 Version Gate Available with October 2023 releases (v1.25.15+rke2r1, v1.26.10+rke2r1, v1.27.7+rke2r1, v1.28.3+rke2r1)
 ====
-+
+
 [,yaml]
 ----
 profile: "cis"
 ----
-+
-Using the generic `cis` profile will ensure that the cluster passes the CIS benchmark (rke2-cis-1.XX-profile-hardened) associated with the Kubernetes version that RKE2 is running. For example, RKE2 v1.28.XX with the `profile: cis` will pass the `rke2-cis-1.7-profile-hardened` in Rancher. 
-+
+
+Using the generic `cis` profile will ensure that the cluster passes the CIS benchmark (rke2-cis-1.XX-profile-hardened) associated with the Kubernetes version that RKE2 is running. For example, RKE2 v1.26.XX with the `profile: cis` will pass the `rke2-cis-1.8-profile-hardened` in Rancher. 
+
 Use of the generic `cis` profile ensures that upgrades to RKE2 do not require a change to existing configuration. Whatever changes are necessary to pass applicable CIS benchmark will be automatically applied. 
-+
+
 A rough mapping of RKE2 versions to CIS benchmark versions is as follows: 
-+
+
 |===
-| CIS Benchmark | Applicable RKE2 Minors | Profile Flag
+| RKE2 Minors | Applicable CIS Benchmark | Profile Flag 
+| 1.27+ 
+| 1.9 
+| `cis` 
 
-| 1.5
-| 1.15-1.18
-| `cis-1.5`
-
-| 1.6
-| 1.19-1.22
-| `cis-1.6`
-
-| 1.23
-| 1.23
-| `cis-1.23`
-
-| 1.24
-| 1.24
-| `cis-1.23`
-
-| 1.7
-| 1.25-1.28
+| 1.26 
+| 1.8 
 | `cis-1.23`, `cis`
 
-| 1.8
-| 1.29+
-| `cis`
-|=== 
-+
-**CIS v1.23 configuration**
-+
-For older versions of 1.25 and 1.26, the `cis-1.23` profile is still available. This profile will ensure that the cluster passes the CIS v1.7 benchmark (rke2-cis-1.7-profile-hardened) available in Rancher. ```yaml profile: "cis-1.23" ``` 
+| 1.25 
+| 1.7 
+| `cis-1.23`, `cis`
+
+| 1.24 
+| 1.24 
+| `cis-1.23`
+
+| 1.23 
+| 1.23 
+| `cis-1.23`
+
+| 1.19-1.22 
+| 1.6 
+| `cis-1.6` 
+|===
+--
 
 v1.24 and Older::
 +
-Below is the minimum necessary configuration needed for hardening RKE2 to pass CIS v1.6 hardened profile `rke2-cis-1.6-profile-hardened` available in Rancher. ```yaml profile: "cis-1.6" # CIS 4.2.6, 5.2.1, 5.2.8, 5.2.9, 5.3.2 ```
-=====
+--
+[,yaml]
+----
+profile: "cis-1.23"
+----
 
 The configuration file must be named `config.yaml` and placed in `/etc/rancher/rke2`. The directory needs to be created prior to installing RKE2.
 
 When the `profile` flag is set it does the following:
+--
+======
 
 [tabs]
-====
+======
 v1.25 and Newer::
 +
+--
 . Checks that host-level requirements have been met. If they haven't, RKE2 will exit with a fatal error describing the unmet requirements.
+. Configures the etcd static pod to run as the etcd user and group, as explained in the https://docs.rke2.io/security/hardening_guide#etcd-is-configured-properly[etcd hardening guide].
 . Applies network policies that allow the cluster to pass associated controls.
-. Configures the Pod Security Admission Controller to enforce restricted mode in all namespaces, with the exception of the `kube-system`, `cis-operator-system`, and `tigera-operator` namespaces. These namespaces are exempted to allow system pods to run without restrictions, which is required for proper operation of the cluster. For more information about the PSA configuration, see the default xref:./pod_security_standards.adoc#_pod_security_standards[Pod Security Admission configurations]. For more information about Pod Security Standards, please refer to the https://kubernetes.io/docs/concepts/security/pod-security-standards/[official documentation]. 
+. Applies more restrictive file permissions (600 vs 644) to agent manifests and other configurations files.
+. Configures the Pod Security Admission Controller to enforce restricted mode in all namespaces, with the exception of the `kube-system`, `cis-operator-system`, and `tigera-operator` namespaces. These namespaces are exempted to allow system pods to run without restrictions, which is required for proper operation of the cluster. For more information about the PSA configuration, see the default xref:security/pod_security_standards.adoc#_pod_security_standards[Pod Security Admission configurations]. For more information about Pod Security Standards, please refer to the https://kubernetes.io/docs/concepts/security/pod-security-standards/[official documentation].
+--
 
 v1.24 and Older::
 +
+--
 . Checks that host-level requirements have been met. If they haven't, RKE2 will exit with a fatal error describing the unmet requirements.
 . Applies network policies that allow the cluster to pass associated controls.
 . Configures runtime pod security policies that allow the cluster to pass associated controls.
-====
+--
+======
 
 == Kubernetes runtime requirements
 
@@ -163,18 +182,8 @@ The runtime requirements to pass the CIS Benchmark are centered around pod secur
 
 RKE2 always runs with some amount of pod security.
 
-On v1.25 and newer, https://kubernetes.io/docs/concepts/security/pod-security-admission/[Pod Security Admission (PSA)] are used for pod security. A default Pod Security Admission config file will be added to the cluster upon startup as follows: 
-
-With the `cis`/`cis-1.23` profile:
-
-* RKE2 will apply a restricted pod security standard via a configuration file which will enforce `restricted` mode throughout the cluster with an exception to the `kube-system`, `cis-operator-system` and `tigera-operator` namespaces to ensure successful operation of system pods. 
-
-Without the `cis`/`cis-1.23` profile:
-
-* RKE2 will apply a nonrestricted pod security standard via a configuration file which will enforce `privileged` mode throughout the cluster which allows a completely unrestricted mode to all pods in the cluster. See the [Pod Security Policies](pod_security_standards.md) page for more details. 
-
 [tabs]
-====
+======
 v1.25 and Newer::
 +
 --
@@ -186,7 +195,7 @@ With the `cis`/`cis-1.23` profile:
 
 Without the `cis`/`cis-1.23` profile:
 
-* RKE2 will apply a nonrestricted pod security standard via a configuration file which will enforce `privileged` mode throughout the cluster which allows a completely unrestricted mode to all pods in the cluster. See the [Pod Security Policies](pod_security_standards.md) page for more details. 
+* RKE2 will apply a nonrestricted pod security standard via a configuration file which will enforce `privileged` mode throughout the cluster which allows a completely unrestricted mode to all pods in the cluster. See the xref:security/pod_security_standards.adoc[Pod Security Policies] page for more details. 
 --
 
 v1.24 and Older::
@@ -200,9 +209,9 @@ With the `cis-1.6` profile:
 
 Without the `cis-1.6` profile:
 
-* RKE2 will put an unrestricted policy in place that allows Kubernetes to run as though the `PodSecurityPolicy` admission controller was not enabled. See the [Pod Security Policies](pod_security_policies.md) page for more details.
+* RKE2 will put an unrestricted policy in place that allows Kubernetes to run as though the `PodSecurityPolicy` admission controller was not enabled. See the xref:security/pod_security_policies.adoc[Pod Security Policies] page for more details.
 --
-====
+======
 
 [NOTE]
 ====
@@ -245,7 +254,7 @@ automountServiceAccountToken: false
 
 RKE2 will automatically set the value correctly for kube-system, cis-operator-system, kube-node-lease and tigera-operator namespaces.
 
-[CAUTION]
+[WARNING]
 .Operator Intervention Required
 ====
 
@@ -339,24 +348,6 @@ The `default` service account should be configured such that it does not provide
 
 This can be remediated by updating the `automountServiceAccountToken` field to `false` for the `default` service account in each namespace.
 
-==== Remediation
-
-You can manually update this field on service accounts in your cluster to pass the control as described <<Configure `default` service account,above>>.
-
-=== Control 5.3.2
-
-Ensure that all Namespaces have Network Policies defined
-
-==== Rationale
-
-Running different applications on the same Kubernetes cluster creates a risk of one compromised application attacking a neighboring application. Network segmentation is important to ensure that containers can communicate only with those they are supposed to. A network policy is a specification of how selections of pods are allowed to communicate with each other and other network endpoints.
-
-Network Policies are namespace scoped. When a network policy is introduced to a given namespace, all traffic not allowed by the policy is denied. However, if there are no network policies in a namespace all traffic will be allowed into and out of the pods in that namespace.
-
-==== Remediation
-
-This can be remediated by starting RKE2 with the `profile` flag set in the configuration file as described <<RKE2 configuration,above>>.
-
 == Conclusion
 
-If you have followed this guide, your RKE2 cluster will be configured to pass the CIS Kubernetes Benchmark. You can review our CIS Benchmark Self-Assessment Guide xref:./cis_self_assessment16.adoc[v1.6] or xref:./cis_self_assessment123.adoc[v1.23] to understand how we verified each of the benchmarks and how you can do the same on your cluster.
+If you have followed this guide, your RKE2 cluster will be configured to pass the CIS Kubernetes Benchmark. You can review our CIS Self-Assessment Guides to understand how we verified each of the benchmarks and how you can do the same on your cluster.
