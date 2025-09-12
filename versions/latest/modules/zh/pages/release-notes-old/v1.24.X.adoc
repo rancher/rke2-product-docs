@@ -289,7 +289,7 @@ https://projectcalico.docs.tigera.io/archive/v3.22/release-notes/#v3222[Calico v
 
 // v1.24.17+rke2r1
 
-This release updates Kubernetes to v1.24.17, and fixes a number of issues.
+This https://github.com/rancher/rke2/releases/tag/v1.24.17+rke2r1[v1.24.17+rke2r1] release updates Kubernetes to v1.24.17, and fixes a number of issues.
 
 === Important Notes
 
