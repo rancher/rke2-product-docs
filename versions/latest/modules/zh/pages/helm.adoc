@@ -1,4 +1,6 @@
 = Helm 集成
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 Helm 是 Kubernetes 的包管理工具。Helm Chart 为 Kubernetes YAML 清单文件提供了模板语法。通过 Helm，用户可以创建可配置的 deployment，而不仅仅只能使用静态文件。如果你需要创建自己的 Deployment 商店应用，请参见 https://helm.sh/docs/intro/quickstart/[Helm 文档]。
 

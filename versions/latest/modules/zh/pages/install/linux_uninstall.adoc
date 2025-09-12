@@ -1,4 +1,6 @@
 = Linux 卸载
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 [NOTE]
 ====

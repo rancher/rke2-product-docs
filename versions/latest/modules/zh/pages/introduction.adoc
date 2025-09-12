@@ -1,4 +1,6 @@
 = 介绍
+:revdate: 2024-09-27
+:page-revdate: {revdate}
 
 
 {product-name}，也称为 RKE Government，是 Rancher 的下一代 Kubernetes 发行版。

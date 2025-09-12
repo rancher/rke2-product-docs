@@ -1,4 +1,6 @@
 = 快速开始
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 本指南帮助你使用默认选项快速启动集群。
 

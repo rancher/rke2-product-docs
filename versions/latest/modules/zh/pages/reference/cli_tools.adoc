@@ -1,4 +1,6 @@
 = CLI 工具
+:revdate: 2024-09-11
+:page-revdate: {revdate}
 
 RKE2 附带了多个 CLI 工具来帮助你访问和调试集群。启动时，它们会被提取到 `/var/lib/rancher/rke2/bin`。
 

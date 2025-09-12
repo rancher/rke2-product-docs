@@ -1,4 +1,6 @@
 = Containerd 镜像仓库配置
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 Containerd 可以配置为连接到私有镜像仓库，并使用仓库在每个节点上拉取私有镜像。
 

@@ -1,4 +1,6 @@
 = 高级选项和配置
+:revdate: 2025-07-09
+:page-revdate: {revdate}
 
 本文描述了用于运行和管理 RKE2 的高级设置：
 
