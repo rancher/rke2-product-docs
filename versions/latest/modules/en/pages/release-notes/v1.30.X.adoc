@@ -1,5 +1,5 @@
 = v1.30.X
-:revdate: 2024-09-11
+:revdate: 2024-09-08
 :page-revdate: {revdate}
 
 [CAUTION]
