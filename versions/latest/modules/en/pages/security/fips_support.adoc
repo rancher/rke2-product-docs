@@ -1,4 +1,5 @@
 = FIPS 140-2 Enablement
+:page-languages: [en, zh]
 :revdate: 2025-07-09
 :page-revdate: {revdate}
 
