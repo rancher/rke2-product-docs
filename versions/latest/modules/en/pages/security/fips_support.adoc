@@ -1,5 +1,5 @@
 = FIPS 140-2 Enablement
-:revdate: 2025-07-09
+:revdate: 2025-07-17
 :page-revdate: {revdate}
 
 FIPS 140-2 is a U.S. Federal Government security standard used to approve cryptographic modules. This document explains how RKE2 is built with FIPS validated cryptographic libraries.

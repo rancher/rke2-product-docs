@@ -1,14 +1,66 @@
 = Certificate Management
-:revdate: 2024-09-11
+:revdate: 2025-07-17
 :page-revdate: {revdate}
 
 == Client and Server Certificates
 
-RKE2 client and server certificates are valid for 365 days from their date of issuance. Any certificates that are expired, or within 90 days of expiring, are automatically renewed every time RKE2 starts.
+RKE2 client and server certificates are valid for 365 days from their date of issuance. Any certificates that are expired or within 120 days to expire are automatically renewed every time RKE2 starts. This renewal extends the lifetime of the existing certificates. If you require new certificates and keys, use the <<Rotating Client and Server Certificates Manually,RKE2 CLI>>.
+
+[NOTE] 
+.CERTIFICATE EXPIRATION WARNING
+====
+When a certificate is within 120 days of expiring a Kubernetes Warning event with reason: `CertificateExpirationWarning` is created.
+====
+
+[NOTE]
+.Version Gate
+====
+Output format is configurable as of the January 2025 releases: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.30.13+rke2r1. 
+
+Prior to the May 2025 releases: v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1, alerts and rotation were triggered at 90 days, instead of 120 days.
+====
+
+=== Checking Expiration Dates
+
+[NOTE] 
+.Version Gate
+====
+A new format with more information is available as of the May 2025 releases: v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1.
+====
+
+To check the node certificates and their expiration date use the `rke2 certificate check --output table`:
+
+[,bash]
+----
+FILENAME                     SUBJECT                     USAGES       EXPIRES                  RESIDUAL TIME   STATUS
+--------                     -------                     ------       -------                  -------------   ------
+client-kube-proxy.crt        system:kube-proxy           ClientAuth   Jun 12, 2026 11:12 UTC   1 year          OK
+client-kube-proxy.crt        rke2-client-ca@1749726675   CertSign     Jun 10, 2035 11:11 UTC   10 years        OK
+client-kubelet.crt           system:node:ip-10-11-0-14   ClientAuth   Jun 12, 2026 11:12 UTC   1 year          OK
+client-kubelet.crt           rke2-client-ca@1749726675   CertSign     Jun 10, 2035 11:11 UTC   10 years        OK
+serving-kubelet.crt          ip-10-11-0-14               ServerAuth   Jun 12, 2026 11:12 UTC   1 year          OK
+serving-kubelet.crt          rke2-server-ca@1749726675   CertSign     Jun 10, 2035 11:11 UTC   10 years        OK
+client-rke2-controller.crt   system:rke2-controller      ClientAuth   Jun 12, 2026 11:12 UTC   1 year          OK
+client-rke2-controller.crt   rke2-client-ca@1749726675   CertSign     Jun 10, 2035 11:11 UTC   10 years        OK
+----
+
+[NOTE] 
+.SAME CERTIFICATE TWICE
+====
+Each certificate file (FILENAME column) contains at least two certificates - the leaf (or end entity) client/server certificate, any intermediate Certificate Authority certificates, and the root Certificate Authority certificate.
+====
+
+In case of unexpected output, please use `--debug` flag to get more information or configure the correct data directory with `--data-dir` flag.
 
 === Rotating Client and Server Certificates Manually
 
-To rotate client and server certificates manually, use the `rke2 certificate rotate` subcommand:
+When rotating client and server certificates manually, rotate certificates on each node in the following order:
+
+* etcd servers
+* control-plane servers
+* agents
+
+For each node, stop the server, use the `rke2 certificate rotate` subcommand to rotate the certificates, then start the server once more; as in the following example:
 
 [,bash]
 ----
@@ -41,7 +93,7 @@ The authoritative CA certificates and keys are stored within the datastore's boo
 
 === Rotating CA Certificates
 
-[IMPORTANT]
+[NOTE]
 .Version Gate
 ====
 Available as of the 2023-02 releases (v1.26.2+rke2r1, v1.25.7+rke2r1, v1.24.11+rke2r1, v1.23.17+rke2r1).
@@ -143,10 +195,9 @@ If the command completes successfully, you may install and/or start RKE2 for the
 
 To rotate custom CA certificates, use the `rke2 certificate rotate-ca` subcommand. Updated files must be staged into a temporary directory, loaded into the datastore, and rke2 must be restarted on all nodes to use the updated certificates.
 
-[CAUTION]
+[WARNING]
 ====
-You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. +
-Stage the updated certificates and keys into a separate directory.
+You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. Stage the updated certificates and keys into a separate directory.
 ====
 
 A cluster that has been started with custom CA certificates can renew or rotate the CA certificates and keys non-disruptively, as long as the same root CA is used.
@@ -186,10 +237,9 @@ If you used the `--force` option or changed the root CA, ensure that any nodes t
 To rotate the RKE2-generated self-signed CA certificates, use the `rke2 certificate rotate-ca` subcommand.
 Updated files must be staged into a temporary directory, loaded into the datastore, and rke2 must be restarted on all nodes to use the updated certificates.
 
-[CAUTION]
+[WARNING]
 ====
-You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. +
-Stage the updated certificates and keys into a separate directory.
+You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. Stage the updated certificates and keys into a separate directory.
 ====
 
 If the cluster has been started with default self-signed CA certificates, rotation will be disruptive. All nodes that were joined with a secure token will need to be reconfigured to trust the new CA hash.
@@ -298,10 +348,9 @@ Ensure that any nodes that were joined with a secure token, including other serv
 
 The service-account issuer key is an RSA private key used to sign service-account tokens. When rotating the service-account issuer key, at least one old key should be retained in the file so that existing service-account tokens are not invalidated. It can be rotated independent of the cluster CAs by using the `rke2 certificate rotate-ca` to install only an updated `service.key` file that includes both the new and old keys.
 
-[CAUTION]
+[WARNING]
 ====
-You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. +
-Stage the updated key into a separate directory.
+You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. Stage the updated key into a separate directory.
 ====
 
 For example, to rotate only the service-account issuer key, run the following commands:
