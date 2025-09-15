@@ -1,11 +1,16 @@
 = Quick Start
-:revdate: 2025-08-06
+:revdate: 2025-09-15
 :page-revdate: {revdate}
 
 This guide will help you quickly launch a cluster with default options.
 ____
 New to Kubernetes? The official Kubernetes docs already have some great tutorials outlining the basics https://kubernetes.io/docs/tutorials/kubernetes-basics/[here].
 ____
+
+[IMPORTANT]
+====
+You can use any RKE2 Prime version listed on the Prime Artifacts URL for the assets mentioned in these steps. To learn more about the Prime Artifacts URL, see our https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime-only documentation]. Authentication is required. Use your https://scc.suse.com/home[SUSE Customer Center (SCC)] credentials to log in.
+====
 
 == Prerequisites
 
@@ -17,11 +22,21 @@ ____
 
 {product-name} provides an installation script that is a convenient way to install it as a service on systemd based systems. This script is available at https://get.rke2.io. To install {product-name} using this method do the following:
 
+. Modify the mirrors section of `registries.yaml` to add `<REGISTRY_URL>` as an endpoint. 
++
+[,yaml]
+----
+mirrors:
+  "*":
+    endpoint:
+      - "<REGISTRY_URL>"
+----
+
 . Run the installer.
 +
 [,sh]
 ----
-curl -sfL https://get.rke2.io | sh -
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" sh -
 ----
 +
 This will install the `rke2-server` service and the `rke2` binary onto your machine. Due to its nature, it will fail unless it runs as the root user or through `sudo`.
