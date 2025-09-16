@@ -745,6 +745,7 @@ cat /var/lib/rancher/rke2/server/token
 This https://github.com/rancher/rke2/releases/tag/v1.32.1+rke2r1[v1.32.1+rke2r1] release updates Kubernetes to v1.32.1.
 
 *Important Note*
+
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
 You may retrieve the token value from any server already joined to the cluster:

@@ -291,7 +291,7 @@ https://projectcalico.docs.tigera.io/archive/v3.22/release-notes/#v3222[Calico v
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.17+rke2r1[v1.24.17+rke2r1] release updates Kubernetes to v1.24.17, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 * ⚠️ This release includes support for remediating CVE-2023-32186, a potential Denial of Service attack vector on RKE2 servers. See https://github.com/rancher/rke2/security/advisories/GHSA-p45j-vfv5-wprq for more information, including mandatory steps necessary to harden clusters against this vulnerability.
 * If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
@@ -330,7 +330,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.16+rke2r1[v1.24.16+rke2r1] release updates Kubernetes to v1.24.16, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -358,7 +358,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.15+rke2r1[v1.24.15+rke2r1] release updates Kubernetes to v1.24.15, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -384,7 +384,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.14+rke2r1[v1.24.14+rke2r1] release updates Kubernetes to v1.24.14, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 --
 * If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
@@ -422,7 +422,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.13+rke2r1[v1.24.13+rke2r1] release updates Kubernetes to v1.24.13, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -448,7 +448,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.12+rke2r1[v1.24.12+rke2r1] release updates Kubernetes to v1.24.12, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -477,7 +477,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.11+rke2r1[v1.24.11+rke2r1] release updates Kubernetes to v1.24.11, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -512,7 +512,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.10+rke2r1[v1.24.10+rke2r1] release updates Kubernetes to v1.24.10 to backport registry changes and fix two critical issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -538,7 +538,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.9+rke2r2[v1.24.9+rke2r2] release updates containerd to v1.6.14 to resolve an issue where pods would lose their CNI information when containerd was restarted.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -566,7 +566,7 @@ This https://github.com/rancher/rke2/releases/tag/v1.24.9+rke2r1[v1.24.9+rke2r1]
 
 This release updates Kubernetes to v1.24.9, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -598,7 +598,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.8+rke2r1[v1.24.8+rke2r1] release updates Kubernetes to v1.24.8, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -625,7 +625,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.7+rke2r1[v1.24.7+rke2r1] release updates Kubernetes to v1.24.7, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -651,7 +651,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.6+rke2r1[v1.24.6+rke2r1] release updates Kubernetes to v1.24.6, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -684,7 +684,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.4+rke2r1[v1.24.4+rke2r1] release updates Kubernetes to v1.24.4, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -723,7 +723,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.3+rke2r1[v1.24.3+rke2r1] release updates Kubernetes to v1.24.3, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -751,7 +751,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.24.2+rke2r1[v1.24.2+rke2r1] release updates Kubernetes to v1.24.2, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -795,7 +795,7 @@ As this release includes a number of significant changes from previous versions,
 
 Before upgrading from earlier releases, be sure to read the Kubernetes https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.24.md#urgent-upgrade-notes[Urgent Upgrade Notes].
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 

@@ -323,7 +323,7 @@ https://projectcalico.docs.tigera.io/archive/v3.24/release-notes/#v3241[Calico v
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.16+rke2r2[v1.25.16+rke2r2] release is a special security release addressing a runc CVE.
 
-=== Important Notes
+*Important Note*
 
 Addresses the runc CVE: https://nvd.nist.gov/vuln/detail/CVE-2024-21626[CVE-2024-21626] by updating runc to v1.1.12.
 
@@ -394,7 +394,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.16+rke2r1[v1.25.16+rke2r1] release updates Kubernetes to v1.25.16.
 
-=== Important Notes
+*Important Note*
 
 This release includes a version of ingress-nginx affected by https://github.com/kubernetes/ingress-nginx/issues/10571[CVE-2023-5043] and https://github.com/kubernetes/ingress-nginx/issues/10572[CVE-2023-5044]. Ingress administrators should set the --enable-annotation-validation flag to enforce restrictions on the contents of ingress-nginx annotation fields.
 
@@ -479,7 +479,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.15+rke2r2[v1.25.15+rke2r2] release fixes an issue with identifying additional container runtimes.
 
-=== Important Notes
+*Important Note*
 
 This release includes a version of ingress-nginx affected by https://github.com/kubernetes/ingress-nginx/issues/10571[CVE-2023-5043] and https://github.com/kubernetes/ingress-nginx/issues/10572[CVE-2023-5044]. Ingress administrators should set the --enable-annotation-validation flag to enforce restrictions on the contents of ingress-nginx annotation fields.
 
@@ -505,7 +505,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.15+rke2r1[v1.25.15+rke2r1] release updates Kubernetes to v1.25.15.
 
-=== Important Notes
+*Important Note*
 
 This release includes a version of ingress-nginx affected by https://github.com/kubernetes/ingress-nginx/issues/10571[CVE-2023-5043] and https://github.com/kubernetes/ingress-nginx/issues/10572[CVE-2023-5044]. Ingress administrators should set the --enable-annotation-validation flag to enforce restrictions on the contents of ingress-nginx annotation fields.
 
@@ -550,7 +550,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.14+rke2r1[v1.25.14+rke2r1] release updates Kubernetes to v1.25.14.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -572,7 +572,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.13+rke2r1[v1.25.13+rke2r1] release updates Kubernetes to v1.25.13, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 ⚠️ This release includes support for remediating CVE-2023-32186, a potential Denial of Service attack vector on RKE2 servers. See https://github.com/rancher/rke2/security/advisories/GHSA-p45j-vfv5-wprq for more information, including mandatory steps necessary to harden clusters against this vulnerability.
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
@@ -620,7 +620,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.12+rke2r1[v1.25.12+rke2r1] release updates Kubernetes to v1.25.12, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -648,7 +648,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.11+rke2r1[v1.25.11+rke2r1] release updates Kubernetes to v1.25.11, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -674,7 +674,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.10+rke2r1[v1.25.10+rke2r1] release updates Kubernetes to v1.25.10, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 --
 * If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
@@ -712,7 +712,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.9+rke2r1[v1.25.9+rke2r1] release updates Kubernetes to v1.25.9, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -738,7 +738,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.8+rke2r1[v1.25.8+rke2r1] release updates Kubernetes to v1.25.8, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -767,7 +767,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.7+rke2r1[v1.25.7+rke2r1] release updates Kubernetes to v1.25.7, and fixes a number of issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -806,7 +806,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.6+rke2r1[v1.25.6+rke2r1] release updates Kubernetes to v1.25.6 to backport registry changes and fix two critical issues.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -831,7 +831,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.5+rke2r2[v1.25.5+rke2r2] release updates containerd to v1.6.14 to resolve an issue where pods would lose their CNI information when containerd was restarted.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -859,7 +859,7 @@ This https://github.com/rancher/rke2/releases/tag/v1.25.5+rke2r1[v1.25.5+rke2r1]
 
 This release update Kubernetes to v1.25.5+rke2r1, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -907,7 +907,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.4+rke2r1[v1.25.4+rke2r1] release update Kubernetes to v1.25.4+rke2r1, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -941,7 +941,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.3+rke2r1[v1.25.3+rke2r1] release update Kubernetes to v1.25.3+rke2r1, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -987,7 +987,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.25.2+rke2r1[v1.25.2+rke2r1] release update Kubernetes to v1.25.2+rke2r1, fixes a number of minor issues, and includes security updates.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -1012,7 +1012,7 @@ This https://github.com/rancher/rke2/releases/tag/v1.25.0+rke2r1[v1.25.0+rke2r1]
 
 Before upgrading from earlier releases, be sure to read the Kubernetes https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.25.md#urgent-upgrade-notes[Urgent Upgrade Notes].
 
-=== Important Notes
+*Important Note*
 
 --
 * If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.

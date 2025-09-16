@@ -28,7 +28,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.2]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.2]
 | https://github.com/cilium/cilium/releases/tag/v1.17.1[v1.17.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
-|
 
 | <<Release v1.29.14+rke2r1,v1.29.14+rke2r1>>
 | Feb 27 2025
@@ -45,7 +44,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.2]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.2]
 | https://github.com/cilium/cilium/releases/tag/v1.17.0[v1.17.0]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
-|
 
 | <<Release v1.29.13+rke2r1,v1.29.13+rke2r1>>
 | Jan 27 2025
@@ -62,7 +60,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.1]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.5[v1.16.5]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
-|
 
 | <<Release v1.29.12+rke2r1,v1.29.12+rke2r1>>
 | Dec 18 2024
@@ -79,7 +76,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.1]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.4[v1.16.4]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.3[v4.1.3]
-|
 
 | <<Release v1.29.11+rke2r1,v1.29.11+rke2r1>>
 | Dec 06 2024
@@ -96,7 +92,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.0]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.0]
 | https://github.com/cilium/cilium/releases/tag/v1.16.3[v1.16.3]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.3[v4.1.3]
-|
 
 | <<Release v1.29.10+rke2r1,v1.29.10+rke2r1>>
 | Oct 30 2024
@@ -113,7 +108,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.2]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.28[v3.28.2]
 | https://github.com/cilium/cilium/releases/tag/v1.16.2[v1.16.2]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.2[v4.1.2]
-|
 
 | <<Release v1.29.9+rke2r1,v1.29.9+rke2r1>>
 | Sep 23 2024
@@ -130,7 +124,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.1]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.28[v3.28.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.1[v1.16.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.0[v4.1.0]
-|
 
 | <<Release v1.29.8+rke2r1,v1.29.8+rke2r1>>
 | Aug 26 2024
@@ -294,7 +287,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.26[Calico v3.26.3]
 
 This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.29.15+rke2r1[v1.29.15], and upgrades rke2-ingress-nginx to controller v1.12.1-hardened1 (chart version 4.12.1). This addresses https://github.com/advisories/GHSA-mgvx-rpfc-9mpv[CVE-2025-1974] as well as all other https://groups.google.com/g/kubernetes-security-announce/c/2qa9DFtN0cQ[recently announced] vulnerabilities in ingress-nginx.
 
-=== Important Note
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -368,7 +361,8 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.14+rke2r1[v1.29.14+rke2r1] release updates Kubernetes to v1.29.14.
 
-=== Important Note
+*Important Note*
+
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
 You may retrieve the token value from any server already joined to the cluster:
@@ -452,7 +446,8 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.13+rke2r1[v1.29.13+rke2r1] release updates Kubernetes to v1.29.13.
 
-=== Important Note
+*Important Note*
+
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 You may retrieve the token value from any server already joined to the cluster:
 
@@ -535,7 +530,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.12+rke2r1[v1.29.12+rke2r1] release updates Kubernetes to v1.29.12.
 
-=== Important Note
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -612,7 +607,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.11+rke2r1[v1.29.11+rke2r1] release updates Kubernetes to v1.29.11.
 
-=== Important Note
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -704,7 +699,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.10+rke2r1[v1.29.10+rke2r1] release updates Kubernetes to v1.29.10.
 
-=== Important Note
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -800,7 +795,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.9+rke2r1[v1.29.9+rke2r1] release updates Kubernetes to v1.29.9.
 
-=== Important Note
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -885,7 +880,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.8+rke2r1[v1.29.8+rke2r1] release updates Kubernetes to v1.29.8.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -969,7 +964,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.7+rke2r1[v1.29.7+rke2r1] release updates Kubernetes to v1.29.7.
 
-=== Important Notes
+*Important Note*
 
 If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 
@@ -1047,7 +1042,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.6+rke2r1[v1.29.6+rke2r1] release updates Kubernetes to v1.29.6.
 
-=== Important Notes
+*Important Note*
 
 --
 * If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
@@ -1154,7 +1149,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.5+rke2r1[v1.29.5+rke2r1] release updates Kubernetes to v1.29.5.
 
-=== Important Notes
+*Important Note*
 
 --
 * If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
@@ -1235,7 +1230,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.4+rke2r1[v1.29.4+rke2r1] release updates Kubernetes to v1.29.4.
 
-=== Important Notes
+*Important Note*
 
 --
 * If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
@@ -1342,7 +1337,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.3+rke2r1[v1.29.3+rke2r1] release updates Kubernetes to v1.29.3.
 
-=== Important Notes
+*Important Note*
 
 --
 * Canal uses flannel 0.24.3 which includes a bug: every 5 seconds it tries to add ipv6 iptables rules and fails if the node does not have an ipv6 address. The consequence is the log "Failed to ensure iptables rules: error setting up rules: failed to apply partial iptables-restore unable to run iptables-restore (, ): exit status 4" appears every 5 seconds in the flannel container of the canal pod.
@@ -1435,7 +1430,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.2+rke2r1[v1.29.2+rke2r1] release updates Kubernetes to v1.29.2.
 
-=== Important Notes
+*Important Note*
 
 --
 * Experimental command rke2 secrets-encrypt rotate-keys is currently broken and should not be used. Use the classic secrets encryption commands detailed https://docs.rke2.io/security/secrets_encryption#encryption-key-rotation-classic[here].
@@ -1536,7 +1531,7 @@ cat /var/lib/rancher/rke2/server/token
 
 This https://github.com/rancher/rke2/releases/tag/v1.29.1+rke2r1[v1.29.1+rke2r1] release updates Kubernetes to v1.29.1.
 
-=== Important Notes
+*Important Note*
 
 --
 * Addresses the runc CVE: https://nvd.nist.gov/vuln/detail/CVE-2024-21626[CVE-2024-21626] by updating runc to v1.1.12.
@@ -1628,7 +1623,7 @@ This https://github.com/rancher/rke2/releases/tag/v1.29.0+rke2r1[v1.29.0+rke2r1]
 
 Before upgrading from earlier releases, be sure to read the Kubernetes https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.29.md#urgent-upgrade-notes[Urgent Upgrade Notes].
 
-=== Important Notes
+*Important Note*
 
 * The experimental `secrets-encrypt rotate-keys` command, used to perform an abbreviated rotation of secrets
 encryptions keys, has been removed from this release due to changes in the upstream implementation of
