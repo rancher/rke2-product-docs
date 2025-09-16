@@ -28,7 +28,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.2]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.2]
 | https://github.com/cilium/cilium/releases/tag/v1.17.1[v1.17.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
-|
 
 | <<Release v1.29.14+rke2r1,v1.29.14+rke2r1>>
 | Feb 27 2025
@@ -45,7 +44,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.2]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.2]
 | https://github.com/cilium/cilium/releases/tag/v1.17.0[v1.17.0]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
-|
 
 | <<Release v1.29.13+rke2r1,v1.29.13+rke2r1>>
 | Jan 27 2025
@@ -62,7 +60,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.1]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.5[v1.16.5]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
-|
 
 | <<Release v1.29.12+rke2r1,v1.29.12+rke2r1>>
 | Dec 18 2024
@@ -79,7 +76,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.1]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.4[v1.16.4]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.3[v4.1.3]
-|
 
 | <<Release v1.29.11+rke2r1,v1.29.11+rke2r1>>
 | Dec 06 2024
@@ -96,7 +92,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.0]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.29[v3.29.0]
 | https://github.com/cilium/cilium/releases/tag/v1.16.3[v1.16.3]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.3[v4.1.3]
-|
 
 | <<Release v1.29.10+rke2r1,v1.29.10+rke2r1>>
 | Oct 30 2024
@@ -113,7 +108,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.2]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.28[v3.28.2]
 | https://github.com/cilium/cilium/releases/tag/v1.16.2[v1.16.2]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.2[v4.1.2]
-|
 
 | <<Release v1.29.9+rke2r1,v1.29.9+rke2r1>>
 | Sep 23 2024
@@ -130,7 +124,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.1]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.28[v3.28.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.1[v1.16.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.0[v4.1.0]
-|
 
 | <<Release v1.29.8+rke2r1,v1.29.8+rke2r1>>
 | Aug 26 2024
