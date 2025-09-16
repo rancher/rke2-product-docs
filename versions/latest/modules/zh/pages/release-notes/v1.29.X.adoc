@@ -10,8 +10,7 @@ Before upgrading from earlier releases, be sure to read the Kubernetes https://g
 
 [%autowidth]
 |===
-| Version | Release date | Kubernetes | Etcd | Containerd | Runc | Metrics-server | CoreDNS | Ingress-Nginx | Helm-controller | Canal (Default) | Calico | Cilium | Multus |
-
+| Version | Release date | Kubernetes | Etcd | Containerd | Runc | Metrics-server | CoreDNS | Ingress-Nginx | Helm-controller | Canal (Default) | Calico | Cilium | Multus 
 
 | <<Release v1.29.15+rke2r1,v1.29.15+rke2r1>>
 | Mar 26 2025
@@ -140,7 +139,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.1]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.28[v3.28.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.0[v1.16.0]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-|
 
 | <<Release v1.29.7+rke2r1,v1.29.7+rke2r1>>
 | Aug 01 2024
@@ -157,7 +155,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.0]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.27[v3.27.3]
 | https://github.com/cilium/cilium/releases/tag/v1.15.5[v1.15.5]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-|
 
 | <<Release v1.29.6+rke2r1,v1.29.6+rke2r1>>
 | Jul 01 2024
@@ -174,7 +171,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.0]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.27[v3.27.3]
 | https://github.com/cilium/cilium/releases/tag/v1.15.5[v1.15.5]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-|
 
 | <<Release v1.29.5+rke2r1,v1.29.5+rke2r1>>
 | May 22 2024
@@ -191,7 +187,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.27[Calico v3.27.3]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.27[v3.27.3]
 | https://github.com/cilium/cilium/releases/tag/v1.15.5[v1.15.5]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-|
 
 | <<Release v1.29.4+rke2r1,v1.29.4+rke2r1>>
 | Apr 29 2024
@@ -208,7 +203,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.27[Calico v3.27.3]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.27[v3.27.3]
 | https://github.com/cilium/cilium/releases/tag/v1.15.4[v1.15.4]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-|
 
 | <<Release v1.29.3+rke2r1,v1.29.3+rke2r1>>
 | Mar 20 2024
@@ -225,7 +219,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.27[Calico v3.27.2]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.27[v3.27.2]
 | https://github.com/cilium/cilium/releases/tag/v1.15.1[v1.15.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-| https://github.com/flannel-io/flannel/releases/tag/v0.24.4[v0.24.4]
 
 | <<Release v1.29.2+rke2r1,v1.29.2+rke2r1>>
 | Feb 29 2024
@@ -242,7 +235,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.27[Calico v3.27.0]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.27[v3.27.0]
 | https://github.com/cilium/cilium/releases/tag/v1.15.1[v1.15.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-|
 
 | <<Release v1.29.1+rke2r1,v1.29.1+rke2r1>>
 | Feb 06 2024
@@ -259,7 +251,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.26[Calico v3.26.3]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.26[v3.26.3]
 | https://github.com/cilium/cilium/releases/tag/v1.14.4[v1.14.4]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-|
 
 | <<Release v1.29.0+rke2r1,v1.29.0+rke2r1>>
 | Dec 22 2023
@@ -276,7 +267,6 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.26[Calico v3.26.3]
 | https://docs.tigera.io/calico/latest/release-notes/#v3.26[v3.26.3]
 | https://github.com/cilium/cilium/releases/tag/v1.14.4[v1.14.4]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
-|
 |===
 
 // This https://github.com/rancher/rke2/releases/tag/v1.28.12+rke2r1[v1.28.12+rke2r1] release updates Kubernetes to v1.28.12.
