@@ -268,13 +268,10 @@ cat /var/lib/rancher/rke2/server/token
 * Change structure and set namespace for ctr command https://github.com/rancher/rke2/pull/8543[(#8543)]
 * Bump ingress-nginx to v1.12.4-hardened1 https://github.com/rancher/rke2/pull/8569[(#8569)]
 * Charts: Bump Harvester CSI driver 0.1.24 https://github.com/rancher/rke2/pull/8506[(#8506)]
- ** {blank}
-  *** Support online resize
- ** {blank}
-  *** Support external storage
+** Support online resize
+** Support external storage
 * Allow for zypper remove 104 code on uninstall https://github.com/rancher/rke2/pull/8578[(#8578)]
-* {blank}
- ** Fix snapshot controller backwards compatibility https://github.com/rancher/rke2/pull/8592[(#8592)]
+** Fix snapshot controller backwards compatibility https://github.com/rancher/rke2/pull/8592[(#8592)]
 * Update flannel chart v0.27.100 https://github.com/rancher/rke2/pull/8602[(#8602)]
 * Backports for 2025-07 https://github.com/rancher/rke2/pull/8607[(#8607)]
 * Update K8s to `v1.32.7` https://github.com/rancher/rke2/pull/8624[(#8624)]
