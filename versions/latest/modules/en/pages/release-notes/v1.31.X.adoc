@@ -11,7 +11,7 @@ Before upgrading from earlier releases, be sure to read the Kubernetes https://g
 |===
 | Version | Release date | Kubernetes | Etcd | Containerd | Runc | Metrics-server | CoreDNS | Ingress-Nginx | Helm-controller | Canal (Default) | Calico | Cilium | Multus
 
-| <<Release v1.31.12+rke2r1,v1.31.12+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.12+rke2r1[v1.31.12+rke2r1],v1.31.12+rke2r1>>
 | Aug 23 2025
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v13112[v1.31.12]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.21-k3s1[v3.5.21-k3s1]
@@ -27,7 +27,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.30[Calico v3.30.2]
 | https://github.com/cilium/cilium/releases/tag/v1.18.0[v1.18.0]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.2.2[v4.2.2]
 
-| <<Release v1.31.11+rke2r1,v1.31.11+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.11+rke2r1[v1.31.11+rke2r1],v1.31.11+rke2r1>>
 | Jul 25 2025
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v13111[v1.31.11]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.21-k3s1[v3.5.21-k3s1]
@@ -43,7 +43,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.30[Calico v3.30.2]
 | https://github.com/cilium/cilium/releases/tag/v1.17.6[v1.17.6]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.2.1[v4.2.1]
 
-| <<Release v1.31.10+rke2r1,v1.31.10+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.10+rke2r1[v1.31.10+rke2r1],v1.31.10+rke2r1>>
 | Jun 27 2025
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v13110[v1.31.10]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.21-k3s1[v3.5.21-k3s1]
@@ -59,7 +59,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.30[Calico v3.30.1]
 | https://github.com/cilium/cilium/releases/tag/v1.17.4[v1.17.4]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.2.1[v4.2.1]
 
-| <<Release v1.31.9+rke2r1,v1.31.9+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.9+rke2r1[v1.31.9+rke2r1],v1.31.9+rke2r1>>
 | May 21 2025
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1319[v1.31.9]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.21-k3s1[v3.5.21-k3s1]
@@ -75,7 +75,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.30[Calico v3.30.0]
 | https://github.com/cilium/cilium/releases/tag/v1.17.3[v1.17.3]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.2.0[v4.2.0]
 
-| <<Release v1.31.8+rke2r1,v1.31.8+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.8+rke2r1[v1.31.8+rke2r1],v1.31.8+rke2r1>>
 | May 01 2025
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1318[v1.31.8]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.21-k3s1[v3.5.21-k3s1]
@@ -91,7 +91,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.3]
 | https://github.com/cilium/cilium/releases/tag/v1.17.3[v1.17.3]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.2.0[v4.2.0]
 
-| <<Release v1.31.7+rke2r1,v1.31.7+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.7+rke2r1[v1.31.7+rke2r1],v1.31.7+rke2r1>>
 | Mar 26 2025
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1317[v1.31.7]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.19-k3s1[v3.5.19-k3s1]
@@ -107,7 +107,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.2]
 | https://github.com/cilium/cilium/releases/tag/v1.17.1[v1.17.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
 
-| <<Release v1.31.6+rke2r1,v1.31.6+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.6+rke2r1[v1.31.6+rke2r1],v1.31.6+rke2r1>>
 | Feb 27 2025
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1316[v1.31.6]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.18-k3s1[v3.5.18-k3s1]
@@ -123,7 +123,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.2]
 | https://github.com/cilium/cilium/releases/tag/v1.17.0[v1.17.0]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
 
-| <<Release v1.31.5+rke2r1,v1.31.5+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.5+rke2r1[v1.31.5+rke2r1],v1.31.5+rke2r1>>
 | Jan 27 2025
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1315[v1.31.5]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.16-k3s1[v3.5.16-k3s1]
@@ -139,7 +139,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.5[v1.16.5]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.4[v4.1.4]
 
-| <<Release v1.31.4+rke2r1,v1.31.4+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.4+rke2r1[v1.31.4+rke2r1],v1.31.4+rke2r1>>
 | Dec 18 2024
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1314[v1.31.4]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.16-k3s1[v3.5.16-k3s1]
@@ -155,7 +155,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.4[v1.16.4]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.3[v4.1.3]
 
-| <<Release v1.31.3+rke2r1,v1.31.3+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.3+rke2r1[v1.31.3+rke2r1],v1.31.3+rke2r1>>
 | Dec 06 2024
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1313[v1.31.3]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.16-k3s1[v3.5.16-k3s1]
@@ -171,7 +171,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.29[Calico v3.29.0]
 | https://github.com/cilium/cilium/releases/tag/v1.16.3[v1.16.3]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.3[v4.1.3]
 
-| <<Release v1.31.2+rke2r1,v1.31.2+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.2+rke2r1[v1.31.2+rke2r1],v1.31.2+rke2r1>>
 | Oct 30 2024
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1312[v1.31.2]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.13-k3s1[v3.5.13-k3s1]
@@ -187,7 +187,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.2]
 | https://github.com/cilium/cilium/releases/tag/v1.16.2[v1.16.2]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.2[v4.1.2]
 
-| <<Release v1.31.1+rke2r1,v1.31.1+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.1+rke2r1[v1.31.1+rke2r1],v1.31.1+rke2r1>>
 | Sep 23 2024
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1311[v1.31.1]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.13-k3s1[v3.5.13-k3s1]
@@ -203,7 +203,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.1]
 | https://github.com/cilium/cilium/releases/tag/v1.16.1[v1.16.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.1.0[v4.1.0]
 
-| <<Release v1.31.0+rke2r1,v1.31.0+rke2r1>>
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.31.0+rke2r1[v1.31.0+rke2r1],v1.31.0+rke2r1>>
 | Sep 04 2024
 | https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.31.md#v1310[v1.31.0]
 | https://github.com/k3s-io/etcd/releases/tag/v3.5.13-k3s1[v3.5.13-k3s1]
@@ -220,11 +220,11 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
 |===
 
-== Release v1.31.12+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.12+rke2r1[v1.31.12+rke2r1]
 
 // v1.31.12+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.12+rke2r1[v1.31.12+rke2r1].
+This release updates Kubernetes to v1.31.12.
 
 *Important Note*
 
@@ -306,11 +306,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== Release v1.31.11+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.11+rke2r1[v1.31.11+rke2r1]
 
 // v1.31.11+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.11+rke2r1[v1.31.11+rke2r1].
+This release updates Kubernetes to v1.31.11.
 
 *Important Note*
 
@@ -391,11 +391,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== Release v1.31.10+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.10+rke2r1[v1.31.10+rke2r1]
 
 // v1.31.10+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.10+rke2r1[v1.31.10+rke2r1].
+This release updates Kubernetes to v1.31.10.
 
 *Important Note*
 
@@ -473,11 +473,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== Release v1.31.9+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.9+rke2r1[v1.31.9+rke2r1]
 
 // v1.31.9+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.9+rke2r1[v1.31.9+rke2r1].
+This release updates Kubernetes to v1.31.9.
 
 *Important Note*
 
@@ -555,11 +555,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== Release v1.31.8+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.8+rke2r1[v1.31.8+rke2r1]
 
 // v1.31.8+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.8+rke2r1[v1.31.8+rke2r1].
+This release updates Kubernetes to v1.31.8.
 
 *Important Note*
 
@@ -636,11 +636,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== Release v1.31.7+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.7+rke2r1[v1.31.7+rke2r1]
 
 // v1.31.7+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.7+rke2r1[v1.31.7+rke2r1], and upgrades rke2-ingress-nginx to controller v1.12.1-hardened1 (chart version 4.12.1). This addresses https://github.com/advisories/GHSA-mgvx-rpfc-9mpv[CVE-2025-1974] as well as all other https://groups.google.com/g/kubernetes-security-announce/c/2qa9DFtN0cQ[recently announced] vulnerabilities in ingress-nginx.
+This release updates Kubernetes to v1.31.7, and upgrades rke2-ingress-nginx to controller v1.12.1-hardened1 (chart version 4.12.1). This addresses https://github.com/advisories/GHSA-mgvx-rpfc-9mpv[CVE-2025-1974] as well as all other https://groups.google.com/g/kubernetes-security-announce/c/2qa9DFtN0cQ[recently announced] vulnerabilities in ingress-nginx.
 
 *Important Note*
 
@@ -714,11 +714,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== Release v1.31.6+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.6+rke2r1[v1.31.6+rke2r1]
 
 // v1.31.6+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.6+rke2r1[v1.31.6+rke2r1].
+This release updates Kubernetes to v1.31.6.
 
 *Important Note*
 
@@ -802,11 +802,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== Release v1.31.5+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.5+rke2r1[v1.31.5+rke2r1]
 
 // v1.31.5+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.5+rke2r1[v1.31.5+rke2r1].
+This release updates Kubernetes to v1.31.5.
 
 *Important Note*
 
@@ -889,11 +889,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
-== Release v1.31.4+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.4+rke2r1[v1.31.4+rke2r1]
 
 // v1.31.4+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.4+rke2r1[v1.31.4+rke2r1].
+This release updates Kubernetes to v1.31.4.
 
 *Important Note*
 
@@ -966,11 +966,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-1.9.001.tgz[1.9.001]
 |===
 
-== Release v1.31.3+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.3+rke2r1[v1.31.3+rke2r1]
 
 // v1.31.3+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.3+rke2r1[v1.31.3+rke2r1].
+This release updates Kubernetes to v1.31.3.
 
 *Important Note*
 
@@ -1056,11 +1056,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-1.9.001.tgz[1.9.001]
 |===
 
-== Release v1.31.2+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.2+rke2r1[v1.31.2+rke2r1]
 
 // v1.31.2+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.2+rke2r1[v1.31.2+rke2r1].
+This release updates Kubernetes to v1.31.2.
 
 *Important Note*
 
@@ -1155,11 +1155,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-1.9.001.tgz[1.9.001]
 |===
 
-== Release v1.31.1+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.1+rke2r1[v1.31.1+rke2r1]
 
 // v1.31.1+rke2r1
 
-This release updates Kubernetes to https://github.com/rancher/rke2/releases/tag/v1.31.1+rke2r1[v1.31.1+rke2r1].
+This release updates Kubernetes to v1.31.1.
 
 *Important Note*
 
@@ -1237,11 +1237,11 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-1.7.302.tgz[1.7.302]
 |===
 
-== Release v1.31.0+rke2r1
+== Release https://github.com/rancher/rke2/releases/tag/v1.31.0+rke2r1[v1.31.0+rke2r1]
 
 // v1.31.0+rke2r1
 
-This https://github.com/rancher/rke2/releases/tag/v1.31.0+rke2r1[v1.31.0+rke2r1] release updates Kubernetes to v1.31.0.
+This release updates Kubernetes to v1.31.0.
 
 *Important Note*
 
