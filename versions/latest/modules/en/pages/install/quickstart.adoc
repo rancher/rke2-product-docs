@@ -22,17 +22,7 @@ You can use any RKE2 Prime version listed on the Prime Artifacts URL for the ass
 
 {product-name} provides an installation script that is a convenient way to install it as a service on systemd based systems. This script is available at https://get.rke2.io. To install {product-name} using this method do the following:
 
-. Modify the mirrors section of `registries.yaml` to add `<REGISTRY_URL>` as an endpoint. 
-+
-[,yaml]
-----
-mirrors:
-  "*":
-    endpoint:
-      - "<REGISTRY_URL>"
-----
-
-. Run the installer.
+. Run the installer, where `INSTALL_RKE2_ARTIFACT_URL` is the Prime Artifacts URL and `INSTALL_RKE2_CHANNEL` is the most recent stable version of RKE2.
 +
 [,sh]
 ----
@@ -48,13 +38,22 @@ This will install the `rke2-server` service and the `rke2` binary onto your mach
 systemctl enable rke2-server.service
 ----
 
+.  To pull images from the Rancher Prime registry, set the following value in `etc/rancher/rke2/config.yaml`:
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+----
++
+This configuration tells RKE2 to use registry.rancher.com as the default location for all container images it needs to deploy within the cluster.
+
 . Start the service.
 +
 [,sh]
 ----
 systemctl start rke2-server.service
 ----
-+
+
 . Follow the logs with the following command:
 +
 [,sh]
