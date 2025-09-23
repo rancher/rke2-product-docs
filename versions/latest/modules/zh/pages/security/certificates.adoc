@@ -1,4 +1,5 @@
 = Certificate Management
+:page-languages: [en, zh]
 :revdate: 2025-07-17
 :page-revdate: {revdate}
 
