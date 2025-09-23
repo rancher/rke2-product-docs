@@ -1,4 +1,5 @@
 = Containerd 镜像仓库配置
+:page-languages: [en, zh]
 :revdate: 2025-07-09
 :page-revdate: {revdate}
 

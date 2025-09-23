@@ -1,4 +1,5 @@
 = Known Issues and Limitations
+:page-languages: [en, zh]
 :revdate: 2025-07-10
 :page-revdate: {revdate}
 

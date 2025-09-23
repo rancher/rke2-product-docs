@@ -1,4 +1,5 @@
 = Anatomy of a Next Generation Kubernetes Distribution
+:page-languages: [en, zh]
 :revdate: 2025-07-10
 :page-revdate: {revdate}
 
