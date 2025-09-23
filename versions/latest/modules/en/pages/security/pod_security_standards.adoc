@@ -1,4 +1,5 @@
 = Default Pod Security Standards
+:page-languages: [en, zh]
 :revdate: 2025-07-17
 :page-revdate: {revdate}
 

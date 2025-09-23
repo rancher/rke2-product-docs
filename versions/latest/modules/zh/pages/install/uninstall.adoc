@@ -1,4 +1,5 @@
 = 卸载
+:page-languages: [en, zh]
 :revdate: 2024-09-11
 :page-revdate: {revdate}
 

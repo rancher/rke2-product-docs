@@ -1,4 +1,5 @@
 = High Availability
+:page-languages: [en, zh]
 :revdate: 2025-08-06
 :page-revdate: {revdate}
 
