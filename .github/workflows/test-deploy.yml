@@ -1,0 +1,61 @@
+name: Test deployment
+
+on:
+  pull_request:
+    paths-ignore:
+      - '**/README.md'
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  test-deploy:
+    name: Test deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install Antora and dependencies
+        run: make environment
+      - name: Generate Site
+        run: |
+          npx antora --stacktrace \
+            --log-file local-build.log \
+            --log-format=pretty \
+            --log-level=info \
+            --log-failure-level=warn \
+            playbook-local.yml 2>&1 | tee local-build.log 2>&1
+            BUILD_STATUS=${PIPESTATUS[0]}
+            if grep "INFO (asciidoctor)" local-build.log; then
+              BUILD_STATUS=1
+            fi
+            echo "BUILD_STATUS=$BUILD_STATUS" >> $GITHUB_ENV
+      - name: Check for build errors
+        run: |
+          echo ${{ env.BUILD_STATUS }}
+          if [ ${{ env.BUILD_STATUS }} -eq "0" ]; then
+            exit 0
+          else
+            cat local-build.log
+            exit 1
+          fi
+      - name: Check files for missing nav entries
+        run: bin/files-missing-nav
+      - name: Check for links to Community docs
+        run: bin/community-links
+      - name: Check if revdate is missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          result=$(sh bin/revdate.sh ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          exit_code=$?
+          if [ exit_code -ne "0" ]; the
+            body="The following files have been modified, but the revdate was not updated. If this is intended, please ignore this message. Refer to the [SUSE Styleguide](link) for guidance on when revdate needs to be updated"
+            gh pr comment ${{ github.event.pull_request.number }} \
+              --body "$body
+              
+              $result"
+          fi
+
