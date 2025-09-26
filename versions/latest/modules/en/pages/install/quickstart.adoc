@@ -23,11 +23,18 @@ You can use any RKE2 Prime version listed on the Prime Artifacts URL for the ass
 
 {product-name} provides an installation script that is a convenient way to install it as a service on systemd based systems. This script is available at https://get.rke2.io. To install {product-name} using this method do the following:
 
-. Run the installer, where `INSTALL_RKE2_ARTIFACT_URL` is the Prime Artifacts URL and `INSTALL_RKE2_CHANNEL` is the most recent stable version of RKE2.
+. Run the installer, where `INSTALL_RKE2_ARTIFACT_URL` is the Prime Artifacts URL and `INSTALL_RKE2_CHANNEL` is a release channel you can subscribe to and defaults to `stable`. In this example, `INSTALL_RKE2_CHANNEL="latest"` gives you the latest version of RKE2.
 +
 [,sh]
 ----
 curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" sh -
+----
++
+If you want to specify a version, set the `INSTALL_RKE2_VERSION` environment variable.
++
+[,bash]
+----
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" ./install.sh
 ----
 +
 This will install the `rke2-server` service and the `rke2` binary onto your machine. Due to its nature, it will fail unless it runs as the root user or through `sudo`.
