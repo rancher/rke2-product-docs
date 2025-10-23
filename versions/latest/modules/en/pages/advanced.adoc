@@ -443,6 +443,36 @@ You should see `"nvidia.com/gpu":` followed by the number of gpus in the node.
 ----
 ls /usr/local/nvidia/toolkit/nvidia-container-runtime
 ----
++
+[NOTE]
+====
+If the Nvidia container toolkit fails to deploy and the toolkit DaemonSet fails to start with the following error:
+
+[,sh]
+----
+level=error msg="error running nvidia-toolkit: unable to setup runtime: unable to restart containerd: unable to dial: dial unix /runtime/sock-dir/containerd.sock: connect: no such file or directory
+----
+
+Follow these steps to resolve this configuration problem:
+
+. Determine the location of the containerd socket on your node.
+. Run the following command to open the manifest for editing:
++
+[,sh]
+----
+kubectl edit ds -n gpu-operator nvidia-container-toolkit-daemonset
+----
+
+. Find the volume definition named `containerd-socket` and change the `path`. For example, if the location of the containerd socket is `/run/k3s/containerd`, update the manifest as follows: 
++
+[,yaml]
+----
+- hostPath:
+    path: /run/k3s/containerd
+    type: ""
+  name: containerd-socket
+----
+====
 
 . Verify if containerd config was updated to include the nvidia container runtime.
 +
