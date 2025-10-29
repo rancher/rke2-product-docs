@@ -1,6 +1,6 @@
 = 下一代 Kubernetes 发行版剖析
 :page-languages: [en, zh]
-:revdate: 2024-09-11
+:revdate: 2025-10-29
 :page-revdate: {revdate}
 :sidebar_label: 架构
 :weight: 204
@@ -23,14 +23,14 @@ RKE2 汇集了许多开源技术：
  ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-proxy[Proxy]
 * https://etcd.io[etcd]
 * https://github.com/opencontainers/runc[runc]
-* https://containerd.io[containerd] / https://github.com/kubernetes/cri-api[cri]
-* https://github.com/containernetworking/cni[CNI]: Canal (https://docs.tigera.io/calico/latest/about[Calico] & https://github.com/coreos/flannel[Flannel]), https://cilium.io[Cilium] 或 https://docs.tigera.io/calico/latest/about[Calico]
+* https://containerd.io[containerd]/link:https://github.com/kubernetes/cri-api[cri]
+* https://github.com/containernetworking/cni[CNI]: Canal (https://docs.tigera.io/calico/latest/about[Calico] & https://github.com/flannel-io/flannel[Flannel]), https://cilium.io[Cilium], https://docs.tigera.io/calico/latest/about[Calico] or https://github.com/flannel-io/flannel[Flannel]. Additionally: https://github.com/k8snetworkplumbingwg/multus-cni[Multus]
 * https://coredns.io[CoreDNS]
-* https://kubernetes.github.io/ingress-nginx[NGINX Ingress Controller]
+* https://kubernetes.github.io/ingress-nginx[Ingress NGINX Controller] and/or https://traefik.io/traefik[Traefik]
 * https://github.com/kubernetes-sigs/metrics-server[Metrics Server]
 * https://helm.sh[Helm]
 
-除了 NGINX Ingress Controller 之外，它们都使用 https://github.com/golang/go/tree/dev.boringcrypto/misc/boring[Go+BoringCrypto] 进行编译和静态链接。
+All of these, except Traefik, are compiled and statically linked with https://github.com/golang/go/tree/dev.boringcrypto/misc/boring[Go+BoringCrypto]
 
 == 进程生命周期
 
@@ -107,11 +107,12 @@ Agent 进程入口点。对于 server 进程，嵌入式 K3s 引擎会直接调�
 
 在 Server 节点上，`helm-controller` 可以将在 `/var/lib/rancher/rke2/server/manifests` 中找到的任何 Chart 应用于集群。
 
-* rke2-canal.yaml or rke2-cilium.yaml (daemonset, bootstrap)
+* rke2-canal.yaml or rke2-cilium.yaml or rke2-calico.yaml or rke2-flannel.yaml or rke2-multus.yaml (daemonset, bootstrap)
 * rke2-coredns.yaml (deployment, bootstrap)
-* rke2-ingress-nginx.yaml (deployment)
-* rke2-kube-proxy.yaml (daemonset, bootstrap)
+* rke2-ingress-nginx.yaml and/or rke2-traefik.yaml and rke2-traefik-crd.yaml (deployment)
 * rke2-metrics-server.yaml (deployment)
+* rke2-runtimeclasses.yaml (deployment)
+* rke2-snapshot-controller-crd.yaml, rke2-snapshot-controller.yaml and rke2-snapshot-validation-webhook.yaml (deployment)
 
 === 守护进程
 
