@@ -1,6 +1,6 @@
 = Multus and SR-IOV
 :page-languages: [en, zh]
-:revdate: 2025-08-21
+:revdate: 2025-10-28
 :page-revdate: {revdate}
 
 == Using Multus
@@ -112,6 +112,31 @@ You should write this file before starting RKE2.
 ====
 --
 =====
+
+=== Enabling Multus Dynamic Networks Controller
+
+One use case for using Multus "thick plugin" is to deploy the https://github.com/k8snetworkplumbingwg/multus-dynamic-networks-controller[Dynamic Networks Controller]. This is done through the following HelmChartConfig:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-multus-config.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-multus
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    thickPlugin:
+      enabled: true
+    dynamicNetworksController:
+      enabled: true
+----
+
+[NOTE]
+====
+The Dynamic Networks Controller can be deployed only with Multus in "thick plugin" mode.
+====
 
 == Using Multus with SR-IOV
 

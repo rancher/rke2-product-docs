@@ -19,6 +19,7 @@
 ** xref:upgrade/upgrade.adoc[]
 ** xref:upgrade/manual_upgrade.adoc[]
 ** xref:upgrade/automated_upgrade.adoc[]
+** xref:upgrade/roll_back.adoc[]
 
 * Security
 ** xref:security/about_hardened_images.adoc[]
@@ -49,6 +50,7 @@
 ** xref:networking/basic_network_options.adoc[]
 ** xref:networking/multus_sriov.adoc[]
 ** xref:networking/networking_services.adoc[]
+** xref:networking/windows_bgp.adoc[]
 
 * xref:helm.adoc[]
 
