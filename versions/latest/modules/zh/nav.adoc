@@ -55,6 +55,7 @@
 * xref:advanced.adoc[]
 
 * References
+** xref:reference/ai_conformance.adoc[]
 ** xref:reference/cli_tools.adoc[]
 ** xref:reference/linux_agent_config.adoc[]
 ** xref:reference/logging.adoc[]
