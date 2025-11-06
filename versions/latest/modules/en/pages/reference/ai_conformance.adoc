@@ -1,4 +1,7 @@
 = CNCF AI Conformance
+:page-languages: [en, zh]
+:revdate: 2025-11-6
+:page-revdate: {revdate}
 
 The https://docs.google.com/document/d/1hXoSdh9FEs13Yde8DivCYjjXyxa7j4J8erjZPEGWuzc/edit?tab=t.0[CNCF Kubernetes AI Conformance] defines a set of additional capabilities, APIs and configurations that a Kubernetes cluster MUST offer, on top of standard CNCF Kubernetes Conformance, to reliably and efficiently run AI/ML workloads.
 
