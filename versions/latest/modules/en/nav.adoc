@@ -43,14 +43,15 @@
 
 * xref:cluster_access.adoc[]
 
-* xref:import_images.adoc[]
-
 * Networking
 ** xref:networking/basic_network_options.adoc[]
 ** xref:networking/multus_sriov.adoc[]
 ** xref:networking/networking_services.adoc[]
 
-* xref:helm.adoc[]
+* Add-ons
+** xref:add-ons/gpu_operators.adoc[]
+** xref:add-ons/helm.adoc[]
+** xref:add-ons/import_images.adoc[]
 
 * xref:advanced.adoc[]
 
