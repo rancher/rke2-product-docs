@@ -280,7 +280,7 @@ Increasing the load on Ollama will raise the GPU utilization to 70%, triggering 
 
 This requirement mandates a functional accelerator metrics solution that exposes fine-grained performance metrics via a standardized, machine-readable metrics endpoint. This solution must include a core set of metrics for per-accelerator utilization and memory usage.
 
-When the NVIDIA GPU Operator is installed (as described in the xref:../add-ons/gpu_operators.md#deploy-nvidia-operator[GPU Operators documentation]), a `nvidia-dcgm-exporter` DaemonSet and Service are deployed. Query this service to collect required GPU metrics, such as accelerator utilization, memory usage, temperature, power usage, etc.
+When the NVIDIA GPU Operator is installed (as described in the xref:add-ons/gpu_operators.adoc#_deploy_nvidia_operator[GPU Operators documentation]), a `nvidia-dcgm-exporter` DaemonSet and Service are deployed. Query this service to collect required GPU metrics, such as accelerator utilization, memory usage, temperature, power usage, etc.
 
 For example, if you SSH into one cluster node from within the cluster, it will show the metrics exposed using the OpenMetrics text format. The following section details how to deploy Prometheus and Grafana to consume them.
 
