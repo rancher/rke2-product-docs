@@ -1,13 +1,13 @@
 = CIS Hardening Guide
 :page-languages: [en, zh]
-:revdate: 2025-07-17
+:revdate: 2025-10-28
 :page-revdate: {revdate}
 
 This document provides prescriptive guidance for hardening a production installation of {product-name}. It outlines the configurations and controls required to address Kubernetes benchmark controls from the Center for Internet Security (CIS).
 
 For more details about evaluating a hardened cluster against the official CIS benchmark, refer to the appropriate CIS Self-Assessment Guide:
 
-* xref:security/cis_self_assessment18.adoc[CIS Self-Assessment Guide v1.8] for RKE2 v1.27 and newer
+* xref:security/cis_self_assessment19.adoc[CIS Self-Assessment Guide v1.9] for RKE2 v1.27 and newer
 * xref:security/cis_self_assessment18.adoc[CIS Self-Assessment Guide v1.8] for RKE2 v1.26
 * xref:security/cis_self_assessment17.adoc[CIS Self-Assessment Guide v1.7] for RKE2 v1.25
 

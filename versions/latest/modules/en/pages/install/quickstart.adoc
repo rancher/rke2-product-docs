@@ -1,6 +1,6 @@
 = Quick Start
 :page-languages: [en, zh]
-:revdate: 2025-09-15
+:revdate: 2025-10-23
 :page-revdate: {revdate}
 
 This guide will help you quickly launch a cluster with default options.
@@ -34,7 +34,7 @@ If you want to specify a version, set the `INSTALL_RKE2_VERSION` environment var
 +
 [,bash]
 ----
-curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" ./install.sh
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" sh -
 ----
 +
 This will install the `rke2-server` service and the `rke2` binary onto your machine. Due to its nature, it will fail unless it runs as the root user or through `sudo`.
@@ -93,7 +93,14 @@ The steps on this section requires root level access or `sudo` to work.
 +
 [,sh]
 ----
-curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
+curl -sfL https://get.rke2.io | INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" INSTALL_RKE2_TYPE="agent" sh -
+----
++
+If you want to specify a version, set the `INSTALL_RKE2_VERSION` environment variable.
++
+[,bash]
+----
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" INSTALL_RKE2_TYPE="agent" sh -
 ----
 +
 This will install the `rke2-agent` service and the `rke2` binary onto your machine. Due to its nature, it will fail unless it runs as the root user or through `sudo`.

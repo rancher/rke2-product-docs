@@ -1,6 +1,6 @@
 = Embedded Registry Mirror
 :page-languages: [en, zh]
-:revdate: 2025-08-06
+:revdate: 2025-10-29
 :page-revdate: {revdate}
 
 [NOTE]
