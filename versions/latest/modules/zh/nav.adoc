@@ -51,9 +51,9 @@
 * xref:advanced.adoc[]
 
 * Add-ons
-** xref:add-ons/gpu_operators.adoc[]
 ** xref:add-ons/helm.adoc[]
 ** xref:add-ons/import_images.adoc[]
+** xref:add-ons/gpu_operators.adoc[]
 
 * References
 ** xref:reference/ai_conformance.adoc[]

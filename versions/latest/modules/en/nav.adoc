@@ -49,9 +49,9 @@
 ** xref:networking/networking_services.adoc[]
 
 * Add-ons
-** xref:add-ons/gpu_operators.adoc[]
 ** xref:add-ons/helm.adoc[]
 ** xref:add-ons/import_images.adoc[]
+** xref:add-ons/gpu_operators.adoc[]
 
 * xref:advanced.adoc[]
 
