@@ -26,7 +26,7 @@ systemctl start rke2-server
 
 在 `/var/lib/rancher/rke2/server/manifests` 中找到的任何文件都会以类似于 `kubectl apply` 的方式自动部署到 Kubernetes。
 
-有关使用清单目录部署 Helm Chart 的信息，请参阅 xref:helm.adoc[Helm] 章节。
+有关使用清单目录部署 Helm Chart 的信息，请参阅 xref:add-ons/helm.adoc[Helm] 章节。
 
 == 配置 Containerd
 
