@@ -44,19 +44,21 @@
 
 * xref:cluster_access.adoc[]
 
-* xref:import_images.adoc[]
-
 * Networking
 ** xref:networking/basic_network_options.adoc[]
 ** xref:networking/multus_sriov.adoc[]
 ** xref:networking/networking_services.adoc[]
 ** xref:networking/windows_bgp.adoc[]
 
-* xref:helm.adoc[]
-
 * xref:advanced.adoc[]
 
+* Add-ons
+** xref:add-ons/helm.adoc[]
+** xref:add-ons/import_images.adoc[]
+** xref:add-ons/gpu_operators.adoc[]
+
 * References
+** xref:reference/ai_conformance.adoc[]
 ** xref:reference/cli_tools.adoc[]
 ** xref:reference/linux_agent_config.adoc[]
 ** xref:reference/logging.adoc[]

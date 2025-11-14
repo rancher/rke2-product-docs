@@ -15,7 +15,7 @@ CoreDNS is deployed by default when starting the server. To disable, run each se
 
 If you don't install CoreDNS, you will need to install a cluster DNS provider yourself.
 
-CoreDNS is deployed with the https://github.com/kubernetes-incubator/cluster-proportional-autoscaler[autoscaler] by default. To disable it or change its config, use the xref:helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig] resource.
+CoreDNS is deployed with the https://github.com/kubernetes-incubator/cluster-proportional-autoscaler[autoscaler] by default. To disable it or change its config, use the xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig] resource.
 
 === NodeLocal DNSCache
 
@@ -105,7 +105,7 @@ https://github.com/kubernetes/ingress-nginx[nginx-ingress] is an Ingress control
 
 `nginx-ingress` is deployed by default when starting the server. Ports 80 and 443 will be bound by the ingress controller in its default configuration, making these unusable for HostPort or NodePort services in the cluster.
 
-Configuration options can be specified by creating a xref:helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-ingress-nginx` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml` with the following contents sets `use-forwarded-headers` to `"true"` in the ConfigMap storing the NGINX config:
+Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-ingress-nginx` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml` with the following contents sets `use-forwarded-headers` to `"true"` in the ConfigMap storing the NGINX config:
 
 [,yaml]
 ----
