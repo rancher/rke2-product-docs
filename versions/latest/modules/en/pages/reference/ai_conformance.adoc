@@ -57,7 +57,7 @@ referencegrants   refgrant     gateway.networking.k8s.io/v1beta1   true         
 To verify Traefik is consuming Gateway API resources:
 
 . Create a GatewayClass:
-
++
 [,yaml]
 ----
 apiVersion: gateway.networking.k8s.io/v1
@@ -69,14 +69,14 @@ spec:
 ----
 
 . Check the status:
-
++
 [,yaml]
 ----
 kubectl get gatewayclass traefik -o jsonpath='{.status}'
 ----
 +
 Expected Output:
-
++
 [,json]
 ----
 "message":"Handled by Traefik controller","observedGeneration":1,"reason":"Handled","status":"True","type":"Accepted"
@@ -191,7 +191,7 @@ For reference, we explain how to use the upstream autoscaler https://github.com/
 
 . Create a https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview[Virtual Machine Scale Set (VMSS)] with GPU-equipped VMs.
 . Deploy RKE2 with the following options:
-
++
 [,yaml]
 ----
 disable-cloud-controller: true # Only in rke2-server
@@ -200,7 +200,7 @@ kubelet-arg: # On both rke2-server and rke2-agent
 ----
 
 . Install the Azure CCM:
-
++
 [,bash]
 ----
 helm install --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure --generate-name --set cloudControllerManager.imageRepository=mcr.microsoft.com/oss/kubernetes --set cloudControllerManager.imageName=azure-cloud-controller-manager --set cloudNodeManager.imageRepository=mcr.microsoft.com/oss/kubernetes --set cloudNodeManager.imageName=azure-cloud-node-manager --set cloudControllerManager.configureCloudRoutes=false --set cloudControllerManager.allocateNodeCidrs=false
@@ -231,7 +231,7 @@ curl -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2021
 . Install the upstream autoscaler. 
 .. Firstly, create a `values.yaml` configuration file, specifying the VMSS from Step 1 and other necessary Azure details. 
 .. Then run the following `helm` commands:
-
++
 [,bash]
 ----
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
