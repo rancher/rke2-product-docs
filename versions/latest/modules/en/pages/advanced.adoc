@@ -1,6 +1,6 @@
 = Advanced Options and Configuration
 :page-languages: [en, zh]
-:revdate: 2025-07-10
+:revdate: 2025-11-6
 :page-revdate: {revdate}
 
 This section contains advanced information describing the different ways you can run and manage RKE2.
@@ -33,7 +33,7 @@ It is also possible to rotate an individual service by passing the `--service` f
 
 Any file found in `/var/lib/rancher/rke2/server/manifests` will automatically be deployed to Kubernetes in a manner similar to `kubectl apply`.
 
-For information about deploying Helm charts using the manifests directory, refer to the section about xref:helm.adoc[Helm.]
+For information about deploying Helm charts using the manifests directory, refer to the section about xref:add-ons/helm.adoc[Helm.]
 
 == Configuring containerd
 

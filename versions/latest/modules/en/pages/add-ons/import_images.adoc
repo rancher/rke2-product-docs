@@ -1,6 +1,6 @@
 = Import Images
 :page-languages: [en, zh]
-:revdate: 2025-08-06
+:revdate: 2025-11-06
 :page-revdate: {revdate}
 
 Container images are cached locally on each node by the containerd image store. Images can be pulled from the registry as needed by pods, preloaded via image pull, or imported from an image tarball.
