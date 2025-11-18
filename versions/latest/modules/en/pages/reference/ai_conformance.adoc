@@ -448,7 +448,7 @@ training-operator-f7d4b59f6-vdnh9   1/1     Running   0          9m54s
 ----
 
 Test the admission webhook's rejection capability by attempting to apply the following invalid TFJob manifest (missing the required image field):
-423
+
 [,yaml]
 ----
 # saved as invalid-tfjob.yaml

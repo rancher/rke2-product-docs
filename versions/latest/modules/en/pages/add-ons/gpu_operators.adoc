@@ -1,6 +1,6 @@
 = GPU Operators
 :page-languages: [en, zh]
-:revdate: 2025-11-6
+:revdate: 2025-11-06
 :page-revdate: {revdate}
 
 == Deploy NVIDIA operator
