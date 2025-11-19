@@ -1,6 +1,6 @@
 = Networking Services
 :page-languages: [en, zh]
-:revdate: 2025-07-09
+:revdate: 2025-11-18
 :page-revdate: {revdate}
 
 This page explains how CoreDNS and the Nginx-Ingress controller work within RKE2.
@@ -54,18 +54,22 @@ spec:
       ipvs: true
 ----
 
-== Nginx Ingress Controller
+== Ingress Controller
 
-https://github.com/kubernetes/ingress-nginx[nginx-ingress] is an Ingress controller powered by NGINX that uses a ConfigMap to store the NGINX configuration.
+[tabs]
+======
+ingress-nginx::
++
+--
+https://github.com/kubernetes/ingress-nginx[ingress-nginx] is an Ingress controller powered by NGINX that uses a ConfigMap to store the NGINX configuration.
 
-`nginx-ingress` is deployed by default when starting the server. Ports 80 and 443 will be bound by the ingress controller in its default configuration, making these unusable for HostPort or NodePort services in the cluster.
+`ingress-nginx` is deployed by default when starting the server. Ports 80 and 443 will be bound by the ingress controller in its default configuration, making these unusable for HostPort or NodePort services in the cluster.
 
 Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-ingress-nginx` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml` with the following contents sets `use-forwarded-headers` to `"true"` in the ConfigMap storing the NGINX config:
 
 [,yaml]
 ----
 # /var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml
----
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
 metadata:
@@ -78,17 +82,53 @@ spec:
         use-forwarded-headers: "true"
 ----
 
-For more information, refer to the official https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx#configuration[nginx-ingress Helm Configuration Parameters].
+For more information, refer to the official https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx#configuration[ingress-nginx Helm configuration parameters].
 
-To disable the NGINX ingress controller, start each server with the `disable: rke2-ingress-nginx` option in your configuration file.
+--
+
+Traefik::
++
+--
+[IMPORTANT]
+.Version Gate
+====
+Traefik support is available as of August 2024 releases: v1.28.12+rke2r1, v1.29.7+rke2r1, v1.30.3+rke2r1.
+====
+
+https://doc.traefik.io/traefik/[Traefik] is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease. It simplifies networking complexity while designing, deploying, and running applications.
+
+To use Traefik, start each server with the `ingress-controller: traefik` option in your configuration file.
+
+Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents enables the kubernetes gateway api:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    providers:
+      kubernetesGateway:
+        enabled: true
+----
+
+For more information, refer to the official https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md[Traefik Helm configuration parameters].
+--
+======
+
+To disable the ingress controller, start each server with the `ingress-controller: none` option in your configuration file.
 
 == Service Load Balancer
 
-Kubernetes Services can be of type LoadBalancer but it requires an external load balancer controller to implement things correctly and for example,provide the external-ip. RKE2 can optionally deploy a load balancer controller known as https://github.com/k3s-io/klipper-lb[ServiceLB] that uses available host ports. For more information, please read the following https://docs.k3s.io/networking/networking-services#service-load-balancer[link].
+Kubernetes Services can be of type LoadBalancer but it requires an external load balancer controller to implement things correctly and for example, provide the external-ip. RKE2 can optionally deploy a load balancer controller known as https://github.com/k3s-io/klipper-lb[ServiceLB] that uses available host ports. For more information, please read the following https://docs.k3s.io/networking/networking-services#service-load-balancer[link].
 
 [TIP]
 ====
 When looking at the K3s documentation, use the label `svccontroller.rke2.cattle.io` instead of `svccontroller.k3s.cattle.io` where applicable.
 ====
 
-To enable serviceLB, use the flag `--serviceLB` when deploying RKE2
+To enable serviceLB, use the flag `--enable-servicelb` when deploying RKE2.
