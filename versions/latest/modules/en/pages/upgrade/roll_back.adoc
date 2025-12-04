@@ -1,6 +1,6 @@
 = Rolling Back RKE2
 :page-languages: [en, zh]
-:revdate: 2025-10-28
+:revdate: 2025-12-04
 :page-revdate: {revdate}
 
 You can roll back the RKE2 Kubernetes version after an upgrade, using a combination of RKE2 binary downgrade and datastore restoration. Rollback can be performed on clusters of all types, including a single-node SQLite, an external datastore, or an embedded etcd. When rolling back to a previous Kubernetes minor version, you must have a datastore snapshot taken on the Kubernetes minor version you wish to roll back to.
@@ -64,8 +64,8 @@ curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
 curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
 ----
  ** Air-gapped Clusters:
-  *** Download the artifacts and run the link:../install/airgap.md#2-install-rke2[install script] locally.
-. On the first server node or the node without a `server:` entry in its xref:../install/configuration.adoc[RKE2 config file], initiate the cluster restore. Refer to the link:../datastore/backup_restore.md#snapshot-restore-steps[Snapshot Restore Steps] for more information:
+  *** Download the artifacts and run the xref:install/airgap.adoc#_install_rke2[install script] locally.
+. On the first server node or the node without a `server:` entry in its xref:install/configuration.adoc[RKE2 config file], initiate the cluster restore. Refer to the xref:datastore/backup_restore.adoc#_snapshot_restore_steps[Snapshot Restore Steps] for more information:
 +
 [,bash]
 ----
@@ -157,7 +157,7 @@ curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
 curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
 ----
  ** Air-gapped Clusters:
-  *** Download the artifacts and run the link:../install/airgap.md#2-install-rke2[install script] locally.
+  *** Download the artifacts and run the xref:install/airgap.adoc#_install_rke2[install script] locally.
 . Start the RKE2 service on each node:
 +
 [,bash]
