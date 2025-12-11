@@ -100,7 +100,7 @@ tls-san:
 
 [NOTE]
 ====
-默认情况下，任何 `kubectl` 命令都需要 root 用户访问权限，除非提供了 `RKE2_KUBECONFIG_MODE` 覆盖。有关更多信息，请参阅link:https://docs.rke2.io/cluster_access[集群访问页面]。
+默认情况下，任何 `kubectl` 命令都需要 root 用户访问权限，除非提供了 `RKE2_KUBECONFIG_MODE` 覆盖。有关更多信息，请参阅xref:cluster_access.adoc[集群访问页面]。
 ====
 
 == 5. 可选：加入 Agent 节点

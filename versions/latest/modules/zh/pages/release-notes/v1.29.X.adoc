@@ -1423,7 +1423,7 @@ This release updates Kubernetes to v1.29.2.
 *Important Note*
 
 --
-* Experimental command rke2 secrets-encrypt rotate-keys is currently broken and should not be used. Use the classic secrets encryption commands detailed https://docs.rke2.io/security/secrets_encryption#encryption-key-rotation-classic[here].
+* Experimental command rke2 secrets-encrypt rotate-keys is currently broken and should not be used. Use the classic secrets encryption commands detailed xref:security/secrets_encryption#_encryption_key_rotation_classic[here].
 * If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
 +
 You may retrieve the token value from any server already joined to the cluster:
