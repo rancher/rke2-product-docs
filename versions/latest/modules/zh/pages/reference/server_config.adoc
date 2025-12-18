@@ -1,9 +1,9 @@
 = Server 配置参考
 :page-languages: [en, zh]
-:revdate: 2024-10-28
+:revdate: 2025-12-04
 :page-revdate: {revdate}
 
-本文提供了可用于配置 RKE2 Server 的所有参数的参考。请注意，这些内容引用了命令行参数，但配置 RKE2 的最佳方法是使用link:../install/configuration.adoc#配置文件[配置文件]。
+本文提供了可用于配置 RKE2 Server 的所有参数的参考。请注意，这些内容引用了命令行参数，但配置 RKE2 的最佳方法是使用xref:install/configuration.adoc#_配置文件[配置文件]。
 
 == Critical Configuration Values
 
@@ -259,6 +259,20 @@ The following options must be set to the same value on all servers in the cluste
 | S3 timeout
 | 5m0s
 |
+|===
+
+[IMPORTANT]
+.Version Gate
+====
+Starting in versions v1.34.0+rke2r1, v1.33.4+rke2r1, v1.32.8+rke2r1, v1.31.12+rke2r1, RKE2 includes a new flag for S3 retention. It has the same default value as the local snapshot retention.
+====
+
+|===
+| Flag | Description | Default
+
+| etcd-s3-retention
+| Number of snapshots in S3 to retain
+| 5
 |===
 
 === Flags
