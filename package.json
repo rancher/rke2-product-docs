@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "@antora/lunr-extension": "^1.0.0-alpha.8",
+    "@springio/antora-xref-extension": "^1.0.0-alpha.4",
     "http-server": "^14.1.1",
     "nodejieba": "^3.4.2"
   }
