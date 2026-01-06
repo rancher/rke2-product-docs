@@ -284,7 +284,7 @@ Single Server::
 +
 [,bash]
 ----
- systemctl stop rke2-server
+systemctl stop rke2-server
 ----
 
 . Run `rke2 server` with the `--cluster-reset` flag, and `--cluster-reset-restore-path` indicating the path to the snapshot to restore.
@@ -309,7 +309,7 @@ rke2 server \
 +
 [,bash]
 ----
- systemctl start rke2-server
+systemctl start rke2-server
 ----
 +
 If an etcd-s3 backup configuration is defined within the RKE2 config file, the RKE2 restore will attempt to pull the snapshot file from the configured S3 bucket. In this instance only the snapshot filename should be passed in the argument `--cluster-reset-restore-path`. To restore from a local snapshot file, where an etcd-s3 backup configuration is present, add the argument `--etcd-s3=false` and pass the full path to the local snapshot file in the argument `--cluster-reset-restore-path`.
@@ -328,7 +328,7 @@ In this example there are 3 servers, `S1`, `S2`, and `S3`. The snapshot is locat
 +
 [,bash]
 ----
- systemctl stop rke2-server
+systemctl stop rke2-server
 ----
 
 . On S1, run `rke2 server` with the `--cluster-reset` option, and `--cluster-reset-restore-path` indicating the path to the snapshot to restore.
@@ -341,9 +341,9 @@ Using the `--cluster-reset` flag without specifying a snapshot to restore simply
 +
 [,bash]
 ----
- rke2 server \
-   --cluster-reset \
-   --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+rke2 server \
+  --cluster-reset \
+  --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
 ----
 +
 *Result:* RKE2 restores the snapshot and resets cluster membership, then prints a message indicating that it is ready to be restarted: +
@@ -354,21 +354,21 @@ Using the `--cluster-reset` flag without specifying a snapshot to restore simply
 +
 [,bash]
 ----
- systemctl start rke2-server
+systemctl start rke2-server
 ----
 
 . On S2 and S3, delete the data directory, `/var/lib/rancher/rke2/server/db/`:
 +
 [,bash]
 ----
- rm -rf /var/lib/rancher/rke2/server/db/
+rm -rf /var/lib/rancher/rke2/server/db/
 ----
 
 . On S2 and S3, start RKE2 again to join the restored cluster:
 +
 [,bash]
 ----
- systemctl start rke2-server
+systemctl start rke2-server
 ----
 
 If an etcd-s3 backup configuration is defined within the RKE2 config file, the RKE2 restore will attempt to pull the snapshot file from the configured S3 bucket. In this instance only the snapshot filename should be passed in the argument `--cluster-reset-restore-path`. To restore from a local snapshot file, where an etcd-s3 backup configuration is present, add the argument `--etcd-s3=false` and pass the full path to the local snapshot file in the argument `--cluster-reset-restore-path`.
@@ -399,7 +399,6 @@ The token value can also be set in the RKE2 config file.
 
 [CAUTION]
 ====
-
 . Node resources are also included in the etcd snapshot. If restoring to a new set of nodes, you will need to manually delete any old nodes that are no longer present in the cluster.
 . If there is a token set in the RKE2 config file, make sure it is the same as the `<BACKED-UP-TOKEN-VALUE>`, otherwise RKE2 will fail to start.
 ====
