@@ -413,8 +413,7 @@ ETCDSnapshotFiles are available as of the November 2023 releases: v1.28.4+rke2r1
 Snapshots can be viewed remotely using any Kubernetes client by listing or describing cluster-scoped `ETCDSnapshotFile` resources.
 Unlike the `rke2 etcd-snapshot list` command, which only shows snapshots visible to that node, `ETCDSnapshotFile` resources track all snapshots present on cluster members.
 
-
-[,shell-session]
+[,sh]
 ----
 $ kubectl get etcdsnapshotfile
 Name                              Location                                                                           Size     Created
@@ -424,7 +423,7 @@ etcd-snapshot-server-0-1754907185 s3://test-bucket/test-folder/etcd-snapshot-ser
 etcd-snapshot-server-0-1754907185 file:///var/lib/rancher/rke2/server/db/snapshots/etcd-snapshot-server-0-1754907185 9633824  2025-08-11T10:13:05Z
 ----
 
-[,shell-session]
+[,sh]
 ----
 $ kubectl describe etcdsnapshotfile s3-etcd-snapshot-server-0-1754906881-e1e196
 Name:         s3-etcd-snapshot-server-0-1754906881-e1e196
@@ -461,7 +460,7 @@ Events:
   Normal  ETCDSnapshotCreated  6m24s  rke2-supervisor  Snapshot etcd-snapshot-server-0-1754906881 saved on server-0
 ----
 
-[,shell-session]
+[,sh]
 ----
 $ kubectl describe etcdsnapshotfile s3-on-demand-k3s-server-1-1730308816-79b15c
 ----
