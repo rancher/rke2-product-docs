@@ -1,31 +1,28 @@
 = Certificate Management
 :page-languages: [en, zh]
-:revdate: 2025-07-17
+:revdate: 2026-01-08
 :page-revdate: {revdate}
 
 == Client and Server Certificates
 
-RKE2 client and server certificates are valid for 365 days from their date of issuance. Any certificates that are expired or within 120 days to expire are automatically renewed every time RKE2 starts. This renewal extends the lifetime of the existing certificates. If you require new certificates and keys, use the <<Rotating Client and Server Certificates Manually,RKE2 CLI>>.
+RKE2 client and server certificates are valid for 365 days from their date of issuance.
+Any certificates that are expired or within 120 days of expiring are automatically renewed every time RKE2 starts.
 
-[NOTE] 
-.CERTIFICATE EXPIRATION WARNING
-====
+This renewal reuses the existing keys, and extends the lifetime of the existing certificates.
+
+If you want to generate new certificates and keys, instead of extending the validity of the existing certificates, use the <<otating Client and Server Certificates Manually,`rotate`>> subcommand documented below.
+
 When a certificate is within 120 days of expiring a Kubernetes Warning event with reason: `CertificateExpirationWarning` is created.
-====
 
-[NOTE]
-.Version Gate
-====
-Output format is configurable as of the January 2025 releases: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.30.13+rke2r1. 
-
-Prior to the May 2025 releases: v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1, alerts and rotation were triggered at 90 days, instead of 120 days.
-====
+Prior to the May 2025 releases (v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1), alerts and rotation were triggered at 90 days, instead of 120 days.
 
 === Checking Expiration Dates
 
 [NOTE] 
 .Version Gate
 ====
+Output format is configurable as of the January 2025 releases: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.29.13+rke2r1.
+
 A new format with more information is available as of the May 2025 releases: v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1.
 ====
 
@@ -51,7 +48,7 @@ client-rke2-controller.crt   rke2-client-ca@1749726675   CertSign     Jun 10, 20
 Each certificate file (FILENAME column) contains at least two certificates - the leaf (or end entity) client/server certificate, any intermediate Certificate Authority certificates, and the root Certificate Authority certificate.
 ====
 
-In case of unexpected output, please use `--debug` flag to get more information or configure the correct data directory with `--data-dir` flag.
+In case of unexpected output, please ensure that you are specifying the correct data directory with the `--data-dir` flag (if using a custom data directory), or use the `--debug` flag to get additional output from the check process.
 
 === Rotating Client and Server Certificates Manually
 
@@ -105,6 +102,25 @@ This command performs integrity checks to confirm that the updated certificates 
 
 === Using Custom CA Certificates
 
+==== Cautions Against CA Reuse
+
+[CAUTION]
+====
+It is not recommended to share Root or Intermediate CAs across multiple clusters, or to use an existing private CA as your cluster CA.
+====
+
+When multiple clusters share a common root of trust, any client or server certificates issued by one cluster will also be trusted by all other clusters, as all certificates chain up to the same trust anchor - the common Root Certificate Authority.
+
+This means that any user with a valid client certificate (or kubeconfig) for one cluster will also be able to authenticate to other clusters, and any RBAC that matches a client's user or group will also be applied in those other clusters.
+
+Similarly, server certificates issued by one cluster will also be trusted in all other clusters, and by all other infrastructure or clients that trust that root CA.
+
+Kubernetes does not support use of Certificate Revocation Lists.
+
+If you ever need to revoke a certificate for any reason (for example, due to a compromised admin kubeconfig), you must perform a full replacement of the cluster Certificate Authority in order to invalidate the certificate's trust.
+
+==== Using Custom CA Certificates
+
 If CA certificates and keys are found the correct location during initial startup of the first server in the cluster, automatic generation of CA certificates will be bypassed.
 
 An example script to pre-create the appropriate certificates and keys is available https://github.com/k3s-io/k3s/blob/master/contrib/util/generate-custom-ca-certs.sh[in the K3s repo at `contrib/util/generate-custom-ca-certs.sh`]. This script should be run prior to starting RKE2 for the first time, and will create a full set of leaf CA certificates signed by common Root and Intermediate CA certificates. If you have an existing Root or Intermediate CA, this script can be used (or used as a starting point) to create the correct CA certificates to provision a RKE2 cluster with PKI rooted in an existing authority.
@@ -125,7 +141,7 @@ Custom Certificate Authority files must be placed in `/var/lib/rancher/rke2/serv
 
 ==== Custom CA Topology
 
-Custom CA Certificates should observe the following topology:
+Custom CA Certificates generated by the example script will have the following topology:
 
 [mermaid]
 ....
@@ -173,6 +189,10 @@ If you want to use existing root and intermediate CA certificates, provide the f
 * `root-ca.pem`
 * `intermediate-ca.pem`
 * `intermediate-ca.key`
+
+The example script uses the provided CAs as the root for all cluster CA bundles - Server, Client, API Aggregation, and etcd Peer/Server.
+
+For advanced use cases, such as using the provided CAs for only select bundles, or using different CAs for different bundles, the example script should be modified to meet the specific needs of your organization.
 
 To use the example script to generate custom certs and keys before starting RKE2, run the following commands:
 
