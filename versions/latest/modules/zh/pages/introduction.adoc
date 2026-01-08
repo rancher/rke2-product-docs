@@ -11,7 +11,7 @@
 为了实现这些目标，{product-name} 会：
 
 * 提供xref:security/hardening_guide.adoc[默认值和配置选项]，让集群能使用最少的人员干预通过 CIS Kubernetes Benchmark xref:security/cis_self_assessment16.adoc[v1.6] 或 xref:security/cis_self_assessment123.adoc[v1.23]
-* 启用 xref:security/fips_support.adoc[FIPS 140-2 合规]
+* 启用 xref:security/fips3_support.adoc[FIPS 140-3 合规]
 * 在我们的构建流水线中使用 https://github.com/aquasecurity/trivy[trivy] 定期扫描组件以查找 CVE
 
 == 与 RKE 或 {k3s-product-name} 的差别？
