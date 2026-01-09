@@ -1,6 +1,6 @@
 = Network Options
 :page-languages: [en, zh]
-:revdate: 2025-10-28
+:revdate: 2025-12-04
 :page-revdate: {revdate}
 
 Kubernetes requires installation of one or more CNI Plugins to provide Pod networking. RKE2 bundles four primary CNI Plugins: Canal, Cilium, Calico, and Flannel. Only Calico and Flannel support Microsoft Windows. RKE2 also includes Multus as a secondary CNI Plugin, which must be enabled alongside a primary CNI Plugin. For more information, see the xref:networking/multus_sriov.adoc[Multus and SR-IOV] documentation.
@@ -82,7 +82,7 @@ Please check xref:known_issues.adoc[Known issues and Limitations] if you experie
 Cilium CNI Plugin::
 +
 --
-When using Cilium, you must ensure that nodes have a supported kernel version (>= 4.9.17) and they meet the https://docs.cilium.io/en/stable/operations/system_requirements/[requirements]. To override the default options, please use a HelmChartConfig resource. The HelmChartConfig resource must match the name and namespace of its corresponding HelmChart. For example, to enable eni: 
+When using Cilium, you must ensure that nodes have a supported kernel version (>= 4.9.17) and they meet the https://docs.cilium.io/en/stable/operations/system_requirements/[requirements]. To override the default options, please use a HelmChartConfig resource. The HelmChartConfig resource must match the name and namespace of its corresponding HelmChart. For example, to enable wireguard: 
 
 [,yaml]
 ----
@@ -95,11 +95,15 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
-    eni:
+    encryption:
       enabled: true
 ----
 
-For more information about values available in the Cilium chart, please refer to the https://github.com/rancher/rke2-charts/blob/main/charts/rke2-cilium/rke2-cilium/1.14.400/values.yaml[rke2-charts repository]. 
+For more information about values available in the Cilium chart, please refer to the https://github.com/rancher/rke2-charts/blob/main/charts/rke2-cilium/rke2-cilium/1.17.601/values.yaml[rke2-charts repository]. 
+
+.Kube-proxy replacement
+[%collapsible]
+======
 
 Cilium includes advanced features to fully replace kube-proxy and implement the routing of services using eBPF instead of iptables. It is not recommended to replace kube-proxy by Cilium if your kernel is not v5.8 or newer, as important bug fixes and features will be missing. To activate this mode, deploy RKE2 with `disable-kube-proxy: true` in the configuration file, and the following chart values: 
 
@@ -121,6 +125,12 @@ spec:
 
 For more information, please check the https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/[upstream docs].
 
+======
+
+.Cilium Hubble
+[%collapsible]
+======
+
 Cilium includes also an observability platform called https://docs.cilium.io/en/stable/overview/intro/#what-is-hubble[Hubble]. To enable Hubble, use the following chart values:
 
 [,yaml]
@@ -141,6 +151,8 @@ spec:
       ui:
         enabled: true
 ---- 
+
+======
 
 [WARNING]
 ====
@@ -241,6 +253,8 @@ IPv4/IPv6 dual-stack networking enables the allocation of both IPv4 and IPv6 add
 cluster-cidr: "10.42.0.0/16,2001:cafe:42::/56"
 service-cidr: "10.43.0.0/16,2001:cafe:43::/112"
 ----
+
+Dual-stack networking must be configured when the cluster is first created. It cannot be enabled on an existing cluster once it has been started as IPv4-only.
 
 Each CNI Plugin may require a different configuration for dual-stack:
 
