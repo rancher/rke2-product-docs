@@ -5,6 +5,6 @@
 
 This section describes how to upgrade your {product-name} cluster.
 
-xref:upgrade/manual.adoc[Manual Upgrades] describes several techniques for upgrading your cluster manually. It can also be used as a basis for upgrading through third-party Infrastructure-as-Code tools like https://www.terraform.io/[Terraform].
+xref:upgrade/manual_upgrade.adoc[Manual Upgrades] describes several techniques for upgrading your cluster manually. It can also be used as a basis for upgrading through third-party Infrastructure-as-Code tools like https://www.terraform.io/[Terraform].
 
-xref:upgrade/automated.adoc[Automated Upgrades] describes how to perform Kubernetes-native automated upgrades using Rancher's https://github.com/rancher/system-upgrade-controller[system-upgrade-controller].
+xref:upgrade/automated_upgrade.adoc[Automated Upgrades] describes how to perform Kubernetes-native automated upgrades using Rancher's https://github.com/rancher/system-upgrade-controller[system-upgrade-controller].

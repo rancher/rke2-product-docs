@@ -17,8 +17,8 @@
 
 * Upgrades
 ** xref:upgrade/upgrade.adoc[]
-** xref:upgrade/manual.adoc[]
-** xref:upgrade/automated.adoc[]
+** xref:upgrade/manual_upgrade.adoc[]
+** xref:upgrade/automated_upgrade.adoc[]
 ** xref:upgrade/roll_back.adoc[]
 
 * Security

@@ -139,7 +139,7 @@ spec:
 Kubernetes 从 v1.25 中删除了 PodSecurityPolicy，以支持 Pod Security Standard（PSS）。你可以在https://kubernetes.io/docs/concepts/security/pod-security-standards/[上游文档]中阅读有关 PSS 的更多信息。对于 RKE2，如果在节点上设置了 `profile` 标志，则必须手动执行一些步骤。
 
 . 在所有节点上，将 `profile` 值更新为 `cis-1.23`，但不要重启或升级 RKE2。
-. 正常执行升级。如果使用xref:./upgrade/automated.adoc[自动升级]，请确保运行 `system-upgrade-controller` pod 的命名空间按照 https://kubernetes.io/docs/concepts/security/pod-security-admission/#pod-security-levels[Pod 安全级别]的要求设置为 privileged。
+. 正常执行升级。如果使用xref:./upgrade/automated_upgrade.adoc[自动升级]，请确保运行 `system-upgrade-controller` pod 的命名空间按照 https://kubernetes.io/docs/concepts/security/pod-security-admission/#pod-security-levels[Pod 安全级别]的要求设置为 privileged。
 +
 [,yaml]
 ----

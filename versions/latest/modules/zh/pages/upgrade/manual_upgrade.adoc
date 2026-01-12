@@ -11,7 +11,7 @@ ____
 
 == 版本 Channels
 
-通过安装脚本或使用我们的xref:upgrade/automated.adoc[自动升级]功能执行的升级可以绑定到不同的版本 channels。以下是可用的 channels：
+通过安装脚本或使用我们的xref:upgrade/automated_upgrade.adoc[自动升级]功能执行的升级可以绑定到不同的版本 channels。以下是可用的 channels：
 
 |===
 | Channel | 描述
