@@ -10,7 +10,7 @@ Any certificates that are expired or within 120 days of expiring are automatical
 
 This renewal reuses the existing keys, and extends the lifetime of the existing certificates.
 
-If you want to generate new certificates and keys, instead of extending the validity of the existing certificates, use the <<otating Client and Server Certificates Manually,`rotate`>> subcommand documented below.
+If you want to generate new certificates and keys, instead of extending the validity of the existing certificates, use the <<Rotating Client and Server Certificates Manually,`rotate`>> subcommand documented below.
 
 When a certificate is within 120 days of expiring a Kubernetes Warning event with reason: `CertificateExpirationWarning` is created.
 
