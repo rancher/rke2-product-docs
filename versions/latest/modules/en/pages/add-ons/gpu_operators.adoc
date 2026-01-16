@@ -1,6 +1,6 @@
 = GPU Operators
 :page-languages: [en, zh]
-:revdate: 2026-01-08
+:revdate: 2026-01-16
 :page-revdate: {revdate}
 
 == Deploy NVIDIA operator
@@ -152,7 +152,7 @@ kubectl get node $NODENAME -o jsonpath='{.status.allocatable}'
 +
 You should see `"nvidia.com/gpu":` followed by the number of GPUs in the node.
 
-. Check that the container runtime binary was installed by the operator (in particular by the `nvidia-container-toolkit-daemonset`):
+. Check that the container runtime binary exists (it gets installed by the `nvidia-container-toolkit-daemonset`):
 +
 [,sh]
 ----
