@@ -69,7 +69,7 @@ For more information about the full options of the Canal config please refer to 
 .*eBPF dataplane*
 [%collapsible]
 ======
-[IMPORTANT]
+[NOTE]
 .Version Gate
 ====
 RKE2 supports the Calico eBPF dataplane as of January 2026 releases: v1.33.8+rke2r1, v1.34.4+rke2r1 and v1.35.1+rke2r1.
