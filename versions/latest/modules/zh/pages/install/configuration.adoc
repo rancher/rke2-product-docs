@@ -1,6 +1,6 @@
 = 配置选项
 :page-languages: [en, zh]
-:revdate: 2025-07-09
+:revdate: 2026-01-16
 :page-revdate: {revdate}
 
 == 配置文件
@@ -82,6 +82,34 @@ node-label:
   - other=what
   - foo=three
 ----
+
+=== Legacy kubelet logging flags
+
+RKE2 supports additional flags to configure kubelet logging that were previously supported by the kubelet itself. These flags are intercepted by RKE2, and control how RKE2 wraps logs written to stdout and stderr by the kubelet:
+
+|===
+| Flag | Type | Description
+
+| `logtostderr`
+| bool
+| Controls whether log messages are written only to stderr (Default `false`)
+
+| `alsologtostderr`
+| bool
+| Controls whether log messages are also written to stderr in addition to the specified log file (Default `false`)
+
+| `stderrthreshold`
+| string
+| This flag is intercepted by RKE2, but not used (Default `FATAL`)
+
+| `log-file`
+| string
+| Specifies the absolute path and filename where the component's log messages should be written (Default `/var/lib/rancher/rke2/agent/logs/kubelet.log`)
+
+| `log-file-max-size`
+| int
+| Specifies the maximum size (in megabytes) a log file can reach before it is rotated (Default `50`)
+|===
 
 == 配置 Linux 安装脚本
 
