@@ -70,12 +70,14 @@
 * xref:known_issues.adoc[]
 
 * Release Notes
+** xref:release-notes/v1.35.X.adoc[]
+** xref:release-notes/v1.34.X.adoc[]
 ** xref:release-notes/v1.33.X.adoc[]
 ** xref:release-notes/v1.32.X.adoc[]
-** xref:release-notes/v1.31.X.adoc[]
-** xref:release-notes/v1.30.X.adoc[]
-** xref:release-notes/v1.29.X.adoc[]
 ** Older...
+*** xref:release-notes-old/v1.31.X.adoc[]
+*** xref:release-notes-old/v1.30.X.adoc[]
+*** xref:release-notes-old/v1.29.X.adoc[]
 *** xref:release-notes-old/v1.28.X.adoc[]
 *** xref:release-notes-old/v1.27.X.adoc[]
 *** xref:release-notes-old/v1.26.X.adoc[]
