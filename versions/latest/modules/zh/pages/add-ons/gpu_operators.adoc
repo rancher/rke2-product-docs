@@ -80,7 +80,7 @@ spec:
         value: volume-mounts
 ----
 
-[IMPORTANT]
+[NOTE]
 ====
 The envvars `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`, `ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` and `DEVICE_LIST_STRATEGY` are required to properly isolate GPU resources as explained in this nvidia https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[doc]
 ====
@@ -111,7 +111,7 @@ spec:
         value: /run/k3s/containerd/containerd.sock
 ----
 
-[IMPORTANT]
+[NOTE]
 ====
 NVIDIA GPU Operator v25.10.x uses https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[Container Device Interface (CDI) specification] and that simplifies operations: we don't need to pass extra envvars to comply with the security requirements and the workloads don't need to pass the `runtimeClassName: nvidia` anymore
 ====
