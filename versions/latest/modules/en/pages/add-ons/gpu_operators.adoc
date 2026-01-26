@@ -1,6 +1,6 @@
 = GPU Operators
 :page-languages: [en, zh]
-:revdate: 2025-11-06
+:revdate: 2026-01-16
 :page-revdate: {revdate}
 
 == Deploy NVIDIA operator
@@ -46,15 +46,11 @@ This library is used by Kubernetes components to interact with the kernel driver
 
 Once the OS is ready and RKE2 is running, install the GPU Operator with the following yaml manifest.
 
-[CAUTION]
-====
-The NVIDIA operator restarts containerd with a hangup call which restarts RKE2.
-====
-
-[IMPORTANT]
-====
-The envvars `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`, `ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` and `DEVICE_LIST_STRATEGY` are required to properly isolate GPU resources as explained in https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[Preventing unprivileged access to GPUs in Kubernetes].
-====
+[tabs,sync-group-id=GPUoperator]
+=====
+v25.3.x::
++
+--
 
 [,yaml]
 ----
@@ -83,6 +79,49 @@ spec:
       - name: DEVICE_LIST_STRATEGY
         value: volume-mounts
 ----
+
+[NOTE]
+====
+The envvars `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`, `ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` and `DEVICE_LIST_STRATEGY` are required to properly isolate GPU resources as explained in this nvidia https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[doc]
+====
+
+--
+
+v25.10.x::
++
+--
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: gpu-operator
+  namespace: kube-system
+spec:
+  repo: https://helm.ngc.nvidia.com/nvidia
+  chart: gpu-operator
+  version: v25.10.1
+  targetNamespace: gpu-operator
+  createNamespace: true
+  valuesContent: |-
+    toolkit:
+      env:
+      - name: CONTAINERD_SOCKET
+        value: /run/k3s/containerd/containerd.sock
+----
+
+[NOTE]
+====
+NVIDIA GPU Operator v25.10.x uses https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[Container Device Interface (CDI) specification] and that simplifies operations: we don't need to pass extra envvars to comply with the security requirements and the workloads don't need to pass the `runtimeClassName: nvidia` anymore
+====
+--
+=====
+
+[CAUTION]
+====
+The NVIDIA operator restarts containerd with a hangup call which restarts RKE2
+====
 
 After one minute approximately, you can perform the following checks to verify that everything is working as expected:
 
@@ -113,7 +152,7 @@ kubectl get node $NODENAME -o jsonpath='{.status.allocatable}'
 +
 You should see `"nvidia.com/gpu":` followed by the number of GPUs in the node.
 
-. Check that the container runtime binary was installed by the operator (in particular by the `nvidia-container-toolkit-daemonset`):
+. Check that the container runtime binary exists (it gets installed by the `nvidia-container-toolkit-daemonset`):
 +
 [,sh]
 ----
@@ -138,7 +177,7 @@ metadata:
   namespace: default
 spec:
   restartPolicy: OnFailure
-  runtimeClassName: nvidia
+  # runtimeClassName: nvidia <== Only needed for v25.3.x
   containers:
 ** name: cuda-container
 image: nvcr.io/nvidia/k8s/cuda-sample:nbody
