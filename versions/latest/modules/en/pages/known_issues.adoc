@@ -1,6 +1,6 @@
 = Known Issues and Limitations
 :page-languages: [en, zh]
-:revdate: 2026-01-09
+:revdate: 2025-07-10
 :page-revdate: {revdate}
 
 This section contains current known issues and limitations with {product-name}. If you come across issues with {product-name} not documented here, please open a new issue https://github.com/rancher/rke2/issues[here].

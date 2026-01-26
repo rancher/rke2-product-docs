@@ -1,6 +1,6 @@
 = 已知问题和限制
 :page-languages: [en, zh]
-:revdate: 2026-01-09
+:revdate: 2025-07-10
 :page-revdate: {revdate}
 
 本文介绍了 RKE2 当前已知的问题和限制。如果你遇到本文未记录的 RKE2 问题，请https://github.com/rancher/rke2/issues[提交一个新 issue]。
