@@ -110,7 +110,7 @@ There are a few important things to call out regarding these plans:
 . The `concurrency` field indicates how many nodes can be upgraded at the same time.
 . The server-plan targets server nodes by specifying a label selector that selects nodes with the `node-role.kubernetes.io/control-plane` label. The agent-plan targets agent nodes by specifying a label selector that select nodes without that label.
 . The `prepare` step in the agent-plan will cause upgrade jobs for that plan to wait for the server-plan to complete before they execute. This logic is built into the image used for the prepare step, and is not part of system-upgrade-controller itself.
-. Both plans have the `channel` field set to the stable release channel URL. This will cause the controller to monitor that URL and upgrade the cluster any time it resolves to a new release. This works well with the link:manual.md#release-channels[release channels]. Thus, you can configure your plans with the following channel to ensure your cluster is always automatically upgraded to the newest stable release of RKE2. Alternatively, you can omit the `channel` field and set the `version` field to a specific release of RKE2:
+. Both plans have the `channel` field set to the stable release channel URL. This will cause the controller to monitor that URL and upgrade the cluster any time it resolves to a new release. This works well with the xref:upgrade/manual_upgrade.adoc#_release_channels[release channels]. Thus, you can configure your plans with the following channel to ensure your cluster is always automatically upgraded to the newest stable release of RKE2. Alternatively, you can omit the `channel` field and set the `version` field to a specific release of RKE2:
 +
 [,yaml]
 ----

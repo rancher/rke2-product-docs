@@ -33,7 +33,7 @@ See the https://www.suse.com/suse-rke2/support-matrix/all-supported-versions[RKE
 
 ==== RHEL 10
 
-On RHEL 10 (and its derivates like Rocky Linux) an additional package is required to allow nf_conntrack.
+On RHEL 10 (and its derivatives like Rocky Linux) an additional package is required to allow nf_conntrack.
 
 [,bash]
 ----
