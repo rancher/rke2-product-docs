@@ -1,0 +1,60 @@
+= FIPS 140-3 Enablement
+:page-languages: [en, zh]
+:revdate: 2026-02-05
+:page-revdate: {revdate}
+
+FIPS 140-3 is a U.S. Federal Government security standard used to approve cryptographic modules. This document explains how RKE2 is built with FIPS validated cryptographic libraries.
+
+Verification of compliance is avaliable in: xref:attachment$RKE2_FIPS3_Verified.pdf[FIPS 140-3 Verifed].
+
+== Use of FIPS Compatible Go compiler
+
+The Go compiler being used can be found https://go.googlesource.com/go/+/dev.boringcrypto[here]. Each component of the system is built with the version of this compiler that matches the same standard Go compiler version that would be used otherwise.
+
+This version of Go replaces the standard Go crypto libraries with the FIPS validated BoringCrypto module. See GoBoring's https://go.dev/src/crypto/internal/boring/README[readme] for more details. This module is validated by NIST as the https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4407[BoringCrypto] module on a wide range of systems.
+
+=== FIPS Support in Cluster Components
+
+Most RKE2 components are statically compiled using the GoBoring Go compiler. Architecturally, RKE2 is divided into several sections, and the following list outlines these sections and their associated components:
+
+* Kubernetes
+ ** API Server
+ ** Controller Manager
+ ** Scheduler
+ ** Kubelet
+ ** Kube Proxy
+ ** Metric Server
+ ** Kubectl
+* Helm Charts
+ ** Flannel
+ ** Calico
+ ** CoreDNS
+ ** Traefik
+
+== Runtime
+
+To ensure the entire architecture utilizes FIPS 140-3 compliant algorithms, RKE2 runtime utilities are statically compiled with the FIPS-enabled Go compiler. This guarantees compliance across every level of the stack, from Kubernetes daemons to container orchestration mechanics.
+
+* etcd
+* containerd
+ ** containerd-shim
+ ** containerd-shim-runc-v1
+ ** containerd-shim-runc-v2
+ ** ctr
+* crictl
+* runc
+
+== CNI
+
+RKE2 supports selecting an alternative CNI via the `--cni` flag. It comes bundled with several options, including Canal (default), Calico, Cilium, and Multus. However, only Canal is rebuilt for FIPS compliance.
+
+== Ingress
+
+RKE2 ships with a FIPS-compliant NGINX as its default ingress provider. There are two primary sub-components:
+
+* Controller: Responsible for monitoring/updating Kubernetes resources and configuring the server accordingly.
+* Server: Responsible for accepting and routing traffic.
+
+The controller is written in Go and is compiled using our <<Use of FIPS Compatible Go compiler,FIPS compatible Go compiler>>.
+
+The server is written in C and depends on OpenSSL to function properly. As a result, it leverages a FIPS-validated version of OpenSSL to achieve FIPS compliance.
