@@ -1,6 +1,6 @@
 = 要求
 :page-languages: [en, zh]
-:revdate: 2025-07-09
+:revdate: 2026-02-06
 :page-revdate: {revdate}
 
 RKE2 非常轻量，但也有一些最低要求，如下所述。
@@ -15,11 +15,7 @@ RKE2 非常轻量，但也有一些最低要求，如下所述。
 * 将配置文件中的 `node-name` 参数设置为唯一值
 * 将配置文件中的 `with-node-id` 参数设置为 `true`，从而将随机生成的 ID 号附加到主机名后。
 
-[IMPORTANT]
-.版本
-====
-`with-node-id` 参数从 2023-05 版本（v1.27.2+rke2r1、v1.26.5+rke2r1、v1.25.10+rke2r1、v1.24.14+rke2r1）开始可用。
-====
+If the Round-Trip Time (RTT) between control-plane nodes exceeds 2ms, refer to the following https://support.scc.suse.com/s/kb/Maximum-RTT-Round-Trip-Time-for-an-RKE2-cluster?language=en_US[guide].
 
 == 操作系统
 
