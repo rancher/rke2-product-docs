@@ -1,6 +1,6 @@
 = 手动升级
 :page-languages: [en, zh]
-:revdate: 2024-09-11
+:revdate: 2026-01-08
 :page-revdate: {revdate}
 
 你可以使用安装脚本升级 RKE2，也可以手动安装所需版本的二进制文件。
@@ -11,7 +11,7 @@ ____
 
 == 版本 Channels
 
-通过安装脚本或使用我们的xref:./automated_upgrade.adoc[自动升级]功能执行的升级可以绑定到不同的版本 channels。以下是可用的 channels：
+通过安装脚本或使用我们的xref:upgrade/automated_upgrade.adoc[自动升级]功能执行的升级可以绑定到不同的版本 channels。以下是可用的 channels：
 
 |===
 | Channel | 描述

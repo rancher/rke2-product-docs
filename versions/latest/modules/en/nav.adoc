@@ -24,9 +24,9 @@
 * Security
 ** xref:security/about_hardened_images.adoc[]
 ** xref:security/hardening_guide.adoc[]
+** xref:security/cis_self_assessment111.adoc[]
+** xref:security/cis_self_assessment110.adoc[]
 ** xref:security/cis_self_assessment19.adoc[]
-** xref:security/cis_self_assessment18.adoc[]
-** xref:security/cis_self_assessment17.adoc[]
 ** xref:security/fips3_support.adoc[]
 ** xref:security/pod_security_policies.adoc[]
 ** xref:security/pod_security_standards.adoc[]
@@ -68,12 +68,14 @@
 ** xref:reference/windows_agent_config.adoc[]
 
 * Release Notes
+** xref:release-notes/v1.35.X.adoc[]
+** xref:release-notes/v1.34.X.adoc[]
 ** xref:release-notes/v1.33.X.adoc[]
 ** xref:release-notes/v1.32.X.adoc[]
-** xref:release-notes/v1.31.X.adoc[]
-** xref:release-notes/v1.30.X.adoc[]
-** xref:release-notes/v1.29.X.adoc[]
 ** Older...
+*** xref:release-notes-old/v1.31.X.adoc[]
+*** xref:release-notes-old/v1.30.X.adoc[]
+*** xref:release-notes-old/v1.29.X.adoc[]
 *** xref:release-notes-old/v1.28.X.adoc[]
 *** xref:release-notes-old/v1.27.X.adoc[]
 *** xref:release-notes-old/v1.26.X.adoc[]
