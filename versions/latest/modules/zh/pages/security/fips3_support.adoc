@@ -11,7 +11,7 @@ Verification of compliance is avaliable in: xref:attachment$RKE2_FIPS3_Verified.
 
 The Go compiler being used can be found https://go.googlesource.com/go/+/dev.boringcrypto[here]. Each component of the system is built with the version of this compiler that matches the same standard Go compiler version that would be used otherwise.
 
-This version of Go replaces the standard Go crypto libraries with the FIPS validated BoringCrypto module. See GoBoring's https://go.dev/src/crypto/internal/boring/README[readme] for more details. This module is validated by NIST as the https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4407[BoringCrypto] module on a wide range of systems.
+This version of Go replaces the standard Go crypto libraries with the FIPS validated BoringCrypto module. See GoBoring's https://go.dev/src/crypto/internal/boring/README[readme] for more details. This module is validated by NIST as the https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4968[BoringCrypto] module on a wide range of systems.
 
 === FIPS Support in Cluster Components
 
@@ -50,11 +50,14 @@ RKE2 supports selecting an alternative CNI via the `--cni` flag. It comes bundle
 
 == Ingress
 
-RKE2 ships with a FIPS-compliant NGINX as its default ingress provider. There are two primary sub-components:
+RKE2 ships with two ingress controllers: ingress-nginx and Traefik. Both are FIPs compliant.
 
-* Controller: Responsible for monitoring/updating Kubernetes resources and configuring the server accordingly.
-* Server: Responsible for accepting and routing traffic.
+Ingress-nginx controller and the complete Traefik stack (controller and proxy server) are written in Go and compiled using our <<Use of FIPS Compatible Go compiler,FIPS compatible Go compiler>>.
 
-The controller is written in Go and is compiled using our <<Use of FIPS Compatible Go compiler,FIPS compatible Go compiler>>.
+Ingress-nginx uses the nginx proxy server which is written in C and depends on OpenSSL to function properly. As a result, it leverages a FIPS-validated version of OpenSSL to achieve FIPS compliance.
 
-The server is written in C and depends on OpenSSL to function properly. As a result, it leverages a FIPS-validated version of OpenSSL to achieve FIPS compliance.
+[WARNING]
+====
+ingress-nginx becomes EOL in March 2026 and is deprecated in RKE2 v1.36. Rancher Prime RKE2 users will still get support and CVE fixes (8+) for the whole lifecycle of RKE2 v1.32, v1.33, v1.34, v1.35 and v1.36. Whenever you are ready, we recommend you switching to Traefik following our https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster?language=es[official guide].
+====
+
