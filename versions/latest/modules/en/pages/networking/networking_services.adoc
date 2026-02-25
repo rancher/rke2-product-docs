@@ -5,9 +5,9 @@
 
 This page explains how CoreDNS and the Nginx-Ingress controller work within RKE2.
 
-Refer to the xref:./basic_network_options.adoc[Basic Network Options] page for details on Canal configuration options, or how to set up your own CNI.
+Refer to the xref:networking/basic_network_options.adoc[Basic Network Options] page for details on Canal configuration options, or how to set up your own CNI.
 
-For information on which ports need to be opened for RKE2, refer to the xref:../install/requirements.adoc[Installation Requirements].
+For information on which ports need to be opened for RKE2, refer to the xref:install/requirements.adoc[Installation Requirements].
 
 == CoreDNS
 
@@ -109,7 +109,9 @@ ingress-nginx::
 
 [WARNING]
 ====
-ingress-nginx becomes EOL in March 2026 and is deprecated in RKE2 v1.36. Rancher Prime RKE2 users will still get support and CVE fixes (8+) for the whole lifecycle of RKE2 v1.32, v1.33, v1.34, v1.35 and v1.36. Whenever you are ready, we recommend you switching to Traefik following our https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster?language=es[official guide].
+The ingress-nginx controller reaches End of Life (EOL) in March 2026 and is deprecated in RKE2 v1.36.
+
+{rke2-product-name} users will continue to receive support and CVE fixes (8+) for the entire lifecycle of RKE2 v1.32, v1.33, v1.34, v1.35 and v1.36. We recommend switching to Traefik by following the https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[Migrating from Ingress-NGINX to Traefik in a standalone RKE2 cluster] guide.
 ====
 
 https://github.com/kubernetes/ingress-nginx[ingress-nginx] is an Ingress controller powered by NGINX that uses a ConfigMap to store the NGINX configuration.
