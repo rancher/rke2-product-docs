@@ -150,14 +150,23 @@ RKE2 supports replicating etcd snapshots to and restoring etcd snapshots from S3
 | `--etcd-s3-secret-key`
 | S3 secret key
 
+| `--etcd-s3-session-token` 
+| S3 session token 
+
 | `--etcd-s3-bucket`
 | S3 bucket name
+
+| `--etcd-s3-bucket-lookup-type`
+| S3 bucket lookup type, one of 'auto', 'dns', 'path'; default is 'auto' if not set
 
 | `--etcd-s3-region`
 | S3 region / bucket location (optional). defaults to us-east-1
 
 | `--etcd-s3-folder`
 | S3 folder
+
+| `--etcd-s3-retention`
+| S3 retention limit (default: 5)
 
 | `--etcd-s3-proxy`
 | Proxy server to use when connecting to S3, overriding any proxy-releated environment variables
@@ -404,12 +413,6 @@ The token value can also be set in the RKE2 config file.
 ====
 
 == ETCDSnapshotFile Custom Resources
-
-[IMPORTANT]
-.Version Gate
-====
-ETCDSnapshotFiles are available as of the November 2023 releases: v1.28.4+rke2r1, v1.27.8+rke2r1, v1.26.11+rke2r1, v1.25.16+rke2r1
-====
 
 Snapshots can be viewed remotely using any Kubernetes client by listing or describing cluster-scoped `ETCDSnapshotFile` resources.
 Unlike the `rke2 etcd-snapshot list` command, which only shows snapshots visible to that node, `ETCDSnapshotFile` resources track all snapshots present on cluster members.
