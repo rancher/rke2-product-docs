@@ -1,13 +1,13 @@
 = Networking Services
 :page-languages: [en, zh]
-:revdate: 2025-11-18
+:revdate: 2026-03-16
 :page-revdate: {revdate}
 
 This page explains how CoreDNS and the Nginx-Ingress controller work within RKE2.
 
-Refer to the xref:./basic_network_options.adoc[Basic Network Options] page for details on Canal configuration options, or how to set up your own CNI.
+Refer to the xref:networking/basic_network_options.adoc[Basic Network Options] page for details on Canal configuration options, or how to set up your own CNI.
 
-For information on which ports need to be opened for RKE2, refer to the xref:../install/requirements.adoc[Installation Requirements].
+For information on which ports need to be opened for RKE2, refer to the xref:install/requirements.adoc[Installation Requirements].
 
 == CoreDNS
 
@@ -152,7 +152,7 @@ https://doc.traefik.io/traefik/[Traefik] is a modern HTTP reverse proxy and load
 
 To use Traefik, start each server with the `ingress-controller: traefik` option in your configuration file.
 
-Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents enables the kubernetes gateway api:
+Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents changes the log level to "DEBUG"::
 
 [,yaml]
 ----
@@ -164,9 +164,9 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
-    providers:
-      kubernetesGateway:
-        enabled: true
+    logs:
+      general:
+        level: "DEBUG"
 ----
 
 For more information, refer to the official https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md[Traefik Helm configuration parameters].
@@ -174,6 +174,34 @@ For more information, refer to the official https://github.com/traefik/traefik-h
 ======
 
 To disable the ingress controller, start each server with the `ingress-controller: none` option in your configuration file.
+
+=== Gateway API
+
+Gateway API is a family of Kubernetes resources that provide dynamic infrastructure provisioning and advanced traffic routing. While the traditional Ingress API is still supported (and not planned to be deprecated), the Gateway API provides a more expressive, role-oriented, and extensible way to manage service exposure.
+
+To leverage Gateway API in {rke2-product-name} you must use Traefik. Please use the following HelmChartConfig to enable GatewayAPI:
+
+```yaml
+# /var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    providers:
+      kubernetesGateway:
+        enabled: true
+#       experimentalChannel: true (read warning below)
+```
+Traefik is compatible with https://gateway-api.sigs.k8s.io/reference/1.4/spec/[Gateway API v1.4].
+
+[WARNING]
+====
+If you need support for experimental Gateway API resources, e.g. TCPRoute, you must install the https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml[experimental-install.yaml] from the official https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0[gateway-api releases] and use the option `providers.kubernetesGateway.experimentalChannel=true` in the rke2-traefik chart values.
+====
 
 == Service Load Balancer
 
