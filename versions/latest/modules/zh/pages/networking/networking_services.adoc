@@ -1,13 +1,13 @@
 = Networking Services
 :page-languages: [en, zh]
-:revdate: 2025-11-18
+:revdate: 2026-03-16
 :page-revdate: {revdate}
 
 This page explains how CoreDNS and the Nginx-Ingress controller work within RKE2.
 
-Refer to the xref:./basic_network_options.adoc[Basic Network Options] page for details on Canal configuration options, or how to set up your own CNI.
+Refer to the xref:networking/basic_network_options.adoc[Basic Network Options] page for details on Canal configuration options, or how to set up your own CNI.
 
-For information on which ports need to be opened for RKE2, refer to the xref:../install/requirements.adoc[Installation Requirements].
+For information on which ports need to be opened for RKE2, refer to the xref:install/requirements.adoc[Installation Requirements].
 
 == CoreDNS
 
@@ -15,7 +15,7 @@ CoreDNS is deployed by default when starting the server. To disable, run each se
 
 If you don't install CoreDNS, you will need to install a cluster DNS provider yourself.
 
-CoreDNS is deployed with the https://github.com/kubernetes-incubator/cluster-proportional-autoscaler[autoscaler] by default. To disable it or change its config, use the xref:add-ons/helm.adoc#_customizing-packaged-components-with-helmchartconfig[HelmChartConfig] resource.
+CoreDNS is deployed with the https://github.com/kubernetes-incubator/cluster-proportional-autoscaler[autoscaler] by default. To disable it or change its config, use the xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig] resource.
 
 === NodeLocal DNSCache
 
@@ -54,6 +54,51 @@ spec:
       ipvs: true
 ----
 
+=== NodeLocal DNS Cache with Cilium in kube-proxy replacement mode
+
+This feature is available starting from versions v1.28.13+rke2r1, v1.29.8+rke2r1 and v1.30.4+rke2r1.
+
+If your choice of CNI is xref:networking/basic_network_options.adoc[Cilium in kube-proxy replacement mode] and you wish to use NodeLocal DNS Cache, you need to configure Cilium to use a https://docs.cilium.io/en/v1.15/network/kubernetes/local-redirect-policy/#node-local-dns-cache[Local Redirect Policy (LRP)] to route the DNS traffic to your NodeLocal cache. This is because in this mode, Cilium eBPF routing bypasses iptables rules so nodelocal cannot configure them to route the DNS traffic towards itself.
+
+This is done in two steps:
+
+. Activate the Local Redirect Policy feature in Cilium by setting the `localRedirectPolicy` flag to true in the Cilium HelmChartConfig. This would look like this:
++
+[,yaml]
+----
+---
+# /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-cilium
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    kubeProxyReplacement: true
+    k8sServiceHost: <KUBE_API_SERVER_IP>
+    k8sServicePort: <KUBE_API_SERVER_PORT>
+    localRedirectPolicy: true
+----
+
+. Configure the `rke2-coredns` chart to setup its LRP by applying the following HelmChartConfig:
++
+[,yaml]
+----
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    nodelocal:
+      enabled: true
+      use_cilium_lrp: true
+----
+
 == Ingress Controller
 
 [tabs]
@@ -61,10 +106,12 @@ spec:
 ingress-nginx::
 +
 --
-[CAUTION]
-.ingress-nginx EOL
+
+[WARNING]
 ====
-https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/[ingress-nginx becomes EOL] in March 2026. RKE2 will still include ingress-nginx in v1.36 but with a deprecated status. No new images with fixes should be expected after March 2026. Please switch to Traefik or become a https://www.suse.com/products/rancher/[Rancher Prime user] for an extended support period.
+The ingress-nginx controller reaches End of Life (EOL) in March 2026 and is deprecated in RKE2 v1.36.
+
+{rke2-product-name} users will continue to receive support and CVE fixes (8+) for the entire lifecycle of RKE2 v1.32, v1.33, v1.34, v1.35 and v1.36. We recommend switching to Traefik by following the https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[Migrating from Ingress-NGINX to Traefik in a standalone RKE2 cluster] guide.
 ====
 
 https://github.com/kubernetes/ingress-nginx[ingress-nginx] is an Ingress controller powered by NGINX that uses a ConfigMap to store the NGINX configuration.
@@ -105,7 +152,7 @@ https://doc.traefik.io/traefik/[Traefik] is a modern HTTP reverse proxy and load
 
 To use Traefik, start each server with the `ingress-controller: traefik` option in your configuration file.
 
-Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents enables the kubernetes gateway api:
+Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents changes the log level to "DEBUG"::
 
 [,yaml]
 ----
@@ -117,9 +164,9 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
-    providers:
-      kubernetesGateway:
-        enabled: true
+    logs:
+      general:
+        level: "DEBUG"
 ----
 
 For more information, refer to the official https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md[Traefik Helm configuration parameters].
@@ -127,6 +174,34 @@ For more information, refer to the official https://github.com/traefik/traefik-h
 ======
 
 To disable the ingress controller, start each server with the `ingress-controller: none` option in your configuration file.
+
+=== Gateway API
+
+Gateway API is a family of Kubernetes resources that provide dynamic infrastructure provisioning and advanced traffic routing. While the traditional Ingress API is still supported (and not planned to be deprecated), the Gateway API provides a more expressive, role-oriented, and extensible way to manage service exposure.
+
+To leverage Gateway API in {rke2-product-name} you must use Traefik. Please use the following HelmChartConfig to enable GatewayAPI:
+
+```yaml
+# /var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    providers:
+      kubernetesGateway:
+        enabled: true
+#       experimentalChannel: true (read warning below)
+```
+Traefik is compatible with https://gateway-api.sigs.k8s.io/reference/1.4/spec/[Gateway API v1.4].
+
+[WARNING]
+====
+If you need support for experimental Gateway API resources, e.g. TCPRoute, you must install the https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml[experimental-install.yaml] from the official https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0[gateway-api releases] and use the option `providers.kubernetesGateway.experimentalChannel=true` in the rke2-traefik chart values.
+====
 
 == Service Load Balancer
 
