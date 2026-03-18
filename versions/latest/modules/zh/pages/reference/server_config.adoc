@@ -1,6 +1,6 @@
 = Server 配置参考
 :page-languages: [en, zh]
-:revdate: 2025-12-04
+:revdate: 2026-02-27
 :page-revdate: {revdate}
 
 本文提供了可用于配置 RKE2 Server 的所有参数的参考。请注意，这些内容引用了命令行参数，但配置 RKE2 的最佳方法是使用xref:install/configuration.adoc#_配置文件[配置文件]。
