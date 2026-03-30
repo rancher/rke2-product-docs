@@ -149,7 +149,7 @@ journalctl -u rke2-agent -f
 
 [NOTE]
 ====
-Each machine must have a unique hostname. If your machines do not have unique hostnames, set the `node-name` parameter in the `config.yaml` file and provide a value with a valid and unique hostname for each node. To learn more about the config.yaml file, refer to the xref:install/configuration.adoc#_configuration-file[Configuration Options documentation].
+Each machine must have a unique hostname. If your machines do not have unique hostnames, set the `node-name` parameter in the `config.yaml` file and provide a value with a valid and unique hostname for each node. To learn more about the config.yaml file, refer to the xref:install/configuration.adoc#_configuration_file[Configuration Options documentation].
 ====
 
 == Windows Agent (Worker) Node Installation
@@ -199,7 +199,7 @@ token: <token from server node>
 "@
 ----
 +
-To learn more about the config.yaml file, refer to the xref:install/configuration.adoc#_configuration-file[Configuration Options documentation].
+To learn more about the config.yaml file, refer to the xref:install/configuration.adoc#_configuration_file[Configuration Options documentation].
 
 . Configure the PATH.
 +
