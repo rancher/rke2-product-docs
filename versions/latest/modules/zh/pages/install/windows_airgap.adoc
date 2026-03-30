@@ -134,7 +134,7 @@ token: <token from server node>
 "@
 ----
 +
-To read more about the config.yaml file, see the xref:./configuration.adoc#_configuration_file[Install Options documentation.]
+To read more about the config.yaml file, see the xref:install/configuration.adoc#_configuration_file[Install Options documentation.]
 
 . Configure your PATH.
 +
