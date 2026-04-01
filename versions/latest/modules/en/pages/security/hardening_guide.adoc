@@ -1,6 +1,6 @@
 = CIS Hardening Guide
 :page-languages: [en, zh]
-:revdate: 2026-02-27
+:revdate: 2026-04-01
 :page-revdate: {revdate}
 
 This document provides prescriptive guidance for hardening a production installation of {product-name}. It outlines the configurations and controls required to address Kubernetes benchmark controls from the Center for Internet Security (CIS).
@@ -173,7 +173,7 @@ v1.25 and Newer::
 . Configures the etcd static pod to run as the etcd user and group, as explained in the xref:security/hardening_guide#_etcd_is_configured_properly[etcd hardening guide].
 . Applies network policies that allow the cluster to pass associated controls.
 . Applies more restrictive file permissions (600 vs 644) to agent manifests and other configurations files.
-. Configures the Pod Security Admission Controller to enforce restricted mode in all namespaces, with the exception of the `kube-system`, `cis-operator-system`, and `tigera-operator` namespaces. These namespaces are exempted to allow system pods to run without restrictions, which is required for proper operation of the cluster. For more information about the PSA configuration, see the default xref:security/pod_security_standards.adoc#_pod_security_standards[Pod Security Admission configurations]. For more information about Pod Security Standards, please refer to the https://kubernetes.io/docs/concepts/security/pod-security-standards/[official documentation].
+. Configures the Pod Security Admission Controller to enforce restricted mode in all namespaces, with the exception of the `kube-system`, `compliance-operator-system`, and `tigera-operator` namespaces. These namespaces are exempted to allow system pods to run without restrictions, which is required for proper operation of the cluster. For more information about the PSA configuration, see the default xref:security/pod_security_standards.adoc#_pod_security_standards[Pod Security Admission configurations]. For more information about Pod Security Standards, please refer to the https://kubernetes.io/docs/concepts/security/pod-security-standards/[official documentation].
 --
 
 v1.24 and Older::
@@ -202,7 +202,7 @@ On v1.25 and newer, https://kubernetes.io/docs/concepts/security/pod-security-ad
 
 With the `cis`/`cis-1.23` profile:
 
-* RKE2 will apply a restricted pod security standard via a configuration file which will enforce `restricted` mode throughout the cluster with an exception to the `kube-system`, `cis-operator-system` and `tigera-operator` namespaces to ensure successful operation of system pods. 
+* RKE2 will apply a restricted pod security standard via a configuration file which will enforce `restricted` mode throughout the cluster with an exception to the `kube-system`, `compliance-operator-system` and `tigera-operator` namespaces to ensure successful operation of system pods. 
 
 Without the `cis`/`cis-1.23` profile:
 
@@ -263,7 +263,7 @@ For each namespace including `default` and `kube-system` on a standard RKE2 inst
 automountServiceAccountToken: false
 ----
 
-RKE2 will automatically set the value correctly for kube-system, cis-operator-system, kube-node-lease and tigera-operator namespaces.
+RKE2 will automatically set the value correctly for kube-system, compliance-operator-system, kube-node-lease and tigera-operator namespaces.
 
 [WARNING]
 .Operator Intervention Required
