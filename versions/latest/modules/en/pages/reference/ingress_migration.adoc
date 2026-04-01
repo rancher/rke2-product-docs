@@ -55,7 +55,7 @@ done
 
 .Verification of IngressClass assignment
 [%collapsible]
-====
+======
 Run this command to quickly verify that all your Ingress resources now have their `ingressClassName`` explicitly set to `nginx``.
 
 [,bash]
@@ -64,7 +64,7 @@ kubectl get ingress --all-namespaces -o custom-columns='NAMESPACE:.metadata.name
 ----
 
 If any Ingress resource shows `none` or a different class in the `ICLASS`` column, you must investigate and manually patch those resources before proceeding to the next step.
-====
+======
 
 === 2. Update RKE2 configuration
 
@@ -162,7 +162,7 @@ You can use the script below as a suggested way to achieve this.
 
 .Ingress duplication script
 [%collapsible]
-====
+======
 [,bash]
 ----
 #!/bin/bash
@@ -201,7 +201,7 @@ done
 
 echo "Ingress duplication complete."
 ----
-====
+======
 
 === 2. Test services via both controllers
 
