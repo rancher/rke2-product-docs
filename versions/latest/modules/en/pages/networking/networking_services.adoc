@@ -152,7 +152,7 @@ https://doc.traefik.io/traefik/[Traefik] is a modern HTTP reverse proxy and load
 
 To use Traefik, start each server with the `ingress-controller: traefik` option in your configuration file.
 
-Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents changes the log level to "DEBUG"::
+Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents changes the log level to "DEBUG":
 
 [,yaml]
 ----
