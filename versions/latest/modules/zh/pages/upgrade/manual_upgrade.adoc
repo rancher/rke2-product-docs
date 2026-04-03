@@ -9,6 +9,7 @@ ____
 *注意*：首先升级 Server 节点，一次可以升级一个。升级完所有 Server 后，你可以升级 Agent 节点。
 ____
 
+[#_release_channels]
 == 版本 Channels
 
 通过安装脚本或使用我们的xref:upgrade/automated_upgrade.adoc[自动升级]功能执行的升级可以绑定到不同的版本 channels。以下是可用的 channels：
