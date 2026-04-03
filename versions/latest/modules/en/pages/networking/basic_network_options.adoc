@@ -307,7 +307,8 @@ Calico CNI Plugin::
 Calico automatically detects the RKE2 configuration for dual-stack and does not need any extra configuration. When deployed in dual-stack mode, it creates two different ippool resources. Note that when using dual-stack, calico leverages BGP instead of VXLAN encapsulation. Dual-stack and BGP are currently not supported in the windows installations of RKE2.
 
 Flannel CNI Plugin::
-lannel automatically detects the RKE2 configuration for dual-stack and does not need any extra configuration.
++
+Flannel automatically detects the RKE2 configuration for dual-stack and does not need any extra configuration.
 
 ====
 
