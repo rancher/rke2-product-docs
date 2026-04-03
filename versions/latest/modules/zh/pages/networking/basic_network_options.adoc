@@ -194,7 +194,8 @@ Cilium is currently not supported on Windows.
 ====
 --
 
-[[install_a_cni_plugin]]Calico CNI Plugin::
+[[install_a_cni_plugin]]
+Calico CNI Plugin::
 +
 --
 For example, to change the interface MTU, you can use the following chart values:
