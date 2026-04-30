@@ -1,6 +1,6 @@
 = Air-Gap Install
 :page-languages: [en, zh]
-:revdate: 2025-08-06
+:revdate: 2026-04-30
 :page-revdate: {revdate}
 
 To install {product-name} can be installed in an air-gapped environment, you must first load the images into the air-gapped environment and then install RKE2.
@@ -55,6 +55,24 @@ Private registry support honors all settings from the xref:install/containerd_re
 
 . Add all the required system images to your private registry. A list of images can be obtained from the `.txt` file corresponding to each tarball referenced above. Alternatively, you can `docker load` the airgap image tarballs, then tag and push the loaded images.
 . <<2. Install RKE2, Install RKE2>> using the `system-default-registry` parameter, or use the xref:install/containerd_registry_configuration.adoc[containerd registry configuration] to use your registry as a mirror for docker.io.
+
+
+=== Hauler Method
+The airgap tool https://docs.hauler.dev/docs/intro[Hauler] allows you to aggregate and transport the RKE2 artifacts to disconnected environments, where you can seed a private registry or serve a registry of the Hauler store. Follow the https://docs.hauler.dev/docs/introduction/install[Hauler installation instructions], then proceed with the following steps. This pattern is repeatable for other artifacts you may want to bring into your airgapped environment.
+These steps assume you have already created nodes in your airgapped environment, and are using the bundled containerd as the container runtime.
+. On your connected machine, download the tarball and add to your Hauler store. The tarball can be found in the RKE2 release artifacts for your desired version.
++
+[,bash]
+----
+hauler store add file rke2-images.linux-amd64.tar.zst
+----
++
+Or:
++
+[,bash]
+----
+hauler store add file https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2-images.linux-amd64.tar.zst
+----
 
 
 == 2. Install RKE2
