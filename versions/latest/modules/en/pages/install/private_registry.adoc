@@ -1,6 +1,6 @@
 = Private Registry Configuration
 :page-languages: [en, zh]
-:revdate: 2025-08-06
+:revdate: 2026-05-11
 :page-revdate: {revdate}
 
 Containerd can be configured to connect to private registries and use them to pull images as needed by the kubelet.
@@ -25,7 +25,7 @@ In order to be recognized as a registry, the first component of the image name m
 [NOTE]
 .Version Gate
 ====
-The `disable-default-registry-endpoint` option is available as an experimental feature as of February 2024 releases: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1
+The `disable-default-registry-endpoint` option is available as of February 2024 releases: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1
 ====
 
 Nodes may be configured with the `disable-default-registry-endpoint: true` option. When this is set, containerd will not fall back to the default registry endpoint, and will only pull from configured mirror endpoints, along with the distributed registry if it is enabled.
