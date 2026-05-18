@@ -1,6 +1,6 @@
 = v1.33.X
 :page-languages: [en, zh]
-:revdate: 2026-03-18
+:revdate: 2026-05-18
 :page-revdate: {revdate}
 
 [CAUTION]
@@ -10,7 +10,7 @@ Before upgrading from earlier releases, be sure to read the Kubernetes https://g
 ====
 
 |===
-| Version | Release date | Kubernetes | Etcd | Containerd | Runc | Metrics-server | CoreDNS | Ingress-Nginx | Helm-controller | Canal (Default) | Calico | Cilium | Multus
+| Version | Release date | Kubernetes | Etcd | Containerd | Runc | Metrics-server | CoreDNS | Ingress-Nginx | Helm-controller | Traefik | Canal (Default) | Calico | Cilium | Multus
 
 | <<Release https://github.com/rancher/rke2/releases/tag/v1.33.11+rke2r1[v1.33.11+rke2r1], v1.33.11+rke2r1>>
 | Apr 24 2026
