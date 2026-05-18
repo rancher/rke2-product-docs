@@ -48,6 +48,11 @@ spec:
 
 === HelmChart 字段定义
 
+[NOTE]
+====
+`name` 字段应遵循 Helm Chart 命名约定，并同时满足 Kubernetes 的 https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[对象命名规则]。更多信息请参见 https://helm.sh/docs/chart_best_practices/conventions/#chart-names[Helm Best Practices 文档]。
+====
+
 |===
 | 字段 | 默认 | 描述 | Helm 参数/标志等效项
 
@@ -76,6 +81,16 @@ spec:
 | Helm Chart 仓库 URL
 | `--repo`
 
+| spec.plainHTTP
+| false
+| 使用不安全的 HTTP 连接下载 Chart。
+| `--plain-http`
+
+| spec.insecureSkipTLSVerify
+| false
+| 跳过 Chart 下载时的 TLS 证书校验。
+| `--insecure-skip-tls-verify`
+
 | spec.helmVersion
 | v3
 | 要使用的 Helm 版本（`v2` 或 `v3`）
@@ -91,9 +106,24 @@ spec:
 | 覆盖简单的默认 Chart 值。优先于通过 valuesContent 设置的选项。
 | `--set` / `--set-string`
 
+| spec.podSecurityContext
+|
+| 为 Helm Job Pod 自定义 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#podsecuritycontext-v1-core[v1.PodSecurityContext]
+|
+
+| spec.securityContext
+|
+| 为 Helm Job Pod 的容器自定义 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#securitycontext-v1-core[v1.SecurityContext]
+|
+
 | spec.valuesContent
 |
 | 通过 YAML 文件内容覆盖复杂的默认 Chart 值
+| `--values`
+
+| spec.valuesSecrets
+|
+| 通过引用外部 Secret 覆盖复杂 Chart 值
 | `--values`
 
 | spec.chartContent
@@ -101,6 +131,13 @@ spec:
 | Base64 编码的 chart archive .tgz，覆盖 spec.chart
 | CHART
 |===
+
+完整 API 请参见 https://github.com/k3s-io/helm-controller/blob/master/doc/helmchart.md#HelmChart[自动生成的 API 文档]。
+
+[NOTE]
+====
+对于复杂 Helm Chart（例如 Rancher）或升级期间的 CNI 插件，建议设置 `failurePolicy: abort`。默认的 `reinstall` 策略适用于一般应用，但对关键基础设施组件可能会造成破坏性影响。当 Helm 升级被中断且发布卡在 pending 状态时，默认策略会自动卸载并重新安装 Chart，可能导致网络中断或关键 CRD 被删除。将策略设置为 `abort` 可在失败后保留现场，便于人工排障并降低进一步影响。
+====
 
 == 使用 HelmChartConfig 自定义打包组件
 
