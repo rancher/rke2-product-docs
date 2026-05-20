@@ -1,0 +1,47 @@
+= Verpackte Komponenten verwalten
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+== Automatisches Bereitstellen von Manifests (AddOns)
+
+Auf Serverknoten wird jede Datei, die in `/var/lib/rancher/rke2/server/manifests` gefunden wird, automatisch ähnlich wie `kubectl apply` in Kubernetes bereitgestellt, sowohl beim Start als auch wenn die Datei auf der Festplatte geändert wird. Das Löschen von Dateien aus diesem Verzeichnis entfernt nicht die entsprechenden Ressourcen aus dem Cluster.
+
+Manifests werden als `AddOn` benutzerdefinierte Ressourcen im `kube-system` Namespace verfolgt. Alle Fehler oder Warnungen, die beim Anwenden der Manifestdatei auftreten, können durch die Verwendung von `kubectl describe` auf dem entsprechenden `AddOn` oder durch die Verwendung von `kubectl get event -n kube-system` zur Anzeige aller Ereignisse für diesen Namespace, einschließlich derjenigen vom Bereitstellungscontroller, eingesehen werden.
+
+=== Verpackte Komponenten
+
+RKE2 wird mit einer Reihe von Paketkomponenten geliefert, die als AddOns über das Verzeichnis für Manifeste bereitgestellt werden, zum Beispiel `rke2-coredns`, `rke2-metrics-server`, `rke2-ingress-nginx` und so weiter.
+
+Manifestdateien für Paketkomponenten werden von RKE2 verwaltet und sollten nicht verändert werden. Die Dateien werden jedes Mal auf die Festplatte geschrieben, wenn RKE2 gestartet wird, um ihre Integrität zu gewährleisten.
+
+=== Benutzer-AddOns
+
+Sie können zusätzliche Dateien im Manifests-Verzeichnis für die Bereitstellung als `AddOn` ablegen. Jede Datei kann mehrere Kubernetes-Ressourcen enthalten, die durch den `---` YAML-Dokumentseparator getrennt sind. Für weitere Informationen zur Organisation von Ressourcen in Manifests siehe den Abschnitt https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/[Verwalten von Ressourcen] der Kubernetes-Dokumentation.
+
+==== Dateibenennungsanforderungen
+
+Der `AddOn` Name für jede Datei im Manifestverzeichnis leitet sich vom Basisnamen der Datei ab. Stellen Sie sicher, dass alle Dateien im Manifests-Verzeichnis (oder in Unterverzeichnissen) Namen haben, die eindeutig sind und den Kubernetes https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[Objektnamensbeschränkungen] entsprechen. Es sollte auch darauf geachtet werden, keine Konflikte mit Namen zu verursachen, die von den standardmäßigen RKE2 paketierten Komponenten verwendet werden, selbst wenn diese Komponenten deaktiviert sind.
+
+[CAUTION]
+====
+Wenn Sie mehrere Serverknoten haben und zusätzliche AddOn-Manifeste auf mehr als einem Server platzieren, liegt es in Ihrer Verantwortung, sicherzustellen, dass die Dateien auf diesen Knoten synchron bleiben. RKE2 synchronisiert keine AddOn-Inhalte zwischen Knoten und kann kein korrektes Verhalten garantieren, wenn verschiedene Server versuchen, widersprüchliche Manifeste bereitzustellen.
+====
+
+== Deaktivierung von Manifesten
+
+Es gibt zwei Möglichkeiten, die Bereitstellung spezifischer Inhalte aus dem Manifests-Verzeichnis zu deaktivieren.
+
+=== Verwendung des `--disable` Flags
+
+Die oben aufgeführten AddOns für verpackte Komponenten sowie AddOns für zusätzliche Manifeste, die im `manifests` Verzeichnis platziert sind, können mit dem `--disable` Flag deaktiviert werden. Deaktivierte AddOns werden aktiv aus dem Cluster deinstalliert, und die Quelldateien werden aus dem `manifests` Verzeichnis gelöscht.
+
+Um beispielsweise zu verhindern, dass der Metrics-Server in einem neuen Cluster installiert wird, oder um ihn zu entfernen und das Manifest aus einem bestehenden Cluster zu entfernen, können Sie RKE2 mit `--disable=rke2-metrics-server` starten. Mehrere Elemente können deaktiviert werden, indem ihre Namen durch Kommas getrennt werden oder indem das Flag wiederholt wird.
+
+=== Verwendung von .skip-Dateien
+
+Für jede Datei unter `/var/lib/rancher/rke2/server/manifests` können Sie eine `.skip` Datei erstellen, die RKE2 veranlasst, das entsprechende Manifest zu ignorieren. Der Inhalt der `.skip` Datei spielt keine Rolle, nur ihre Existenz wird überprüft. Beachten Sie, dass das Erstellen einer `.skip` Datei, nachdem ein AddOn bereits erstellt wurde, es nicht entfernt oder anderweitig ändert; die Datei wird einfach so behandelt, als ob sie nicht existiert hätte.
+
+== Helm AddOns
+
+Für Informationen zur Verwaltung von Helm-Charts über automatisch bereitgestellte Manifeste, siehe den Abschnitt über xref:add-ons/helm.adoc[Helm].

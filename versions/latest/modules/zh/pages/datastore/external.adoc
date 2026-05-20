@@ -1,51 +1,51 @@
-= External Datastore
+= 外部数据存储
 :page-languages: [en, zh]
 :revdate: 2025-08-08
 :page-revdate: {revdate}
 
-Using an external datastore means leveraging a database that resides outside the Kubernetes cluster. Instead of being contained within the cluster, Kubernetes access the external datastore over the network. This approach could be common for organizations with existing database infrastructure or those who have more experience operating an enterprise-grade SQL database like MySQL or PostgreSQL. The project https://github.com/k3s-io/kine[kine] is used for SQL databases. The alternative to external datastore is xref:datastore/embedded.adoc[embedded datastore].
+使用外部数据存储意味着利用位于Kubernetes集群外部的数据库。Kubernetes通过网络访问外部数据存储，而不是将其包含在集群内。这种方法对于拥有现有数据库基础设施的组织或那些更有经验操作企业级SQL数据库（如MySQL或PostgreSQL）的组织来说可能是常见的。项目 https://github.com/k3s-io/kine[kine]用于SQL数据库。外部数据存储的替代方案是xref:datastore/embedded.adoc[嵌入式数据存储]。
 
-== Datastore Options
+== 数据存储选项
 
-* *External Database*
-** https://etcd.io/[etcd] (certified against version 3.5.4)
-** https://www.mysql.com[MySQL] (certified against versions 5.7 and 8.0)
-** https://mariadb.org/[MariaDB] (certified against version 10.6.8)
-** https://www.postgresql.org/[PostgreSQL] (certified against versions 12.16, 13.12, 14.9 and 15.4)
+* *外部数据库*
+** https://etcd.io/[etcd]（针对版本3.5.4进行认证）
+** https://www.mysql.com[MySQL]（针对版本5.7和8.0进行认证）
+** https://mariadb.org/[MariaDB]（针对版本10.6.8进行认证）
+** https://www.postgresql.org/[PostgreSQL]（针对版本12.16、13.12、14.9和15.4进行认证）
 
 [WARNING]
-.Prepared Statement Support
+.预处理语句支持
 ====
-RKE2 requires prepared statements support from the DB. This means that connection poolers such as https://www.pgbouncer.org/faq.html#how-to-use-prepared-statements-with-transaction-pooling[PgBouncer] may require additional configuration to work with RKE2.
+RKE2需要数据库对预处理语句的支持。这意味着像 https://www.pgbouncer.org/faq.html#how-to-use-prepared-statements-with-transaction-pooling[PgBouncer]这样的连接池可能需要额外配置才能与RKE2一起使用。
 ====
 
-=== External Datastore Configuration Parameters
+=== 外部数据存储配置参数
 
-If you wish to use an external datastore such as PostgreSQL, MySQL, or etcd you must set the `datastore-endpoint` config so that RKE2 knows how to connect to it. You may also specify parameters to configure the authentication and encryption of the connection. The below table summarizes these options:
+如果您希望使用外部数据存储，如PostgreSQL、MySQL或etcd，您必须设置`datastore-endpoint`配置，以便RKE2知道如何连接到它。您还可以指定参数以配置连接的身份验证和加密。下表总结了这些选项：
 
 |===
-| Options | Environment Variable | Description
+| 选项 | 环境变量 | 说明
 
 | `datastore-endpoint`
 | `RKE2_DATASTORE_ENDPOINT`
-| Specify a PostgreSQL, MySQL, or etcd connection string. This is a string used to describe the connection to the datastore. The structure of this string is specific to each backend and is detailed below.
+| 指定PostgreSQL、MySQL或etcd连接字符串。这是用于描述与数据存储连接的字符串。该字符串的结构特定于每个后端，详细信息如下。
 
 | `datastore-cafile`
 | `RKE2_DATASTORE_CAFILE`
-| TLS Certificate Authority (CA) file used to help secure communication with the datastore. If your datastore serves requests over TLS using a certificate signed by a custom certificate authority, you can specify that CA using this parameter so that the RKE2 client can properly verify the certificate.
+| 用于帮助保护与数据存储通信的TLS证书颁发机构（CA）文件。如果您的数据存储通过TLS使用由自定义证书颁发机构签署的证书提供请求，您可以使用此参数指定该CA，以便RKE2客户端可以正确验证证书。
 
 | `datastore-certfile`
 | `RKE2_DATASTORE_CERTFILE`
-| TLS certificate file used for client certificate based authentication to your datastore. To use this feature, your datastore must be configured to support client certificate based authentication. If you specify this parameter, you must also specify the `datastore-keyfile` parameter.
+| 用于基于客户端证书进行身份验证以访问您的数据存储的TLS证书文件。要使用此功能，您的数据存储必须配置为支持基于客户端证书的身份验证。如果您指定此参数，则必须同时指定 `datastore-keyfile` 参数。
 
 | `datastore-keyfile`
 | `RKE2_DATASTORE_KEYFILE`
-| TLS key file used for client certificate based authentication to your datastore. See the previous `datastore-certfile` parameter for more details.
+| 用于基于客户端证书进行身份验证以访问您的数据存储的TLS密钥文件。有关更多详细信息，请参见之前的 `datastore-certfile` 参数。
 |===
 
-=== Datastore Endpoint Format and Functionality
+=== 数据存储端点格式和功能
 
-As mentioned, the format of the value passed to the `datastore-endpoint` parameter is dependent upon the datastore backend. The following details this format and functionality for each supported external datastore.
+如前所述，传递给 `datastore-endpoint` 参数的值的格式取决于数据存储后端。以下详细说明了每个支持的外部数据存储的格式和功能。
 
 [tabs]
 ======
@@ -53,65 +53,65 @@ As mentioned, the format of the value passed to the `datastore-endpoint` paramet
 PostgreSQL::
 +
 --
-A typical `datastore-endpoint` option for PostgreSQL has the following format: 
+PostgreSQL的典型`datastore-endpoint`选项具有以下格式：
 
 `postgres://username:password@hostname:port/database-name`
 
-More advanced configuration parameters are available. For more information on these, please see https://godoc.org/github.com/lib/pq. 
+提供了更高级的配置参数。有关这些的更多信息，请参见 https://godoc.org/github.com/lib/pq.。
 
-If you specify a database name and it does not exist, the server will attempt to create it. 
+如果您指定了数据库名称且该数据库不存在，服务器将尝试创建它。
 
-If you only supply `postgres://` as the endpoint, RKE2 will attempt to do the following:
+如果您仅将`postgres://`作为端点提供，RKE2将尝试执行以下操作：
 
-* Connect to localhost using `postgres` as the username and password. 
-* Create a database named `kubernetes`.
+* 使用`postgres`作为用户名和密码连接到localhost。
+* 创建一个名为 `kubernetes` 的数据库。
 --
 
 MySQL / MariaDB::
 +
 --
-A typical `datastore-endpoint` option for MySQL and MariaDB has the following format: 
+MySQL 和 MariaDB 的典型 `datastore-endpoint` 选项具有以下格式：
 
 `mysql://username:password@tcp(hostname:3306)/database-name`
 
-More advanced configuration parameters are available. For more information, please see https://github.com/go-sql-driver/mysql#dsn-data-source-name.
+提供了更高级的配置参数。有关更多信息，请参见 https://github.com/go-sql-driver/mysql#dsn-data-source-name.。
 
-If you specify a database name and it does not exist, the server will attempt to create it.
+如果您指定了数据库名称且该数据库不存在，服务器将尝试创建它。
 
-If you only supply `mysql://` as the endpoint, RKE2 will attempt to do the following:
+如果您仅将`mysql://`作为端点提供，RKE2将尝试执行以下操作：
 
-* Connect to the MySQL socket at `/var/run/mysqld/mysqld.sock` using the `root` user and no password. 
-* Create a database with the name `kubernetes`.
+* 使用 `root` 用户和无密码连接到 `/var/run/mysqld/mysqld.sock` 的 MySQL 套接字。
+* 创建一个名为 `kubernetes` 的数据库。
 --
 
 etcd::
 +
 --
-A typical `datastore-endpoint` option for etcd has the following format: 
+etcd 的典型 `datastore-endpoint` 选项具有以下格式：
 
 `\https://etcd-host-1:2379,https://etcd-host-2:2379,https://etcd-host-3:2379`
 
-The above assumes a typical three node etcd cluster. The parameter accepts comma separated etcd URLs.
+以上假设了一个典型的三节点etcd集群。该参数接受以逗号分隔的 etcd URL。
 --
 ======
 
-== External database
+== 外部数据库
 
-=== 1. Create an External Datastore
+=== 1.创建外部数据存储
 
-You will first need to create an external datastore for the cluster. See the <<Datastore Options>> section for more details.
+您首先需要为集群创建一个外部数据存储。有关更多详细信息，请参见 <<Datastore Options>> 部分。
 
-=== 2. Launch Server Nodes
+=== 2.启动服务器节点
 
-RKE2 requires two or more server nodes for this HA configuration. See the xref:install/requirements.adoc[Requirements] guide for minimum machine requirements.
+RKE2 需要两个或更多服务器节点以进行此 HA 配置。有关最低机器要求，请参见 xref:install/requirements.adoc[要求] 指南。
 
-When starting the `rke2-server` service on these nodes with `systemctl start rke2-server`, you must set the `datastore-endpoint` option in the config so that RKE2 knows how to connect to the external datastore. The `token` option can also be used to set a deterministic token when adding nodes. When empty, this token will be generated automatically for further use.
+在这些节点上使用 `rke2-server` 启动 `systemctl start rke2-server` 服务时，必须在配置中设置 `datastore-endpoint` 选项，以便 RKE2 知道如何连接到外部数据存储。`token` 选项也可以用于在添加节点时设置确定性词元。当为空时，此词元将自动生成以供进一步使用。
 
-For example, a `config.yaml` like the following could be used to configure RKE2 with a MySQL database as the external datastore and set a token:
+例如，可以使用如下的 `config.yaml` 来配置 RKE2，使 MySQL 数据库作为外部数据存储并设置一个词元：
 
 [NOTE]
 ====
-The RKE2 config file needs to be created manually. You can do that by running touch /etc/rancher/rke2/config.yaml as a privileged user.
+RKE2 配置文件需要手动创建。您可以通过以特权用户身份运行 touch /etc/rancher/rke2/config.yaml 来完成此操作。
 ====
 
 [,yaml]
@@ -120,26 +120,26 @@ datastore-endpoint: "mysql://username:password@tcp(hostname:3306)/database-name"
 token: SECRET
 ----
 
-The datastore endpoint format differs based on the database type. For details, refer to the section on <<Datastore Endpoint Format and Functionality,datastore endpoint formats>>.
+数据存储端点格式根据数据库类型而有所不同。有关详细信息，请参阅 <<Datastore Endpoint Format and Functionality,数据存储端点格式>> 部分。
 
-To configure TLS certificates when launching server nodes, refer to the <<External Datastore Configuration Parameters,datastore configuration section>>.
+要在启动服务器节点时配置 TLS 证书，请参阅 <<External Datastore Configuration Parameters,数据存储配置部分>>。
 
-By default, server nodes will be schedulable and thus your workloads can get launched on them. If you wish to have a dedicated control plane where no user workloads will run, you can use xref:advanced.adoc#_节点标签和污点[taints].
+默认情况下，服务器节点将可调度，因此您的工作负载可以在其上启动。如果您希望拥有一个专用的控制平面，不运行任何用户工作负载，可以使用 xref:advanced.adoc#_node_labels_and_taints[污点]。
 
-Once you've started the `rke2-server` process on all server nodes, ensure that the cluster has come up properly with `kubectl get nodes`. You should see your server nodes in the `Ready` state.
+一旦您在所有服务器节点上启动了 `rke2-server` 进程，请使用 `kubectl get nodes` 检查集群是否已正确启动。您应该看到您的服务器节点处于 `Ready` 状态。
 
-=== 3. Optional: Join Additional Server Nodes
+=== 3.可选：加入额外的服务器节点
 
-The same example config specified in step 2 can be used to join additional server nodes and the same token from the first node must be added to the config.
+在步骤 2 中指定的相同示例配置可以用于加入额外的服务器节点，并且必须将第一个节点的相同词元添加到配置中。
 
-If the first server node was started without the `token` option, the token value can be retrieved from any server already joined to the cluster:
+如果第一个服务器节点在没有 `token` 选项的情况下启动，则可以从已加入集群的任何服务器中检索词元值：
 
 [,bash]
 ----
 cat /var/lib/rancher/rke2/server/token
 ----
 
-Then you can join an additional server by adding the `server` address to the config and starting the the `rke2-server` process with `systemctl start rke2-server`.
+然后，您可以通过将 `server` 地址添加到配置中并使用 `rke2-server` 启动 `systemctl start rke2-server` 进程来加入额外的服务器。
 
 [,yaml]
 ----
@@ -148,22 +148,22 @@ datastore-endpoint: "mysql://username:password@tcp(hostname:3306)/database-name"
 token: SECRET
 ----
 
-There are a few config flags that must be the same in all server nodes:
+在所有服务器节点中，有一些配置标志必须保持一致：
 
-* Network related flags: `cluster-dns`, `cluster-domain`, `cluster-cidr`, `service-cidr`
-* Flags controlling the deployment of certain components: `disable-helm-controller` and any component passed to `disable`
-* Feature related flags: `secrets-encryption`
+* 与网络相关的标志：`cluster-dns`、`cluster-domain`、`cluster-cidr`、`service-cidr`
+* 控制某些组件部署的标志：`disable-helm-controller` 以及传递给 `disable` 的任何组件
+* 与功能相关的标志：`secrets-encryption`
 
 [NOTE]
 ====
-Ensure that you retain a copy of this token as it is required when restoring from backup and adding nodes.
+确保保留此词元的副本，因为在从备份恢复和添加节点时需要它。
 ====
 
-=== 4. Optional: Join Agent Nodes
+=== 4.可选：加入代理节点
 
-Because RKE2 server nodes are schedulable by default, agent nodes are not required for a RKE2 cluster. However, you may wish to have dedicated agent nodes to run your apps and services.
+因为 RKE2 服务器节点默认是可调度的，所以 RKE2 集群不需要代理节点。然而，您可能希望拥有专用的代理节点来运行您的应用程序和服务。
 
-You just need to specify the URL the agent should register to (either one of the server IPs or a fixed registration address) and the token it should use in the `config` file.
+您只需指定代理应注册的 URL（可以是服务器 IP 地址之一或固定注册地址）以及它应使用的词元，存放在 `config` 文件中。
 
 [,yaml]
 ----
@@ -171,7 +171,7 @@ server: https://you-first-server-node-address:9345
 token: SECRET
 ----
 
-Then you can install the agent:
+然后，您可以安装代理：
 
 [,bash]
 ----

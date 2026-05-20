@@ -1,76 +1,299 @@
-= Agent 配置参考
+= 代理配置参考
 :page-languages: [en, zh]
-:revdate: 2024-09-11
+:revdate: 2025-08-21
 :page-revdate: {revdate}
 
-本文提供了可用于配置 RKE2 Agent 的所有参数的参考。请注意，这些内容引用了命令行参数，但配置 RKE2 的最佳方法是使用xref:install/configuration.adoc#_配置文件[配置文件]。
+这是一个关于可以用于配置RKE2代理的所有参数的参考。请注意，虽然这是命令行参数的参考，但配置RKE2的最佳方式是使用xref:../install/configuration.adoc#_configuration_file[配置文件]。
 
-== RKE2 Agent CLI 帮助
+== 常用
 
-[NOTE]
-====
-如果某个选项出现在括号中（例如 `[$RKE2_URL]`），该选项可以作为该名称的环境变量传入。
-====
+|===
+| 标志 | 说明 | 默认值 | 环境变量
 
-[,console]
-----
-NAME:
-   rke2 agent - Run node agent
+| config
+| 配置文件路径
+| /etc/rancher/rke2/config.yaml
+| RKE2_CONFIG_FILE
 
-USAGE:
-   rke2 agent command [command options] [arguments...]
+| debug
+| 打开调试日志
+|
+| RKE2_DEBUG
 
-COMMANDS:
+| 数据目录
+| 用于保存状态的文件夹
+| "/var/lib/rancher/rke2"
+|
+|===
 
+== 群集
 
-OPTIONS:
-   --config FILE, -c FILE                        (config) Load configuration from FILE (default: "/etc/rancher/rke2/config.yaml") [$RKE2_CONFIG_FILE]
-   --debug                                       (logging) Turn on debug logs [$RKE2_DEBUG]
-   --token value, -t value                       (cluster) Token to use for authentication [$RKE2_TOKEN]
-   --token-file value                            (cluster) Token file to use for authentication [$RKE2_TOKEN_FILE]
-   --server value, -s value                      (cluster) Server to connect to [$RKE2_URL]
-   --data-dir value, -d value                    (data) Folder to hold state (default: "/var/lib/rancher/rke2")
-   --node-name value                             (agent/node) Node name [$RKE2_NODE_NAME]
-   --node-label value                            (agent/node) Registering and starting kubelet with set of labels
-   --node-taint value                            (agent/node) Registering kubelet with set of taints
-   --image-credential-provider-bin-dir value     (agent/node) The path to the directory where credential provider plugin binaries are located (default: "/var/lib/rancher/credentialprovider/bin")
-   --image-credential-provider-config value      (agent/node) The path to the credential provider plugin config file (default: "/var/lib/rancher/credentialprovider/config.yaml")
-   --container-runtime-endpoint value            (agent/runtime) Disable embedded containerd and use alternative CRI implementation
-   --snapshotter value                           (agent/runtime) Override default containerd snapshotter (default: "overlayfs")
-   --private-registry value                      (agent/runtime) Private registry configuration file (default: "/etc/rancher/rke2/registries.yaml")
-   --node-ip value, -i value                     (agent/networking) IPv4/IPv6 addresses to advertise for node
-   --node-external-ip value                      (agent/networking) IPv4/IPv6 external IP addresses to advertise for node
-   --resolv-conf value                           (agent/networking) Kubelet resolv.conf file [$RKE2_RESOLV_CONF]
-   --kubelet-arg value                           (agent/flags) Customized flag for kubelet process
-   --kube-proxy-arg value                        (agent/flags) Customized flag for kube-proxy process
-   --protect-kernel-defaults                     (agent/node) Kernel tuning behavior. If set, error if kernel tunables are different than kubelet defaults.
-   --selinux                                     (agent/node) Enable SELinux in containerd [$RKE2_SELINUX]
-   --lb-server-port value                        (agent/node) Local port for supervisor client load-balancer. If the supervisor and apiserver are not colocated an additional port 1 less than this port will also be used for the apiserver client load-balancer. (default: 6444) [$RKE2_LB_SERVER_PORT]
-   --kube-apiserver-image value                  (image) Override image to use for kube-apiserver [$RKE2_KUBE_APISERVER_IMAGE]
-   --kube-controller-manager-image value         (image) Override image to use for kube-controller-manager [$RKE2_KUBE_CONTROLLER_MANAGER_IMAGE]
-   --kube-proxy-image value                      (image) Override image to use for kube-proxy [$RKE2_KUBE_PROXY_IMAGE]
-   --kube-scheduler-image value                  (image) Override image to use for kube-scheduler [$RKE2_KUBE_SCHEDULER_IMAGE]
-   --pause-image value                           (image) Override image to use for pause [$RKE2_PAUSE_IMAGE]
-   --runtime-image value                         (image) Override image to use for runtime binaries (containerd, kubectl, crictl, etc) [$RKE2_RUNTIME_IMAGE]
-   --etcd-image value                            (image) Override image to use for etcd [$RKE2_ETCD_IMAGE]
-   --kubelet-path value                          (experimental/agent) Override kubelet binary path [$RKE2_KUBELET_PATH]
-   --cloud-provider-name value                   (cloud provider) Cloud provider name [$RKE2_CLOUD_PROVIDER_NAME]
-   --cloud-provider-config value                 (cloud provider) Cloud provider configuration file path [$RKE2_CLOUD_PROVIDER_CONFIG]
-   --profile value                               (security) Validate system configuration against the selected benchmark (valid items: cis-1.6, cis-1.23 ) [$RKE2_CIS_PROFILE]
-   --audit-policy-file value                     (security) Path to the file that defines the audit policy configuration [$RKE2_AUDIT_POLICY_FILE]
-   --control-plane-resource-requests value       (components) Control Plane resource requests [$RKE2_CONTROL_PLANE_RESOURCE_REQUESTS]
-   --control-plane-resource-limits value         (components) Control Plane resource limits [$RKE2_CONTROL_PLANE_RESOURCE_LIMITS]
-   --kube-apiserver-extra-mount value            (components) kube-apiserver extra volume mounts [$RKE2_KUBE_APISERVER_EXTRA_MOUNT]
-   --kube-scheduler-extra-mount value            (components) kube-scheduler extra volume mounts [$RKE2_KUBE_SCHEDULER_EXTRA_MOUNT]
-   --kube-controller-manager-extra-mount value   (components) kube-controller-manager extra volume mounts [$RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT]
-   --kube-proxy-extra-mount value                (components) kube-proxy extra volume mounts [$RKE2_KUBE_PROXY_EXTRA_MOUNT]
-   --etcd-extra-mount value                      (components) etcd extra volume mounts [$RKE2_ETCD_EXTRA_MOUNT]
-   --cloud-controller-manager-extra-mount value  (components) cloud-controller-manager extra volume mounts [$RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT]
-   --kube-apiserver-extra-env value              (components) kube-apiserver extra environment variables [$RKE2_KUBE_APISERVER_EXTRA_ENV]
-   --kube-scheduler-extra-env value              (components) kube-scheduler extra environment variables [$RKE2_KUBE_SCHEDULER_EXTRA_ENV]
-   --kube-controller-manager-extra-env value     (components) kube-controller-manager extra environment variables [$RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV]
-   --kube-proxy-extra-env value                  (components) kube-proxy extra environment variables [$RKE2_KUBE_PROXY_EXTRA_ENV]
-   --etcd-extra-env value                        (components) etcd extra environment variables [$RKE2_ETCD_EXTRA_ENV]
-   --cloud-controller-manager-extra-env value    (components) cloud-controller-manager extra environment variables [$RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV]
-   --help, -h                                    show help
-----
+|===
+| 标志 | 说明 | 环境变量
+
+| 令牌
+| 用于身份验证的词元
+| RKE2_TOKEN
+
+| 令牌文件
+| 用于身份验证的词元文件
+| RKE2_TOKEN_FILE
+
+| server
+| 要连接的服务器
+| RKE2_URL
+|===
+
+== 节点
+
+|===
+| 标志 | 说明 | 默认值 | 环境变量
+
+| 节点名称
+| 节点名称
+|
+| RKE2_NODE_NAME
+
+| with-node-id
+| 将 ID 附加到节点名称
+|
+|
+
+| node-label
+| 使用标签集注册并启动 kubelet
+|
+|
+
+| 节点污点
+| 使用污点集注册kubelet
+|
+|
+
+| image-credential-provider-bin-dir
+| 凭证提供程序插件二进制文件所在目录的路径
+| "/var/lib/rancher/credentialprovider/bin"
+|
+
+| image-credential-provider-config
+| 凭证提供程序插件配置文件的路径
+| "/var/lib/rancher/credentialprovider/config.yaml"
+|
+
+| selinux
+| 在containerd中启用SELinux
+|
+| RKE2_SELINUX
+
+| lb-server-port
+| 用于主管客户端负载均衡器的本地端口。如果主管和apiserver不在同一位置，将使用比此端口少1的额外端口用于apiserver客户端负载均衡器。
+| 6444
+| RKE2_LB_SERVER_PORT
+
+| protect-kernel-defaults
+| 内核调优行为。如果设置，内核可调参数与kubelet默认值不同则报错。
+|
+|
+|===
+
+== 运行时
+
+|===
+| 标志 | 说明 | 默认值
+
+| 容器运行时端点
+| 禁用嵌入式containerd并使用给定路径的CRI套接字；与--docker一起使用时，这将设置docker套接字路径
+|
+
+| 默认运行时
+| 在containerd中设置默认运行时
+|
+
+| snapshotter
+| 覆盖默认的containerd快照器
+| "overlayfs"
+
+| private-registry
+| 私有注册表配置文件
+| "/etc/rancher/rke2/registries.yaml"
+|===
+
+== Containerd
+
+|===
+| 标志 | 说明
+
+| disable-default-registry-endpoint
+| 当为该注册表配置镜像时，禁用containerd的回退默认注册表端点
+|===
+
+== 网络
+
+|===
+| 标志 | 说明 | 环境变量
+
+| 节点IP
+| 要为节点发布的IPv4/IPv6地址
+|
+
+| node-external-ip
+| 要为节点发布的IPv4/IPv6外部IP地址
+|
+
+| resolv.conf
+| Kubelet resolv.conf 文件
+| RKE2_RESOLV_CONF
+|===
+
+== 组件
+
+|===
+| 标志 | 说明 | 环境变量
+
+| kubelet-arg
+| 用于 kubelet 进程的自定义标志
+|
+
+| kube-proxy-arg
+| 用于 kube-proxy 进程的自定义标志
+|
+
+| control-plane-resource-requests
+| 控制平面资源请求
+| RKE2_CONTROL_PLANE_RESOURCE_REQUESTS
+
+| control-plane-resource-limits
+| 控制平面资源限制
+| RKE2_CONTROL_PLANE_RESOURCE_LIMITS
+
+| control-plane-probe-configuration
+| 控制平面探针配置
+| RKE2_CONTROL_PLANE_PROBE_CONFIGURATION
+
+| kube-apiserver-extra-mount
+| kube-apiserver额外卷挂载
+| RKE2_KUBE_APISERVER_EXTRA_MOUNT
+
+| kube-scheduler-extra-mount
+| kube-scheduler额外卷挂载
+| RKE2_KUBE_SCHEDULER_EXTRA_MOUNT
+
+| kube-controller-manager-extra-mount
+| kube-controller-manager额外卷挂载
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT
+
+| kube-proxy-extra-mount
+| kube-proxy额外卷挂载
+| RKE2_KUBE_PROXY_EXTRA_MOUNT
+
+| etcd额外卷挂载
+| etcd额外卷挂载
+| RKE2_ETCD_EXTRA_MOUNT
+
+| cloud-controller-manager-extra-mount
+| cloud-controller-manager额外卷挂载
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT
+
+| kube-apiserver-extra-env
+| kube-apiserver额外环境变量
+| RKE2_KUBE_APISERVER_EXTRA_ENV
+
+| kube-scheduler-extra-env
+| kube-scheduler额外环境变量
+| RKE2_KUBE_SCHEDULER_EXTRA_ENV
+
+| kube-controller-manager-extra-env
+| kube-controller-manager额外环境变量
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV
+
+| kube-proxy-extra-env
+| kube-proxy额外环境变量
+| RKE2_KUBE_PROXY_EXTRA_ENV
+
+| etcd-extra-env
+| etcd额外环境变量
+| RKE2_ETCD_EXTRA_ENV
+
+| cloud-controller-manager-extra-env
+| cloud-controller-manager额外环境变量
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
+|===
+
+== 映像
+
+|===
+| 标志 | 说明 | 环境变量
+
+| kube-apiserver-image
+| 覆盖 kube-apiserver 使用的镜像
+| RKE2_KUBE_APISERVER_IMAGE
+
+| kube-controller-manager-image
+| 覆盖 kube-controller-manager 使用的镜像
+| RKE2_KUBE_CONTROLLER_MANAGER_IMAGE
+
+| cloud-controller-manager-image
+| 覆盖 cloud-controller-manager 使用的镜像
+| RKE2_CLOUD_CONTROLLER_MANAGER_IMAGE
+
+| kube-proxy-image
+| 覆盖 kube-proxy 使用的镜像
+| RKE2_KUBE_PROXY_IMAGE
+
+| kube-scheduler 镜像
+| 覆盖 kube-scheduler 使用的镜像
+| RKE2_KUBE_SCHEDULER_IMAGE
+
+| pause 镜像
+| 覆盖 pause 使用的镜像
+| RKE2_PAUSE_IMAGE
+
+| 运行时镜像
+| 覆盖用于运行时二进制文件的镜像（containerd、kubectl、crictl等）
+| RKE2_RUNTIME_IMAGE
+
+| etcd镜像
+| 覆盖用于etcd的镜像
+| RKE2_ETCD_IMAGE
+|===
+
+== 云提供商
+
+|===
+| 标志 | 说明 | 环境变量
+
+| cloud-provider-name
+| 云提供商名称
+| RKE2_CLOUD_PROVIDER_NAME
+
+| cloud-provider-config
+| 云提供商配置文件路径
+| RKE2_CLOUD_PROVIDER_CONFIG
+|===
+
+== 安全性
+
+|===
+| 标志 | 说明 | 环境变量
+
+| 配置文件
+| 根据所选基准验证系统配置（有效项：cis，cis-1.23（已弃用））
+| RKE2_CIS_PROFILE
+
+| audit-policy-file
+| 定义审计策略配置的文件路径
+| RKE2_AUDIT_POLICY_FILE
+
+| pod-security-admission-config-file
+| 定义 Pod 安全准入配置的文件的路径
+| RKE2_POD_SECURITY_ADMISSION_CONFIG_FILE
+|===
+
+== 实验性
+
+|===
+| 标志 | 说明 | 环境变量
+
+| kubelet-path
+| 覆盖kubelet二进制文件路径
+| RKE2_KUBELET_PATH
+|===

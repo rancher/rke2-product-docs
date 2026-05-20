@@ -1,0 +1,158 @@
+= Problèmes et limitations connus
+:page-languages: [en, zh]
+:revdate: 2025-07-10
+:page-revdate: {revdate}
+
+Cette section contient les problèmes et limitations connus actuels avec {product-name}. Si vous rencontrez des problèmes avec {product-name} non documentés ici, veuillez ouvrir un nouveau problème https://github.com/rancher/rke2/issues[ici].
+
+== Firewalld entre en conflit avec le réseau par défaut
+
+Firewalld entre en conflit avec la pile de réseau par défaut de RKE2 (Calico + Flannel). Pour éviter un comportement inattendu, firewalld doit être désactivé sur les systèmes exécutant RKE2. Désactiver firewalld ne supprime pas la passerelle de périmètre de sécurité du noyau (iptables/nftables) que Canal utilise pour gérer les règles nécessaires. Des règles de pare-feu personnalisées peuvent être mises en œuvre via les ressources Calico.
+
+== NetworkManager
+
+NetworkManager manipule la table de routage pour les interfaces dans l'espace de noms par défaut où de nombreux CNI, y compris celui de RKE2, créent des paires veth pour les connexions aux conteneurs. Cela peut interférer avec la capacité du CNI à acheminer correctement. Ainsi, si vous installez RKE2 sur un système utilisant NetworkManager, il est fortement recommandé de configurer NetworkManager pour ignorer les interfaces réseau liées à Calico/Flannel. Pour ce faire, créez un fichier de configuration appelé `rke2-canal.conf` dans `/etc/NetworkManager/conf.d` avec le contenu{nbsp}:
+
+[,bash]
+----
+[keyfile]
+unmanaged-devices=interface-name:flannel*;interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico;interface-name:vxlan-v6.calico;interface-name:wireguard.cali;interface-name:wg-v6.cali
+----
+
+Si vous n'avez pas encore installé RKE2, un simple `systemctl reload NetworkManager` suffira pour installer la configuration. Si vous effectuez ce changement de configuration sur un système qui a déjà RKE2 installé, un redémarrage du nœud est nécessaire pour appliquer efficacement les modifications.
+
+Dans certains systèmes d'exploitation comme RHEL 8.4, NetworkManager inclut deux services supplémentaires appelés `nm-cloud-setup.service` et `nm-cloud-setup.timer`.  Ces services ajoutent une table de routage qui interfère avec la configuration du plugin CNI. Malheureusement, il n'existe pas de configuration qui puisse éviter cela comme expliqué dans le https://github.com/rancher/rke2/issues/1053[problème]. Par conséquent, si ces services existent, ils doivent être désactivés.
+
+[IMPORTANT]
+====
+  Avant NetworkManager-1.30.0-11.el8_4, le nœud doit également être redémarré après avoir désactivé les services supplémentaires.
+====
+
+
+== Istio dans un système SELinux en mode enforcing échoue par défaut
+
+Cela est dû au chargement de modules du noyau à la demande de RKE2, qui est interdit sous SELinux à moins que le conteneur ne soit privilégié. Pour permettre à Istio de fonctionner dans ces conditions, deux étapes sont nécessaires{nbsp}:
+
+. https://istio.io/latest/docs/setup/additional-setup/cni/[Activer CNI] dans le cadre de l'installation d'Istio. Veuillez noter que cette https://istio.io/latest/about/feature-stages/[fonctionnalité] est encore en état Alpha au moment de la rédaction de ce document.
+Assurez-vous de `values.cni.cniBinDir=/opt/cni/bin` et `values.cni.cniConfDir=/etc/cni/net.d`
+. Après l'installation, il devrait y avoir `cni-node` pods en CrashLoopBackoff. Modifiez manuellement leur daemonset pour inclure `securityContext.privileged: true` sur le conteneur `install-cni`.
+
+Cela peut être effectué via un overlay personnalisé comme suit{nbsp}:
+
+[,yaml]
+----
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  components:
+    cni:
+      enabled: true
+      k8s:
+        overlays:
+        - apiVersion: "apps/v1"
+          kind: "DaemonSet"
+          name: "istio-cni-node"
+          patches:
+          - path: spec.template.spec.containers.[name:install-cni].securityContext.privileged
+            value: true
+  values:
+    cni:
+      image: rancher/mirrored-istio-install-cni:1.9.3
+      excludeNamespaces:
+      - istio-system
+      - kube-system
+      logLevel: info
+      cniBinDir: /opt/cni/bin
+      cniConfDir: /etc/cni/net.d
+----
+
+Pour plus d'informations concernant les échecs exacts avec des journaux détaillés lorsque ces étapes ne sont pas suivies, veuillez consulter https://github.com/rancher/rke2/issues/504[Issue 504].
+
+== Calico avec encapsulation vxlan
+
+Calico rencontre un bug du noyau lors de l'utilisation de l'encapsulation vxlan et lorsque le déchargement de la somme de contrôle de l'interface vxlan est activé. Le problème est décrit dans le https://github.com/projectcalico/calico/issues/4865[projet Calico] et dans https://github.com/rancher/rke2/issues/1541[projet RKE2]. La solution de contournement que nous appliquons consiste à désactiver le déchargement de la somme de contrôle par défaut en appliquant la valeur `ChecksumOffloadBroken=true` dans le https://github.com/rancher/rke2-charts/blob/main/charts/rke2-calico/rke2-calico/v3.25.001/values.yaml#L75-L76[chart Helm de Calico].
+
+Ce problème a été observé sur Ubuntu 18.04, Ubuntu 20.04 et openSUSE Leap 15.3
+
+== Wicked
+
+Wicked configure les paramètres réseau de l'hôte en fonction des fichiers de configuration sysctl (par exemple, sous le répertoire /etc/sysctl.d/). Bien que RKE2 définisse des paramètres tels que `/net/ipv4/conf/all/forwarding` à 1, cette configuration pourrait être annulée par Wicked chaque fois qu'il réapplique la configuration réseau (il existe plusieurs événements qui entraînent la réapplication de la configuration réseau ainsi que le redémarrage de rcwicked lors des mises à jour). Par conséquent, il est très important d'activer le transfert IPv4 (et IPv6 en cas de double pile) dans les fichiers de configuration sysctl. Par exemple, il est recommandé de créer un fichier nommé `/etc/sysctl.d/90-rke2.conf` contenant ces paramètres (IPv6 uniquement nécessaire en cas de double pile){nbsp}:
+
+[,bash]
+----
+net.ipv4.conf.all.forwarding=1
+net.ipv6.conf.all.forwarding=1
+----
+
+== Canal et épuisement des adresses IP
+
+Il y a deux raisons possibles pour cela{nbsp}:
+
+. Le binaire `iptables` n'est pas installé sur l'hôte et il y a un pod définissant un hostPort. Le pod se verra attribuer une IP, mais sa création échouera et Kubernetes continuera d'essayer de le recréer, consommant une IP à chaque tentative. Des messages d'erreur similaires à ceux-ci apparaîtront dans le journal de containerd. Voici le journal montrant l'erreur{nbsp}:
++
+[,console]
+----
+plugin type="portmap" failed (add): failed to open iptables: exec: "iptables": executable file not found in $PATH
+----
++
+Veuillez installer le paquet iptables ou xtables-nft pour résoudre ce problème.
+
+. Par défaut, Canal suit les IP des pods en créant un fichier de verrouillage pour chaque IP dans `/var/lib/cni/networks/k8s-pod-network`. Chaque IP appartient à un seul pod et sera supprimée dès que le pod sera retiré. Cependant, dans le cas peu probable où containerd perdrait la trace des pods en cours d'exécution, des fichiers de verrouillage pourraient être perdus et Canal ne pourra plus réutiliser ces IP. Si cela se produit, vous pourriez rencontrer des erreurs d'épuisement d'IP, par exemple{nbsp}:
++
+[,console]
+----
+failed to allocate for range 0: no IP addresses available in range set
+----
+
+Il y a deux façons de résoudre cela. Vous pouvez soit supprimer manuellement les IP inutilisées de ce répertoire, soit vider le nœud, exécuter rke2-killall.sh, démarrer le service systemd RKE2 et débloquer le nœud. Si vous devez entreprendre l'une de ces actions, veuillez signaler le problème via GitHub, en veillant à spécifier comment il a été déclenché.
+
+== Ingress en mode CIS
+
+Par défaut, lorsque RKE2 est exécuté avec un profil CIS sélectionné par le paramètre `profile`, il applique des politiques réseau qui peuvent être restrictives pour l'ingress. Cela, associé au chart `rke2-ingress-nginx` ayant `hostNetwork: false` par défaut, nécessite que les utilisateurs définissent leurs propres politiques réseau pour permettre l'accès aux URL d'ingress. Voici un exemple de politique réseau qui permet l'ingress à tout workload dans l'espace de noms où elle est appliquée. Voir https://kubernetes.io/docs/concepts/services-networking/network-policies/ pour plus d'options de configuration.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-to-backends
+spec:
+  podSelector: {}
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rke2-ingress-nginx
+  policyTypes:
+  - Ingress
+----
+
+Pour plus d'informations, reportez-vous aux commentaires sur https://github.com/rancher/rke2/issues/3195..
+
+[#hardened-125]
+== Mise à niveau des clusters dont la sécurité a été renforcée de v1.24.x à v1.25.x
+
+Kubernetes a supprimé PodSecurityPolicy à partir de v1.25 au profit des normes de sécurité des pods. Vous pouvez en savoir plus sur PSS dans la https://kubernetes.io/docs/concepts/security/pod-security-standards/[documentation en amont]. Pour RKE2, il y a certaines étapes manuelles qui doivent être prises si le drapeau `profile` a été défini sur les nœuds.
+
+. Sur tous les nœuds, mettez à jour la valeur `profile` à `cis-1.23`, mais ne redémarrez pas ou ne mettez pas encore à niveau RKE2.
+. Effectuez la mise à niveau comme d'habitude. Si vous utilisez xref:upgrade/automated_upgrade.adoc[des mises à niveau automatisées], assurez-vous que l'espace de noms dans lequel le pod `system-upgrade-controller` s'exécute est configuré pour être privilégié, conformément aux https://kubernetes.io/docs/concepts/security/pod-security-admission/#pod-security-levels[Niveaux de sécurité des pods] :
++
+[,yaml]
+----
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: system-upgrade
+  labels:
+ # This value must be privileged for the controller to run successfully.
+ pod-security.kubernetes.io/enforce: privileged
+ pod-security.kubernetes.io/enforce-version: v1.25
+ # We are setting these to our _desired_ `enforce` level, but note that these below values can be any of the available options.
+ pod-security.kubernetes.io/audit: privileged
+ pod-security.kubernetes.io/audit-version: v1.25
+ pod-security.kubernetes.io/warn: privileged
+ pod-security.kubernetes.io/warn-version: v1.25
+----

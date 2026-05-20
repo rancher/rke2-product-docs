@@ -1,0 +1,57 @@
+= 組み込みデータストア
+:page-languages: [en, zh]
+:revdate: 2025-08-08
+:page-revdate: {revdate}
+
+組み込みデータストアを使用することは、通常はコンテナ化されたサービスとしてKubernetesクラスター内で実行されるデータベース、例えばetcdを活用することを意味します。このオプションはデプロイメントを簡素化し、パフォーマンスとセキュリティを向上させる可能性があります。代替はxref:datastore/external.adoc[外部データベース]です。
+
+== データストアオプション
+
+[WARNING]
+.実験的
+====
+RKE2は公式に組み込みetcdをサポートしており、組み込みSQLiteは実験的と見なされています。
+====
+
+* *組み込み https://etcd.io/[etcd]*:組み込みetcdはデフォルトのデータストアであり、他のデータストアの設定が存在しない場合は使用されます。
+* *組み込み https://www.sqlite.org/index.html[SQLite]*:SQLiteは複数のサーバーを持つクラスターでは使用できません。プロジェクト https://github.com/k3s-io/kine[kine]を使用します。
+
+== 組み込みetcd
+
+組み込み https://etcd.io/[etcd]はデフォルトのデータストアであり、他のデータストアの設定が存在しない場合は使用されます。 これは、RKE2をxref:install/ha.adoc[HAモード]でデプロイできる唯一の組み込みオプションです。明示的に解除されない限り、RKE2サーバーごとに1つのetcdポッドがデプロイされ、すべてのetcdインスタンスはクォーラムを維持します。RKE2には、このデータストアを使用する際にスナップショットを簡単に作成するためのツールが含まれており、xref:datastore/backup_restore.adoc[バックアップと復元]の指示に説明されています。
+
+== 組み込みSQLite
+
+この組み込みオプションは本番環境には推奨されませんが、例えばCI/CD環境でシンプルで短期間のクラスターを実行する必要がある場合には便利です。 https://www.sqlite.org/index.html[SQLite]でデプロイする際はHAモードはサポートされていません。
+
+=== SQLiteを使用した単一サーバー
+
+. 設定ファイルで、`server`パラメータを使わずに`disable-etcd`を設定します。
++
+[,yaml]
+----
+disable-etcd: true
+----
+
+. RKE2をインストールします。
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | sh -
+----
+
+. rke2-serverサービスを有効にします。
++
+[,sh]
+----
+systemctl enable rke2-server.service
+----
+
+. rke2-serverサービスを開始します。
++
+[,sh]
+----
+systemctl start rke2-server.service
+----
+
+サーバーの起動状況は`kubectl get nodes`を参照することで、サーバーが`Ready`の状態になるのを確認できます。RKE2へのアクセス方法についてはxref:cluster_access.adoc[クラスターアクセス]を参照してください。

@@ -1,0 +1,10 @@
+= Upgrade von {product-name} Clustern
+:page-languages: [en, zh]
+:revdate: 2026-01-08
+:page-revdate: {revdate}
+
+In diesem Abschnitt wird beschrieben, wie Sie Ihr {product-name} Cluster upgraden können.
+
+xref:upgrade/manual_upgrade.adoc[Manuelle Upgrades] beschreibt mehrere Techniken zur manuellen Durchführung eines Upgrades Ihres Clusters. Es kann auch als Grundlage für das Upgrade über Drittanbieter-Infrastruktur-als-Code-Tools wie https://www.terraform.io/[Terraform] verwendet werden.
+
+xref:upgrade/automated_upgrade.adoc[Automatisierte Upgrades] beschreibt, wie Kubernetes-native automatisierte Upgrades mit Ranchers https://github.com/rancher/system-upgrade-controller[Upgrade Controller] durchgeführt werden.

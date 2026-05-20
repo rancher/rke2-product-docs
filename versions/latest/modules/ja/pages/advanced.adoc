@@ -1,0 +1,343 @@
+= 詳細オプションと設定
+:page-languages: [en, zh]
+:revdate: 2026-03-10
+:page-revdate: {revdate}
+
+このセクションには、RKE2を実行および管理するさまざまな方法を説明する高度な情報が含まれています。
+
+== 証明書のローテーション
+
+デフォルトでは、RKE2の証明書は12か月で期限切れになります。
+
+証明書が期限切れであるか、期限切れまで90日未満の場合、RKE2が再起動されると証明書がローテーションされます。
+
+証明書は手動でローテーションすることもできます。これを行うには、rke2-serverプロセスを停止し、証明書をローテーションしてから、プロセスを再起動するのが最適です。
+
+[,sh]
+----
+systemctl stop rke2-server
+rke2 certificate rotate
+systemctl start rke2-server
+----
+
+エージェント証明書を更新するには、エージェントノードでrke2-agentを再起動します。エージェントが起動するたびに、エージェント証明書は更新されます。
+
+[,sh]
+----
+systemctl restart rke2-agent
+----
+
+`--service`フラグを渡すことで、個々のサービスをローテーションすることも可能です。例えば：`rke2 certificate rotate --service api-server`。詳細については、xref:security/certificates.adoc#_rotating_client_and_server_certificates_manually[証明書管理]を参照してください。
+
+== 自動デプロイマニフェスト
+
+`/var/lib/rancher/rke2/server/manifests`に見つかったファイルは、`kubectl apply`に似た方法でKubernetesに自動的にデプロイされます。
+
+マニフェストディレクトリを使用してHelmチャートをデプロイする方法については、xref:add-ons/helm.adoc[Helm.]に関するセクションを参照してください。
+
+== containerdの設定
+
+[NOTE]
+.バージョンゲート
+====
+RKE2は2025年2月のリリースからcontainerd 2.0を含んでいます：v1.31.6+rke2r1およびv1.32.2+rke2r1。 +
+containerd 2.0は設定バージョン3を好むことに注意してください。一方、containerd 1.7は設定バージョン2を好みます。
+====
+
+RKE2は、現在のクラスターおよびノードの設定に特有の値を使用して、containerdの設定ファイルを`/var/lib/rancher/rke2/agent/etc/containerd/config.toml`に生成します。
+
+高度なカスタマイズのために、同じディレクトリにcontainerdの設定テンプレートを作成できます。
+
+* containerd 2.0の場合、`config-v3.toml.tmpl`にバージョン3の設定テンプレートを配置してください。詳細については、 https://github.com/containerd/containerd/blob/release/2.0/docs/cri/config.md[containerd 2.0 ドキュメント]を参照してください。
+* containerd 1.7 およびそれ以前のバージョンでは、`config.toml.tmpl` にバージョン 2 の設定テンプレートを配置してください。詳細については、 https://github.com/containerd/containerd/blob/release/1.7/docs/cri/config.md[containerd 1.7 ドキュメント]を参照してください。
+
+Containerd 2.0は以前の設定バージョンと後方互換性があり、`config-v3.toml.tmpl`が見つからない場合、RKE2は`config.toml.tmpl`からレガシーバージョン2の設定を引き続きレンダリングします。
+
+テンプレートファイルは、 https://pkg.go.dev/text/template[`text/template`] ライブラリを使用して containerd 設定にレンダリングされます。デフォルトのテンプレート内容については、`ContainerdConfigTemplateV3`と`ContainerdConfigTemplate`を https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go[`templates.go`]で参照してください。テンプレートは、 https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go#L22-L33[`ContainerdConfig`]構造体をドット値（データ引数）として実行されます。
+
+=== ベーステンプレート
+
+RKE2 のソースコードから完全なストックテンプレートをコピー＆ペーストするのではなく、RKE2 ベーステンプレートを拡張できます。これは、既存の設定を基にして、最後にいくつかの追加行を加える必要がある場合に便利です。
+
+[,toml]
+----
+#/var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.tmpl
+
+{{ template "base" . }}
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'custom']
+  runtime_type = "io.containerd.runc.v2"
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'custom'.options]
+  BinaryName = "/usr/bin/custom-container-runtime"
+  SystemdCgroup = true
+----
+
+[WARNING]
+====
+最良の結果を得るために、プリレンダリングされた `config.toml` をテンプレートに単純にコピーして、希望の変更を加えないでください。ベーステンプレートを使用するか、上記のデフォルトに基づいた完全なテンプレートを提供してください。
+====
+
+== HTTP プロキシの設定
+
+RKE2 を HTTP プロキシを介してのみ外部接続が可能な環境で実行している場合、RKE2 systemd サービスでプロキシ設定を構成できます。これらのプロキシ設定は、RKE2 で使用され、埋め込まれた containerd や kubelet、制御プレーン、etcd、kube-proxy の静的ポッドに渡されます。
+
+必要な `HTTP_PROXY`、`HTTPS_PROXY`、および `NO_PROXY` 変数を、通常、systemd サービスの環境ファイルに追加してください。
+
+* `/etc/default/rke2-server`
+* `/etc/default/rke2-agent`
+
+RKE2 は、クラスター内部の Pod およびサービス IP 範囲、クラスター DNS ドメインをリストの `NO_PROXY` エントリに自動的に追加します。Kubernetes ノード自体（つまり、ノードのパブリックおよびプライベート IP）が `NO_PROXY` リストに含まれているか、ノードがプロキシを介して到達可能であることを確認する必要があります。
+
+[,sh]
+----
+HTTP_PROXY=http://your-proxy.example.com:8888
+HTTPS_PROXY=http://your-proxy.example.com:8888
+NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+----
+
+RKE2 および Kubelet に影響を与えずに containerd のプロキシ設定を構成したい場合は、変数の前に `CONTAINERD_` を付けることができます。
+
+[,sh]
+----
+CONTAINERD_HTTP_PROXY=http://your-proxy.example.com:8888
+CONTAINERD_HTTPS_PROXY=http://your-proxy.example.com:8888
+CONTAINERD_NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+----
+
+== ノードのラベルとテイント
+
+RKE2 エージェントは、`node-label` および `node-taint` オプションで構成でき、これにより kubelet にラベルとテイントが追加されます。これらの二つのオプションは、登録時にのみラベルおよび/またはテイントを追加し、一度追加すると rke2 コマンドで削除することはできません。
+
+ノード登録後にノードラベルとテイントを変更したい場合は、`kubectl`を使用してください。 https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/[テイント] と https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/#add-a-label-to-a-node[ノードラベル] の追加方法の詳細については、公式 Kubernetes ドキュメントを参照してください。
+
+== エージェントノード登録の仕組み
+
+エージェントノードは、`rke2 agent` プロセスによって開始された WebSocket 接続を介して登録され、その接続はエージェントプロセスの一部として動作するクライアント側のロードバランサーによって維持されます。
+
+エージェントは、参加トークンのクラスターシークレット部分を使用してサーバーに登録し、`/etc/rancher/node/password` に保存されるランダムに生成されたノード固有のパスワードも使用します。サーバーは、個々のノードのパスワードをKubernetesシークレットとして保存し、その後の試行は同じパスワードを使用する必要があります。ノードパスワードシークレットは、`kube-system` ネームスペースに、`<host>.node-password.rke2` テンプレートを使った名前で保存されます。これらのシークレットは、対応する Kubernetes ノードが削除されると同時に削除されます。
+
+エージェントの `/etc/rancher/node` ディレクトリが削除された場合は、起動前にエージェント用のパスワードファイルを再作成するか、サーバーまたは Kubernetes クラスターからエントリを削除する必要があります（RKE2 のバージョンによって異なります）。
+
+== インストールスクリプトでサーバーを起動する
+
+インストールスクリプトは systemd 用のユニットを提供しますが、デフォルトではサービスを有効化も開始もしません。
+
+systemd で実行する場合、ログは `/var/log/syslog` に作成され、`journalctl -u rke2-server` または `journalctl -u rke2-agent` で表示できます。
+
+インストールスクリプトによるインストール例：
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | sh -
+systemctl enable rke2-server
+systemctl start rke2-server
+----
+
+== サーバーチャートを無効化する
+
+クラスターのブートストラッピング中にデプロイされた `rke2` にバンドルされたサーバーチャートは無効化でき、代替品に置き換えることができます。一般的な使用例は、バンドルされた `rke2-ingress-nginx` チャートを代替品に置き換えることです。
+
+バンドルされたシステムチャートのいずれかを無効にするには、ブートストラッピング前に設定ファイルで `disable` パラメータを設定します。すべての利用可能なシステムチャートを無効にする例は次のとおりです。
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable:
+  - rke2-coredns
+  - rke2-ingress-nginx
+  - rke2-metrics-server
+  - rke2-snapshot-controller
+  - rke2-snapshot-controller-crd
+  - rke2-snapshot-validation-webhook
+----
+
+[CAUTION]
+====
+クラスターオペレーターは、サーバーチャートがクラスターの運用に重要な役割を果たすため、コンポーネントが注意深く無効化または置き換えられることを確認する責任があります。 クラスター内の個々のシステムチャートの役割に関する詳細は、xref:architecture.adoc#_server_charts[アーキテクチャ概要]を参照してください。
+====
+
+== 分類されたAWSリージョンまたはカスタムAWS APIエンドポイントを持つネットワークへのインストール
+
+公共のAWSリージョンでは、RKE2がクラウド対応であり、特定のクラウドリソースを自動プロビジョニングできることを確認するために、RKE2を次のように構成します。
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+cloud-provider-name: aws
+----
+
+分類されたリージョン（SC2SやC2Sなど）にRKE2をインストールする際には、RKE2が適切なAWSエンドポイントと安全に通信する方法と場所を知るために注意すべきいくつかの追加の前提条件があります。
+
+. すべての一般的なAWSクラウドプロバイダーの https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[前提条件]が満たされていることを確認してください。これらはリージョンに依存せず、常に必要です。
+. `ec2`および`elasticloadbalancing`サービスのAPIリクエストを送信する場所をRKE2が知っていることを確認するために、`cloud.conf`ファイルを作成します。以下は`us-iso-east-1`（C2S）リージョンの例です。
++
+[,yaml]
+----
+# /etc/rancher/rke2/cloud.conf
+[Global]
+[ServiceOverride "ec2"]
+  Service=ec2
+  Region=us-iso-east-1
+  URL=https://ec2.us-iso-east-1.c2s.ic.gov
+  SigningRegion=us-iso-east-1
+[ServiceOverride "elasticloadbalancing"]
+  Service=elasticloadbalancing
+  Region=us-iso-east-1
+  URL=https://elasticloadbalancing.us-iso-east-1.c2s.ic.gov
+  SigningRegion=us-iso-east-1
+----
++
+また、 https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-services-overview.html[プライベートAWSエンドポイント]を使用している場合は、各プライベートエンドポイントに適切な`URL`が使用されていることを確認してください。
+
+. 適切なAWS CAバンドルがシステムのルートCA信頼ストアにロードされていることを確認してください。 これは、使用しているAMIによってはすでに行われている場合があります。
++
+[,sh]
+----
+# on CentOS/RHEL 7/8
+cp <ca.pem> /etc/pki/ca-trust/source/anchors/
+update-ca-trust
+----
+
+. RKE2を、ステップ1で作成されたカスタム`cloud.conf`とともに、`aws`クラウドプロバイダーとして構成します。
++
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+...
+cloud-provider-name: aws
+cloud-provider-config: "/etc/rancher/rke2/cloud.conf"
+...
+----
+
+. xref:install/methods.adoc[RKE2を通常通りインストール]（おそらくxref:install/airgap.adoc[エアギャップ]の状態で）。
+. AWSメタデータがクラスターのノードラベルに存在することを確認することで、成功したインストールを検証します。
+
+== コントロールプレーンコンポーネントのリソースリクエスト/制限
+
+RKE2の`server`サブコマンドの下で利用可能なオプションは次のとおりです。これらのオプションは、RKE2内のコントロールプレーンコンポーネントのCPUリクエストと制限を指定することを可能にします。
+
+[,sh]
+----
+   --control-plane-resource-requests value       (components) Control Plane resource requests [$RKE2_CONTROL_PLANE_RESOURCE_REQUESTS]
+   --control-plane-resource-limits value         (components) Control Plane resource limits [$RKE2_CONTROL_PLANE_RESOURCE_LIMITS]
+----
+
+値は`[controlplane-component]-(cpu|memory)=[desired-value]`のカンマ区切りリストです。`controlplane-component`の可能な値は次のとおりです。
+
+----
+kube-apiserver
+kube-scheduler
+kube-controller-manager
+kube-proxy
+etcd
+cloud-controller-manager
+----
+
+したがって、例の設定値は次のようになります。
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+control-plane-resource-requests:
+  - kube-apiserver-cpu=500m
+  - kube-apiserver-memory=512M
+  - kube-scheduler-cpu=250m
+  - kube-scheduler-memory=512M
+  - etcd-cpu=1000m
+----
+
+CPU/メモリの単位値はKubernetesリソース単位と同じです（参照： https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes[Kubernetesにおけるリソース制限]）。
+
+== 追加のコントロールプレーンコンポーネントボリュームマウント
+
+RKE2の`server`サブコマンドの下で利用可能なオプションは次のとおりです。これらのオプションは、ノードファイルシステムから静的ポッドコンポーネントにディレクトリをホストパスとしてマウントすることを指定します。
+
+|===
+| フラグ | ENV VAR |
+
+| kube-apiserver-extra-mount
+| RKE2_KUBE_APISERVER_EXTRA_MOUNT
+| kube-apiserverの追加ボリュームマウント
+
+| kube-scheduler-extra-mount
+| RKE2_KUBE_SCHEDULER_EXTRA_MOUNT
+| kube-schedulerの追加ボリュームマウント
+
+| kube-controller-manager-extra-mount
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT
+|
+
+| kube-proxy-extra-mount
+| RKE2_KUBE_PROXY_EXTRA_MOUNT
+|
+
+| etcd-extra-mount
+| RKE2_ETCD_EXTRA_MOUNT
+|
+
+| cloud-controller-manager-extra-mount
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT
+|
+|===
+
+=== RWホストパスボリュームマウント
+
+`/source/volume/path/on/host:/destination/volume/path/in/staticpod`
+
+=== ROホストパスボリュームマウント
+
+ボリュームを読み取り専用としてマウントするには、ボリュームマウントの末尾に`:ro`を追加します：`/source/volume/path/on/host:/destination/volume/path/in/staticpod:ro`
+
+同じコンポーネントに対して複数のボリュームマウントを指定するには、設定ファイル内でフラグ値を配列として渡します。
+
+[IMPORTANT]
+.バージョンゲート
+====
+2024年4月のリリース（v1.27.13+rke2r1、v1.28.9+rke2r1、v1.29.4+rke2r1）以前は、ディレクトリのみがマウント可能です。
+====
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+kube-apiserver-extra-mount:
+   - "/tmp/foo:/root/foo"
+   - "/tmp/bar.txt:/etc/bar.txt:ro"
+----
+
+== 追加のコントロールプレーンコンポーネント環境変数
+
+次の設定オプションは、RKE2の`server`サブコマンドで利用可能です。これらのオプションは、接頭辞付きの名前に対応する静的ポッドコンポーネントのための標準形式である`KEY=VALUE`の追加環境変数を指定します。
+
+|===
+| フラグ | ENV VAR
+
+| kube-apiserver-extra-env
+| RKE2_KUBE_APISERVER_EXTRA_ENV
+
+| kube-scheduler-extra-env
+| RKE2_KUBE_SCHEDULER_EXTRA_ENV
+
+| kube-controller-manager-extra-env
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV
+
+| kube-proxy-extra-env
+| RKE2_KUBE_PROXY_EXTRA_ENV
+
+| etcd-extra-env
+| RKE2_ETCD_EXTRA_ENV
+
+| cloud-controller-manager-extra-env
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
+|===
+
+同じコンポーネントに対しては、設定ファイル内でフラグ値を配列として渡すことにより、複数の環境変数を指定できます。
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+kube-apiserver-extra-env:
+  - "MY_FOO=FOO"
+  - "MY_BAR=BAR"
+kube-scheduler-extra-env: "TZ=America/Los_Angeles"
+----
+

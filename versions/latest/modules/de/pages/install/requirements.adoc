@@ -1,0 +1,319 @@
+= Anforderungen
+:page-languages: [en, zh]
+:revdate: 2026-02-06
+:page-revdate: {revdate}
+
+RKE2 ist sehr leichtgewichtig, hat jedoch einige Mindestanforderungen, die im Folgenden aufgeführt sind.
+
+== Voraussetzungen
+
+Zwei RKE2-Knoten dürfen nicht denselben Knotennamen haben. Standardmäßig wird der Knotename vom Hostnamen der Maschine übernommen.
+
+Wenn zwei oder mehr Ihrer Maschinen denselben Hostnamen haben, müssen Sie Folgendes tun:
+
+* Aktualisieren Sie den Hostnamen auf einen eindeutigen Wert.
+* Setzen Sie den `node-name`-Parameter in der Konfigurationsdatei auf einen eindeutigen Wert.
+* Setzen Sie den `with-node-id`-Parameter in der Konfigurationsdatei auf `true`, um eine zufällig generierte ID-Nummer an den Hostnamen anzuhängen.
+
+Wenn die Round-Trip-Zeit (RTT) zwischen den Control-Plane-Knoten 2 ms überschreitet, beziehen Sie sich auf den folgenden https://support.scc.suse.com/s/kb/Maximum-RTT-Round-Trip-Time-for-an-RKE2-cluster?language=en_US[Leitfaden].
+
+== Architektur
+
+RKE2 ist für x86_64 und arm64/aarch64 verfügbar.
+
+== Betriebssysteme
+
+=== Linux
+
+Siehe die https://www.suse.com/suse-rke2/support-matrix/all-supported-versions[RKE2 Support Matrix] für alle Betriebssystemversionen, die mit RKE2 validiert wurden. Im Allgemeinen sollte RKE2 auf jeder Linux-Distribution funktionieren, die systemd und iptables verwendet.
+
+==== RHEL 10
+
+Auf RHEL 10 (und seinen Derivaten wie Rocky Linux) ist ein zusätzliches Paket erforderlich, um nf_conntrack zu ermöglichen.
+
+[,bash]
+----
+sudo dnf install kernel-modules-extra -y
+----
+
+=== Windows
+
+[IMPORTANT]
+====
+Der Windows-Support erfordert die Wahl von Calico oder Flannel als CNI für den RKE2-Cluster.
+====
+
+[NOTE] 
+====
+Die Windows Server-Containerfunktion muss aktiviert sein, damit der RKE2 Windows-Agent funktioniert.
+====
+
+Der RKE2 Windows Node (Worker)-Agent wurde auf den folgenden Betriebssystemen getestet und validiert, sowie deren nachfolgenden nicht-majoren Versionen:
+
+* Windows Server 2019 LTSC (amd64) (OS Build 17763.2061)
+* Windows Server 2022 LTSC (amd64) (OS Build 20348.169)
+
+Öffnen Sie ein neues Powershell-Fenster mit Administrator-Berechtigungen.
+
+[,powershell]
+----
+powershell -Command "Start-Process PowerShell -Verb RunAs"
+----
+
+Führen Sie im neuen Powershell-Fenster den folgenden Befehl aus.
+
+[,powershell]
+----
+Enable-WindowsOptionalFeature -Online -FeatureName Containers -All
+----
+
+Dies erfordert einen Neustart, damit die `Containers`-Funktion ordnungsgemäß funktioniert.
+
+== Hardware
+
+Die Hardwareanforderungen skalieren basierend auf der Größe Ihrer Bereitstellungen. Die Mindestempfehlungen sind hier aufgeführt.
+
+=== Linux/Windows
+
+* RAM: Mindestens 4 GB (wir empfehlen mindestens 8 GB)
+* CPU (Central Processing Unit, Prozessor): Mindestens 2 CPU (wir empfehlen mindestens 4 CPU)
+
+=== VM-Größenguide
+
+Wenn die CPU und der RAM auf den Control-Plane- und etcd-Knoten begrenzt sind, kann es unter Standardarbeitslastbedingungen zu Einschränkungen bei der Anzahl der Agentenknoten kommen, die beitreten können.
+
+|===
+| Server-CPU | Server-RAM | Anzahl der Agenten
+
+| 2
+| 4 GB
+| 0-225
+
+| 4
+| 8 GB
+| 226-450
+
+| 8
+| 16 GB
+| 451-1300
+
+| 16+
+| 32 GB
+| 1300+
+|===
+
+Es wird empfohlen, Agentenknoten in Gruppen von 50 oder weniger hinzuzufügen, um der CPU zu ermöglichen, Platz freizugeben, da es beim Hinzufügen von Knoten zu einem Anstieg kommt. Denken Sie daran, die Standard-`cluster-cidr` zu ändern, wenn Sie mehr als 255 Knoten wünschen!
+
+Diese Daten wurden unter spezifischen Testbedingungen abgerufen. Es wird je nach Umgebung und Arbeitslasten variieren. Die folgenden Schritte geben einen Überblick über den Test, der durchgeführt wurde, um dies abzurufen. Er wurde zuletzt auf v1.27.4+rke2r1 durchgeführt. Alle Maschinen wurden in AWS mit standardmäßigen 20 GiB gp3-Volumes bereitgestellt.
+
+. Ressourcen in Grafana mit der Prometheus-Datenquelle überwachen.
+. Arbeitslasten so bereitstellen, dass eine kontinuierliche Clusteraktivität simuliert wird:
+** Eine grundlegende Arbeitslast, die kontinuierlich hoch- und herunterskaliert.
+** Eine Arbeitslast, die in einer Schleife gelöscht und neu erstellt wird.
+** Eine konstante Arbeitslast, die mehrere andere Ressourcen, einschließlich CRDs, enthält.
+. Fügen Sie Agentenknoten in Gruppen von 30 bis 50 gleichzeitig hinzu.
+
+==== Festplatten
+
+Die Leistung von RKE2 hängt von der Leistung der Datenbank ab, und da RKE2 etcd als eingebetteten Dienst betreibt und das Datenverzeichnis auf der Festplatte speichert, empfehlen wir, wenn möglich eine SSD zu verwenden, um eine optimale Leistung sicherzustellen.
+
+== Netzwerke
+
+[IMPORTANT]
+====
+Wenn Ihr Knoten NetworkManager installiert und aktiviert hat, xref:known_issues.adoc#_networkmanager[stellen Sie sicher, dass er so konfiguriert ist, dass er CNI-gemanagte Schnittstellen ignoriert]. Wenn Ihr Knoten Wicked installiert und aktiviert hat, xref:known_issues.adoc#_wicked[stellen Sie sicher, dass die Weiterleitungs-Sysctl-Konfiguration aktiviert ist].
+====
+
+Die Ports 6443 und 9345 des RKE2-Servers müssen für andere Knoten im Cluster erreichbar sein.
+
+Alle Knoten müssen in der Lage sein, andere Knoten über den UDP-Port 8472 zu erreichen, wenn Flannel VXLAN verwendet wird.
+
+Wenn Sie den Metrikserver nutzen möchten, müssen Sie den Port 10250 an jedem Knoten öffnen.
+
+[IMPORTANT] 
+====
+Der VXLAN-Port auf den Knoten sollte nicht der Öffentlichkeit zugänglich gemacht werden, da dies Ihr Cluster-Netzwerk für jeden zugänglich macht. Führen Sie Ihre Knoten hinter einer Firewall/Sicherheitsgruppe aus, die den Zugriff auf Port 8472 deaktiviert.
+====
+
+=== Eingehende Netzwerkregeln
+
+|===
+| Port | Protokoll | Quelle | Ziel | Beschreibung
+
+| 6443
+| TCP
+| Alle RKE2-Knoten
+| RKE2-Serverknoten
+| Kubernetes API
+
+| 9345
+| TCP
+| Alle RKE2-Knoten
+| RKE2-Serverknoten
+| RKE2-Supervisor-API
+
+| 10250
+| TCP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Kubelet-Metriken
+
+| 2379
+| TCP
+| RKE2-Serverknoten
+| RKE2-Serverknoten
+| etcd-Client-Port
+
+| 2380
+| TCP
+| RKE2-Serverknoten
+| RKE2-Serverknoten
+| etcd-Peer-Port
+
+| 2381
+| TCP
+| RKE2-Serverknoten
+| RKE2-Serverknoten
+| etcd-Metriken-Port
+
+| 30000-32767
+| TCP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| NodePort-Portbereich
+|===
+
+==== CNI-spezifische eingehende Netzwerkregeln
+
+[tabs]
+======
+
+Canal::
++
+|===
+| Port | Protokoll | Quelle | Ziel | Beschreibung
+
+| 8472
+| UDP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Canal CNI mit VXLAN
+
+| 9099
+| TCP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Canal CNI-Gesundheitsprüfungen
+
+| 51820
+| UDP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Canal CNI mit WireGuard IPv4
+
+| 51821
+| UDP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Canal CNI mit WireGuard IPv6/Dual-Stack
+|===
+
+Cilium::
++
+|===
+| Port | Protokoll | Quelle | Ziel | Beschreibung
+
+| 8/0
+| ICMP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Cilium CNI-Gesundheitsprüfungen
+
+| 4240
+| TCP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Cilium CNI-Gesundheitsprüfungen
+
+| 8472
+| UDP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Cilium CNI mit VXLAN
+
+| 51871
+| UDP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Cilium CNI mit WireGuard
+
+|===
+
+Calico::
++
+|===
+| Port | Protokoll | Quelle | Ziel | Beschreibung
+
+| 179
+| TCP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Calico CNI mit BGP
+
+| 4789
+| UDP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Calico CNI mit VXLAN
+
+| 5473
+| TCP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Calico CNI mit Typha
+
+| 9098
+| TCP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Calico Typha Gesundheitsprüfungen
+
+| 9099
+| TCP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Calico Gesundheitsprüfungen
+|===
+
+Flannel::
++
+|===
+| Port | Protokoll | Quelle | Ziel | Beschreibung
+
+| 4789
+| UDP
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Flannel CNI mit VXLAN
+|===
+======
+
+=== Windows-spezifische eingehende Netzwerkregeln
+
+|===
+| Protokoll | Port | Quelle | Ziel | Beschreibung
+
+| UDP
+| 4789
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Erforderlich für Calico und Flannel VXLAN
+
+| TCP
+| 179
+| Alle RKE2-Knoten
+| Alle RKE2-Knoten
+| Calico CNI mit BGP
+|===
+
+Typischerweise wird sämtlicher ausgehender Verkehr erlaubt sein.

@@ -1,0 +1,159 @@
+= Mises à niveau manuelles
+:page-languages: [en, zh]
+:revdate: 2026-01-08
+:page-revdate: {revdate}
+
+Vous pouvez mettre à niveau RKE2 en utilisant le script d'installation, en installant manuellement le binaire de la version souhaitée, ou en utilisant des mises à niveau rpm en cas d'installation rpm.
+
+[NOTE]
+====
+Mettez à niveau d'abord les nœuds du serveur, un à la fois. Une fois que tous les serveurs ont été mis à niveau, vous pouvez ensuite mettre à niveau les nœuds agents.
+====
+
+== Canaux de publication
+
+Les mises à niveau effectuées via le script d'installation ou en utilisant notre fonctionnalité de xref:upgrade/automated_upgrade.adoc[mises à niveau automatisées] peuvent être liées à différents canaux de publication. Les canaux suivants sont disponibles{nbsp}:
+
+|===
+| Canal | Description
+
+| stable
+| (Par défaut) Stable est recommandé pour les environnements de production. Ces versions ont été soumises à une période de renforcement de la sécurité communautaire et sont compatibles avec la version la plus récente de Rancher.
+
+| latest
+| Latest est recommandé pour essayer les dernières fonctionnalités.  Ces versions n'ont pas encore été soumises à une période de renforcement de la sécurité communautaire et peuvent ne pas être compatibles avec Rancher.
+
+| v1.26 (exemple)
+| Il existe un canal de publication lié à chaque version mineure de Kubernetes, y compris les versions qui sont en fin du service. Ces canaux sélectionneront le dernier correctif disponible, pas nécessairement une version stable.
+|===
+
+Pour une liste exhaustive et à jour des canaux, vous pouvez visiter le https://update.rke2.io/v1-release/channels[service API des canaux RKE2]. Pour plus de détails techniques sur le fonctionnement des canaux, vous pouvez consulter le https://github.com/rancher/channelserver[projet channelserver].
+
+[TIP]
+====
+Lors de la tentative de mise à niveau vers une nouvelle version de RKE2, la https://kubernetes.io/docs/setup/release/version-skew-policy/[stratégie de décalage de version Kubernetes] s'applique. Assurez-vous que votre plan ne saute pas de versions mineures intermédiaires lors de la mise à niveau. Rien dans le processus de mise à niveau ne protégera contre les changements non pris en charge de la version de Kubernetes.
+====
+
+== Mettez à niveau RKE2 en utilisant le script d'installation
+
+Pour mettre à niveau RKE2 à partir d'une version antérieure, vous pouvez relancer le script d'installation en utilisant les mêmes options, par exemple{nbsp}:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | sh -
+----
+
+Cela mettra à niveau vers la version la plus récente dans le canal stable par défaut.
+
+Si vous mettez à niveau les nœuds agents, vous devez spécifier la variable d'environnement `INSTALL_RKE2_TYPE`{nbsp}:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=agent sh -
+----
+
+Si vous souhaitez mettre à niveau vers la version la plus récente dans un canal spécifique (tel que latest), vous pouvez spécifier le canal{nbsp}:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_CHANNEL=latest sh -
+----
+
+Si vous souhaitez mettre à niveau vers une version spécifique, vous pouvez exécuter la commande suivante{nbsp}:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Z+rke2rN sh -
+----
+
+N'oubliez pas de redémarrer le processus RKE2 après l'installation{nbsp}:
+
+[,sh]
+----
+# Server nodes:
+systemctl restart rke2-server
+
+# Agent nodes:
+systemctl restart rke2-agent
+----
+
+== Mettre à niveau RKE2 manuellement à l'aide du binaire
+
+Ou pour mettre à niveau RKE2 manuellement{nbsp}:
+
+. Téléchargez la version souhaitée du binaire RKE2 depuis https://github.com/rancher/rke2/releases[releases]
+. Copiez le binaire téléchargé dans `/usr/local/bin/rke2` pour RKE2 installé à partir d'une archive tarball, et `/usr/bin` pour RKE2 installé à partir d'un RPM
+. Arrêtez l'ancien binaire RKE2
+. Lancez le nouveau binaire RKE2
+
+== Mettre à niveau RKE2 à l'aide des mises à niveau RPM
+
+En cas d'installation RPM, il est prévu de mettre à niveau RKE2 à partir d'une version antérieure en utilisant des mises à niveau rpm, par exemple{nbsp}:
+
+[,sh]
+----
+# zypper upgrade
+zypper update rke2-server
+----
+
+[,sh]
+----
+yum update rke2-server
+----
+
+Cela mettra à niveau le paquet `rke2-server` rpm vers le dernier paquet de votre canal qui est configuré initialement dans les dépôts yum ou zypper par le script d'installation lors de l'installation initiale.
+
+Si vous mettez à niveau des nœuds agents, vous devez spécifier le nom du paquet `rke2-agent`
+
+[,sh]
+----
+# zypper upgrade
+zypper update rke2-agent
+----
+
+[,sh]
+----
+# yum upgrade
+yum update rke2-agent
+----
+
+N'oubliez pas de redémarrer le processus RKE2 après l'installation{nbsp}:
+
+[,sh]
+----
+# Server nodes:
+systemctl restart rke2-server
+
+# Agent nodes:
+systemctl restart rke2-agent
+----
+
+[NOTE] 
+====
+Dans le cas où vous avez activé `rke2-selinux`, vous devriez également pouvoir mettre à niveau rke2-selinux vers la dernière version en utilisant{nbsp}:
+
+[,sh]
+----
+yum update rke2-selinux
+----
+====
+
+== Redémarrage de RKE2
+
+Le redémarrage de RKE2 est pris en charge par le script d'installation pour systemd.
+
+=== systemd
+
+Pour redémarrer les serveurs manuellement{nbsp}:
+
+[,sh]
+----
+sudo systemctl restart rke2-server
+----
+
+Pour redémarrer les agents manuellement{nbsp}:
+
+[,sh]
+----
+sudo systemctl restart rke2-agent
+----

@@ -1,32 +1,32 @@
-= Certificate Management
+= 证书管理
 :page-languages: [en, zh]
 :revdate: 2026-02-27
 :page-revdate: {revdate}
 
-== Client and Server Certificates
+== 客户端和服务器证书
 
-RKE2 client and server certificates are valid for 365 days from their date of issuance.
-Any certificates that are expired or within 120 days of expiring are automatically renewed every time RKE2 starts.
+RKE2 客户端和服务器证书自签发之日起有效期为 365 天。
+任何过期或在 120 天内即将过期的证书将在每次 RKE2 启动时自动续期。
 
-This renewal reuses the existing keys, and extends the lifetime of the existing certificates.
+此续期将重用现有密钥，并延长现有证书的有效期。
 
-If you want to generate new certificates and keys, instead of extending the validity of the existing certificates, use the <<Rotating Client and Server Certificates Manually,`rotate`>> subcommand documented below.
+如果您想生成新的证书和密钥，而不是延长现有证书的有效期，请使用下面文档中的 <<Rotating Client and Server Certificates Manually,`rotate`>> 子命令。
 
-When a certificate is within 120 days of expiring a Kubernetes Warning event with reason: `CertificateExpirationWarning` is created.
+当证书在 120 天内即将过期时，会创建一个 Kubernetes 警告事件，原因是：`CertificateExpirationWarning`。
 
-Prior to the May 2025 releases (v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1), alerts and rotation were triggered at 90 days, instead of 120 days.
+在 2025 年 5 月之前的版本（v1.33.1+rke2r1，v1.32.5+rke2r1，v1.31.9+rke2r1，v1.30.13+rke2r1）中，警报和轮换在 90 天时触发，而不是 120 天。
 
-=== Checking Expiration Dates
+=== 检查过期日期
 
 [NOTE] 
-.Version Gate
+.版本门控
 ====
-Output format is configurable as of the January 2025 releases: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.29.13+rke2r1.
+自 2025 年 1 月的版本起，输出格式可配置：v1.32.0+rke2r1，v1.31.5+rke2r1，v1.30.9+rke2r1，v1.29.13+rke2r1。
 
-A new format with more information is available as of the May 2025 releases: v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1.
+自 2025 年 5 月的版本起，提供了包含更多信息的新格式：v1.33.1+rke2r1，v1.32.5+rke2r1，v1.31.9+rke2r1，v1.30.13+rke2r1。
 ====
 
-To check the node certificates and their expiration date use the `rke2 certificate check --output table`:
+要检查节点证书及其过期日期，请使用 `rke2 certificate check --output table`：
 
 [,bash]
 ----
@@ -43,16 +43,16 @@ client-rke2-controller.crt   rke2-client-ca@1749726675   CertSign     Jun 10, 20
 ----
 
 [NOTE] 
-.SAME CERTIFICATE TWICE
+.同一证书两次
 ====
-Each certificate file (FILENAME column) contains at least two certificates - the leaf (or end entity) client/server certificate, any intermediate Certificate Authority certificates, and the root Certificate Authority certificate.
+每个证书文件（FILENAME 列）至少包含两个证书——叶子（或终端实体）客户端/服务器证书、任何中间证书颁发机构证书，以及根证书颁发机构证书。
 ====
 
-In case of unexpected output, please ensure that you are specifying the correct data directory with the `--data-dir` flag (if using a custom data directory), or use the `--debug` flag to get additional output from the check process.
+如果出现意外输出，请确保您使用 `--data-dir` 标志指定了正确的数据目录（如果使用自定义数据目录），或使用 `--debug` 标志以获取检查过程的附加输出。
 
-=== Rotating Client and Server Certificates Manually
+=== 手动轮换客户端和服务器证书
 
-To rotate client and server certificates manually, use the `rke2 certificate rotate` subcommand:
+要手动轮换客户端和服务器证书，请使用 `rke2 certificate rotate` 子命令：
 
 [,bash]
 ----
@@ -66,61 +66,60 @@ rke2 certificate rotate
 systemctl start rke2-server
 ----
 
-Individual or lists of certificates can be rotated by specifying the certificate name:
+可以通过指定证书名称来轮换单个或多个证书：
 
 [,bash]
 ----
 rke2 certificate rotate --service <SERVICE>,<SERVICE>
 ----
 
-The following certificates can be rotated: `admin`, `api-server`, `controller-manager`, `scheduler`, `rke2-controller`, `rke2-server`, `cloud-controller`, `etcd`, `auth-proxy`, `kubelet`, `kube-proxy`.
+以下证书可以轮换：`admin`、`api-server`、`controller-manager`、`scheduler`、`rke2-controller`、`rke2-server`、`cloud-controller`、`etcd`、`auth-proxy`、`kubelet`、`kube-proxy`。
 
 [IMPORTANT]
-.Version Gate
+.版本门控
 ====
-Prior to the January 2025 releases: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.30.13+rke2r1, the rotation of certificates must be done in the following order: etcd servers, control-plane server, agents.
+在 2025 年 1 月之前的版本：v1.32.0+rke2r1，v1.31.5+rke2r1，v1.30.9+rke2r1，v1.30.13+rke2r1，证书的轮换必须按以下顺序进行：etcd 服务器、控制平面服务器、代理。
 ====
 
-== Certificate Authority (CA) Certificates
+== 证书颁发机构（CA）证书
 
-Kubernetes requires a number of CA certificates for proper operation. For more information on how Kubernetes uses CA certificates, see the Kubernetes https://kubernetes.io/docs/setup/best-practices/certificates/#all-certificates[PKI Certificates and Requirements] documentation.
+Kubernetes 需要多个 CA 证书以确保正常运行。有关 Kubernetes 如何使用 CA 证书的更多信息，请参见 Kubernetes https://kubernetes.io/docs/setup/best-practices/certificates/#all-certificates[PKI 证书和要求] 文档。
 
-By default, RKE2 generates self-signed CA certificates during startup of the first server node. These CA certificates are valid for 10 years from date of issuance, and are not automatically renewed.
+默认情况下，RKE2 在第一个服务器节点启动时生成自签名的 CA 证书。这些 CA 证书自签发之日起有效期为 10 年，且不会自动续期。
 
-The authoritative CA certificates and keys are stored within the datastore's bootstrap key, encrypted using the server token as the PBKDF2 passphrase with AES256-GCM and HMAC-SHA1. Copies of the CA certificates and keys are extracted to disk during RKE2 server startup. Any server may generate leaf certificates for nodes as they join the cluster, and the Kubernetes https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/[Certificates API] controllers may issue additional certificates at runtime.
+权威 CA 证书和密钥存储在数据存储的启动密钥中，使用服务器词元作为 PBKDF2 密码短语，采用 AES256-GCM 和 HMAC-SHA1 加密。在 RKE2 服务器启动期间，CA 证书和密钥的副本会提取到磁盘。任何服务器都可以为加入集群的节点生成叶证书，Kubernetes https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/[证书 API] 控制器可以在运行时发放额外的证书。
 
-=== Rotating CA Certificates
+=== 轮换 CA 证书
 
-To rotate CA certificates and keys, use the `rke2 certificate rotate-ca` command.
-This command performs integrity checks to confirm that the updated certificates and keys are usable. If the updated data is acceptable, the datastore's encrypted bootstrap key is updated, and the new certificates and keys will be used the next time RKE2 starts. If problems are encountered while validating the certificates and keys, an error is reported to the system log and the operation is cancelled without changes.
+要轮换 CA 证书和密钥，请使用 `rke2 certificate rotate-ca` 命令。
+该命令执行完整性检查，以确认更新的证书和密钥可用。如果更新的数据可接受，则数据存储的加密启动密钥将被更新，新的证书和密钥将在下次 RKE2 启动时使用。如果在验证证书和密钥时遇到问题，系统日志将报告错误，操作将被取消且不做更改。
 
-=== Using Custom CA Certificates
+=== 使用自定义 CA 证书
 
-
-==== Cautions Against CA Reuse
+==== 关于 CA 重用的注意事项
 
 [CAUTION]
 ====
-It is not recommended to share Root or Intermediate CAs across multiple clusters, or to use an existing private CA as your cluster CA.
+不建议在多个集群之间共享根 CA 或中间 CA，或使用现有的私有 CA 作为集群 CA。
 ====
 
-When multiple clusters share a common root of trust, any client or server certificates issued by one cluster will also be trusted by all other clusters, as all certificates chain up to the same trust anchor - the common Root Certificate Authority.
+当多个集群共享一个共同的信任根时，由一个集群发放的任何客户端或服务器证书也将被所有其他集群信任，因为所有证书都链到同一个信任锚——共同的根证书颁发机构。
 
-This means that any user with a valid client certificate (or kubeconfig) for one cluster will also be able to authenticate to other clusters, and any RBAC that matches a client's user or group will also be applied in those other clusters.
+这意味着，任何拥有一个集群有效客户端证书（或 kubeconfig）的用户也能够对其他集群进行身份验证，任何与客户端用户或组匹配的 RBAC 也将在其他集群中应用。
 
-Similarly, server certificates issued by one cluster will also be trusted in all other clusters, and by all other infrastructure or clients that trust that root CA.
+同样，由一个集群发放的服务器证书在所有其他集群中也被信任，并且被所有信任该根 CA 的其他基础设施或客户端信任。
 
-Kubernetes does not support use of Certificate Revocation Lists.
+Kubernetes 不支持使用证书吊销列表。
 
-If you ever need to revoke a certificate for any reason (for example, due to a compromised admin kubeconfig), you must perform a full replacement of the cluster Certificate Authority in order to invalidate the certificate's trust.
+如果您出于任何原因需要撤销证书（例如，由于管理员 kubeconfig 被泄露），则必须完全替换集群证书颁发机构，以使证书的信任失效。
 
-==== Using Custom CA Certificates
+==== 使用自定义 CA 证书
 
-If CA certificates and keys are found the correct location during initial startup of the first server in the cluster, automatic generation of CA certificates will be bypassed.
+如果在集群中第一个服务器的初始启动期间，在正确位置找到了 CA 证书和密钥，则将跳过 CA 证书的自动生成。
 
-An example script to pre-create the appropriate certificates and keys is available https://github.com/k3s-io/k3s/blob/master/contrib/util/generate-custom-ca-certs.sh[in the K3s repo at `contrib/util/generate-custom-ca-certs.sh`]. This script should be run prior to starting RKE2 for the first time, and will create a full set of leaf CA certificates signed by common Root and Intermediate CA certificates. If you have an existing Root or Intermediate CA, this script can be used (or used as a starting point) to create the correct CA certificates to provision a RKE2 cluster with PKI rooted in an existing authority.
+有一个示例脚本可用于预先创建适当的证书和密钥， https://github.com/k3s-io/k3s/blob/master/contrib/util/generate-custom-ca-certs.sh[可在 K3s 仓库的 `contrib/util/generate-custom-ca-certs.sh`] 中找到。此脚本应在首次启动 RKE2 之前运行，并将创建一整套由常见根 CA 和中间 CA 证书签名的叶 CA 证书。如果您有现有的根 CA 或中间 CA，此脚本可用于（或可作为起点）创建正确的 CA 证书，以便使用基于现有权威机构的 PKI 配置 RKE2 集群。
 
-Custom Certificate Authority files must be placed in `/var/lib/rancher/rke2/server/tls`. The following files are required:
+自定义证书颁发机构文件必须放置在 `/var/lib/rancher/rke2/server/tls` 中。以下文件是必需的：
 
 * `server-ca.crt`
 * `server-ca.key`
@@ -131,23 +130,23 @@ Custom Certificate Authority files must be placed in `/var/lib/rancher/rke2/serv
 * `etcd/peer-ca.crt`
 * `etcd/peer-ca.key`
 * `etcd/server-ca.crt`
-* `etcd/server-ca.key` (This is the private key used to sign service-account tokens. It does not have a corresponding certificate.)
+* `etcd/server-ca.key`（这是用于签署服务账户词元的私钥。它没有相应的证书。）
 * `service.key`
 
-==== Custom CA Topology
+==== 自定义 CA 拓扑
 
-Custom CA Certificates generated by the example script will have the following topology:
+示例脚本生成的自定义 CA 证书具有以下拓扑：
 
 [mermaid]
 ....
 graph TD
-  root("Root CA")
-  intermediate("Intermediate CA")
-  server-ca("Server CA")
-  client-ca("Client CA")
-  request-header-ca("API Aggregation CA")
-  etcd-peer-ca("etcd Peer CA")
-  etcd-server-ca("etcd Server CA")
+  root("根 CA")
+  intermediate("中间 CA")
+  server-ca("服务器 CA")
+  client-ca("客户端 CA")
+  request-header-ca("API 聚合 CA")
+  etcd-peer-ca("etcd 对等 CA")
+  etcd-server-ca("etcd 服务器 CA")
 
   root-hash>"Join token CA hash"]
 
@@ -166,30 +165,30 @@ graph TD
   intermediate --> etcd-server-ca ==> etcd-server-certs
 ....
 
-==== Using the Example Script
+==== 使用示例脚本
 
 [IMPORTANT]
-.Important
+.重要说明
 ====
-If you want to sign the cluster CA certificates with an existing root CA using the example script, you must place the root and intermediate files in the target directory prior to running the script. If the files do not exist, the script will create new root and intermediate CA certificates.
+如果您想使用示例脚本利用现有根 CA 签署集群 CA 证书，则必须在运行脚本之前将根 CA 和中间 CA 文件放置在目标目录中。如果文件不存在，脚本将创建新的根 CA 和中间 CA 证书。
 ====
 
-If you want to use only an existing root CA certificate, provide the following files:
+如果您只想使用现有的根 CA 证书，请提供以下文件：
 
 * `root-ca.pem`
 * `root-ca.key`
 
-If you want to use existing root and intermediate CA certificates, provide the following files:
+如果您想使用现有的根 CA 和中间 CA 证书，请提供以下文件：
 
 * `root-ca.pem`
 * `intermediate-ca.pem`
 * `intermediate-ca.key`
 
-The example script uses the provided CAs as the root for all cluster CA bundles - Server, Client, API Aggregation, and etcd Peer/Server.
+示例脚本将提供的 CA 用作所有集群 CA 包的根——服务器、客户端、API 聚合以及 etcd 对等/服务器。
 
-For advanced use cases, such as using the provided CAs for only select bundles, or using different CAs for different bundles, the example script should be modified to meet the specific needs of your organization.
+对于高级用例，例如仅对特定包使用提供的 CA，或对不同包使用不同的 CA，示例脚本应根据您组织的具体需求进行修改。
 
-To use the example script to generate custom certs and keys before starting RKE2, run the following commands:
+要使用示例脚本在启动 RKE2 之前生成自定义证书和密钥，请运行以下命令：
 
 [,bash]
 ----
@@ -205,24 +204,24 @@ cp /etc/ssl/certs/root-ca.pem /etc/ssl/certs/intermediate-ca.pem /etc/ssl/privat
 curl -sL https://github.com/k3s-io/k3s/raw/master/contrib/util/generate-custom-ca-certs.sh | PRODUCT=rke2 bash -
 ----
 
-If the command completes successfully, you may install and/or start RKE2 for the first time. If the script generated root and/or intermediate CA files, you should back up these files so that they can be reused if it is necessary to rotate the CA certificates at a later date.
+如果命令成功完成，您可以首次安装和/或启动 RKE2。如果脚本生成了根 CA 和/或中间 CA 文件，您应备份这些文件，以便在将来需要轮换 CA 证书时重复使用。
 
-=== Rotating Custom CA Certificates
+=== 轮换自定义 CA 证书
 
-To rotate custom CA certificates, use the `rke2 certificate rotate-ca` subcommand. Updated files must be staged into a temporary directory, loaded into the datastore, and rke2 must be restarted on all nodes to use the updated certificates.
+要轮换自定义 CA 证书，请使用 `rke2 certificate rotate-ca` 子命令。更新的文件必须暂存到临时目录中，加载到数据存储中，并且必须在所有节点上重新启动 rke2 以使用更新的证书。
 
 [WARNING]
 ====
-You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. Stage the updated certificates and keys into a separate directory.
+您不得覆盖 `/var/lib/rancher/rke2/server/tls` 中当前正在使用的数据。将更新的证书和密钥暂存到单独的目录中。
 ====
 
-A cluster that has been started with custom CA certificates can renew or rotate the CA certificates and keys non-disruptively, as long as the same root CA is used.
+使用自定义 CA 证书启动的集群可以在不中断的情况下续订或轮换 CA 证书和密钥，只要使用相同的 root CA。
 
-If a new root CA is required, the rotation will be disruptive. The `rke2 certificate rotate-ca --force` option must be used, all nodes (servers and agents) will need to be reconfigured to use the new token value, and pods will need to be restarted to trust the new root CA.
+如果需要新的 root CA，轮换将会造成中断。必须使用 `rke2 certificate rotate-ca --force` 选项，所有节点（服务器和代理）都需要重新配置以使用新的词元值，并且需要重新启动 pod 以信任新的根 CA。
 
-==== Using the Example Script
+==== 使用示例脚本
 
-The example `generate-custom-ca-certs.sh` script linked above can also be used to generate updated certs in a new temporary directory, by copying files into the correct location and setting the `DATA_DIR` environment variable. To use the example script to generate updated certs and keys, run the following commands:
+上面链接的示例 `generate-custom-ca-certs.sh` 脚本也可以用于在新的临时目录中生成更新的证书，通过将文件复制到正确的位置并设置 `DATA_DIR` 环境变量。要使用示例脚本生成更新的证书和密钥，请运行以下命令：
 
 [,bash]
 ----
@@ -244,35 +243,35 @@ curl -sL https://github.com/k3s-io/k3s/raw/master/contrib/util/generate-custom-c
 rke2 certificate rotate-ca --path=/opt/rke2/server
 ----
 
-If the `rotate-ca` command returns an error, check the service log for errors. If the command completes successfully, restart RKE2 on all nodes in the cluster - servers first, then agents.
+如果 `rotate-ca` 命令返回错误，请检查服务日志以获取错误信息。如果命令成功完成，请在集群中的所有节点上重新启动 RKE2 - 首先是服务器，然后是代理。
 
-If you used the `--force` option or changed the root CA, ensure that any nodes that were joined with a secure token are reconfigured to use the new token value, prior to being restarted. The token may be stored in a `.env` file, systemd unit, or config.yaml, depending on how the node was configured during initial installation.
+如果您使用了 `--force` 选项或更改了根 CA，请确保任何使用安全词元加入的节点在重新启动之前重新配置为使用新的词元值。该词元可能存储在 `.env` 文件、systemd 单元或 config.yaml 中，具体取决于节点在初始安装期间的配置方式。
 
-=== Rotating Self-Signed CA Certificates
+=== 轮换自签名 CA 证书
 
-To rotate the RKE2-generated self-signed CA certificates, use the `rke2 certificate rotate-ca` subcommand.
-Updated files must be staged into a temporary directory, loaded into the datastore, and rke2 must be restarted on all nodes to use the updated certificates.
+要轮换 RKE2 生成的自签名 CA 证书，请使用 `rke2 certificate rotate-ca` 子命令。
+更新的文件必须暂存到临时目录中，加载到数据存储中，并且必须在所有节点上重新启动 rke2 以使用更新的证书。
 
 [WARNING]
 ====
-You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. Stage the updated certificates and keys into a separate directory.
+您不得覆盖 `/var/lib/rancher/rke2/server/tls` 中当前正在使用的数据。将更新的证书和密钥暂存到单独的目录中。
 ====
 
-If the cluster has been started with default self-signed CA certificates, rotation will be disruptive. All nodes that were joined with a secure token will need to be reconfigured to trust the new CA hash.
-If the new CA certificates are not cross-signed by the old CA certificates, you will need to use the `--force` option to bypass integrity checks, and pods will need to be restarted to trust the new root CA.
+如果集群是使用默认的自签名 CA 证书启动的，轮换将会造成中断。所有使用安全词元加入的节点都需要重新配置以信任新的 CA 哈希。
+如果新的 CA 证书没有被旧的 CA 证书交叉签名，您需要使用 `--force` 选项来绕过完整性检查，并且需要重启 Pod 以信任新的 root CA。
 
-==== Default CA Topology
+==== 默认 CA 拓扑
 
-The default self-signed CA certificates have the following topology:
+默认的自签名 CA 证书具有以下拓扑：
 
 [mermaid]
 ....
-graph TD
-  server-ca("Server CA")
-  client-ca("Client CA")
-  request-header-ca("API Aggregation CA")
-  etcd-peer-ca("etcd Peer CA")
-  etcd-server-ca("etcd Server CA")
+graph TD +
+  server-ca("服务器 CA") +
+  client-ca("客户端 CA") +
+  request-header-ca("API 聚合 CA") +
+  etcd-peer-ca("etcd 对等 CA") +
+  etcd-server-ca("etcd 服务器 CA")
 
   root-hash>"Join token CA hash"]
 
@@ -290,24 +289,24 @@ graph TD
   etcd-server-ca ===> etcd-server-certs
 ....
 
-When rotating the default self-signed CAs, a modified certificate topology with intermediate CAs and a new root CA cross-signed by the old CA can be used so that there is a continuous chain of trust between the old and new CAs:
+在轮换默认的自签名 CA 时，可以使用修改后的证书拓扑，其中包含中间 CA 和由旧 CA 交叉签名的新根 CA，以便在旧 CA 和新 CA 之间建立持续的信任链：
 
 [mermaid]
 ....
-graph TD
-  server-ca-old("Server CA<br/>(old)")
-  client-ca-old("Client CA<br/>(old)")
-  request-header-ca-old("API Aggregation CA<br/>(old)")
-  etcd-peer-ca-old("etcd Peer CA<br/>(old)")
-  etcd-server-ca-old("etcd Server CA<br/>(old)")
+graph TD +
+  server-ca-old("服务器 CA<br/>(旧)") +
+  client-ca-old("客户端 CA<br/>(旧)") +
+  request-header-ca-old("API 聚合 CA<br/>(旧)") +
+  etcd-peer-ca-old("etcd 对等 CA<br/>(旧)") +
+  etcd-server-ca-old("etcd 服务器 CA<br/>(旧)")
 
   root-hash>"Join token CA hash"]
 
-  server-ca-xsigned("Server CA<br/>(cross-signed)")
-  client-ca-xsigned("Client CA<br/>(cross-signed)")
-  request-header-ca-xsigned("API Aggregation CA<br/>(cross-signed)")
-  etcd-peer-ca-xsigned("etcd Peer CA<br/>(cross-signed)")
-  etcd-server-ca-xsigned("etcd Server CA<br/>(cross-signed)")
+  server-ca-xsigned("服务器 CA<br/>(交叉签名)") +
+  client-ca-xsigned("客户端 CA<br/>(交叉签名)") +
+  request-header-ca-xsigned("API 聚合 CA<br/>(交叉签名)") +
+  etcd-peer-ca-xsigned("etcd 对等 CA<br/>(交叉签名)") +
+  etcd-server-ca-xsigned("etcd 服务器 CA<br/>(交叉签名)")
 
   server-ca-ssigned("Server CA<br/>(self-signed)")
   client-ca-ssigned("Client CA<br/>(self-signed)")
@@ -315,11 +314,11 @@ graph TD
   etcd-peer-ca-ssigned("etcd Peer CA<br/>(self-signed)")
   etcd-server-ca-ssigned("etcd Server CA<br/>(self-signed)")
 
-  server-ca("Intermediate<br/>Server CA")
-  client-ca("Intermediate<br/>Client CA")
-  request-header-ca("Intermediate<br/>API Aggregation CA")
-  etcd-peer-ca("Intermediate<br/>etcd Peer CA")
-  etcd-server-ca("Intermediate<br>etcd Server CA")
+  server-ca("中间<br/>服务器 CA") +
+  client-ca("中间<br/>客户端 CA") +
+  request-header-ca("中间<br/>API 聚合 CA") +
+  etcd-peer-ca("中间<br/>etcd 对等 CA") +
+  etcd-server-ca("中间<br>etcd 服务器 CA")
 
   kube-server-certs[["Kubernetes servers<br/>(control-plane and kubelet listeners)"]]
   kube-client-certs[["Kubernetes clients<br/>(apiserver and kubelet clients)"]]
@@ -327,24 +326,24 @@ graph TD
   etcd-peer-certs[["etcd peer client/server<br/>(etcd replication)"]]
   etcd-server-certs[["etcd client/server certificates<br/>(Kubernetes <-> etcd)"]]
 
-  server-ca-ssigned -.-|SHA256| root-hash
-  server-ca-ssigned --> server-ca ==> kube-server-certs
-  server-ca-old --> server-ca-xsigned --> server-ca
-  client-ca-ssigned --> client-ca ==> kube-client-certs
-  client-ca-old --> client-ca-xsigned --> client-ca
-  request-header-ca-ssigned --> request-header-ca ==> request-header-certs
-  request-header-ca-old --> request-header-ca-xsigned --> request-header-ca
-  etcd-peer-ca-ssigned --> etcd-peer-ca ==> etcd-peer-certs
-  etcd-peer-ca-old --> etcd-peer-ca-xsigned --> etcd-peer-ca
-  etcd-server-ca-ssigned --> etcd-server-ca ==> etcd-server-certs
+  server-ca-ssigned -.-|SHA256| root-hash +
+  server-ca-ssigned --> server-ca ==> kube-server-certs +
+  server-ca-old --> server-ca-xsigned --> server-ca +
+  client-ca-ssigned --> client-ca ==> kube-client-certs +
+  client-ca-old --> client-ca-xsigned --> client-ca +
+  request-header-ca-ssigned --> request-header-ca ==> request-header-certs +
+  request-header-ca-old --> request-header-ca-xsigned --> request-header-ca +
+  etcd-peer-ca-ssigned --> etcd-peer-ca ==> etcd-peer-certs +
+  etcd-peer-ca-old --> etcd-peer-ca-xsigned --> etcd-peer-ca +
+  etcd-server-ca-ssigned --> etcd-server-ca ==> etcd-server-certs +
   etcd-server-ca-old --> etcd-server-ca-xsigned --> etcd-server-ca
 ....
 
-==== Using The Example Script
+==== 使用示例脚本
 
-An example script to create updated CA certificates and keys cross-signed by the existing CAs is available https://github.com/k3s-io/k3s/blob/master/contrib/util/rotate-default-ca-certs.sh[in the K3s repo at `contrib/util/rotate-default-ca-certs.sh`].
+一个示例脚本，用于创建由现有 CA 交叉签名的更新 CA 证书和密钥，已在 https://github.com/k3s-io/k3s/blob/master/contrib/util/rotate-default-ca-certs.sh[K3s 仓库中`contrib/util/rotate-default-ca-certs.sh`] 提供。
 
-To use the example script to generate updated self-signed certificates that are cross-signed by the existing CAs, run the following commands:
+要使用示例脚本生成由现有 CA 交叉签名的更新自签名证书，请运行以下命令：
 
 [,bash]
 ----
@@ -356,20 +355,20 @@ curl -sL https://github.com/k3s-io/k3s/raw/master/contrib/util/rotate-default-ca
 rke2 certificate rotate-ca --path=/var/lib/rancher/rke2/server/rotate-ca
 ----
 
-If the `rotate-ca` command returns an error, check the service log for errors. If the command completes successfully, restart RKE2 on all nodes in the cluster - servers first, then agents.
+如果 `rotate-ca` 命令返回错误，请检查服务日志以获取错误信息。如果命令成功完成，请在集群中的所有节点上重新启动 RKE2 - 首先是服务器，然后是代理。
 
-Ensure that any nodes that were joined with a secure token, including other server nodes, are reconfigured to use the new token value prior to being restarted. The token may be stored in a `.env` file, systemd unit, or config.yaml, depending on how the node was configured during initial installation.
+确保所有使用安全词元加入的节点，包括其他服务器节点，在重启之前重新配置为使用新的词元值。该词元可能存储在 `.env` 文件、systemd 单元或 config.yaml 中，具体取决于节点在初始安装期间的配置方式。
 
-== Service-Account Issuer Key Rotation
+== 服务账户颁发者密钥轮换
 
-The service-account issuer key is an RSA private key used to sign service-account tokens. When rotating the service-account issuer key, at least one old key should be retained in the file so that existing service-account tokens are not invalidated. It can be rotated independent of the cluster CAs by using the `rke2 certificate rotate-ca` to install only an updated `service.key` file that includes both the new and old keys.
+服务账户颁发者密钥是用于签署服务账户词元的 RSA 私钥。在旋转服务账户发行者密钥时，应该在文件中保留至少一个旧密钥，以确保现有的服务账户词元不会失效。可以通过使用 `rke2 certificate rotate-ca` 独立于集群 CA 进行轮换，仅安装包含新旧密钥的更新 `service.key` 文件。
 
 [WARNING]
 ====
-You must not overwrite the currently in-use data in `/var/lib/rancher/rke2/server/tls`. Stage the updated key into a separate directory.
+您不得覆盖 `/var/lib/rancher/rke2/server/tls` 中当前正在使用的数据。将更新的密钥暂存到一个单独的目录中。
 ====
 
-For example, to rotate only the service-account issuer key, run the following commands:
+例如，要仅旋转服务账户发行者密钥，请运行以下命令：
 
 [,bash]
 ----
@@ -389,4 +388,4 @@ cat /var/lib/rancher/rke2/server/tls/service.key >> /opt/rke2/server/tls/service
 rke2 certificate rotate-ca --path=/opt/rke2/server
 ----
 
-It is normal to see warnings for files that are not being updated. If the `rotate-ca` command returns an error, check the service log for errors. If the command completes successfully, restart RKE2 on all servers in the cluster. It is not necessary to restart agents or restart any pods.
+对于未更新的文件，看到警告是正常的。如果 `rotate-ca` 命令返回错误，请检查服务日志以获取错误信息。如果命令成功完成，请在集群中的所有服务器上重启 RKE2。不需要重启代理或重启任何pod。

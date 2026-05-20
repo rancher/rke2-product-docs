@@ -1,0 +1,134 @@
+= Espejo de registro integrado
+:page-languages: [en, zh]
+:revdate: 2025-10-29
+:page-revdate: {revdate}
+
+[NOTE]
+.Puerta de Versión
+====
+El Espejo de Registro Embebido está disponible como una característica experimental a partir de las versiones de enero de 2024: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1 y GA a partir de las versiones de diciembre de 2024: v1.29.12+rke2r1, v1.30.8+rke2r1, v1.31.4+rke2r1.
+====
+
+RKE2 incorpora https://github.com/spegel-org/spegel[Spegel], un espejo de registro OCI distribuido sin estado que permite el intercambio de imágenes de contenedores entre nodos en un clúster de Kubernetes. El espejo de registro distribuido está deshabilitado por defecto. Para que RKE2 lo aproveche, debes habilitar tanto el <<Enabling The Distributed OCI Registry Mirror,Espejo de Registro OCI Distribuido>> como el <<Enabling Registry Mirroring,Espejo de Registro>> como se explica en las siguientes subsecciones.
+
+== Habilitación del Espejo de Registro OCI Distribuido
+
+Para habilitar el espejo de registro embebido, los nodos del servidor deben estar configurados con `embedded-registry: true`. Esta opción habilita el espejo embebido para su uso en todos los nodos del clúster.
+
+Cuando se habilita a nivel de clúster, todos los nodos alojarán un registro OCI local en el puerto 6443, y publicarán una lista de imágenes disponibles a través de una red peer to peer en el puerto 5001. Cualquier imagen disponible en el almacén de imágenes de containerd en cualquier nodo, puede ser descargada por otros miembros del clúster sin acceso a un registro externo. Las imágenes importadas a través de xref:install/airgap.adoc#_tarball_method[archivos tar de imágenes de entorno aislado] o xref:add-ons/import_images.adoc#_pre_import_images[pre-importadas] están fijadas en containerd para asegurar que permanezcan disponibles y no sean eliminadas por la recolección de basura de Kubelet.
+
+=== Requisitos
+
+Cuando el espejo de registro embebido está habilitado, todos los nodos deben poder alcanzarse entre sí a través de sus direcciones IP internas, en los puertos TCP 5001 y 9345. Si los nodos no pueden alcanzarse entre sí, puede tardar más en descargar imágenes, ya que containerd intentará primero el registro distribuido, antes de recurrir a otros puntos finales.
+
+=== Métricas
+
+Spegel proporciona algunas métricas que pueden ser útiles para rastrear su actividad y pueden ser consultadas en el supervisor. Sin embargo, las métricas del supervisor están deshabilitadas por defecto. Para habilitarlas, los nodos del servidor deben iniciarse con `supervisor-metrics: true` en el archivo de configuración.
+
+Una vez habilitado, consulta:
+
+----
+kubectl get --server https://$SERVER_NAME:9345 --raw /metrics | grep spegel
+----
+
+== Habilitando el Espejo de Registro
+
+Habilitar el espejo de registro permite a un nodo tanto descargar imágenes de ese registro desde otros nodos, como compartir las imágenes del registro con otros nodos. Si un registro está habilitado para el espejado en algunos nodos, pero no en otros, solo los nodos con el registro habilitado intercambiarán imágenes de ese registro.
+
+Para habilitar el espejado de imágenes desde un registro de contenedores en sentido ascendente, los nodos deben tener una entrada en la sección `mirrors` de `registries.yaml` para ese registro. El registro no necesita tener ningún punto final listado, solo necesita estar presente. Por ejemplo, para habilitar el espejo distribuido de imágenes desde `docker.io` y `registry.k8s.io`, configura `registries.yaml` con el siguiente contenido en todos los nodos del clúster:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+  registry.k8s.io:
+----
+
+Los puntos finales para los espejos de registro también pueden añadirse como de costumbre. En la siguiente configuración, los intentos de extracción de imágenes primero probarán el espejo embebido, luego `mirror.example.com`, y finalmente `docker.io`:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - https://mirror.example.com
+----
+
+Si estás utilizando un registro privado directamente, en lugar de como un espejo para un registro de sentido ascendente, puedes habilitar el espejo distribuido de la misma manera que se habilitan los registros públicos: listándolo en la sección de espejos:
+
+[,yaml]
+----
+mirrors:
+  mirror.example.com:
+----
+
+[NOTE]
+.Puerta de Versión
+====
+El soporte para comodines está disponible a partir de las versiones de marzo de 2024: v1.26.15+rke2r1, v1.27.12+rke2r1, v1.28.8+rke2r1, v1.29.3+rke2r1
+====
+
+La entrada de espejo comodín `"*"` se puede utilizar para habilitar el espejo distribuido de todos los registros. Ten en cuenta que el asterisco DEBE estar entre comillas:
+
+[,yaml]
+----
+mirrors:
+  "*":
+----
+
+Si no hay registros con el espejo de registro habilitado en un nodo, ese nodo no participa en el registro distribuido en ninguna capacidad.
+
+Para más información sobre la estructura del archivo `registries.yaml`, consulta xref:install/private_registry.adoc[Configuración de Registro Privado].
+
+=== Recaída de Punto Final Predeterminado
+
+Por defecto, containerd volverá al punto final predeterminado al extraer de registros con puntos finales de espejo configurados. Si deseas deshabilitar esto, y solo extraer imágenes de los espejos configurados y/o del espejo embebido, consulta la sección xref:install/private_registry.adoc#_default_endpoint_fallback[Recaída de Punto Final Predeterminado] de la documentación de Configuración de Registro Privado.
+
+Ten en cuenta que si estás utilizando la opción `disable-default-endpoint` y deseas permitir la extracción directamente desde un registro particular, mientras se prohíbe la extracción de imágenes desde los demás, puedes proporcionar explícitamente un punto final para permitir que la extracción de la imagen vuelva al propio registro:
+
+[,yaml]
+----
+mirrors:
+  docker.io:           # no default endpoint, pulls will fail if not available on a node
+  registry.k8s.io:     # no default endpoint, pulls will fail if not available on a node
+  mirror.example.com:  # explicit default endpoint, can pull from upstream if not available on a node
+    endpoint:
+      - https://mirror.example.com
+----
+
+=== Última Etiqueta
+
+Cuando no se especifica ninguna etiqueta para una imagen de contenedor, la etiqueta predeterminada implícita es `latest`. Esta etiqueta se actualiza frecuentemente para apuntar a la versión más reciente de la imagen. Debido a que esta etiqueta apuntará a diferentes revisiones de una imagen dependiendo de cuándo se extraiga, el registro distribuido *no* extraerá la etiqueta `latest` de otros nodos. Esto obliga a containerd a salir a un registro o espejo de registro en sentido ascendente para asegurar una vista consistente de a qué se refiere la etiqueta `latest`.
+
+Esto se alinea con el https://kubernetes.io/docs/concepts/containers/images/#imagepullpolicy-defaulting[especial `imagePullPolicy` predeterminado] observado por Kubernetes al usar la etiqueta `latest` para una imagen de contenedor.
+
+== Seguridad
+
+=== Autenticación
+
+El acceso a la API del registro del espejo embebido requiere un certificado de cliente válido, firmado por la autoridad de certificación del cliente del clúster.
+
+El acceso a la red peer-to-peer de la tabla hash distribuida requiere una clave precompartida que es controlada por los nodos del servidor. Los nodos se autentican entre sí utilizando tanto la clave precompartida como un certificado firmado por la autoridad de certificación del clúster.
+
+=== Preocupaciones potenciales
+
+[WARNING]
+====
+El registro distribuido se basa en principios de peer-to-peer y asume un nivel igual de privilegio y confianza entre todos los miembros del clúster. Si esto no coincide con la postura de seguridad de su clúster, no debería habilitar el registro distribuido embebido.
+====
+
+El registro embebido puede hacer disponibles imágenes a las que un nodo de otro modo no tendría acceso. Por ejemplo, si algunas de vuestras imágenes se extraen de un registro, proyecto o repositorio que requiere autenticación a través de Kubernetes Image Pull Secrets, o credenciales en `registries.yaml`, el registro distribuido permitirá que otros nodos compartan esas imágenes sin proporcionar ninguna credencial al registro en sentido ascendente.
+
+Los usuarios con acceso para subir imágenes al almacén de imágenes de containerd en un nodo pueden ser capaces de usar esto para 'envenenar' la imagen para otros nodos del clúster, ya que otros nodos confiarán en la etiqueta anunciada por el nodo y la usarán sin verificar con el registro en sentido ascendente. Si la integridad de la imagen es importante, debería usar resúmenes de imagen en lugar de etiquetas, ya que el resumen no puede ser envenenado de esta manera.
+
+== Compartiendo Imágenes de Entorno Aislado o Cargadas Manualmente
+
+El intercambio de imágenes se controla en función del registro de origen. Las imágenes cargadas directamente en containerd a través de xref:install/airgap.adoc#_tarball_method[tarballs de entorno aislado], xref:add-ons/import_images.adoc#_pre_import_images[pre-importadas] o cargadas directamente en el almacén de imágenes de containerd utilizando la herramienta shell `ctr`, se compartirán entre nodos si están etiquetadas como provenientes de un registro que está habilitado para la replicación.
+
+Tenga en cuenta que el registro de sentido ascendente del que las imágenes parecen provenir no tiene que existir o ser accesible. Por ejemplo, podría etiquetar imágenes como si provinieran de un registro de sentido ascendente ficticio e importar esas imágenes al almacén de imágenes de containerd. Luego podríais extraer esas imágenes de todos los miembros del clúster, siempre que ese registro esté listado en `registries.yaml`.
+
+== Subir imágenes
+
+El registro embebido es de solo lectura y no se puede subir directamente utilizando `docker push` u otras herramientas comunes que interactúan con los registros OCI.
+
+Las imágenes se pueden hacer disponibles manualmente a través del registro embebido ejecutando `ctr -n k8s.io image pull` para extraer una imagen, o cargando archivos de imagen creados por `docker save` mediante el comando `ctr -n k8s.io image import` o la xref:add-ons/import_images.adoc#_pre_import_images[función de pre-importación]. Tenga en cuenta que el espacio de nombres `k8s.io` debe especificarse al gestionar imágenes a través de `ctr` para que sean visibles para el kubelet.

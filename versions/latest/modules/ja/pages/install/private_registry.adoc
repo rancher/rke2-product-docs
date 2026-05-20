@@ -1,0 +1,286 @@
+= プライベートレジストリの設定
+:page-languages: 起動時に、RKE2はが存在するかどうかを確認します。
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Containerdはプライベートレジストリに接続し、kubeletが必要に応じてイメージをプルするためにそれらを使用するように構成できます。
+
+起動時に、RKE2は`/etc/rancher/rke2/registries.yaml`が存在するかどうかを確認します。存在する場合、このファイルに含まれるレジストリ設定がcontainerdの設定を生成する際に使用されます。
+
+* docker.ioのようなパブリックレジストリのミラーとしてプライベートレジストリを使用したい場合は、ミラーを使用する各ノードで`registries.yaml`を設定する必要があります。
+* プライベートレジストリが認証を必要とする場合、カスタムTLS証明書を使用する場合、またはTLSを使用しない場合は、レジストリからイメージをプルする各ノードで`registries.yaml`を設定する必要があります。
+
+サーバーノードはデフォルトでスケジュール可能であることに注意してください。サーバーノードにテイントが設定されていない場合、これらのノードでワークロードを実行するのであれば、各サーバーにも`registries.yaml`ファイルを作成することを確認してください。
+
+== デフォルトエンドポイントのフォールバック
+
+Containerdにはすべてのレジストリに対して暗黙の「デフォルトエンドポイント」があります。デフォルトエンドポイントは、`registries.yaml`にそのレジストリの他のエンドポイントがリストされていても、常に最後の手段として試みられます。デフォルトエンドポイントに対するプルにはリライトは適用されません。例えば、`registry.example.com:5000/rancher/mirrored-pause:3.6`をプルする際、containerdは`\https://registry.example.com:5000/v2`というデフォルトエンドポイントを使用します。
+
+* `docker.io`のデフォルトエンドポイントは`\https://index.docker.io/v2`です。
+* 他のすべてのレジストリのデフォルトエンドポイントは`\https://<REGISTRY>/v2`であり、`<REGISTRY>`はレジストリのホスト名とオプションのポートです。
+
+レジストリとして認識されるためには、イメージ名の最初のコンポーネントには少なくとも1つのピリオドまたはコロンが含まれている必要があります。歴史的な理由から、名前にレジストリが指定されていないイメージは暗黙的に`docker.io`からのものであると識別されます。
+
+[NOTE]
+.バージョンゲート
+====
+`disable-default-registry-endpoint`オプションは、2024年2月のリリース（v1.26.13+rke2r1、v1.27.10+rke2r1、v1.28.6+rke2r1、v1.29.1+rke2r1）から実験的な機能として利用可能です。
+====
+
+ノードは`disable-default-registry-endpoint: true`オプションで構成することができます。この設定が有効な場合、containerdはデフォルトのレジストリエンドポイントにフォールバックせず、構成済みのミラーエンドポイント、さらに分散レジストリ（有効な場合）からのみプルします。
+
+これは、クラスターが真のエアギャップ環境にあり、アップストリームレジストリが利用できない場合、または特定のノードのみがアップストリームレジストリからプルすることを望む場合に有用です。
+
+デフォルトのレジストリエンドポイントを無効にすることは、`registries.yaml`を介して構成されたレジストリにのみ適用されます。レジストリが`registries.yaml`のミラーエントリを介して明示的に構成されていない場合、デフォルトのフォールバック動作は引き続き使用されます。
+
+== レジストリ設定ファイル
+
+ファイルは、各レジストリのサブキーを持つ2つのトップレベルキーで設定されています：
+
+[,yaml]
+----
+mirrors:
+  <REGISTRY>:
+    endpoint:
+      - https://<REGISTRY>/v2
+configs:
+  <REGISTRY>:
+    auth:
+      username: <BASIC AUTH USERNAME>
+      password: <BASIC AUTH PASSWORD>
+      token: <BEARER TOKEN>
+    tls:
+      ca_file: <PATH TO SERVER CA>
+      cert_file: <PATH TO CLIENT CERT>
+      key_file: <PATH TO CLIENT KEY>
+      insecure_skip_verify: <SKIP TLS CERT VERIFICATION BOOLEAN>
+----
+
+=== ミラー
+
+ミラーセクションは、レジストリの名前とエンドポイントを定義します。例えば：
+
+[,yaml]
+----
+mirrors:
+  registry.example.com:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+各ミラーには名前とエンドポイントのセットが必要です。レジストリからイメージをプルする際、containerdはこれらのエンドポイントURLとデフォルトのエンドポイントを試み、最初に動作するものを使用します。
+
+[NOTE]
+====
+エンドポイントが構成されていない場合、containerdは、レジストリに対してポート443のHTTPSを介して匿名アクセスが可能であり、ホストのオペレーティングシステムに信頼された証明書が使用されていると仮定します。詳細については、 https://github.com/containerd/containerd/blob/master/docs/cri/registry.md#configure-registry-endpoint[containerdのドキュメント]を参照してください。
+====
+
+==== リダイレクト
+
+プライベートレジストリが別のレジストリのミラーとして使用される場合、たとえば https://docs.docker.com/registry/recipes/mirror/[プルスルーキャッシュ]を構成する際には、イメージのプルがリストされたエンドポイントに透過的にリダイレクトされます。元のレジストリ名は、`ns`クエリパラメータを介してミラーエンドポイントに渡されます。
+
+例えば、`docker.io`のためにミラーが設定されている場合：
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+その場合、`docker.io/rancher/mirrored-pause:3.6`をプルすると、透過的にイメージが`registry.example.com:5000/rancher/mirrored-pause:3.6`としてプルされます。
+
+==== リライト
+
+各ミラーには、プル時にイメージの名称を一致・変換するために正規表現を使用するリライトのセットを持たせることができます。これは、プライベートレジストリの組織/プロジェクト構造がミラーしているレジストリと異なる場合に便利です。リライトはイメージ名のみを一致させて変換し、タグは一致させません。
+
+例えば、次の設定では、`rancher/rke2-runtime:v1.30.1-rke2r1`というイメージが`registry.example.com:5000/mirrorproject/rancher-images/rke2-runtime:v1.30.1-rke2r1`から透過的にプルされます:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+    rewrite:
+      "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+[NOTE]
+.バージョンゲート
+====
+2024年2月のリリース（v1.26.13+rke2r1、v1.27.10+rke2r1、v1.28.6+rke2r1、v1.29.1+rke2r1）以降、デフォルトエンドポイントにはリライトが適用されなくなりました。これらのリリース以前は、デフォルトエンドポイントにリライトが適用され、ミラーエンドポイントからのプルが失敗し、かつアップストリームに変更後の名称でイメージが存在しない場合、RKE2がアップストリームレジストリからプルするのを防いでいました。
+====
+
+レジストリから直接プルする際にリライトを適用したい場合（異なるアップストリームレジストリのミラーとして使用されていない場合）、デフォルトエンドポイントと一致しないミラーエンドポイントを提供する必要があります。デフォルトエンドポイントと一致する`registries.yaml`のミラーエンドポイントは無視されます。フォールバックが無効になっていない場合、デフォルトエンドポイントは常に最後にリライトなしで試行されます。
+
+例えば、`\https://registry.example.com/`にレジストリが存在し、明示的に`registry.example.com/rancher/rke2-runtime:v1.30.1-rke2r1`をプルする際にリライトを適用したい場合は、ポートが指定されたミラーエンドポイントを追加できます。ミラーエンドポイントがデフォルトエンドポイント（*`"\https://registry.example.com:443/v2" != "\https://registry.example.com/v2"`*）と一致しないため、たとえ実質的にデフォルトと同じであっても、そのエンドポイントはミラーとして受け入れられ、リライトが適用されます。
+
+[,yaml]
+----
+mirrors:
+ registry.example.com
+   endpoint:
+     - "https://registry.example.com:443"
+   rewrite:
+     "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+ミラーと書き換えを使用する際、イメージは元の名前の下に保存されることに注意してください。例えば、`crictl image ls`は、イメージが異なる名前のミラーからプルされた場合でも、ノード上で`docker.io/rancher/rke2-runtime:v1.30.1-rke2r1`が利用可能であることを表示します。
+
+=== 設定
+
+configsセクションは、各ミラーのTLSおよび認証情報の設定を定義します。各ミラーに対して、`auth`および/または`tls`を定義できます。
+
+`tls`部分は次のように構成されています：
+
+|===
+| ディレクティブ | 説明
+
+| `cert_file`
+| レジストリとの認証に使用されるクライアント証明書のパス
+
+| `key_file`
+| レジストリとの認証に使用されるクライアントキーのパス
+
+| `ca_file`
+| レジストリのサーバー証明書ファイルを検証するために使用されるCA証明書のパスを定義します。
+
+| `insecure_skip_verify`
+| レジストリのTLS検証をスキップするかどうかを定義するブール値
+|===
+
+`auth`部分は、ユーザー名/パスワードまたは認証トークンのいずれかで構成されています：
+
+|===
+| ディレクティブ | 説明
+
+| `username`
+| プライベートレジストリの基本認証のユーザー名
+
+| `password`
+| プライベートレジストリの基本認証のユーザーパスワード
+
+| `auth`
+| プライベートレジストリの基本認証の認証トークン
+|===
+
+以下は、異なるモードでプライベートレジストリを使用する基本的な例です：
+
+=== ワイルドカードサポート
+
+[NOTE]
+.バージョンゲート
+====
+ワイルドカードサポートは、2024年3月のリリース（v1.26.15+rke2r1、v1.27.12+rke2r1、v1.28.8+rke2r1、v1.29.3+rke2r1）から利用可能です。
+====
+
+`mirrors`および`configs`セクションで、すべてのレジストリに対するデフォルト設定を提供するために、`"*"`ワイルドカードエントリを使用できます。デフォルト設定は、そのレジストリに対する特定のエントリがない場合にのみ使用されます。アスタリスクは必ず引用符で囲む必要があります。
+
+以下の例では、すべてのレジストリに対してローカルレジストリミラーが使用されます。TLS検証は、`docker.io`を除くすべてのレジストリに対して無効になります。
+
+[,yaml]
+----
+mirrors:
+  "*":
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "docker.io":
+  "*":
+    tls:
+      insecure_skip_verify: true
+----
+
+=== TLSを使用する場合
+
+以下は、TLSを使用する場合に各ノードで`/etc/rancher/rke2/registries.yaml`を構成する方法を示す例です。
+
+[tabs]
+======
+
+認証を使用する場合::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+認証を使用しない場合:: 
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+======
+
+=== TLSなし
+
+以下は、TLSを_使用しない_場合に各ノードで`/etc/rancher/rke2/registries.yaml`を構成する方法を示す例です。
+
+[tabs]
+======
+
+認証を使用する場合::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+----
+
+認証を使用しない場合::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+----
+
+======
+
+____
+TLSなしでプレーンテキストHTTPを使用するレジストリを使用する場合、`http://`をエンドポイントURIスキームとして指定する必要があります。そうしないと、デフォルトで`https://`になります。
+____
+
+レジストリの変更を有効にするには、ノードでRKE2を開始する前にこのファイルを構成するか、各構成ノードでRKE2を再起動する必要があります。
+
+== イメージプルのトラブルシューティング
+
+Kubernetesがイメージをプルする際に問題が発生した場合、kubeletに表示されるエラーは、デフォルトエンドポイントに対して実施されたプル試行で最後に返されたエラーのみを反映する可能性があり、そのため、設定されたエンドポイントが使用されていないように見えることがあります。
+
+エラーの根本原因に関する詳細情報は、ノードの`/var/lib/rancher/rke2/agent/containerd/containerd.log`にあるcontainerdログを確認してください。

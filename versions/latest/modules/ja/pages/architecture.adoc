@@ -1,0 +1,118 @@
+= 次世代Kubernetesディストリビューションの構造
+:page-languages: [en, zh]
+:revdate: 2025-10-29
+:page-revdate: {revdate}
+
+== アーキテクチャの概要
+
+RKE2では、軽量な https://kubernetes.io[Kubernetes]ディストリビューションである https://k3s.io[K3s]の開発と維持から得た教訓を活かし、エンタープライズ向けのディストリビューションを https://k3s.io[K3s]の使いやすさで構築します。これは、RKE2が最もシンプルな形で、 https://kubernetes.io[Kubernetes]クラスターに参加することが期待されるすべてのノードにインストールおよび構成される単一のバイナリであることを意味します。起動後、RKE2は各ノードごとに適切な役割のエージェントを起動し、監視しつつ、ネットワークから必要なコンテンツを取得します。
+
+image::overview.png[アーキテクチャの概要]
+
+RKE2は、これを実現するために多くのオープンソース技術を統合しています：
+
+* https://k3s.io[K3s]
+ ** https://github.com/k3s-io/helm-controller[Helmコントローラー]
+* https://kubernetes.io[K8s]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-apiserver[APIサーバー]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-controller-manager[コントローラーマネージャー]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kubelet[Kubelet]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-scheduler[スケジューラ]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-proxy[プロキシ]
+* https://etcd.io[etcd]
+* https://github.com/opencontainers/runc[runc]
+* https://containerd.io[containerd]/link:https://github.com/kubernetes/cri-api[cri]
+* https://github.com/containernetworking/cni[CNI]：Canal (https://docs.tigera.io/calico/latest/about[Calico] & https://github.com/flannel-io/flannel[Flannel])、 https://cilium.io[Cilium]、 https://docs.tigera.io/calico/latest/about[Calico]または https://github.com/flannel-io/flannel[Flannel]。さらに: https://github.com/k8snetworkplumbingwg/multus-cni[Multus]
+* https://coredns.io[CoreDNS]
+* https://kubernetes.github.io/ingress-nginx[Ingress NGINX Controller] および/または https://traefik.io/traefik[Traefik]
+* https://github.com/kubernetes-sigs/metrics-server[Metrics Server]
+* https://helm.sh[Helm]
+
+これらのうち、Traefikを除くすべては、 https://github.com/golang/go/tree/dev.boringcrypto/misc/boring[Go+BoringCrypto]でコンパイルされ、静的にリンクされています。
+
+== プロセスライフサイクル
+
+=== コンテンツの起動
+
+RKE2は、RKE2ランタイムイメージから_server_および_agent_ノードの両方を実行するために、バイナリとマニフェストを取得します。
+これは、RKE2がデフォルトで`/var/lib/rancher/rke2/agent/images/*.tar`をスキャンし、 https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`]イメージ（`rke2 --version`の出力に関連するタグを持つ）を探すことを意味し、見つからない場合はネットワークからプルしようとします（別名。Docker Hub).その後、RKE2はイメージから`/bin/`を抽出し、それを`/var/lib/rancher/rke2/data/${RKE2_DATA_KEY}/bin`にフラット化します。ここで`${RKE2_DATA_KEY}`はイメージを識別するユニークな文字列を表します。
+
+RKE2が期待通りに動作するためには、ランタイムイメージが最小限提供する必要があります：
+
+* *`containerd`*（ https://github.com/kubernetes/cri-api[CRI]）
+* *`containerd-shim`*（シムが`runc`タスクをラップし、`containerd`が停止しても止まらない）
+* *`containerd-shim-runc-v1`*
+* *`containerd-shim-runc-v2`*
+* *`kubelet`*（Kubernetesノードエージェント）
+* *`runc`*（OCIランタイム）
+
+次のオプスツールもランタイムイメージによって提供されます：
+
+* *`ctr`*（低レベルの`containerd`メンテナンスと検査）
+* *`crictl`*（低レベルのCRIメンテナンスと検査）
+* *`kubectl`*（Kubernetes クラスターのメンテナンスと検査）
+* *`socat`*（ポートフォワーディングのために `containerd` に必要）
+
+バイナリが抽出された後、RKE2 はイメージからチャートを抽出し、`/var/lib/rancher/rke2/server/manifests` ディレクトリに格納します。
+
+=== サーバーの初期化
+
+組み込みの K3s エンジンでは、サーバーは専門のエージェントプロセスであり、ノードのコンテナランタイムが起動するまで次の起動が遅延されます。
+
+==== コンポーネントの準備
+
+===== `kube-apiserver`
+
+`kube-apiserver` イメージをプルし、すでに存在しない場合は、`etcd` を待つためのゴルーチンを起動し、その後 `/var/lib/rancher/rke2/agent/pod-manifests/` に静的ポッド定義を書き込みます。
+
+===== `kube-controller-manager`
+
+`kube-controller-manager` イメージをプルし、すでに存在しない場合は、`kube-apiserver` を待つためのゴルーチンを起動し、その後 `/var/lib/rancher/rke2/agent/pod-manifests/` に静的ポッド定義を書き込みます。
+
+===== `kube-scheduler`
+
+`kube-scheduler` イメージをプルし、すでに存在しない場合は、`kube-apiserver` を待つためのゴルーチンを起動し、その後 `/var/lib/rancher/rke2/agent/pod-manifests/` に静的ポッド定義を書き込みます。
+
+==== クラスターの開始
+
+他のクラスターサーバー/エージェントをリスンするためにゴルーチンで HTTP サーバーを起動し、その後クラスターを初期化/参加します。
+
+===== `etcd`
+
+`etcd` イメージをプルし、すでに存在しない場合は、`kubelet` を待つためのゴルーチンを起動し、その後 `/var/lib/rancher/rke2/agent/pod-manifests/` に静的ポッド定義を書き込みます。
+
+===== `helm-controller`
+
+`kube-apiserver` が準備完了になるのを待った後、組み込みの `helm-controller` を起動するためのゴルーチンを起動します。
+
+=== エージェントの初期化
+
+エージェントプロセスのエントリポイント。サーバープロセスの場合、組み込みの K3s エンジンがこれを直接呼び出します。
+
+==== コンテナランタイム
+
+===== `containerd`
+
+`containerd` プロセスを生成し、終了をリスンする。`containerd` が終了すると、`rke2` プロセスも終了します。
+
+==== ノードエージェント
+
+===== `kubelet`
+
+`kubelet` プロセスを生成し、監視します。`kubelet` が終了すると、`rke2` は再起動を試みます。
+`kubelet` が実行されると、利用可能な静的ポッドを開始します。サーバーにとって、これは `etcd` と `kube-apiserver` が順次起動し、静的ポッドを介して起動された残りのコンポーネントが `kube-apiserver` に接続して処理を開始できることを意味します。
+
+==== サーバーチャート
+
+サーバーノード上で、`helm-controller` は `/var/lib/rancher/rke2/server/manifests` に見つかったチャートをクラスターに適用できるようになりました。
+
+* rke2-canal.yaml または rke2-cilium.yaml または rke2-calico.yaml または rke2-flannel.yaml または rke2-multus.yaml (デーモンセット、起動)
+* rke2-coredns.yaml (デプロイメント、起動)
+* rke2-ingress-nginx.yaml および/または rke2-traefik.yaml と rke2-traefik-crd.yaml (デプロイメント)
+* rke2-metrics-server.yaml (デプロイメント)
+* rke2-runtimeclasses.yaml (デプロイメント)
+* rke2-snapshot-controller-crd.yaml、rke2-snapshot-controller.yaml および rke2-snapshot-validation-webhook.yaml (デプロイメント)
+
+=== デーモンプロセス
+
+RKE2 プロセスは、SIGTERM または SIGKILL を受信するか、`containerd` プロセスが終了するまで無期限に実行されます。

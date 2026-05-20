@@ -3,15 +3,15 @@
 :revdate: 2026-03-10
 :page-revdate: {revdate}
 
-本文描述了用于运行和管理 RKE2 的高级设置：
+本节包含描述您可以运行和管理 RKE2 的不同方式的高级信息。
 
 == 证书轮换
 
 默认情况下，RKE2 中的证书在 12 个月后过期。
 
-如果证书已经过期或剩余的时间不足 90 天，则在 RKE2 重启时轮换证书。
+如果证书已过期或在过期前剩余少于 90 天，则在 RKE2 重启时会轮换证书。
 
-你可以手动轮换证书。为此，建议先停止 rke2-server 进程，然后轮换证书，最后再次启动该进程：
+证书也可以手动轮换。为此，最好先停止 rke2-server 进程，轮换证书，然后再重新启动该进程：
 
 [,sh]
 ----
@@ -20,48 +20,73 @@ rke2 certificate rotate
 systemctl start rke2-server
 ----
 
-你也可以通过传递 `--service` 标志来轮换单个服务，例如：`rke2 certificate rotate --service api-server`。
+要续订代理证书，请在代理节点中重启 rke2-agent。每次代理启动时，代理证书都会被续订。
+
+[,sh]
+----
+systemctl restart rke2-agent
+----
+
+也可以通过传递 `--service` 标志来轮换单个服务，例如：`rke2 certificate rotate --service api-server`。有关更多详细信息，请参见 xref:security/certificates.adoc#_rotating_client_and_server_certificates_manually[证书管理]。
 
 == 自动部署清单
 
-在 `/var/lib/rancher/rke2/server/manifests` 中找到的任何文件都会以类似于 `kubectl apply` 的方式自动部署到 Kubernetes。
+在 `/var/lib/rancher/rke2/server/manifests` 中找到的任何文件将以类似于 `kubectl apply` 的方式自动部署到 Kubernetes。
 
-有关使用清单目录部署 Helm Chart 的信息，请参阅 xref:add-ons/helm.adoc[Helm] 章节。
+有关使用清单目录部署 Helm 图表的信息，请参阅关于 xref:add-ons/helm.adoc[Helm.] 的部分。
 
-== 配置 Containerd
+== 配置 containerd
 
-RKE2 会在 `/var/lib/rancher/rke2/agent/etc/containerd/config.toml` 中为 containerd 生成 `config.toml`。
+[NOTE]
+.版本门控
+====
+RKE2 从 2025 年 2 月的版本开始包含 containerd 2.0：v1.31.6+rke2r1 和 v1.32.2+rke2r1。 +
+请注意，containerd 2.0 更倾向于配置版本 3，而 containerd 1.7 更倾向于配置版本 2。
+====
 
-如果要对这个文件进行高级定制，你可以在同一目录中创建另一个名为 `config.toml.tmpl` 的文件，此文件将会代替默认设置。
+RKE2 将在 `/var/lib/rancher/rke2/agent/etc/containerd/config.toml` 为 containerd 生成一个配置文件，使用特定于当前集群和节点配置的值。
 
-`config.toml.tmpl` 是一个 Go 模板文件，并且 `config.Node` 结构会被传递给模板。有关如何使用该结构自定义配置文件的示例，请参见link:https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates_linux.go#L10-L104[此模板]。
+对于高级自定义，您可以在同一目录中创建一个 containerd 配置模板：
 
-=== Base Template
+* 对于 containerd 2.0，请在 `config-v3.toml.tmpl` 中放置版本 3 的配置模板。请参阅 https://github.com/containerd/containerd/blob/release/2.0/docs/cri/config.md[containerd 2.0 文档]以获取更多信息。
+* 对于 containerd 1.7 及更早版本，请在 `config.toml.tmpl` 中放置版本 2 配置模板。请参阅 https://github.com/containerd/containerd/blob/release/1.7/docs/cri/config.md[containerd 1.7 文档]以获取更多信息。
 
-You can extend the RKE2 base template instead of copy-pasting the complete stock template out of the source code. This is useful if you need to build on the existing configuration, and add a few extra lines at the end.
+Containerd 2.0 与之前的配置版本向后兼容，如果未找到 `config-v3.toml.tmpl`，RKE2 将继续从 `config.toml.tmpl` 渲染旧版 2 配置。
+
+模板文件使用 https://pkg.go.dev/text/template[`text/template`] 库渲染到 containerd 配置中。请参阅 `ContainerdConfigTemplateV3` 和 `ContainerdConfigTemplate` 在 https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go[`templates.go`] 中的默认模板内容。模板使用 https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go#L22-L33[`ContainerdConfig`] 结构作为其点值（数据参数）执行。
+
+=== 基础模板
+
+您可以扩展 RKE2 基础模板，而不是从源代码中复制粘贴完整的标准模板。如果您需要在现有配置的基础上进行构建，并在末尾添加几行，这将非常有用。
 
 [,toml]
 ----
-#/var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmpl
+#/var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.tmpl
 
 {{ template "base" . }}
 
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom"]
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'custom']
   runtime_type = "io.containerd.runc.v2"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom".options]
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'custom'.options]
   BinaryName = "/usr/bin/custom-container-runtime"
+  SystemdCgroup = true
 ----
+
+[WARNING]
+====
+为了获得最佳效果，请勿仅仅将预渲染的 `config.toml` 复制到模板中并进行所需的更改。使用基础模板，或提供基于上述默认值的完整模板。
+====
 
 == 配置 HTTP 代理
 
-If you are running RKE2 in an environment, which only has external connectivity through an HTTP proxy, you can configure your proxy settings on the RKE2 systemd service. These proxy settings will then be used in RKE2 and passed down to the embedded containerd and kubelet, as well as the control-plane, etcd, and kube-proxy static pods.
+如果您在一个仅通过 HTTP 代理具有外部连接的环境中运行 RKE2，您可以在 RKE2 systemd 服务上配置代理设置。这些代理设置将被 RKE2 使用，并传递给嵌入的 containerd 和 kubelet，以及控制平面、etcd 和 kube-proxy 静态 Pod。
 
-将必要的 `HTTP_PROXY`、`HTTPS_PROXY` 和 `NO_PROXY` 变量添加到 systemd 服务的环境文件中，通常是：
+将必要的 `HTTP_PROXY`、`HTTPS_PROXY` 和 `NO_PROXY` 变量添加到您 systemd 服务的环境文件中，通常是：
 
 * `/etc/default/rke2-server`
 * `/etc/default/rke2-agent`
 
-RKE2 会自动将集群内部 Pod 和 Service IP 范围以及集群 DNS 域添加到 `NO_PROXY` 条目列表中。你需要确保 Kubernetes 节点本身使用的 IP 地址范围（即节点的公共和私有 IP）包含在 `NO_PROXY` 列表中，或者可以通过代理访问节点。
+RKE2 将自动将集群内部 Pod 和服务 IP 范围以及集群 DNS 域添加到 `NO_PROXY` 条目列表中。您应该确保 Kubernetes 节点本身使用的 IP 地址范围（即节点的公共和私有 IP）包含在 `NO_PROXY` 列表中，或者节点可以通过代理访问。
 
 [,sh]
 ----
@@ -70,7 +95,7 @@ HTTPS_PROXY=http://your-proxy.example.com:8888
 NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 ----
 
-如果你想在不影响 RKE2 和 Kubelet 的情况下为 containerd 配置代理，你可以在变量前加上 `CONTAINERD_`：
+如果您希望为 containerd 配置代理设置而不影响 RKE2 和 Kubelet，您可以在变量前加上 `CONTAINERD_`：
 
 [,sh]
 ----
@@ -81,61 +106,59 @@ CONTAINERD_NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 
 == 节点标签和污点
 
-RKE2 Agent 可以通过 `node-label` 和 `node-taint` 选项来配置，它们会为 kubelet 添加标签和污点。这两个选项只能在注册时添加标签和/或污点，因此它们只能被添加一次，之后不能再通过运行 rke2 命令来移除。
+RKE2 代理可以使用选项 `node-label` 和 `node-taint` 进行配置，这将为 kubelet 添加标签和污点。这两个选项仅在注册时添加标签和/或污点，并且只能添加一次，之后不能通过 rke2 命令删除。
 
-如果你想在节点注册后更改节点标签和污点，你需要使用 `kubectl`。关于如何添加link:https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/[污点]和link:https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/#add-a-label-to-a-node[节点标签]的详细信息，请参阅官方 Kubernetes 文档。
+如果您想在节点注册后更改节点标签和污点，您应该使用 `kubectl`。有关如何添加 https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/[污点] 和 https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/#add-a-label-to-a-node[节点标签] 的详细信息，请参阅官方 Kubernetes 文档。
 
-== Agent 节点注册的工作原理
+== 代理节点注册的工作原理
 
-Agent 节点通过 `rke2 agent` 进程发起的 WebSocket 连接进行注册，连接由作为 agent 进程一部分运行的客户端负载均衡器维护。
+代理节点通过 `rke2 agent` 进程发起的 websocket 连接进行注册，连接由作为代理进程一部分运行的客户端负载均衡器维护。
 
-Agent 将使用 join token 的集群 Secret 以及随机生成的节点密码注册到 Server，密码存储在 `/etc/rancher/node/password` 中。Server 会将各个节点的密码存储为 Kubernetes Secret，后续的任何尝试都必须使用相同的密码。节点密码 Secret 存储在 `kube-system` 命名空间中，名称使用 `<host>.node-password.rke2` 模板。当相应的 Kubernetes 节点被删除时，这些 Secret 也会被删除。
+代理使用加入词元的集群秘密部分以及一个随机生成的节点特定密码向服务器注册，该密码存储在 `/etc/rancher/node/password` 的代理上。服务器将把单个节点的密码存储为 Kubernetes 秘密，任何后续尝试必须使用相同的密码。节点密码秘密存储在 `kube-system` 名称空间中，名称使用模板 `<host>.node-password.rke2`。当相应的 Kubernetes 节点被删除时，这些秘密将被删除。
 
-如果 Agent 的 `/etc/rancher/node` 目录被删除，你需要在启动前为 Agent 重新创建密码文件，或者从 Server 或 Kubernetes 集群中删除该条目（取决于 RKE2版本）。
+如果代理的 `/etc/rancher/node` 目录被删除，则应在启动之前为代理重新创建密码文件，或者从服务器或 Kubernetes 集群中删除该条目（具体取决于 RKE2 版本）。
 
-== 使用安装脚本启动 Server
+== 使用安装脚本启动服务器
 
-安装脚本为 systemd 提供了单元，但默认情况下不启用或启动该服务。
+安装脚本提供了 systemd 的单元，但默认情况下不启用或启动服务。
 
-使用 systemd 运行时，日志将在 `/var/log/syslog` 中创建，你可以通过 `journalctl -u rke2-server` 或 `journalctl -u rke2-agent` 查看日志。
+在使用 systemd 运行时，日志将创建在 `/var/log/syslog` 中，并使用 `journalctl -u rke2-server` 或 `journalctl -u rke2-agent` 查看。
 
 使用安装脚本安装的示例：
 
-[,bash]
+[,sh]
 ----
 curl -sfL https://get.rke2.io | sh -
 systemctl enable rke2-server
 systemctl start rke2-server
 ----
 
-[NOTE]
-====
-中国用户，可以使用以下方法加速安装：
+== 禁用服务器图表
 
-[,bash]
+在集群引导期间部署的与 `rke2` 捆绑的服务器图表可以被禁用并替换为其他选项。一个常见的用例是用替代品替换捆绑的 `rke2-ingress-nginx` 图表。
+
+要禁用任何捆绑的系统图表，请在引导之前在配置文件中设置 `disable` 参数。禁用所有可用系统图表的示例是：
+
+[,yaml]
 ----
-curl -sfL https://rancher-mirror.rancher.cn/rke2/install.sh | INSTALL_RKE2_MIRROR=cn sh -
-systemctl enable rke2-server
-systemctl start rke2-server
+# /etc/rancher/rke2/config.yaml
+disable:
+  - rke2-coredns
+  - rke2-ingress-nginx
+  - rke2-metrics-server
+  - rke2-snapshot-controller
+  - rke2-snapshot-controller-crd
+  - rke2-snapshot-validation-webhook
 ----
+
+[CAUTION]
+====
+集群操作员有责任确保组件被小心地禁用或替换，因为服务器图表在集群可操作性中扮演着重要角色。 有关集群中各个系统图表角色的更多信息，请参阅 xref:architecture.adoc#_server_charts[架构概述]。
 ====
 
-== 禁用 Server Chart
+== 在分类的 AWS 区域或具有自定义 AWS API 端点的网络上的安装
 
-在集群引导期间与 `rke2` 绑在一起的 Server Chart 可以被禁用并替换。常见的用例是替换捆绑的 `rke2-ingress-nginx` Chart。
-
-要禁用任何捆绑的系统 Chart，请在引导之前在配置文件中设置 `disable` 参数。要禁用的系统 Chart 完整列表：
-
-* `rke2-canal`
-* `rke2-coredns`
-* `rke2-ingress-nginx`
-* `rke2-metrics-server`
-
-请注意，由于 server Chart 对集群的操作非常重要，因此集群操作人员需要确保已禁用或更换组件。有关集群中各个系统 Chart 角色的更多信息，请参阅xref:architecture.adoc#_server_charts[架构概述]。
-
-== 在分类的 AWS 区域或具有自定义 AWS API 端点的网络上安装
-
-在公共 AWS 区域，为确保 RKE2 支持云并且能够自动配置某些云资源，请使用以下内容配置 RKE2：
+在公共 AWS 区域，为确保 RKE2 具备云功能，并能够自动配置某些云资源，请配置 RKE2：
 
 [,yaml]
 ----
@@ -143,11 +166,10 @@ systemctl start rke2-server
 cloud-provider-name: aws
 ----
 
-在分类区域（例如 SC2S 或 C2S）上安装 RKE2 时，你需要注意一些额外的条件，从而确保 RKE2 知道如何以及在哪里与适当的 AWS 端点进行安全通信。
+在分类区域（如 SC2S 或 C2S）上安装 RKE2 时，需要注意一些额外的前提条件，以确保 RKE2 知道如何以及在哪里安全地与适当的 AWS 端点通信：
 
---
-. 确保满足所有常见的 AWS 云提供商link:https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[先决条件]。它们与区域无关，并且始终是必需的。
-. 通过创建 `cloud.conf` 文件确保 RKE2 知道将 `ec2` 和 `elasticloadbalancing` 服务的 API 请求发送到哪里，以下是 `us-iso-east-1` (C2S) 区域的示例：
+. 确保满足所有常见的 AWS 云提供商 https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[前提条件]。这些与区域无关，并且始终是必需的。
+. 通过创建 `cloud.conf` 文件，确保 RKE2 知道将 API 请求发送到 `ec2` 和 `elasticloadbalancing` 服务，以下是 `us-iso-east-1`（C2S）区域的示例：
 +
 [,yaml]
 ----
@@ -165,18 +187,18 @@ cloud-provider-name: aws
   SigningRegion=us-iso-east-1
 ----
 +
-如果你使用的是link:https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-services-overview.html[私有 AWS 端点]，请确保为每个私有端点使用适当的 `URL`。
+或者，如果您使用 https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-services-overview.html[私有 AWS 端点]，请确保为每个私有端点使用适当的 `URL`。
 
-. 确保将适当的 AWS CA 包加载到系统的根 CA 信任库中。该操作可能已完成，具体取决于你使用的 AMI。
+. 确保适当的 AWS CA 包已加载到系统的 root CA 信任存储中。 这可能已经根据您使用的 AMI 为您完成。
 +
-[,bash]
+[,sh]
 ----
 # on CentOS/RHEL 7/8
 cp <ca.pem> /etc/pki/ca-trust/source/anchors/
 update-ca-trust
 ----
 
-. 使用在步骤 1 中创建的自定义 `cloud.conf` 配置 RKE2，以使用 `aws` 云提供商：
+. 配置 RKE2 使用步骤 1 中创建的自定义 `cloud.conf` 的 `aws` 云提供商：
 +
 [,yaml]
 ----
@@ -187,13 +209,12 @@ cloud-provider-config: "/etc/rancher/rke2/cloud.conf"
 ...
 ----
 
-. xref:install/methods.adoc[正常安装] RKE2（很可能使用xref:install/airgap.adoc[离线]安装）。
-. 使用 `kubectl get nodes --show-labels` 确认集群节点标签上是否存在 AWS 元数据，从而验证安装是否成功。
---
+. xref:install/methods.adoc[正常安装] RKE2（很可能是在 xref:install/airgap.adoc[隔离] 的情况下）。
+. 通过确认集群节点标签上存在 AWS 元数据来验证安装成功，使用 `kubectl get nodes --show-labels`。
 
-== Control Plane 组件资源请求/限制
+== 控制平面组件资源请求/限制
 
-以下选项在 RKE2 的 `server` 子命令下可用。这些选项允许为 RKE2 中的 control plane 组件指定 CPU 请求和限制。
+在 RKE2 的 `server` 子命令下可用以下选项。这些选项允许为 RKE2 中的控制平面组件指定 CPU 请求和限制。
 
 [,sh]
 ----
@@ -201,9 +222,8 @@ cloud-provider-config: "/etc/rancher/rke2/cloud.conf"
    --control-plane-resource-limits value         (components) Control Plane resource limits [$RKE2_CONTROL_PLANE_RESOURCE_LIMITS]
 ----
 
-值是 `[controlplane-component]-(cpu|memory)=[desired-value]` 格式的逗号分隔列表。`controlplane-component` 的值可能是：
+值是一个以逗号分隔的 `[controlplane-component]-(cpu|memory)=[desired-value]` 列表。`controlplane-component` 的可能值为：
 
-[,sh]
 ----
 kube-apiserver
 kube-scheduler
@@ -213,7 +233,7 @@ etcd
 cloud-controller-manager
 ----
 
-因此，示例配置值可能如下所示：
+因此，示例配置的值可能如下所示：
 
 [,yaml]
 ----
@@ -226,86 +246,91 @@ control-plane-resource-requests:
   - etcd-cpu=1000m
 ----
 
-CPU/内存的单位值与 Kubernetes 资源单位相同（参见 https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes[Kubernetes 中的资源限制]）。
+CPU/内存的单位值与 Kubernetes 资源单位相同（见： https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes[Kubernetes 中的资源限制]）。
 
-== 额外的 control plane 组件卷挂载
+== 额外的控制平面组件卷挂载
 
-以下选项在 RKE2 的 `server` 子命令下可用。些选项指定主机路径，将节点文件系统中的目录挂载到与前缀名称相对应的静态 Pod 组件中。
+在 RKE2 的 `server` 子命令下可用以下选项。这些选项指定将节点文件系统中的目录挂载到与前缀名称对应的静态 Pod 组件中。
 
 |===
-| 标志 | ENV VAR |
+| 标志 | 环境变量 |
 
-| `--kube-apiserver-extra-mount`
+| kube-apiserver-extra-mount
 | RKE2_KUBE_APISERVER_EXTRA_MOUNT
-| kube-apiserver extra volume mounts
+| kube-apiserver 额外卷挂载
 
-| `--kube-scheduler-extra-mount`
+| kube-scheduler-extra-mount
 | RKE2_KUBE_SCHEDULER_EXTRA_MOUNT
-| kube-scheduler extra volume mounts
+| kube-scheduler 额外卷挂载
 
-| `--kube-controller-manager-extra-mount`
+| kube-controller-manager-extra-mount
 | RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT
 |
 
-| `--kube-proxy-extra-mount`
+| kube-proxy-extra-mount
 | RKE2_KUBE_PROXY_EXTRA_MOUNT
 |
 
-| `--etcd-extra-mount`
+| etcd 额外挂载
 | RKE2_ETCD_EXTRA_MOUNT
 |
 
-| `--cloud-controller-manager-extra-mount`
+| cloud-controller-manager-extra-mount
 | RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT
 |
 |===
 
-=== RW 主机路径卷挂载
+=== 可读写主机路径卷挂载
 
 `/source/volume/path/on/host:/destination/volume/path/in/staticpod`
 
-=== RO 主机路径卷挂载
+=== 只读主机路径卷挂载
 
-要将卷挂载为只读，在卷挂载的最后加上 `:ro`。
-`/source/volume/path/on/host:/destination/volume/path/in/staticpod:ro`
+为了将卷挂载为只读，请在卷挂载的末尾添加 `:ro`：`/source/volume/path/on/host:/destination/volume/path/in/staticpod:ro`
 
-通过在配置文件中以数组形式传递标志值，可以为同一个组件指定多个卷挂载。
+可以通过在配置文件中将标志值作为数组传递，为同一组件指定多个卷挂载。
+
+[IMPORTANT]
+.版本门控
+====
+在 2024 年 4 月之前的版本（v1.27.13+rke2r1，v1.28.9+rke2r1，v1.29.4+rke2r1）中，仅可以挂载目录。
+====
 
 [,yaml]
 ----
 # /etc/rancher/rke2/config.yaml
 kube-apiserver-extra-mount:
-   - "/tmp/foo.yaml:/root/foo.yaml"
+   - "/tmp/foo:/root/foo"
    - "/tmp/bar.txt:/etc/bar.txt:ro"
 ----
 
-== 额外的 Control Plane 组件环境变量
+== 额外的控制平面组件环境变量
 
-以下选项在 RKE2 的 `server` 子命令下可用。这些选项以标准格式指定额外的环境变量，即 `KEY=VALUE`，用于与前缀名称相对应的静态 Pod 组件。
+在 RKE2 的 `server` 子命令下可用以下配置选项。这些选项以标准格式指定额外的环境变量，即 `KEY=VALUE`，用于与前缀名称对应的静态 Pod 组件。
 
 |===
-| 标志 | ENV VAR
+| 标志 | 环境变量
 
-| `--kube-apiserver-extra-env`
+| kube-apiserver-extra-env
 | RKE2_KUBE_APISERVER_EXTRA_ENV
 
-| `--kube-scheduler-extra-env`
+| kube-scheduler-extra-env
 | RKE2_KUBE_SCHEDULER_EXTRA_ENV
 
-| `--kube-controller-manager-extra-env`
+| kube-controller-manager-extra-env
 | RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV
 
-| `--kube-proxy-extra-env`
+| kube-proxy-extra-env
 | RKE2_KUBE_PROXY_EXTRA_ENV
 
-| `--etcd-extra-env`
+| etcd-extra-env
 | RKE2_ETCD_EXTRA_ENV
 
-| `--cloud-controller-manager-extra-env`
+| cloud-controller-manager-extra-env
 | RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
 |===
 
-通过在配置文件中以数组形式传递标志值，可以为同一个组件指定多个环境变量。
+可以通过在配置文件中将标志值作为数组传递，为同一组件指定多个环境变量。
 
 [,yaml]
 ----
@@ -315,3 +340,4 @@ kube-apiserver-extra-env:
   - "MY_BAR=BAR"
 kube-scheduler-extra-env: "TZ=America/Los_Angeles"
 ----
+

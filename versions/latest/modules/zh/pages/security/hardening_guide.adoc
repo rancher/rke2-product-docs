@@ -1,36 +1,35 @@
-= CIS Hardening Guide
-:page-languages: [en, zh]
+= CIS安全强化指南
+:page-languages: 本文件为生产环境的安装提供了安全强化的具体指导。
 :revdate: 2026-02-27
 :page-revdate: {revdate}
 
-This document provides prescriptive guidance for hardening a production installation of {product-name}. It outlines the configurations and controls required to address Kubernetes benchmark controls from the Center for Internet Security (CIS).
+本文件针对 {product-name} 的生产环境安装提供了具体的安全强化指导。它概述了为满足互联网安全中心（CIS）的Kubernetes基准控制所需的配置和控制措施。
 
-For more details about evaluating a hardened cluster against the official CIS benchmark, refer to the appropriate CIS Self-Assessment Guide:
+有关如何根据官方 CIS 基准评估加固后的集群的更多详细信息，请参阅相应的 CIS 自我评估指南：
 
-* xref:security/cis_self_assessment111.adoc[CIS Self-Assessment Guide v1.11] for RKE2 v1.29 and newer
-* xref:security/cis_self_assessment110.adoc[CIS Self-Assessment Guide v1.10] for RKE2 v1.29-v1.31
-* xref:security/cis_self_assessment19.adoc[CIS Self-Assessment Guide v1.9] for RKE2 v1.27-v1.29
+* xref:security/cis_self_assessment111.adoc[CIS自我评估指南v1.11]适用于RKE2 v1.29及更新版本
+* xref:security/cis_self_assessment110.adoc[CIS自我评估指南v1.10]适用于RKE2 v1.29-v1.31
+* xref:security/cis_self_assessment19.adoc[CIS自我评估指南v1.9]适用于RKE2 v1.27-v1.29
 
-RKE2 is designed to be "hardened by default" and pass the majority of the Kubernetes CIS controls without modification. There are a few notable exceptions to this that require manual intervention to fully pass the CIS Benchmark:
+RKE2 默认被设计为加固状态，并且无需修改即可通过大部分 Kubernetes CIS 控制。对此有一些显著的例外情况需要手动干预才能完全通过 CIS 基准：
 
-. RKE2 will not modify the host operating system. Therefore, you, the operator, must make a few host-level modifications.
-. RKE2 will not modify the host operating system. Therefore, you, the operator, must make a few host-level modifications.
-. Certain CIS controls for Network Policies and Pod Security Standards (or Pod Security Policies (PSP) on RKE2 versions prior to v1.25) will restrict the functionality of the cluster. You must opt into having RKE2 configure these for you. To help ensure these requirements are met, RKE2 can be started with the `profile` flag set to `cis` or `cis-1.23` depending on the RKE2 version.
+. RKE2 不会修改主机操作系统。因此，您作为操作员必须进行一些主机级别的修改。
+. 某些针对网络策略和 Pod 安全标准（或 RKE2 v1.25 之前版本中对应的 Pod 安全策略（PSP））的 CIS 控制将限制集群的功能。您必须选择让 RKE2 为您配置这些。为帮助确保满足这些要求，RKE2 可以根据版本不同，使用 `profile` 标志设置为 `cis` 或 `cis-1.23` 启动。
 
 [NOTE]
 ====
-This guide assumes that RKE2 has been installed, but is not yet running. If you have already started RKE2, you will need to stop the RKE2 service.
+本指南假设 RKE2 已安装，但尚未运行。如果您已经启动了 RKE2，则需要停止 RKE2 服务。
 ====
 
-== Host-level requirements
+== 主机级别要求
 
-There are three areas of host-level requirements: kernel parameters, kubelet's protect-kernel-defaults and etcd process/directory configuration. These are outlined in this section.
+主机级别要求包括三个方面：内核参数、kubelet 的 protect-kernel-defaults 以及 etcd 进程/目录配置。这些在本节中进行了概述。
 
-=== Kernel parameters
+=== 内核参数
 
-CIS benchmark requires some specific kernel parameters configuration to be set. When RKE2 is installed, it creates a sysctl config file to set the required parameters appropriately. However, it does not automatically configure the host to use this configuration. You must do this manually. The location of the config file depends on the installation method used.
+CIS 基准要求设置一些特定的内核参数配置。当 RKE2 安装时，它会创建一个 sysctl 配置文件，以适当地设置所需的参数。然而，它并不会自动配置主机以使用此配置。您必须手动执行此操作。配置文件的位置取决于所使用的安装方法。
 
-If RKE2 was installed via RPM, YUM, or DNF (the default on OSes that use RPMs, such as CentOS), run the following commands:
+如果通过 RPM、YUM 或 DNF 安装 RKE2（在使用 RPM 的操作系统上，如 CentOS，默认使用），请运行以下命令：
 
 [,bash]
 ----
@@ -38,7 +37,7 @@ sudo cp -f /usr/share/rke2/rke2-cis-sysctl.conf /etc/sysctl.d/60-rke2-cis.conf
 sudo systemctl restart systemd-sysctl
 ----
 
-If RKE2 was installed via the tarball (the default on OSes that do not use RPMs, such as Ubuntu), run the following commands:
+如果通过 tarball 安装 RKE2（在不使用 RPM 的操作系统上，如 Ubuntu，默认使用），请运行以下命令：
 
 [,bash]
 ----
@@ -46,37 +45,37 @@ sudo cp -f /usr/local/share/rke2/rke2-cis-sysctl.conf /etc/sysctl.d/60-rke2-cis.
 sudo systemctl restart systemd-sysctl
 ----
 
-If your system lacks the `systemd-sysctl.service` and/or the `/etc/sysctl.d` directory, you will want to make sure the sysctls are applied at boot by running the following command during start-up:
+如果您的系统缺少 `systemd-sysctl.service` 和/或 `/etc/sysctl.d` 目录，您需要确保在启动时应用 sysctl，通过在启动时运行以下命令：
 
 [,bash]
 ----
 sudo sysctl -p /usr/local/share/rke2/rke2-cis-sysctl.conf
 ----
 
-Please perform this step only on fresh installations, before actually using RKE2 to deploy Kubernetes. Many Kubernetes components, including CNI plugins, set up their own sysctls. Restarting the `systemd-sysctl` service on a running Kubernetes cluster can result in unexpected side-effects.
+请仅在全新安装上执行此步骤，在实际使用 RKE2 部署 Kubernetes 之前。许多 Kubernetes 组件，包括 CNI 插件，都会设置它们自己的 sysctls。在运行的 Kubernetes 集群上重启 `systemd-sysctl` 服务可能会导致意外的副作用。
 
-=== Kubelet parameter `protect-kernel-defaults` is set to `true`
+=== Kubelet 参数 `protect-kernel-defaults` 被设置为 `true`
 
-This is a kubelet flag that will cause the kubelet to exit if the required kernel parameters are unset or are set to values that are different from the kubelet's defaults.
+这是一个kubelet标志，如果所需的内核参数未设置或设置为与kubelet的默认值不同的值，kubelet将退出。
 
-RKE2 will automatically set the flag to `true` when the `profile` flag is set.
+当 `profile` 标志被设置时，RKE2 将自动将标志设置为 `true`。
 
 [NOTE]
 ====
-`protect-kernel-defaults` is exposed as a top-level flag for RKE2. If you have set `profile` to `cis-1.XX` and `protect-kernel-defaults` to `false` explicitly, RKE2 will exit with an error.
+`protect-kernel-defaults` 作为 RKE2 的顶级标志暴露。如果您已将 `profile` 显式设置为 `cis-1.XX`，并将 `protect-kernel-defaults` 设置为 `false`，RKE2 将以错误退出。
 ====
 
-RKE2 will also check the same kernel parameters that the kubelet does and exit with an error following the same rules as the kubelet. This is done as a convenience to help the operator more quickly and easily identify what kernel parameters are violating the kubelet defaults.
+RKE2 还将检查 kubelet 所检查的相同内核参数，并根据与 kubelet 相同的规则以错误退出。这样做是为了方便操作员更快、更轻松地识别哪些内核参数违反了 kubelet 的默认值。
 
-=== etcd is configured properly
+=== etcd 配置正确。
 
-The CIS Benchmark requires that the etcd data directory be owned by the `etcd` user and group. This implicitly requires the etcd process run as the host-level `etcd` user. To achieve this, RKE2 takes several steps when started with a valid `cis` or `cis-1.XX` profile:
+CIS 基准要求 etcd 数据目录由 `etcd` 用户和组拥有。这隐含要求 etcd 进程以主机级别的 `etcd` 用户身份运行。为此，RKE2 在使用有效的 `cis` 或 `cis-1.XX` 控制文件启动时会采取几个步骤：
 
-. Check that the `etcd` user and group exists on the host. If they don't, exit with an error.
-. Create etcd's data directory with `etcd` as the user and group owner.
-. Ensure the etcd process is run as the `etcd` user and group by setting the etcd static pod's `SecurityContext` appropriately.
+. 检查主机上是否存在 `etcd` 用户和组。如果不存在，则以错误退出。
+. 使用 `etcd` 作为用户和组所有者创建 etcd 的数据目录。
+. 通过适当设置 etcd 静态 Pod 的 `SecurityContext`，确保 etcd 进程以 `etcd` 用户和组身份运行。
 
-On some Linux distributions, the `useradd` command will not create a group. The `-U` flag is included below to account for that. This flag tells `useradd` to create a group with the same name as the user.
+在某些 Linux 发行套件中，`useradd` 命令不会创建组。下面包含 `-U` 标志以考虑到这一点。该标志告诉 `useradd` 创建一个与用户同名的组。
 
 [,bash]
 ----
@@ -85,14 +84,14 @@ sudo useradd -r -c "etcd user" -s /sbin/nologin -M etcd -U
 
 [NOTE]
 ====
-The `etcd` user and group must be defined in the traditional database files at /etc/passwd and /etc/group. Golang's stdlib `os/user` package does not support external user databases such as NSS or systemd userdb (varlink).
+`etcd` 用户和组必须在传统数据库文件 /etc/passwd 和 /etc/group 中定义。Golang 的标准库 `os/user` 包不支持外部用户数据库，如 NSS 或 systemd userdb (varlink)。
 ====
 
-== RKE2 Configuration
+== RKE2 配置
 
 [tabs]
 ======
-v1.29 and Newer::
+v1.29 及更新版本::
 +
 --
 
@@ -109,32 +108,33 @@ kube-apiserver-arg:
 v1.25 - v1.28::
 +
 --
-*Generic CIS configuration*
+
+*通用 CIS 配置*
 
 [,yaml]
 ----
 profile: "cis"
 ----
 
-Using the generic `cis` profile will ensure that the cluster passes the CIS benchmark (rke2-cis-1.XX-profile-hardened) associated with the Kubernetes version that RKE2 is running. For example, RKE2 v1.26.XX with the `profile: cis` will pass the `rke2-cis-1.8-profile-hardened` in Rancher. 
+使用通用 `cis` 控制文件将确保集群通过与 RKE2 运行的 Kubernetes 版本相关的 CIS 基准 (rke2-cis-1.XX-profile-hardened)。例如，RKE2 v1.26.XX 使用 `profile: cis` 将在 Rancher 中通过 `rke2-cis-1.8-profile-hardened`。
 
-Use of the generic `cis` profile ensures that upgrades to RKE2 do not require a change to existing configuration. Whatever changes are necessary to pass applicable CIS benchmark will be automatically applied. 
+使用通用 `cis` 控制文件确保 RKE2 的升级不需要更改现有配置。为通过适用的 CIS 基准所需的任何更改将自动应用。
 
-A rough mapping of RKE2 versions to CIS benchmark versions is as follows: 
+RKE2 版本与 CIS 基准版本的粗略映射如下：
 
 |===
-| RKE2 Minors | Applicable CIS Benchmark | Profile Flag 
-| 1.27-1.28
+| RKE2 次要版本 | 适用的 CIS 基准 | 配置标志 
+| 1.27-1.28 
 | 1.9 
 | `cis` 
 
 | 1.26 
 | 1.8 
-| `cis-1.23`, `cis`
+| `cis-1.23`、`cis`
 
 | 1.25 
 | 1.7 
-| `cis-1.23`, `cis`
+| `cis-1.23`、`cis`
 
 | 1.24 
 | 1.24 
@@ -150,7 +150,7 @@ A rough mapping of RKE2 versions to CIS benchmark versions is as follows:
 |===
 --
 
-v1.24 and Older::
+v1.24 及旧版本::
 +
 --
 [,yaml]
@@ -158,120 +158,120 @@ v1.24 and Older::
 profile: "cis-1.23"
 ----
 
-The configuration file must be named `config.yaml` and placed in `/etc/rancher/rke2`. The directory needs to be created prior to installing RKE2.
+配置文件必须命名为 `config.yaml` 并放置在 `/etc/rancher/rke2` 中。在安装 RKE2 之前需要创建该目录。
 
-When the `profile` flag is set it does the following:
+当设置 `profile` 标志时，它会执行以下操作：
 --
 ======
 
 [tabs]
 ======
-v1.25 and Newer::
+v1.25 及更新版本::
 +
 --
-. Checks that host-level requirements have been met. If they haven't, RKE2 will exit with a fatal error describing the unmet requirements.
-. Configures the etcd static pod to run as the etcd user and group, as explained in the xref:security/hardening_guide#_etcd_is_configured_properly[etcd hardening guide].
-. Applies network policies that allow the cluster to pass associated controls.
-. Applies more restrictive file permissions (600 vs 644) to agent manifests and other configurations files.
-. Configures the Pod Security Admission Controller to enforce restricted mode in all namespaces, with the exception of the `kube-system`, `cis-operator-system`, and `tigera-operator` namespaces. These namespaces are exempted to allow system pods to run without restrictions, which is required for proper operation of the cluster. For more information about the PSA configuration, see the default xref:security/pod_security_standards.adoc#_pod_安全标准[Pod Security Admission configurations]. For more information about Pod Security Standards, please refer to the https://kubernetes.io/docs/concepts/security/pod-security-standards/[official documentation].
+. 检查主机级要求是否已满足。如果未满足，RKE2 将以描述未满足要求的致命错误退出。
+. 配置 etcd 静态 Pod 以 etcd 用户和组身份运行，如 xref:security/hardening_guide#_etcd_is_configured_properly[etcd 安全强化指南] 中所述。
+. 应用网络策略，允许集群通过相关控制。
+. 对代理清单和其他配置文件应用更严格的文件权限（600 对比 644）。
+. 配置 Pod 安全准入控制器，在所有命名空间中强制执行受限模式，`kube-system`、`cis-operator-system` 和 `tigera-operator` 命名空间除外。这些命名空间被豁免，以允许系统 Pod 在没有限制的情况下运行，这是集群正常操作所必需的。有关 PSA 配置的更多信息，请参见默认的 xref:security/pod_security_standards.adoc#_pod_security_standards[Pod 安全准入配置]。有关 Pod 安全标准的更多信息，请参考 https://kubernetes.io/docs/concepts/security/pod-security-standards/[官方文档]。
 --
 
-v1.24 and Older::
+v1.24 及旧版本::
 +
 --
-. Checks that host-level requirements have been met. If they haven't, RKE2 will exit with a fatal error describing the unmet requirements.
-. Applies network policies that allow the cluster to pass associated controls.
-. Configures runtime pod security policies that allow the cluster to pass associated controls.
+. 检查主机级要求是否已满足。如果未满足，RKE2 将以描述未满足要求的致命错误退出。
+. 应用网络策略，允许集群通过相关控制。
+. 配置运行时 Pod 安全策略，允许集群通过相关控制。
 --
 ======
 
-== Kubernetes runtime requirements
+== Kubernetes 运行时要求
 
-The runtime requirements to pass the CIS Benchmark are centered around pod security and network policies. Most of this is automatically handled by RKE2 when using a valid `cis-1.XX` profile, but some additional operator intervention is required.
+通过 CIS 基准的运行时要求集中在 Pod 安全和网络策略上。大部分由 RKE2 在使用有效的 `cis-1.XX` 控制文件时自动处理，但需要一些额外的操作员干预。
 
-=== Pod Security
+=== Pod 安全性
 
-RKE2 always runs with some amount of pod security.
+RKE2 始终以某种 Pod 安全性运行。
 
 [tabs]
 ======
-v1.25 and Newer::
+v1.25 及更新版本::
 +
 --
-On v1.25 and newer, https://kubernetes.io/docs/concepts/security/pod-security-admission/[Pod Security Admission (PSA)] are used for pod security. A default Pod Security Admission config file will be added to the cluster upon startup as follows: 
+在 v1.25 及更高版本中， https://kubernetes.io/docs/concepts/security/pod-security-admission/[Pod 安全准入 (PSA)] 用于 Pod 安全。默认的 Pod 安全准入配置文件将在集群启动时添加，具体如下：
 
-With the `cis`/`cis-1.23` profile:
+使用 `cis`/`cis-1.23` 控制文件：
 
-* RKE2 will apply a restricted pod security standard via a configuration file which will enforce `restricted` mode throughout the cluster with an exception to the `kube-system`, `cis-operator-system` and `tigera-operator` namespaces to ensure successful operation of system pods. 
+* RKE2 将通过配置文件应用受限的 Pod 安全标准，该标准将在整个集群中强制执行 `restricted` 模式，`kube-system`、`cis-operator-system` 和 `tigera-operator` 命名空间除外，以确保系统 Pod 的成功运行。
 
-Without the `cis`/`cis-1.23` profile:
+没有 `cis`/`cis-1.23` 控制文件：
 
-* RKE2 will apply a nonrestricted pod security standard via a configuration file which will enforce `privileged` mode throughout the cluster which allows a completely unrestricted mode to all pods in the cluster. See the xref:security/pod_security_standards.adoc[Pod Security Policies] page for more details. 
+* RKE2 将通过配置文件应用不受限制的 Pod 安全标准，该标准将在整个集群中强制执行 `privileged` 模式，允许集群中所有 Pod 完全不受限制。有关更多详细信息，请参见xref:security/pod_security_standards.adoc[Pod Security Policies]页面。
 --
 
-v1.24 and Older::
+v1.24 及旧版本::
 +
 --
-On v1.24 and older, the `PodSecurityPolicy` admission controller is always enabled. A policy is applied based on the profile passed to RKE2. 
+在v1.24及更早版本中，`PodSecurityPolicy`准入控制器始终处于启用状态。根据传递给 RKE2 的控制文件应用策略。
 
-With the `cis-1.6` profile:
+使用 `cis-1.6` 控制文件：
 
-* RKE2 will put a much more restrictive set of policies in place. These policies meet the requirements outlined in section 5.2 of the CIS Benchmark. 
+* RKE2 将实施一套更为严格的策略。这些策略符合 CIS 基准第 5.2 节中概述的要求。
 
-Without the `cis-1.6` profile:
+没有 `cis-1.6` 控制文件：
 
-* RKE2 will put an unrestricted policy in place that allows Kubernetes to run as though the `PodSecurityPolicy` admission controller was not enabled. See the xref:security/pod_security_policies.adoc[Pod Security Policies] page for more details.
+* RKE2 将实施一项不受限制的策略，允许 Kubernetes 运行，就好像 `PodSecurityPolicy` 准入控制器未启用一样。有关更多详细信息，请参见xref:security/pod_security_policies.adoc[Pod Security Policies]页面。
 --
 ======
 
 [NOTE]
 ====
-The Kubernetes control plane components and critical additions such as CNI, DNS, and Ingress are ran as pods in the `kube-system` namespace. Therefore, this namespace will have a policy that is less restrictive so that these components can run properly.
+Kubernetes 控制平面组件和关键附加组件（如 CNI、DNS 和 Ingress）以 pod 形式在 `kube-system` 命名空间中运行。因此，该名称空间将具有一个不那么严格的策略，以便这些组件能够正常运行。
 ====
 
-=== Network Policies
+=== 网络策略
 
-When ran with a valid "cis-1.XX" profile, RKE2 will put `NetworkPolicies` in place that passes the CIS Benchmark for Kubernetes' built-in namespaces. These namespaces are: `kube-system`, `kube-public`, and `default`.
+当使用有效的 "cis-1.XX" 控制文件运行时，RKE2 将实施 `NetworkPolicies` 以使 Kubernetes 内置名称空间通过 CIS 基准。这些名称空间包括：`kube-system`、`kube-public`和`default`。
 
-The `NetworkPolicy` used will only allow pods within the same namespace to talk to each other. There are some notable exceptions to this is that it allows DNS requests to be resolved.
+所使用的`NetworkPolicy`仅允许同一名称空间内的pod相互通信。有一些显著的例外情况，其中允许解析DNS请求。
 
-* DNS requests are allowed to reach the dns server
-* HTTP/s requests are allowed to reach the ingress-nginx service
-* HTTPs requests are allowed to reach the metrics-server
-* Requests to the ingress-nginx webhook on the specified pod by the ingress-nginx pod (normally 8443)
-* HTTPs requests to the rke2-snapshot-validation-webhook
+* DNS请求被允许到达DNS服务器。
+* HTTP/s请求被允许到达ingress-nginx服务。
+* HTTPs请求被允许到达metrics-server。
+* 对指定pod的ingress-nginx webhook的请求由ingress-nginx pod发起（通常为8443）。
+* 对rke2-snapshot-validation-webhook的HTTPs请求。
 
 [CAUTION]
-.Operator Intervention Required
+.需要操作员干预。
 ====
-Operators must manage network policies as normal for additional namespaces that are created.
+操作员必须像正常一样管理为创建的其他名称空间的网络策略。
 ====
 
-=== Configure `default` service account
+=== 配置`default`服务账户。
 
 [NOTE] 
 ====
-Set `automountServiceAccountToken` to `false` for `default` service accounts.
+将`automountServiceAccountToken`设置为`false`，用于`default`服务账户。
 ====
 
-Kubernetes provides a `default` service account which is used by cluster workloads where no specific service account is assigned to the pod. Where access to the Kubernetes API from a pod is required, a specific service account should be created for that pod, and rights granted to that service account. The `default` service account should be configured such that it does not provide a service account token and does not have any explicit rights assignments.
+Kubernetes 提供了一个 `default` 服务账户，用于没有特定服务账户分配给 Pod 的集群工作负载。当 Pod 需要访问 Kubernetes API 时，应为该 Pod 创建一个特定的服务账户，并授予该服务账户权限。`default` 服务账户应配置为不提供服务账户词元，并且没有任何显式的权限分配。
 
-For each namespace including `default` and `kube-system` on a standard RKE2 install, the `default` service account must include this value:
+对于包括 `default` 和 `kube-system` 的每个名称空间，在标准 RKE2 安装中，`default` 服务账户必须包含以下值：
 
 [,yaml]
 ----
 automountServiceAccountToken: false
 ----
 
-RKE2 will automatically set the value correctly for kube-system, cis-operator-system, kube-node-lease and tigera-operator namespaces.
+RKE2 将自动为 kube-system、cis-operator-system、kube-node-lease 和 tigera-operator 名称空间正确设置该值。
 
 [WARNING]
-.Operator Intervention Required
+.需要操作员干预。
 ====
 
-For namespaces created by the cluster operator, the following script and configuration file can be used to configure the `default` service account.
+对于由集群操作员创建的名称空间，可以使用以下脚本和配置文件来配置 `default` 服务账户。
 
-The configuration below must be saved to a file called `account_update.yaml`.
+以下配置必须保存到名为 `account_update.yaml` 的文件中。
 
 [,yaml]
 ----
@@ -282,7 +282,7 @@ metadata:
 automountServiceAccountToken: false
 ----
 
-Create a bash script file called `account_update.sh`. Be sure to `sudo chmod +x account_update.sh` so the script has execute permissions.
+创建一个名为 `account_update.sh` 的 bash 脚本文件。确保 `sudo chmod +x account_update.sh` 以便脚本具有执行权限。
 
 [,bash]
 ----
@@ -294,16 +294,16 @@ for namespace in $(kubectl get namespaces -A -o=jsonpath="{.items[*]['metadata.n
 done
 ----
 
-Execute this script to apply the `account_update.yaml` configuration to `default` service account in all namespaces.
+执行此脚本以将 `account_update.yaml` 配置应用于所有名称空间中的 `default` 服务账户。
 ====
 
-=== API Server audit configuration
+=== API服务器审计配置
 
-CIS requirements 1.2.22 to 1.2.25 are related to configuring audit logs for the API Server. When RKE2 is started with the `profile` flag set, it will automatically configure hardened `--audit-log-` parameters in the API Server to pass those CIS checks.
+CIS要求1.2.22到1.2.25与API服务器的审计日志配置相关。当 RKE2 启动时，如果设置了 `profile` 标志，它将自动在 API 服务器中配置强化的 `--audit-log-` 参数，以通过这些 CIS 检查。
 
-RKE2's default audit policy is configured to not log requests in the API Server. This is done to allow cluster operators flexibility to customize an audit policy that suits their auditing requirements and needs, as these are specific to each users' environment and policies.
+RKE2 的默认审计策略配置为不记录 API 服务器中的请求。这样做是为了允许集群操作员灵活定制适合其审计要求和需求的审计策略，因为这些策略特定于每个用户的环境和政策。
 
-A default audit policy is created by RKE2 when started with the `profile` flag set. The policy is defined in `/etc/rancher/rke2/audit-policy.yaml`.
+当 RKE2 启动时，如果设置了 `profile` 标志，将创建默认审计策略。该策略定义在 `/etc/rancher/rke2/audit-policy.yaml` 中。
 
 [,yaml]
 ----
@@ -316,11 +316,11 @@ rules:
 ----
 
 [CAUTION]
-.Operator Intervention Required
+.需要操作员干预。
 ====
-To start logging requests to the API Server, at least `level` parameter must be modified, for example, to `Metadata`. Detailed information about policy configuration for the API server can be found in the Kubernetes https://kubernetes.io/docs/tasks/debug-application-cluster/audit/[documentation].
+要开始记录 API 服务器中的请求，必须修改至少 `level` 参数，例如，修改为 `Metadata`。有关API服务器的策略配置的详细信息，请参阅Kubernetes https://kubernetes.io/docs/tasks/debug-application-cluster/audit/[文档]。
 
-After adapting the audit policy, RKE2 must be restarted to load the new configuration.
+在调整审计策略后，必须重新启动 RKE2 以加载新配置。
 
 [,shell]
 ----
@@ -328,37 +328,37 @@ sudo systemctl restart rke2-server.service
 ----
 ====
 
-API Server audit logs will be written to `/var/lib/rancher/rke2/server/logs/audit.log`.
+API 服务器审计日志将写入 `/var/lib/rancher/rke2/server/logs/audit.log`。
 
-== Known issues
+== 已知问题
 
-The following are controls that default RKE2 currently does not pass. Each gap will be explained and how it is addressed.
+以下是默认 RKE2 当前未通过的控制项。每个差距将被解释以及如何解决。
 
-=== Control 1.1.12
+=== 控制 1.1.12
 
-Ensure that the etcd data directory ownership is set to `etcd:etcd`.
+确保 etcd 数据目录的所有权设置为 `etcd:etcd`。
 
-==== Rationale
+==== 说明
 
-etcd is a highly-available key-value store used by Kubernetes deployments for persistent storage of all of its REST API objects. This data directory should be protected from any unauthorized reads or writes. It should be owned by `etcd:etcd`.
+etcd 是一个高可用的键值存储，用于 Kubernetes 部署的所有 REST API 对象的持久存储。该数据目录应受到保护，防止任何未经授权的读取或写入。它应由 `etcd:etcd` 拥有。
 
-==== Remediation
+==== 修正
 
-This can be remediated by creating an `etcd` user and group as described <<etcd is configured properly,above>>.
+可以通过创建一个 `etcd` 用户和组来修复，如 <<etcd is configured properly,上面>> 所述。
 
-=== Control 5.1.5
+=== 控制 5.1.5
 
-Ensure that default service accounts are not actively used
+确保默认服务账户未被积极使用
 
-==== Rationale
-Kubernetes provides a `default` service account which is used by cluster workloads where no specific service account is assigned to the pod.
+==== 说明
+Kubernetes 提供了一个 `default` 服务账户，用于没有特定服务账户分配给 Pod 的集群工作负载。
 
-Where access to the Kubernetes API from a pod is required, a specific service account should be created for that pod, and rights granted to that service account.
+当 Pod 需要访问 Kubernetes API 时，应为该 Pod 创建一个特定的服务账户，并授予该服务账户权限。
 
-The `default` service account should be configured such that it does not provide a service account token and does not have any explicit rights assignments.
+`default` 服务账户应配置为不提供服务账户词元，并且没有任何明确的权限分配。
 
-This can be remediated by updating the `automountServiceAccountToken` field to `false` for the `default` service account in each namespace.
+可以通过将每个名称空间中 `default` 服务账户的 `automountServiceAccountToken` 字段更新为 `false` 来修复。
 
-== Conclusion
+== 结论
 
-If you have followed this guide, your RKE2 cluster will be configured to pass the CIS Kubernetes Benchmark. You can review our CIS Self-Assessment Guides to understand how we verified each of the benchmarks and how you can do the same on your cluster.
+如果您遵循了本指南，您的 RKE2 集群将配置为通过 CIS Kubernetes 基准。您可以查看我们的 CIS 自我评估指南，以了解我们如何验证每个基准，以及您如何在自己的集群上做到这一点。

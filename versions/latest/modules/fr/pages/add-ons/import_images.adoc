@@ -1,0 +1,75 @@
+= Importer des images
+:page-languages: [en, zh]
+:revdate: 2025-12-04
+:page-revdate: {revdate}
+
+Les images de conteneur sont mises en cache localement sur chaque nœud par le magasin d'images containerd. Les images peuvent être tirées du registre selon les besoins par les pods, préchargées via le tirage d'images, ou importées à partir d'une archive tar d'images.
+
+== Tirage d'images à la demande
+
+Kubernetes, par défaut, tire automatiquement les images lorsqu'un Pod en a besoin si l'image n'est pas déjà présente sur le nœud. Ce comportement peut être modifié en utilisant le champ https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy[stratégie de tirage d'images] du Pod. Lors de l'utilisation de la stratégie par défaut `IfNotPresent`, containerd tirera l'image soit en amont (par défaut) soit depuis votre xref:install/private_registry.adoc[registre privé] et la stockera dans son magasin d'images. Les utilisateurs n'ont pas besoin d'appliquer de configuration supplémentaire pour que le tirage d'images à la demande fonctionne.
+
+== Pré-importer des images
+
+[NOTE]
+.Version Gate
+====
+La fonctionnalité de pré-importation d'images pendant que RKE2 est en cours d'exécution est disponible depuis les versions de janvier 2025{nbsp}: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.30.13+rke2r1. Avant cela, RKE2 pré-importait les images uniquement lors du démarrage.
+====
+
+La pré-importation d'images sur le nœud est essentielle si vous configurez `imagePullPolicy` de Kubernetes comme `Never`. Vous pourriez le faire pour des raisons de sécurité ou pour réduire le temps nécessaire à vos nœuds RKE2 pour démarrer.
+
+RKE2 inclut deux mécanismes pour pré-importer des images dans le magasin d'images containerd{nbsp}:
+
+[tabs]
+====
+
+Importation d'images en ligne::
++
+Les utilisateurs peuvent déclencher un tirage d'images dans le magasin d'images containerd en plaçant un fichier texte contenant les noms des images, un par ligne, dans le répertoire `/var/lib/rancher/k3s/agent/images`. Le fichier texte peut être placé avant le démarrage de RKE2, ou créé/modifié pendant que RKE2 est en cours d'exécution. RKE2 tirera les images séquentiellement via l'API CRI, en utilisant éventuellement la configuration [registries.yaml](install/private_registry.md). 
++
+Par exemple :
++
+[,bash]
+----
+mkdir /var/lib/rancher/rke2/agent/images 
+cp example.txt /var/lib/rancher/rke2/agent/images
+----
++
+Où `example.txt` contient{nbsp}:
++
+[,bash]
+----
+docker.io/library/redis:latest docker.io/library/mysql:latest
+----
++
+Après quelques secondes, les images `redis` et `mysql` seront disponibles dans le magasin d'images containerd du nœud. 
++
+Utilisez `ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list` pour interroger le magasin d'images containerd.
+
+Importation d'images hors ligne::
++
+Les utilisateurs peuvent importer des images directement dans le magasin d'images containerd en plaçant des tarballs d'images dans le répertoire `/var/lib/rancher/rke2/agent/images`. Le tarball peut être placé avant le démarrage de RKE2, ou créé/modifié pendant que RKE2 est en cours d'exécution. RKE2 décompressera le tarball d'images si nécessaire, extraira les images et les chargera dans le magasin d'images containerd. 
++
+Par exemple :
++
+[,bash]
+----
+mkdir /var/lib/rancher/rke2/agent/images 
+curl https://github.com/rancher/rke2/releases/download/v1.33.1%2Brke2r1/rke2-images.linux-amd64.tar.zst -O /var/lib/rancher/rke2/agent/images/rke2-images-amd64.tar.zst
+----
++
+Après quelques secondes, les images incluses dans le tarball d'images seront disponibles dans le magasin d'images containerd du nœud. 
++
+Utilisez `ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list` pour interroger le magasin d'images containerd. 
++
+C'est la méthode utilisée dans Airgap. Veuillez suivre la [documentation d'installation Airgap](install/airgap.md) pour des informations détaillées.
+
+====
+
+== Configurer un registre d'images
+
+RKE2 prend en charge deux alternatives pour les registres d'images{nbsp}:
+
+* La xref:install/private_registry.adoc[Configuration du registre privé] couvre l'utilisation de `registries.yaml` pour configurer l'authentification et le miroir du registre d'images de conteneur.
+* Le xref:install/registry_mirror.adoc[miroir de registre intégré] montre comment activer le miroir de registre d'images distribué intégré, pour le partage pair-à-pair d'images entre nœuds.

@@ -1,0 +1,215 @@
+= Servicios de red
+:page-languages: [en, zh]
+:revdate: 2026-03-16
+:page-revdate: {revdate}
+
+Esta página explica cómo funcionan CoreDNS y el controlador Nginx-Ingress dentro de RKE2.
+
+Consulta la página de xref:networking/basic_network_options.adoc[Opciones Básicas de Red] para obtener detalles sobre las opciones de configuración de Canal, o cómo configurar tu propio CNI.
+
+Para información sobre qué puertos deben abrirse para RKE2, consulta los xref:install/requirements.adoc[Requisitos de Instalación].
+
+== CoreDNS
+
+CoreDNS se despliega por defecto al iniciar el servidor. Para deshabilitar, ejecuta cada servidor con la opción `disable: rke2-coredns` en tu archivo de configuración.
+
+Si no instalas CoreDNS, necesitarás instalar un proveedor de DNS de clúster tú mismo.
+
+CoreDNS se despliega con el https://github.com/kubernetes-incubator/cluster-proportional-autoscaler[autoscaler] por defecto. Para deshabilitarlo o cambiar su configuración, utiliza el recurso xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig].
+
+=== NodeLocal DNSCache
+
+https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/[NodeLocal DNSCache] mejora el rendimiento al ejecutar un agente de caché DNS en cada nodo. Para activar esta función, aplica el siguiente HelmChartConfig:
+
+[,yaml]
+----
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    nodelocal:
+      enabled: true
+----
+
+El controlador Helm volverá a desplegar CoreDNS con la nueva configuración. Ten en cuenta que nodelocal modifica el paquete de tablas IP del nodo para interceptar el tráfico DNS. Por lo tanto, activar y luego desactivar esta función sin volver a desplegar, hará que el servicio DNS deje de funcionar.
+
+Ten en cuenta que NodeLocal DNSCache debe desplegarse en modo ipvs si kube-proxy está utilizando ese modo. Para desplegarlo en este modo, aplica el siguiente HelmChartConfig:
+
+[,yaml]
+----
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    nodelocal:
+      enabled: true
+      ipvs: true
+----
+
+=== NodeLocal DNS Cache con Cilium en modo de reemplazo de kube-proxy
+
+Esta función está disponible a partir de las versiones v1.28.13+rke2r1, v1.29.8+rke2r1 y v1.30.4+rke2r1.
+
+Si tu elección de CNI es xref:networking/basic_network_options.adoc[Cilium en modo de reemplazo de kube-proxy] y deseas utilizar NodeLocal DNS Cache, necesitas configurar Cilium para usar una https://docs.cilium.io/en/v1.15/network/kubernetes/local-redirect-policy/#node-local-dns-cache[Política de Redirección Local (LRP)] para enrutar el tráfico DNS a tu caché NodeLocal. Esto se debe a que, en este modo, el enrutamiento eBPF de Cilium omite las reglas del paquete de tablas IP, por lo que nodelocal no puede configurarlas para enrutar el tráfico DNS hacia sí mismo.
+
+Esto se hace en dos pasos:
+
+. Activa la función de Política de Redirección Local en Cilium configurando la bandera `localRedirectPolicy` en verdadero en el HelmChartConfig de Cilium. Esto tendría el siguiente aspecto:
++
+[,yaml]
+----
+---
+# /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-cilium
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    kubeProxyReplacement: true
+    k8sServiceHost: <KUBE_API_SERVER_IP>
+    k8sServicePort: <KUBE_API_SERVER_PORT>
+    localRedirectPolicy: true
+----
+
+. Configura el chart `rke2-coredns` para establecer su LRP aplicando el siguiente HelmChartConfig:
++
+[,yaml]
+----
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    nodelocal:
+      enabled: true
+      use_cilium_lrp: true
+----
+
+== Controlador de Ingress
+
+[tabs]
+======
+ingress-nginx::
++
+--
+
+[WARNING]
+====
+El controlador ingress-nginx alcanzará el Fin de Vida (EOL) en marzo de 2026 y queda obsoleto en RKE2 v1.36.
+
+Los usuarios de {rke2-product-name} seguirán recibiendo soporte y correcciones de CVE (8+) durante todo el ciclo de vida de RKE2 v1.32, v1.33, v1.34, v1.35 y v1.36. Recomendamos cambiar a Traefik siguiendo la guía https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[Migrando de Ingress-NGINX a Traefik en un clúster RKE2 independiente].
+====
+
+https://github.com/kubernetes/ingress-nginx[ingress-nginx] es un controlador de Ingress impulsado por NGINX que utiliza un ConfigMap para almacenar la configuración de NGINX.
+
+`ingress-nginx` se despliega por defecto al iniciar el servidor. Los puertos 80 y 443 serán ocupados por el controlador de ingress en su configuración predeterminada, haciendo que estos sean inutilizables para servicios de HostPort o NodePort en el clúster.
+
+Las opciones de configuración se pueden especificar creando un xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[manifiesto HelmChartConfig] para personalizar los valores del HelmChart `rke2-ingress-nginx`. Por ejemplo, un HelmChartConfig en `/var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml` con el siguiente contenido establece `use-forwarded-headers` en `"true"` en el ConfigMap que almacena la configuración de NGINX:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-ingress-nginx
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    controller:
+      config:
+        use-forwarded-headers: "true"
+----
+
+Para más información, consulta los https://github.com/rancher/rke2-charts/tree/main/charts/rke2-ingress-nginx/rke2-ingress-nginx/4.14.400#configuration[parámetros oficiales de configuración del Helm para ingress-nginx].
+
+--
+
+Traefik::
++
+--
+[IMPORTANT]
+.Puerta de Versión
+====
+El soporte de Traefik está disponible a partir de las versiones de agosto de 2024: v1.28.12+rke2r1, v1.29.7+rke2r1, v1.30.3+rke2r1.
+====
+
+https://doc.traefik.io/traefik/[Traefik] es un proxy inverso HTTP moderno y un balanceador de carga diseñado para desplegar microservicios con facilidad. Simplifica la complejidad de la red al diseñar, desplegar y ejecutar aplicaciones.
+
+Para usar Traefik, inicia cada servidor con la opción `ingress-controller: traefik` en tu archivo de configuración.
+
+Las opciones de configuración se pueden especificar creando un xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[manifiesto HelmChartConfig] para personalizar los valores del HelmChart `rke2-traefik`. Por ejemplo, un HelmChartConfig en `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` con el siguiente contenido cambia el nivel de registro a "DEBUG"::
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    logs:
+      general:
+        level: "DEBUG"
+----
+Para ver todas las opciones configurables, visita el https://github.com/rancher/rke2-charts/blob/main/charts/rke2-traefik/rke2-traefik/39.0.502/values.yaml[values.yaml] del chart.
+
+--
+======
+
+Para desactivar el controlador de ingress, inicia cada servidor con la opción `ingress-controller: none` en tu archivo de configuración.
+
+=== API de Gateway
+
+La API de Gateway es una familia de recursos de Kubernetes que proporciona aprovisionamiento dinámico de infraestructura y enrutamiento de tráfico avanzado. Mientras que la API de Ingress tradicional sigue siendo compatible (y no se planea que se deprecie), la API de Gateway ofrece una forma más expresiva, orientada a roles y extensible de gestionar la exposición de servicios.
+
+Para aprovechar la API de Gateway en {rke2-product-name} debes usar Traefik. Por favor, utiliza la siguiente HelmChartConfig para habilitar GatewayAPI:
+
+```yaml
+# /var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    providers:
+      kubernetesGateway:
+        enabled: true
+#       experimentalChannel: true (read warning below)
+```
+Traefik es compatible con https://gateway-api.sigs.k8s.io/reference/1.4/spec/[API de Gateway v1.4].
+
+[WARNING]
+====
+Si necesitas soporte para recursos experimentales de la API de Gateway, por ejemplo, TCPRoute, debes instalar el https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml[experimental-install.yaml] desde las https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0[versiones de gateway-api] oficiales y usar la opción `providers.kubernetesGateway.experimentalChannel=true` en los valores del chart rke2-traefik.
+====
+
+== Balanceador de Carga de Servicio
+
+Los Servicios de Kubernetes pueden ser del tipo LoadBalancer, pero requiere un controlador de balanceo de carga externo para implementar las cosas correctamente y, por ejemplo, proporcionar la dirección externa. RKE2 puede desplegar opcionalmente un controlador de balanceo de carga conocido como https://github.com/k3s-io/klipper-lb[ServiceLB] que utiliza puertos de host disponibles. Para más información, por favor lee el siguiente https://documentation.suse.com/cloudnative/k3s/latest/en/networking/networking-services.html#_service_load_balancer[enlace].
+
+[TIP]
+====
+Al consultar la documentación de K3s, utiliza la etiqueta `svccontroller.rke2.cattle.io` en lugar de `svccontroller.k3s.cattle.io` donde sea aplicable.
+====
+
+Para habilitar serviceLB, utiliza la opción `--enable-servicelb` al desplegar RKE2.

@@ -1,0 +1,118 @@
+= Anatomia de uma Distribuição Kubernetes de Próxima Geração
+:page-languages: [en, zh]
+:revdate: 2025-10-29
+:page-revdate: {revdate}
+
+== Visão geral da arquitetura
+
+Com o RKE2, aproveitamos as lições aprendidas no desenvolvimento e manutenção de nossa distribuição leve https://kubernetes.io[Kubernetes], https://k3s.io[K3s] e as aplicamos para construir uma distribuição pronta para empresas com a facilidade de uso do https://k3s.io[K3s]. O que isso significa é que o RKE2 é, em sua forma mais simples, um único binário a ser instalado e configurado em todos os nós que devem participar do cluster https://kubernetes.io[Kubernetes]. Uma vez iniciado, o RKE2 é capaz de inicializar e supervisionar agentes apropriados por função em cada nó, enquanto obtém o conteúdo necessário da rede.
+
+image::overview.png[Visão Geral da Arquitetura]
+
+O RKE2 reúne uma série de tecnologias de código aberto para fazer tudo isso funcionar:
+
+* https://k3s.io[K3s]
+ ** https://github.com/k3s-io/helm-controller[Controlador Helm]
+* https://kubernetes.io[K8s]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-apiserver[Servidor API]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-controller-manager[Gerenciador de Controladores]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kubelet[Kubelet]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-scheduler[Agendador]
+ ** https://github.com/kubernetes/kubernetes/tree/master/cmd/kube-proxy[Proxy]
+* https://etcd.io[etcd]
+* https://github.com/opencontainers/runc[runc]
+* https://containerd.io[containerd]/link:https://github.com/kubernetes/cri-api[cri]
+* https://github.com/containernetworking/cni[CNI]: Canal (https://docs.tigera.io/calico/latest/about[Calico] & https://github.com/flannel-io/flannel[Flannel]), https://cilium.io[Cilium], https://docs.tigera.io/calico/latest/about[Calico] ou https://github.com/flannel-io/flannel[Flannel]. Adicionalmente: https://github.com/k8snetworkplumbingwg/multus-cni[Multus]
+* https://coredns.io[CoreDNS]
+* https://kubernetes.github.io/ingress-nginx[Controlador Ingress NGINX] e/ou https://traefik.io/traefik[Traefik]
+* https://github.com/kubernetes-sigs/metrics-server[Servidor de Métricas]
+* https://helm.sh[Helm]
+
+Todos esses, exceto o Traefik, são compilados e vinculados estaticamente com https://github.com/golang/go/tree/dev.boringcrypto/misc/boring[Go+BoringCrypto].
+
+== Ciclo de Vida do Processo
+
+=== Inicializar Conteúdo
+
+O RKE2 busca binários e manifestos para executar tanto _servidor_ quanto _agente_ a partir da imagem do RKE2 Runtime.
+Isso significa que o RKE2 escaneia `/var/lib/rancher/rke2/agent/images/*.tar` em busca da imagem https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] (com uma tag correlacionando à saída de `rke2 --version`) por padrão e, se não puder ser encontrada, tenta puxá-la da rede (a.k.a. Docker Hub). O RKE2 então extrai `/bin/` da imagem, achatando-a em `/var/lib/rancher/rke2/data/${RKE2_DATA_KEY}/bin`, onde `${RKE2_DATA_KEY}` representa uma string única identificando a imagem.
+
+Para que o RKE2 funcione como esperado, a imagem de runtime deve fornecer, no mínimo:
+
+* *`containerd`* (o https://github.com/kubernetes/cri-api[CRI])
+* *`containerd-shim`* (shims envolvem tarefas `runc` e não param quando `containerd` para)
+* *`containerd-shim-runc-v1`*
+* *`containerd-shim-runc-v2`*
+* *`kubelet`* (o agente do nó Kubernetes)
+* *`runc`* (o runtime OCI)
+
+As seguintes ferramentas de ops também são fornecidas pela imagem de runtime:
+
+* *`ctr`* (manutenção e inspeção de baixo nível `containerd`)
+* *`crictl`* (manutenção e inspeção de baixo nível CRI)
+* *`kubectl`* (manutenção e inspeção do cluster Kubernetes)
+* *`socat`* (necessário por `containerd` para encaminhamento de porta)
+
+Após os binários terem sido extraídos, o RKE2 extrairá os charts da imagem para o diretório `/var/lib/rancher/rke2/server/manifests`.
+
+=== Inicializar Servidor
+
+No mecanismo K3s incorporado, os servidores são processos de agente especializados, o que significa que a inicialização a seguir será adiada até que o tempo de execução do contêiner do nó tenha iniciado.
+
+==== Preparar Componentes
+
+===== `kube-apiserver`
+
+Baixe a imagem `kube-apiserver`, se ainda não estiver presente, e inicie uma goroutine para aguardar `etcd` e, em seguida, escreva a definição do pod estático em `/var/lib/rancher/rke2/agent/pod-manifests/`.
+
+===== `kube-controller-manager`
+
+Baixe a imagem `kube-controller-manager`, se ainda não estiver presente, e inicie uma goroutine para aguardar `kube-apiserver` e, em seguida, escreva a definição do pod estático em `/var/lib/rancher/rke2/agent/pod-manifests/`.
+
+===== `kube-scheduler`
+
+Baixe a imagem `kube-scheduler`, se ainda não estiver presente, e inicie uma goroutine para aguardar `kube-apiserver` e, em seguida, escreva a definição do pod estático em `/var/lib/rancher/rke2/agent/pod-manifests/`.
+
+==== Iniciar Cluster
+
+Inicie um servidor HTTP em uma goroutine para escutar outros servidores/agentes do cluster e, em seguida, inicialize/junte-se ao cluster.
+
+===== `etcd`
+
+Baixe a imagem `etcd`, se ainda não estiver presente, e inicie uma goroutine para aguardar o `kubelet` e, em seguida, escreva a definição do pod estático em `/var/lib/rancher/rke2/agent/pod-manifests/`.
+
+===== `helm-controller`
+
+Inicie a goroutine para iniciar o `helm-controller` incorporado, após aguardar que `kube-apiserver` esteja pronto.
+
+=== Inicializar Agente
+
+O ponto de entrada do processo do agente. Para processos de servidor, o mecanismo K3s incorporado invoca isso diretamente.
+
+==== Tempo de Execução do Contêiner
+
+===== `containerd`
+
+Crie o processo `containerd` e escute por terminação. Se `containerd` fechar, então o processo `rke2` também fechará.
+
+==== Agente do Nó
+
+===== `kubelet`
+
+Crie e supervise o processo `kubelet`. Se `kubelet` fechar, então `rke2` tentará reiniciá-lo.
+Uma vez que o `kubelet` esteja em execução, ele iniciará quaisquer pods estáticos disponíveis. Para servidores, isso significa que `etcd` e `kube-apiserver` iniciarão, em sucessão, permitindo que os componentes restantes iniciados via pod estático se conectem ao `kube-apiserver` e comecem seu processamento.
+
+==== Charts do Servidor
+
+Nos nós do servidor, o `helm-controller` agora pode aplicar ao cluster quaisquer charts encontrados em `/var/lib/rancher/rke2/server/manifests`.
+
+* rke2-canal.yaml ou rke2-cilium.yaml ou rke2-calico.yaml ou rke2-flannel.yaml ou rke2-multus.yaml (daemonset, bootstrap)
+* rke2-coredns.yaml (implantação, bootstrap)
+* rke2-ingress-nginx.yaml e/ou rke2-traefik.yaml e rke2-traefik-crd.yaml (implantação)
+* rke2-metrics-server.yaml (implantação)
+* rke2-runtimeclasses.yaml (implantação)
+* rke2-snapshot-controller-crd.yaml, rke2-snapshot-controller.yaml e rke2-snapshot-validation-webhook.yaml (implantação)
+
+=== Processo do daemon
+
+O processo RKE2 agora será executado indefinidamente até receber um SIGTERM ou SIGKILL ou se o processo `containerd` fechar.

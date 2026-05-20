@@ -1,0 +1,57 @@
+= Datastore embebido
+:page-languages: [en, zh]
+:revdate: 2025-08-08
+:page-revdate: {revdate}
+
+Utilizar un datastore embebido significa aprovechar una base de datos que se ejecuta dentro del clúster de Kubernetes, típicamente como un servicio en contenedor, por ejemplo, etcd. Esta opción simplifica el despliegue y podría mejorar el rendimiento y la seguridad. La alternativa son xref:datastore/external.adoc[bases de datos externas].
+
+== Opciones de datastore
+
+[WARNING]
+.Experimental
+====
+RKE2 admite oficialmente etcd embebido, el SQLite embebido se considera experimental.
+====
+
+* *Embebido https://etcd.io/[etcd]*: etcd embebido es el datastore por defecto, y se utilizará si no hay otra configuración de datastore presente.
+* *Embebido https://www.sqlite.org/index.html[SQLite]*: SQLite no puede ser utilizado en clústeres con múltiples servidores. Utiliza el proyecto https://github.com/k3s-io/kine[kine].
+
+== etcd embebido
+
+El https://etcd.io/[etcd] embebido es el datastore por defecto, y se utilizará si no hay otra configuración de datastore presente.  Es la única opción embebida que permite desplegar RKE2 en xref:install/ha.adoc[modo HA]. A menos que se desactive explícitamente, se desplegará un pod de etcd por servidor RKE2 y todas las instancias de etcd mantendrán un quórum. RKE2 incluye herramientas para crear fácilmente instantáneas al utilizar este datastore, como se explica en las instrucciones de xref:datastore/backup_restore.adoc[Copia de seguridad y restauración].
+
+== SQLite embebido
+
+Esta opción embebida no se recomienda para producción, pero puede ser útil si necesitas ejecutar un clúster simple y de corta duración, por ejemplo, en un entorno de CI/CD. El modo HA no es compatible al desplegar con https://www.sqlite.org/index.html[SQLite].
+
+=== Servidor único con SQLite
+
+. Configura `disable-etcd` sin el parámetro `server` en el archivo de configuración.
++
+[,yaml]
+----
+disable-etcd: true
+----
+
+. Instala RKE2.
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | sh -
+----
+
+. Habilita el servicio rke2-server.
++
+[,sh]
+----
+systemctl enable rke2-server.service
+----
+
+. Inicia el servicio rke2-server.
++
+[,sh]
+----
+systemctl start rke2-server.service
+----
+
+Puedes seguir el inicio del servidor mediante `kubectl get nodes` para ver cómo el servidor obtiene el estado `Ready`. Consulta xref:cluster_access.adoc[Acceso al clúster] para más información sobre cómo acceder a RKE2.

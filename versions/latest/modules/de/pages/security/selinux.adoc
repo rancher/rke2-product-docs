@@ -1,0 +1,46 @@
+= SELinux
+:page-languages: [en, zh]
+:revdate: 2025-07-17
+:page-revdate: {revdate}
+
+RKE2 ist mit SELinux-aktivierten Systemen kompatibel, was die Standardkonfiguration auf CentOS/RHEL-Systemen ab Version 7 ist. Die https://github.com/rancher/rke2-selinux[Richtlinie], die dies unterstützt, ist eine Spezialisierung der https://github.com/containers/container-selinux[container-selinux]-Richtlinie für containerd. Es berücksichtigt die nicht standardmäßigen Standorte, an denen containerd installiert ist, und platziert persistente und flüchtige Zustände.
+
+[NOTE] 
+====
+In einigen Fällen kann ein Neustart des Knotens erforderlich sein, nachdem das rke2-selinux-Paket installiert wurde und bevor der rke2-Dienst gestartet wird. Wenn Sie trotz der Installation der rke2-selinux- und container-selinux-Pakete Ablehnungen in Ihrem SELinux-Auditprotokoll feststellen, starten Sie bitte den Knoten neu.
+====
+
+== Benutzerdefinierte Kontextbeschriftungen
+
+RKE2 führt Steuerungsebene-Dienste als statische Pods aus, die Zugriff auf mehrere https://github.com/containers/container-selinux/blob/RHEL7.5/container.te#L59[`container_var_lib_t`] Standorte benötigen. Der `etcd` Container muss unter `/var/lib/rancher/rke2/server/db` Lese- und Schreibzugriff haben und lesen, zusammen mit `kube-apiserver`, `kube-controller-manager` und `kube-scheduler`, von `/var/lib/rancher/rke2/server/tls`. Um dies ohne übermäßige Berechtigungen zu ermöglichen, z. B. https://github.com/containers/container-selinux/blob/RHEL7.5/container.te#L47-L49[`spc_t`], führt die RKE2 SELinux-Richtlinie die https://github.com/rancher/rke2-selinux/blob/v0.3.latest.1/rke2.te#L15-L21[`rke2_service_db_t`] und https://github.com/rancher/rke2-selinux/blob/v0.3.latest.1/rke2.te#L9-L13[`rke2_service_t`] Kontext-Labels für Lese- und Schreibzugriff sowie für Nur-Lese-Zugriff ein. Diese Beschriftungen werden nur auf die statischen Pods der RKE2-Steuerungsebene angewendet.
+
+== Spezifische Betriebssystemanforderungen
+
+=== Amazon Linux 2
+
+Amazon Linux 2 erfordert die Installation zusätzlicher SELinux-Pakete:
+
+[,bash]
+----
+sudo amazon-linux-extras enable selinux-ng; sudo yum install selinux-policy-targeted -y
+----
+
+== Konfiguration
+
+Die RKE2-Unterstützung für SELinux beläuft sich auf ein einzelnes Konfigurationselement, das `--selinux` boolescher Datentyp ist. Dies ist ein Passthrough zum https://github.com/containerd/cri/blob/release/1.4/docs/config.md[`enable_selinux` booleschen Datentyp im cri-Abschnitt der containerd/cri toml]. Wenn RKE2 über ein Tarball installiert wurde, wird SELinux ohne zusätzliche Konfiguration nicht aktiviert. Die empfohlene Methode zur Konfiguration besteht darin, einen Eintrag in der RKE2 `config.yaml` vorzunehmen, z. B.:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml is the default location
+selinux: true
+----
+
+Dies entspricht dem Übergeben des `--selinux` Flags an `rke2 server` oder `rke2 agent` über die Befehlszeile oder dem Setzen der `RKE2_SELINUX=true` Umgebungsvariable.
+
+=== Calico-Unterstützung
+
+Wenn Sie sich entscheiden, Calico als Ihr CNI mit aktiviertem SELinux zu verwenden, müssen Sie auch spezifische Richtlinien installieren.
+
+Das zu installierende Paket wird von Tigera https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el9.noarch.rpm[hier] bereitgestellt.
+
+Siehe Calicos https://docs.tigera.io/calico-enterprise/latest/getting-started/install-on-clusters/requirements[Dokumentation] für weitere Details.

@@ -1,57 +1,57 @@
-= Embedded datastore
+= 嵌入式数据存储
 :page-languages: [en, zh]
 :revdate: 2025-08-08
 :page-revdate: {revdate}
 
-Using an embedded datastore means leveraging a database that runs within the Kubernetes cluster, typically as a containerized service, e.g. etcd. This option simplifies deployment and could improve performance and security. The alternative is xref:datastore/external.adoc[external databases].
+使用嵌入式数据存储意味着利用在Kubernetes集群内运行的数据库，通常作为容器化服务，例如etcd。此选项简化了部署，并可能提高性能和安全性。替代方案是xref:datastore/external.adoc[外部数据库]。
 
-== Datastore options
+== 数据存储选项
 
 [WARNING]
-.Experimental
+.实验性
 ====
-RKE2 officially supports Embedded etcd, embedded SQLite is considered experimental.
+RKE2官方支持嵌入式etcd，嵌入式SQLite被视为实验性功能。
 ====
 
-* *Embedded https://etcd.io/[etcd]*: Embedded etcd is the default datastore, and will be used if no other datastore configuration is present.
-* *Embedded https://www.sqlite.org/index.html[SQLite]*: SQLite cannot be used on clusters with multiple servers. It uses project https://github.com/k3s-io/kine[kine].
+* *嵌入式 https://etcd.io/[etcd]*:嵌入式etcd是默认的数据存储，如果没有其他数据存储配置，将使用它。
+* *嵌入式 https://www.sqlite.org/index.html[SQLite]*:SQLite不能在多个服务器的集群上使用。它使用项目 https://github.com/k3s-io/kine[kine]。
 
-== Embedded etcd
+== 嵌入式etcd
 
-Embedded https://etcd.io/[etcd]is the default datastore, and will be used if no other datastore configuration is present.  It is the only embedded option that allows to deploy RKE2 in xref:install/ha.adoc[HA mode]. Unless explicitly unset, one etcd pod will be deployed per RKE2 server and all the etcd instances will maintain a quorum. RKE2 includes tools to easily create snapshots when using this datastore as explained in the xref:datastore/backup_restore.adoc[Backup and Restore] instructions.
+嵌入式 https://etcd.io/[etcd]是默认的数据存储，如果没有其他数据存储配置，将使用它。 这是唯一允许在xref:install/ha.adoc[HA模式]下部署RKE2的嵌入式选项。除非明确取消设置，否则每个RKE2服务器将部署一个etcd pod，所有etcd实例将保持法定人数。RKE2包含工具，可以在使用此数据存储时轻松创建快照，如xref:datastore/backup_restore.adoc[备份和恢复]说明中所述。
 
-== Embedded SQLite
+== 嵌入式SQLite
 
-This embedded option is not recommended for production but can be useful if you need to run a simple, short-lived cluster, for example in a CI/CD environment. HA mode is not supported when deploying with https://www.sqlite.org/index.html[SQLite].
+此嵌入式选项不推荐用于生产，但如果您需要运行一个简单的、短暂的集群，例如在CI/CD环境中，它可能会很有用。在使用 https://www.sqlite.org/index.html[SQLite]进行部署时，不支持HA模式。
 
-=== Single Server with SQLite
+=== 使用SQLite的单服务器
 
-. Set `disable-etcd` without the `server` parameter in the config file.
+. 在配置文件中设置`disable-etcd`而不使用`server`参数。
 +
 [,yaml]
 ----
 disable-etcd: true
 ----
 
-. Install RKE2.
+. 安装RKE2。
 +
 [,bash]
 ----
 curl -sfL https://get.rke2.io | sh -
 ----
 
-. Enable rke2-server service.
+. 启用 rke2-server 服务。
 +
 [,sh]
 ----
 systemctl enable rke2-server.service
 ----
 
-. Start the rke2-server service.
+. 启动 rke2-server 服务。
 +
 [,sh]
 ----
 systemctl start rke2-server.service
 ----
 
-You can follow the server starting by `kubectl get nodes` to see the server get the `Ready` status. See xref:cluster_access.adoc[Cluster access] for more info about how to access RKE2.
+您可以通过 `kubectl get nodes` 跟踪服务器的启动过程，以查看服务器获得 `Ready` 状态。有关如何访问 RKE2 的更多信息，请参见 xref:cluster_access.adoc[集群访问]。

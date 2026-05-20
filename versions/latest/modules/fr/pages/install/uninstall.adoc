@@ -1,0 +1,45 @@
+= Uninstall
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+[CAUTION]
+====
+La désinstallation de RKE2 supprime les données du cluster et tous les scripts.
+====
+
+[NOTE]
+====
+Pour nettoyer {rancher-product-name}un cluster déployé {product-name}, voir{nbsp}: https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-admin/manage-clusters/clean-cluster-nodes.html#_cleaning_up_nodes[Nettoyer les nœuds du cluster].
+====
+
+== Désinstallation de Linux
+
+Selon la méthode utilisée pour installer RKE2, le processus de désinstallation varie.
+
+=== Méthode RPM
+
+Pour désinstaller RKE2 installé via la méthode RPM de votre système, exécutez simplement les commandes correspondant à la version de RKE2 que vous avez installée, soit en tant qu'utilisateur root, soit via `sudo`. Cela arrêtera le processus RKE2, supprimera les RPM RKE2 et nettoiera les fichiers utilisés par RKE2.
+
+[,bash]
+----
+/usr/bin/rke2-uninstall.sh
+----
+
+=== Méthode Tarball
+
+Pour désinstaller RKE2 installé via la méthode Tarball de votre système, exécutez simplement la commande ci-dessous. Cela mettra fin au processus, supprimera le binaire RKE2 et nettoiera les fichiers utilisés par RKE2.
+
+[,bash]
+----
+/usr/local/bin/rke2-uninstall.sh
+----
+
+== Désinstallation de Windows
+
+Pour désinstaller l'agent RKE2 Windows installé via la méthode tarball de votre système, exécutez simplement la commande ci-dessous. Cela arrêtera tous les processus RKE2 Windows, supprimera le binaire RKE2 Windows et nettoiera les fichiers utilisés par RKE2.
+
+[,powershell]
+----
+c:/usr/local/bin/rke2-uninstall.ps1
+----

@@ -1,0 +1,184 @@
+= Installation Windows en isolation physique
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+*Le support Windows nécessite d'utiliser Calico ou Flannel comme CNI pour le cluster RKE2.*
+
+Vous pouvez utiliser des nœuds agents Windows RKE2 (travailleurs) dans un environnement isolé physiquement avec deux méthodes différentes. Cela nécessite d'abord de compléter la xref:install/airgap.adoc[configuration d'isolation physique] de RKE2.
+
+[IMPORTANT]
+====
+Vous pouvez utiliser n'importe quelle version de RKE2 Prime répertoriée sur l'URL des Artéfacts Prime pour les ressources mentionnées dans ces étapes. Pour en savoir plus sur l'URL des artefacts Prime, consultez notre https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[documentation réservée aux Prime]. Une authentification est requise. Utilisez vos identifiants du https://scc.suse.com/home[Centre Client SUSE (SCC)] pour vous connecter.
+====
+
+Téléchargez les tarballs d'images en isolation physique pour votre version de RKE2 ou en utilisant un registre privé. Il y a actuellement trois artefacts tarball publiés pour Windows conformément à nos xref:install/requirements.adoc#_windows[versions Windows] validées.
+
+* `rke2.windows-amd64.tar.gz`
+* `rke2-windows-1809-amd64-images.tar.gz`
+* `rke2-windows-ltsc2022-amd64-images.tar.gz`
+
+Tous les fichiers mentionnés dans les étapes peuvent être obtenus à partir de l'https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[URL des artefacts principaux] pour la version de RKE2 souhaitée.
+
+== Préparez le nœud Agent Windows
+
+[NOTE]
+====
+La fonctionnalité des conteneurs Windows Server doit être activée pour que l'agent RKE2 fonctionne correctement.
+====
+
+. Ouvrez une nouvelle fenêtre Powershell avec des privilèges d'administrateur.
++
+[,powershell]
+----
+powershell -Command "Start-Process PowerShell -Verb RunAs"
+----
+
+. Dans la nouvelle fenêtre Powershell, exécutez la commande suivante.
++
+[,powershell]
+----
+Enable-WindowsOptionalFeature -Online -FeatureName containers –All
+----
+
+. Redémarrez le nœud pour que la fonctionnalité `Containers` fonctionne correctement.
+
+== Méthode du Tarball Windows
+
+. Téléchargez les tarballs d'images Windows et le binaire à partir de l'https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[URL des artefacts principaux] pour la version de RKE2 que vous utilisez.
++
+**Utilisation des tarballs d'images tar.gz**
+
+** *Windows Server*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2.windows-amd64.tar.gz -OutFile /var/lib/rancher/rke2/agent/images/rke2.windows-amd64.tar.gz
+----
++
+** *Windows Server 2019 LTSC (amd64) (OS Build 17763.2061)*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-1809-amd64-images.tar.gz -OutFile c:/var/lib/rancher/rke2/agent/images/rke2-windows-1809-amd64-images.tar.gz
+----
++
+** *Windows Server 2022 LTSC (amd64) (OS Build 20348.169)*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-ltsc2022-amd64-images.tar.gz -OutFile c:/var/lib/rancher/rke2/agent/images/rke2-windows-ltsc2022-amd64-images.tar.gz
+----
++
+**Utilisation des tarballs d'images tar.zst**
+
+Zstandard offre de meilleurs ratios de compression et des vitesses de décompression plus rapides par rapport à pigz.
+
+** *Windows Server 2019 LTSC (amd64) (OS Build 17763.2061)*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-1809-amd64-images.tar.zst -OutFile /var/lib/rancher/rke2/agent/images/rke2-windows-1809-amd64-images.tar.zst
+----
++
+** *Windows Server 2022 LTSC (amd64) (OS Build 20348.169)*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-ltsc2022-amd64-images.tar.zst -OutFile c:/var/lib/rancher/rke2/agent/images/rke2-windows-ltsc2022-amd64-images.tar.zst
+----
++
+** Utilisez `rke2-windows-<VERSION>-amd64.tar.gz` ou `rke2-windows-<VERSION>-amd64.tar.zst`. Zstandard offre de meilleurs ratios de compression et des vitesses de décompression plus rapides par rapport à pigz.
++
+. Assurez-vous que le répertoire `/var/lib/rancher/rke2/agent/images/` existe sur le nœud.
++
+[,powershell]
+----
+ New-Item -Type Directory c:\usr\local\bin -Force
+ New-Item -Type Directory c:\var\lib\rancher\rke2\bin -Force
+----
+. Copiez l'archive compressée dans `/var/lib/rancher/rke2/agent/images/` sur le nœud, en veillant à ce que l'extension de fichier soit conservée.
+. <<Install Windows RKE2>>.
+
+== Méthode du registre privé
+
+Le support de registre privé respecte tous les paramètres de la xref:install/containerd_registry_configuration.adoc[configuration du registre containerd], y compris le remplacement de point de terminaison, le protocole de transport (HTTP/HTTPS), l'authentification, la vérification des certificats, et plus encore.
+
+. Ajoutez toutes les images système requises à votre registre privé. Une liste d'images peut être obtenue à partir du fichier `.txt` correspondant à chaque tarball mentionné ci-dessus. Alternativement, vous pouvez `docker load` les archives d'images isolées physiquement, puis taguer et pousser les images chargées.
+. <<Install Windows RKE2>> en utilisant le paramètre `system-default-registry`, ou utilisez la xref:install/containerd_registry_configuration.adoc[configuration du registre containerd] pour utiliser votre registre comme miroir pour docker.io.
+
+== Installer Windows RKE2
+
+Ces étapes ne doivent être effectuées qu'après avoir complété l'une des méthodes suivantes{nbsp}: <<Windows Tarball Method,Méthode Tarball>> ou <<Private Registry Method>>.
+
+. Obtenez le fichier binaire RKE2 pour Windows `rke2-windows-amd64.exe`. Assurez-vous que le binaire est nommé `rke2.exe` et placez-le dans `c:/usr/local/bin`.
++
+[,powershell]
+----
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-amd64.exe -OutFile c:/usr/local/bin/rke2.exe
+----
+
+. Configurez l'agent rke2 pour Windows.
++
+[,powershell]
+----
+New-Item -Type Directory c:/etc/rancher/rke2 -Force
+Set-Content -Path c:/etc/rancher/rke2/config.yaml -Value @"
+server: https://<server>:9345
+token: <token from server node>
+"@
+----
++
+Pour en savoir plus sur le fichier config.yaml, consultez la xref:install/configuration.adoc#_configuration_file[documentation des options d'installation.]
+
+. Configurez votre PATH.
++
+[,powershell]
+----
+$env:PATH+=";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin"
+
+"Path",
+[Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine) + ";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin",
+[EnvironmentVariableTarget]::Machine)
+----
+
+. Démarrez le service RKE2 pour Windows en exécutant le binaire avec les paramètres souhaités. Veuillez consulter la xref:reference/windows_agent_config.adoc[référence de configuration de l'agent Windows] pour des paramètres supplémentaires.
++
+[,powershell]
+----
+c:\usr\local\bin\rke2.exe agent service --add
+Start-Service rke2
+----
++
+* Si vous utilisez le registre Rancher Prime, définissez les valeurs suivantes dans `config.yaml` :
+.. Définissez `system-default-registry: registry.rancher.com`.
+.. Si vous n'utilisez pas le CNI par défaut, Canal, définissez `cni: <CNI>`.
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+cni: <CNI>
+----
+* Si vous utilisez la méthode du registre privé, définissez les valeurs suivantes dans `config.yaml` :
++
+[,yaml]
+----
+system-default-registry: "registry.example.com:5000"
+----
++
+[NOTE] 
+====
+Le paramètre `system-default-registry` doit spécifier uniquement des autorités URI valides selon le RFC 3986, c'est-à-dire un hôte et un port optionnel.
+====
++
+Si vous préférez utiliser uniquement des paramètres CLI, exécutez le binaire avec les paramètres souhaités.
++
+[,powershell]
+----
+c:/usr/local/bin/rke2.exe agent --token <> --server <>
+----

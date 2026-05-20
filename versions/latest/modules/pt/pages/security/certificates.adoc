@@ -1,0 +1,391 @@
+= Gerenciamento de certificados
+:page-languages: [en, zh]
+:revdate: 2026-02-27
+:page-revdate: {revdate}
+
+== Certificados de Cliente e Servidor
+
+Os certificados de cliente e servidor do RKE2 são válidos por 365 dias a partir da data de emissão.
+Quaisquer certificados que estejam expirados ou a vencer em até 120 dias são renovados automaticamente toda vez que o RKE2 é iniciado.
+
+Essa renovação reutiliza as chaves existentes e estende a validade dos certificados existentes.
+
+Se você deseja gerar novos certificados e chaves, em vez de estender a validade dos certificados existentes, use o subcomando <<Rotating Client and Server Certificates Manually,`rotate`>> documentado abaixo.
+
+Quando um certificado estiver a vencer em até 120 dias, um evento de aviso do Kubernetes com a razão: `CertificateExpirationWarning` é criado.
+
+Antes das versões de maio de 2025 (v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1), alertas e rotação eram acionados em 90 dias, em vez de 120 dias.
+
+=== Verificando Datas de Expiração
+
+[NOTE] 
+.Versão Gate
+====
+O formato de saída é configurável a partir das versões de janeiro de 2025: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.29.13+rke2r1.
+
+Um novo formato com mais informações está disponível a partir das versões de maio de 2025: v1.33.1+rke2r1, v1.32.5+rke2r1, v1.31.9+rke2r1, v1.30.13+rke2r1.
+====
+
+Para verificar os certificados do nó e sua data de expiração, use o `rke2 certificate check --output table`:
+
+[,bash]
+----
+FILENAME                     SUBJECT                     USAGES       EXPIRES                  RESIDUAL TIME   STATUS
+--------                     -------                     ------       -------                  -------------   ------
+client-kube-proxy.crt        system:kube-proxy           ClientAuth   Jun 12, 2026 11:12 UTC   1 year          OK
+client-kube-proxy.crt        rke2-client-ca@1749726675   CertSign     Jun 10, 2035 11:11 UTC   10 years        OK
+client-kubelet.crt           system:node:ip-10-11-0-14   ClientAuth   Jun 12, 2026 11:12 UTC   1 year          OK
+client-kubelet.crt           rke2-client-ca@1749726675   CertSign     Jun 10, 2035 11:11 UTC   10 years        OK
+serving-kubelet.crt          ip-10-11-0-14               ServerAuth   Jun 12, 2026 11:12 UTC   1 year          OK
+serving-kubelet.crt          rke2-server-ca@1749726675   CertSign     Jun 10, 2035 11:11 UTC   10 years        OK
+client-rke2-controller.crt   system:rke2-controller      ClientAuth   Jun 12, 2026 11:12 UTC   1 year          OK
+client-rke2-controller.crt   rke2-client-ca@1749726675   CertSign     Jun 10, 2035 11:11 UTC   10 years        OK
+----
+
+[NOTE] 
+.MESMO CERTIFICADO DUAS VEZES
+====
+Cada arquivo de certificado (coluna NOME_DO_ARQUIVO) contém pelo menos dois certificados - o certificado de entidade final do cliente/servidor, quaisquer certificados intermediários da Autoridade Certificadora e o certificado da Autoridade Certificadora raiz.
+====
+
+Em caso de saída inesperada, certifique-se de que está especificando o diretório de dados correto com a flag `--data-dir` (se estiver usando um diretório de dados personalizado), ou use a flag `--debug` para obter saída adicional do processo de verificação.
+
+=== Rotacionando Certificados de Cliente e Servidor Manualmente
+
+Para rotacionar certificados de cliente e servidor manualmente, use o subcomando `rke2 certificate rotate`:
+
+[,bash]
+----
+# Stop RKE2
+systemctl stop rke2-server
+
+# Rotate certificates
+rke2 certificate rotate
+
+# Start RKE2
+systemctl start rke2-server
+----
+
+Certificados individuais ou listas de certificados podem ser rotacionados especificando o nome do certificado:
+
+[,bash]
+----
+rke2 certificate rotate --service <SERVICE>,<SERVICE>
+----
+
+Os seguintes certificados podem ser rotacionados: `admin`, `api-server`, `controller-manager`, `scheduler`, `rke2-controller`, `rke2-server`, `cloud-controller`, `etcd`, `auth-proxy`, `kubelet`, `kube-proxy`.
+
+[IMPORTANT]
+.Versão Gate
+====
+Antes das versões de janeiro de 2025: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.30.13+rke2r1, a rotação dos certificados deve ser feita na seguinte ordem: servidores etcd, servidor de controle, agentes.
+====
+
+== Certificados da Autoridade de Certificação (CA)
+
+O Kubernetes requer um número de certificados CA para operação adequada. Para mais informações sobre como o Kubernetes utiliza certificados CA, consulte a documentação do Kubernetes https://kubernetes.io/docs/setup/best-practices/certificates/#all-certificates[Certificados e Requisitos PKI].
+
+Por padrão, o RKE2 gera certificados CA autoassinados durante a inicialização do primeiro nó servidor. Esses certificados CA são válidos por 10 anos a partir da data de emissão e não são renovados automaticamente.
+
+Os certificados e chaves CA autoritativos são armazenados dentro da chave de inicialização do datastore, criptografados usando o token do servidor como a frase secreta PBKDF2 com AES256-GCM e HMAC-SHA1. Cópias dos certificados e chaves CA são extraídas para o disco durante a inicialização do servidor RKE2. Qualquer servidor pode gerar certificados de entidade final para os nós à medida que se juntam ao cluster, e os controladores do Kubernetes https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/[API de Certificados] podem emitir certificados adicionais em tempo de execução.
+
+=== Rotacionando Certificados CA
+
+Para rotacionar certificados e chaves CA, use o comando `rke2 certificate rotate-ca`.
+Este comando realiza verificações de integridade para confirmar que os certificados e chaves atualizados são utilizáveis. Se os dados atualizados forem aceitáveis, a chave de inicialização criptografada do datastore é atualizada, e os novos certificados e chaves serão usados na próxima vez que o RKE2 iniciar. Se problemas forem encontrados ao validar os certificados e chaves, um erro é relatado ao log do sistema e a operação é cancelada sem alterações.
+
+=== Usando Certificados CA Personalizados
+
+==== Cuidado com a Reutilização de CAs
+
+[CAUTION]
+====
+Não é recomendado compartilhar CAs Raiz ou Intermediárias entre múltiplos clusters, ou usar uma CA privada existente como sua CA de cluster.
+====
+
+Quando múltiplos clusters compartilham uma raiz de confiança comum, quaisquer certificados de cliente ou servidor emitidos por um cluster também serão confiáveis por todos os outros clusters, já que todos os certificados se encadeiam até a mesma âncora de confiança – a Autoridade de Certificação Raiz comum.
+
+Isso significa que qualquer usuário com um certificado de cliente válido (ou kubeconfig) para um cluster também poderá se autenticar em outros clusters, e qualquer RBAC que corresponda ao usuário ou grupo de um cliente também será aplicado nesses outros clusters.
+
+Da mesma forma, os certificados de servidor emitidos por um cluster também serão confiáveis em todos os outros clusters e por toda a infraestrutura ou clientes que confiam naquela CA raiz.
+
+O Kubernetes não suporta o uso de lista de revogação de certificados.
+
+Se você precisar revogar um certificado por qualquer motivo (por exemplo, devido a um kubeconfig de administrador comprometido), deve realizar uma substituição completa da Autoridade Certificadora do cluster para invalidar a confiança no certificado.
+
+==== Usando Certificados CA Personalizados
+
+Se os certificados e chaves da CA forem encontrados no local correto durante a inicialização do primeiro servidor no cluster, a geração automática de certificados da CA será ignorada.
+
+Um script de exemplo para pré-criar os certificados e chaves apropriados está disponível https://github.com/k3s-io/k3s/blob/master/contrib/util/generate-custom-ca-certs.sh[no repositório K3s em `contrib/util/generate-custom-ca-certs.sh`]. Este script deve ser executado antes de iniciar o RKE2 pela primeira vez e criará um conjunto completo de certificados CA de entidade final assinados por certificados CA raiz e intermediários comuns. Se você tiver uma CA raiz ou intermediária existente, este script pode ser usado (ou usado como ponto de partida) para criar os certificados CA corretos para provisionar um cluster RKE2 com PKI enraizada em uma autoridade existente.
+
+Os arquivos de CA personalizada devem ser colocados em `/var/lib/rancher/rke2/server/tls`. Os seguintes arquivos são necessários:
+
+* `server-ca.crt`
+* `server-ca.key`
+* `client-ca.crt`
+* `client-ca.key`
+* `request-header-ca.crt`
+* `request-header-ca.key`
+* `etcd/peer-ca.crt`
+* `etcd/peer-ca.key`
+* `etcd/server-ca.crt`
+* `etcd/server-ca.key` (Esta é a chave privada usada para assinar tokens de conta de serviço. Não possui um certificado correspondente.)
+* `service.key`
+
+==== Topologia da CA Personalizada
+
+Os certificados CA personalizados gerados pelo script de exemplo terão a seguinte topologia:
+
+[mermaid]
+....
+graph TD
+  root("CA Raiz")
+  intermediate("CA Intermediária")
+  server-ca("CA do Servidor")
+  client-ca("CA do Cliente")
+  request-header-ca("CA de Agregação de API")
+  etcd-peer-ca("CA de Par etcd")
+  etcd-server-ca("CA do Servidor etcd")
+
+  root-hash>"Join token CA hash"]
+
+  kube-server-certs[["Kubernetes servers<br/>(control-plane and kubelet listeners)"]]
+  kube-client-certs[["Kubernetes clients<br/>(apiserver and kubelet clients)"]]
+  request-header-certs[["Kubernetes API aggregation<br/>(apiserver proxy client)"]]
+  etcd-peer-certs[["etcd peer client/server<br/>(etcd replication)"]]
+  etcd-server-certs[["etcd client/server certificates<br/>(Kubernetes <-> etcd)"]]
+
+  root -.-|SHA256| root-hash
+  root ---> intermediate
+  intermediate --> server-ca ==> kube-server-certs
+  intermediate --> client-ca ==> kube-client-certs
+  intermediate --> request-header-ca ==> request-header-certs
+  intermediate --> etcd-peer-ca ==> etcd-peer-certs
+  intermediate --> etcd-server-ca ==> etcd-server-certs
+....
+
+==== Usando o Script de Exemplo
+
+[IMPORTANT]
+.Importante
+====
+Se você quiser assinar os certificados CA do cluster com uma CA raiz existente usando o script de exemplo, deve colocar os arquivos raiz e intermediários no diretório de destino antes de executar o script. Se os arquivos não existirem, o script criará novos certificados CA raiz e intermediários.
+====
+
+Se você quiser usar apenas um certificado CA raiz existente, forneça os seguintes arquivos:
+
+* `root-ca.pem`
+* `root-ca.key`
+
+Se você quiser usar certificados CA raiz e intermediários existentes, forneça os seguintes arquivos:
+
+* `root-ca.pem`
+* `intermediate-ca.pem`
+* `intermediate-ca.key`
+
+O script de exemplo usa os CAs fornecidos como raiz para todos os pacotes CA do cluster - Servidor, Cliente, API de Agregação e etcd Peer/Servidor.
+
+Para casos de uso avançados, como usar os CAs fornecidos apenas para pacotes selecionados ou usar CAs diferentes para pacotes diferentes, o script de exemplo deve ser modificado para atender às necessidades específicas da sua organização.
+
+Para usar o script de exemplo para gerar certificados e chaves personalizados antes de iniciar o RKE2, execute os seguintes comandos:
+
+[,bash]
+----
+# Create the target directory for cert generation.
+mkdir -p /var/lib/rancher/rke2/server/tls
+
+# Copy your root CA cert and intermediate CA cert+key into the correct location for the script.
+# For the purposes of this example, we assume you have existing root and intermediate CA files in /etc/ssl.
+# If you do not have an existing root and/or intermediate CA, the script will generate them for you.
+cp /etc/ssl/certs/root-ca.pem /etc/ssl/certs/intermediate-ca.pem /etc/ssl/private/intermediate-ca.key /var/lib/rancher/rke2/server/tls
+
+# Generate custom CA certs and keys.
+curl -sL https://github.com/k3s-io/k3s/raw/master/contrib/util/generate-custom-ca-certs.sh | PRODUCT=rke2 bash -
+----
+
+Se o comando for concluído com sucesso, você pode instalar e/ou iniciar o RKE2 pela primeira vez. Se o script gerou arquivos CA raiz e/ou intermediários, você deve fazer backup desses arquivos para que possam ser reutilizados caso seja necessário rotacionar os certificados CA em uma data posterior.
+
+=== Rotação de Certificados CA Personalizados
+
+Para rotacionar certificados CA personalizados, use o subcomando `rke2 certificate rotate-ca`. Os arquivos atualizados devem ser organizados em um diretório temporário, carregados no datastore e o RKE2 deve ser reiniciado em todos os nós para usar os certificados atualizados.
+
+[WARNING]
+====
+Você não deve sobrescrever os dados atualmente em uso em `/var/lib/rancher/rke2/server/tls`. Prepare os certificados e chaves atualizados em um diretório separado.
+====
+
+Um cluster que foi iniciado com certificados CA personalizados pode renovar ou rotacionar os certificados e chaves CA de forma não disruptiva, desde que o mesmo CA raiz seja usado.
+
+Se um novo CA raiz for necessário, a rotação será disruptiva. A opção `rke2 certificate rotate-ca --force` deve ser usada, todos os nós (servidores e agentes) precisarão ser reconfigurados para usar o novo valor do token, e os pods precisarão ser reiniciados para confiar no novo CA raiz.
+
+==== Usando o Script de Exemplo
+
+O script de exemplo `generate-custom-ca-certs.sh` vinculado acima também pode ser usado para gerar certificados atualizados em um novo diretório temporário, copiando arquivos para o local correto e definindo a variável de ambiente `DATA_DIR`. Para usar o script de exemplo para gerar certificados e chaves atualizados, execute os seguintes comandos:
+
+[,bash]
+----
+# Create a temporary directory for cert generation.
+mkdir -p /opt/rke2/server/tls
+
+# Copy your root CA cert and intermediate CA cert+key into the correct location for the script.
+# Non-disruptive rotation requires the same root CA that was used to generate the original certificates.
+# If the original files are still in the data directory, you can just run:
+cp /var/lib/rancher/rke2/server/tls/root-ca.* /var/lib/rancher/rke2/server/tls/intermediate-ca.* /opt/rke2/server/tls
+
+# Copy the current service-account signing key, so that existing service-account tokens are not invalidated.
+cp /var/lib/rancher/rke2/server/tls/service.key /opt/rke2/server/tls
+
+# Generate updated custom CA certs and keys.
+curl -sL https://github.com/k3s-io/k3s/raw/master/contrib/util/generate-custom-ca-certs.sh | DATA_DIR=/opt/rke2 PRODUCT=rke2 bash -
+
+# Load the updated CA certs and keys into the datastore.
+rke2 certificate rotate-ca --path=/opt/rke2/server
+----
+
+Se o comando `rotate-ca` retornar um erro, verifique o log do serviço em busca de erros. Se o comando for concluído com sucesso, reinicie o RKE2 em todos os nós do cluster - servidores primeiro, depois agentes.
+
+Se você usou a opção `--force` ou alterou o CA raiz, certifique-se de que quaisquer nós que foram adicionados com um token seguro sejam reconfigurados para usar o novo valor do token, antes de serem reiniciados. O token pode ser armazenado em um `.env` arquivo, unidade systemd ou config.yaml, dependendo de como o nó foi configurado durante a instalação inicial.
+
+=== Rotação de Certificados CA Autoassinados
+
+Para rotacionar os certificados CA autoassinados gerados pelo RKE2, use o subcomando `rke2 certificate rotate-ca`.
+Os arquivos atualizados devem ser organizados em um diretório temporário, carregados no datastore e o RKE2 deve ser reiniciado em todos os nós para usar os certificados atualizados.
+
+[WARNING]
+====
+Você não deve sobrescrever os dados atualmente em uso em `/var/lib/rancher/rke2/server/tls`. Prepare os certificados e chaves atualizados em um diretório separado.
+====
+
+Se o cluster foi iniciado com certificados CA autoassinados padrão, a rotação será disruptiva. Todos os nós que foram adicionados com um token seguro precisarão ser reconfigurados para confiar no novo hash CA.
+Se os novos certificados CA não forem cruzados pelos antigos certificados CA, você precisará usar a opção `--force` para ignorar as verificações de integridade, e os pods precisarão ser reiniciados para confiar na nova CA raiz.
+
+==== Topologia CA Padrão
+
+Os certificados CA autoassinados padrão têm a seguinte topologia:
+
+[mermaid]
+....
+graph TD +
+  server-ca("CA do Servidor") +
+  client-ca("CA do Cliente") +
+  request-header-ca("CA de Agregação de API") +
+  etcd-peer-ca("CA de Par etcd") +
+  etcd-server-ca("CA do Servidor etcd")
+
+  root-hash>"Join token CA hash"]
+
+  kube-server-certs[["Kubernetes servers<br/>(control-plane and kubelet listeners)"]]
+  kube-client-certs[["Kubernetes clients<br/>(apiserver and kubelet clients)"]]
+  request-header-certs[["Kubernetes API aggregation<br/>(apiserver proxy client)"]]
+  etcd-peer-certs[["etcd peer client/server<br/>(etcd replication)"]]
+  etcd-server-certs[["etcd client/server certificates<br/>(Kubernetes <-> etcd)"]]
+
+  server-ca -.-|SHA256| root-hash
+  server-ca ===> kube-server-certs
+  client-ca ===> kube-client-certs
+  request-header-ca ===> request-header-certs
+  etcd-peer-ca ===> etcd-peer-certs
+  etcd-server-ca ===> etcd-server-certs
+....
+
+Ao rotacionar os CAs autoassinados padrão, uma topologia de certificados modificada com CAs intermediárias e uma nova CA raiz cruzada pelo antigo CA pode ser usada para que haja uma cadeia contínua de confiança entre o antigo e o novo CA:
+
+[mermaid]
+....
+graph TD +
+  server-ca-old("CA do Servidor<br/>(antigo)") +
+  client-ca-old("CA do Cliente<br/>(antigo)") +
+  request-header-ca-old("CA de Agregação de API<br/>(antigo)") +
+  etcd-peer-ca-old("CA de Par etcd<br/>(antigo)") +
+  etcd-server-ca-old("CA do Servidor etcd<br/>(antigo)")
+
+  root-hash>"Join token CA hash"]
+
+  server-ca-xsigned("CA do Servidor<br/>(cruzado)") +
+  client-ca-xsigned("CA do Cliente<br/>(cruzado)") +
+  request-header-ca-xsigned("CA de Agregação de API<br/>(cruzado)") +
+  etcd-peer-ca-xsigned("CA de Par etcd<br/>(cruzado)") +
+  etcd-server-ca-xsigned("CA do Servidor etcd<br/>(cruzado)")
+
+  server-ca-ssigned("Server CA<br/>(self-signed)")
+  client-ca-ssigned("Client CA<br/>(self-signed)")
+  request-header-ca-ssigned("API Aggregation CA<br/>(self-signed)")
+  etcd-peer-ca-ssigned("etcd Peer CA<br/>(self-signed)")
+  etcd-server-ca-ssigned("etcd Server CA<br/>(self-signed)")
+
+  server-ca("Intermediário<br/>CA do Servidor") +
+  client-ca("Intermediário<br/>CA do Cliente") +
+  request-header-ca("Intermediário<br/>CA de Agregação de API") +
+  etcd-peer-ca("Intermediário<br/>CA de Par etcd") +
+  etcd-server-ca("Intermediário<br>CA do Servidor etcd")
+
+  kube-server-certs[["Kubernetes servers<br/>(control-plane and kubelet listeners)"]]
+  kube-client-certs[["Kubernetes clients<br/>(apiserver and kubelet clients)"]]
+  request-header-certs[["Kubernetes API aggregation<br/>(apiserver proxy client)"]]
+  etcd-peer-certs[["etcd peer client/server<br/>(etcd replication)"]]
+  etcd-server-certs[["etcd client/server certificates<br/>(Kubernetes <-> etcd)"]]
+
+  server-ca-ssigned -.-|SHA256| hash-raiz +
+  server-ca-ssigned --> server-ca ==> kube-server-certs +
+  server-ca-old --> server-ca-xsigned --> server-ca +
+  client-ca-ssigned --> client-ca ==> kube-client-certs +
+  client-ca-old --> client-ca-xsigned --> client-ca +
+  request-header-ca-ssigned --> request-header-ca ==> request-header-certs +
+  request-header-ca-old --> request-header-ca-xsigned --> request-header-ca +
+  etcd-peer-ca-ssigned --> etcd-peer-ca ==> etcd-peer-certs +
+  etcd-peer-ca-old --> etcd-peer-ca-xsigned --> etcd-peer-ca +
+  etcd-server-ca-ssigned --> etcd-server-ca ==> etcd-server-certs +
+  etcd-server-ca-old --> etcd-server-ca-xsigned --> etcd-server-ca
+....
+
+==== Usando o Script de Exemplo
+
+Um script de exemplo para criar certificados e chaves CA atualizados, assinados cruzadamente pelas CAs existentes, está disponível https://github.com/k3s-io/k3s/blob/master/contrib/util/rotate-default-ca-certs.sh[no repositório K3s em `contrib/util/rotate-default-ca-certs.sh`].
+
+Para usar o script de exemplo para gerar certificados autoassinados atualizados que são cruzados pelos CAs existentes, execute os seguintes comandos:
+
+[,bash]
+----
+# Create updated CA certs and keys, cross-signed by the current CAs.
+# This script will create a new temporary directory containing the updated certs, and output the new token values.
+curl -sL https://github.com/k3s-io/k3s/raw/master/contrib/util/rotate-default-ca-certs.sh | PRODUCT=rke2 bash -
+
+# Load the updated certs into the datastore; see the script output for the updated token values.
+rke2 certificate rotate-ca --path=/var/lib/rancher/rke2/server/rotate-ca
+----
+
+Se o comando `rotate-ca` retornar um erro, verifique o log do serviço em busca de erros. Se o comando for concluído com sucesso, reinicie o RKE2 em todos os nós do cluster - servidores primeiro, depois agentes.
+
+Certifique-se de que quaisquer nós que foram adicionados com um token seguro, incluindo outros nós de servidor, sejam reconfigurados para usar o novo valor do token antes de serem reiniciados. O token pode ser armazenado em um `.env` arquivo, unidade systemd ou config.yaml, dependendo de como o nó foi configurado durante a instalação inicial.
+
+== Rotação da Chave do Emissor de Conta de Serviço
+
+A chave do emissor da conta de serviço é uma chave privada RSA usada para assinar tokens de conta de serviço. Ao rotacionar a chave do emissor da conta de serviço, pelo menos uma chave antiga deve ser mantida no arquivo para que os tokens de conta de serviço existentes não sejam invalidados. Pode ser rotacionado independentemente das CA do cluster, usando o `rke2 certificate rotate-ca` para instalar apenas um arquivo `service.key` atualizado que inclua tanto as chaves novas quanto as antigas.
+
+[WARNING]
+====
+Você não deve sobrescrever os dados atualmente em uso em `/var/lib/rancher/rke2/server/tls`. Prepare a chave atualizada em um diretório separado.
+====
+
+Por exemplo, para girar apenas a chave do emissor da conta de serviço, execute os seguintes comandos:
+
+[,bash]
+----
+# Create a temporary directory for cert generation
+mkdir -p /opt/rke2/server/tls
+
+# Check OpenSSL version
+openssl version | grep -qF 'OpenSSL 3' && OPENSSL_GENRSA_FLAGS=-traditional
+
+# Generate a new key
+openssl genrsa ${OPENSSL_GENRSA_FLAGS:-} -out /opt/rke2/server/tls/service.key 2048
+
+# Append the existing key to avoid invalidating current tokens
+cat /var/lib/rancher/rke2/server/tls/service.key >> /opt/rke2/server/tls/service.key
+
+# Load the updated key into the datastore
+rke2 certificate rotate-ca --path=/opt/rke2/server
+----
+
+É normal ver avisos para arquivos que não estão sendo atualizados. Se o comando `rotate-ca` retornar um erro, verifique o log do serviço em busca de erros. Se o comando for concluído com sucesso, reinicie o RKE2 em todos os servidores do cluster. Não é necessário reiniciar agentes ou reiniciar quaisquer pods.

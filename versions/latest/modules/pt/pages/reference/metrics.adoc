@@ -1,0 +1,110 @@
+= Métricas
+:page-languages: [en, zh]
+:revdate: 2025-07-22
+:page-revdate: {revdate}
+
+O RKE2 fornece métricas para monitorar a saúde e o desempenho do cluster.
+
+Componentes individuais fornecem a maioria das métricas. Consulte a documentação específica de cada componente a seguir para mais informações:
+
+* https://coredns.io/plugins/metrics/[Métricas do CoreDNS]
+* https://etcd.io/docs/v3.5/metrics/[métricas do etcd]
+* https://kubernetes.io/docs/reference/instrumentation/node-metrics/[Métricas do nó Kubernetes]
+* https://kubernetes.io/docs/reference/instrumentation/metrics/[Métricas de componentes Kubernetes]
+
+Outros componentes podem fornecer métricas adicionais. Consulte a documentação do projeto upstream para quaisquer componentes não listados acima.
+
+== Métricas do Supervisor
+
+Quando você inicia o RKE2 com `supervisor-metrics: true`, o supervisor do RKE2 expõe métricas. Você pode acessar essas métricas através do endpoint `/metrics` em cada nó na porta `9345`:
+
+[,sh]
+----
+kubectl get --server https://NODENAME:9345 --raw /metrics
+----
+
+O processo supervisor do RKE2 expõe as seguintes métricas:
+
+* <<RKE2 Cluster Management Metrics>>
+* https://github.com/rancher/lasso/blob/main/README.md#lasso-controller[métricas do controlador Lasso]
+* https://github.com/kubernetes/client-go/blob/master/README.md[métricas do cliente Kubernetes e da fila de trabalho]
+* https://pkg.go.dev/runtime/metrics#hdr-Supported_metrics[métricas do runtime Go]
+
+Se o registro embutido do RKE2 estiver habilitado, o processo supervisor do RKE2 também expõe as seguintes métricas:
+
+* https://spegel.dev/docs/metrics/[métricas do Spegel]
+* https://github.com/libp2p/go-libp2p/blob/master/README.md[métricas do libp2p]
+
+== Métricas de Gerenciamento do Cluster RKE2
+
+=== rke2_certificate_expiration_seconds
+
+Tempo de vida restante em segundos do certificado, rotulado pelo assunto do certificado e usos.
+
+* Tipo: Medidor
+* Rótulos: `*subject*`, `*usage*`
+
+=== rke2_loadbalancer_server_connections
+
+Contagem de conexões atuais ao servidor do balanceador de carga, rotulada pelo nome do balanceador de carga e endereço do servidor.
+
+* Tipo: Medidor
+* Rótulos: `*name*`, `*server*`
+
+=== rke2_loadbalancer_server_health
+
+Estado de saúde atual dos servidores de backend do balanceador de carga, rotulado pelo nome do balanceador de carga e endereço do servidor.
+
+O estado é um enum de 0=INVALID, 1=FAILED, 2=STANDBY, 3=UNCHECKED, 4=RECOVERING, 5=HEALTHY, 6=PREFERRED, 7=ACTIVE.
+
+* Tipo: Medidor
+* Rótulos: `*name*`, `*server*`
+
+=== rke2_loadbalancer_dial_duration_seconds
+
+Tempo em segundos necessário para estabelecer uma conexão com um servidor de backend, rotulado pelo nome do balanceador de carga e status de sucesso/falha.
+
+* Tipo: Histograma
+* Rótulos: `*name*`, `*status*`
+
+=== rke2_etcd_snapshot_save_duration_seconds
+
+Tempo total em segundos necessário para completar o processo de instantâneo do etcd, rotulado pelo status de sucesso/falha.
+
+* Tipo: Histograma
+* Rótulos: `*status*`
+
+=== rke2_etcd_snapshot_save_local_duration_seconds
+
+Tempo total em segundos necessário para salvar um arquivo instantâneo local, rotulado pelo status de sucesso/falha.
+
+* Tipo: Histograma
+* Rótulos: `*status*`
+
+=== rke2_etcd_snapshot_save_s3_duration_seconds
+
+Tempo total em segundos necessário para fazer upload de um arquivo instantâneo para o S3, rotulado pelo status de sucesso/falha.
+
+* Tipo: Histograma
+* Rótulos: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_duration_seconds
+
+Tempo total em segundos necessário para sincronizar a lista de instantâneos do etcd, rotulado pelo status de sucesso/falha.
+
+* Tipo: Histograma
+* Rótulos: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_local_duration_seconds
+
+Tempo total em segundos necessário para listar arquivos instantâneos locais, rotulado pelo status de sucesso/falha.
+
+* Tipo: Histograma
+* Rótulos: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_s3_duration_seconds
+
+Tempo total em segundos necessário para listar arquivos instantâneos do S3, rotulado pelo status de sucesso/falha.
+
+* Tipo: Histograma
+* Rótulos: `*status*`

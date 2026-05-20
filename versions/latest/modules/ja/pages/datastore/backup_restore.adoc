@@ -1,0 +1,498 @@
+
+= バックアップと回復
+:page-languages: [en, zh]
+:revdate: 2026-02-27
+:page-revdate: {revdate}
+:page-aliases: backup_restore.adoc
+
+RKE2はetcdスナップショットを使用してクラスター情報をバックアップします。このページでは、rke2 etcd-snapshot CLIツールを使用してetcdスナップショットを管理し、etcdスナップショットから復元する方法について説明します。スナップショットは埋め込みetcd専用であり、`datastore-endpoint`構成を使用して別のデータストアを使用する場合は、xref:backup_restore.adoc#_external_db_backups_experimental[Experimental]に移動してください。
+
+RKE2 etcdスナップショットはノードのファイルシステムに保存され、災害復旧シナリオのためにS3互換のオブジェクトストアにアップロードすることもできます。スナップショットは、定期的に自動化されることも、手動でオンデマンドで取得されることもあります。 `rke2 etcd-snapshot` CLIツールは、スナップショットを作成、削除、管理するために使用できる一連のサブコマンドを提供します。
+
+|===
+| サブコマンド | 説明
+
+| delete
+| 指定されたスナップショットを削除する
+
+| ls、list、l
+| スナップショットの一覧
+
+| prune
+| 設定された保持数を超えるスナップショットを削除する
+
+| 保存
+| オンデマンドでetcdスナップショットをトリガーする
+|===
+
+etcdスナップショットサブコマンドに関する追加情報は、`rke2 etcd-snapshot --help`を実行してください。
+
+== スナップショットの作成
+
+[tabs,sync-group-id=snapshots]
+=====
+スケジュール済::
++
+--
+
+スケジュールされたスナップショットはデフォルトで有効で、システム時間の00:00と12:00に実行され、5つのスナップショットが保持されます。スケジュールされたスナップショットは、`etcd-snapshot`で始まり、ノード名とタイムスタンプが続く名前を持っています。
+
+以下のオプションは、スケジュールされたスナップショットの操作を制御します：
+
+|===
+| フラグ | 説明
+
+| `--etcd-disable-snapshots`
+| スケジュールされたスナップショットを無効にする
+
+| `--etcd-snapshot-name`
+| etcdスケジュールされたスナップショットの基本名を設定します。（デフォルト：`etcd-snapshot`）
+
+| `--etcd-snapshot-compress`
+| etcdスナップショットを圧縮します。
+
+| `--etcd-snapshot-dir`
+| dbスナップショットを保存するディレクトリ。（デフォルトの場所：`${data-dir}/db/snapshots`）
+
+| `--etcd-snapshot-retention`
+| 保持するスナップショットの数（デフォルト：5)
+
+| `--etcd-snapshot-schedule-cron`
+| スナップショットの間隔時間をcron仕様で指定します。例えば、5時間ごとに`0 */5 * * *`（デフォルト：`0 */12 * * *`）
+|===
+
+data-dirの値はデフォルトで`/var/lib/rancher/rke2`に設定されており、`--data-dir`フラグを設定することで独立して変更できます。
+
+スケジュールされたスナップショットは、サーバーの`--etcd-snapshot-dir`値で設定されたパスに保存されます。S3互換のオブジェクトストアに複製したい場合は、<<_s3_compatible_object_store_support,S3設定オプション>>を参照してください。
+
+--
+
+オンデマンド::
++
+--
+
+スナップショットは`rke2 etcd-snapshot save`コマンドを実行することで手動で保存できます。これらのオンデマンドスナップショットには保持期間がなく、ユーザーは`rke2 etcd-snapshot delete`または`rke2 etcd-snapshot prune`コマンドを使用して手動で削除する必要があります。オンデマンドスナップショットの名前は`on-demand`で始まり、ノード名とタイムスタンプが続きます。
+
+以下のオプションは、オンデマンドスナップショットの操作を制御します：
+
+|===
+| フラグ | 説明
+
+| `--name`
+| etcdオンデマンドスナップショットのベース名を設定します。（デフォルト：`on-demand`）
+
+| `--etcd-snapshot-compress`
+| etcdスナップショットを圧縮します。
+
+| `--etcd-snapshot-dir`
+| dbスナップショットを保存するディレクトリ。（デフォルトの場所：`${data-dir}/db/snapshots`）
+|===
+
+data-dirの値はデフォルトで`/var/lib/rancher/rke2`に設定されており、`--data-dir`フラグを設定することで独立して変更できます。
+
+`--name`フラグは`rke2 etcd-snapshot save`コマンドを実行しているときのみ設定できます。他の2つも`rke2 server` xref:install/configuration.adoc#_configuration_file[設定ファイル]の一部となることができます。
+
+オンデマンドスナップショットは、サーバーの`--etcd-snapshot-dir`値で設定されたパスに保存されます。S3互換のオブジェクトストアに複製したい場合は、<<_s3_compatible_object_store_support,S3設定オプション>>を参照してください。
+
+--
+
+=====
+
+== スナップショットの削除
+
+スケジュールされたスナップショットは、スナップショットの数が設定された保持カウント（デフォルトは5）を超えると自動的に削除されます。最も古いスナップショットが最初に削除されます。
+
+スケジュールされたスナップショットまたはオンデマンドスナップショットを手動で削除するには、`rke2 etcd-snapshot delete`コマンドを使用できます：
+
+[,bash]
+----
+rke2 etcd-snapshot delete <SNAPSHOT-NAME-1> <SNAPSHOT-NAME-2> ...
+----
+
+`prune`サブコマンドは、名前のプレフィックス（デフォルトは`on-demand`）に一致し、設定された保持カウントを超えるスナップショットを削除します。保持カウントを設定するためのフラグ`--snapshot-retention`が含まれています。スケジュールされたスナップショットの場合、デフォルトの保持ポリシーを上書きします。オンデマンドスナップショットには保持ポリシーがなく、このフラグが必要です。
+
+"オンデマンド"スナップショットを少ない数に削減します：
+
+[,bash]
+----
+rke2 etcd-snapshot prune --snapshot-retention  <NUM-OF-SNAPSHOTS-TO-RETAIN>
+----
+
+"スケジュールされた"スナップショットを少ない数に削減します：
+
+[,bash]
+----
+rke2 etcd-snapshot prune --name etcd-snapshot --etcd-snapshot-retention <NUM-OF-SNAPSHOTS-TO-RETAIN>
+----
+
+== S3互換オブジェクトストアのサポート
+
+RKE2は、etcdスナップショットをS3互換オブジェクトストアに複製し、そこから復元することをサポートしています。S3のサポートは、オンデマンドスナップショットとスケジュールされたスナップショットの両方で利用可能です。
+
+|===
+| フラグ | 説明
+
+| `--etcd-s3`
+| S3へのバックアップを有効にします
+
+| `--etcd-s3-endpoint`
+| S3エンドポイントURL
+
+| `--etcd-s3-endpoint-ca`
+| S3エンドポイントに接続するためのS3カスタムCA証明書
+
+| `--etcd-s3-skip-ssl-verify`
+| S3のSSL証明書検証を無効にします
+
+| `--etcd-s3-access-key`
+| S3アクセスキー
+
+| `--etcd-s3-secret-key`
+| S3シークレットキー
+
+| `--etcd-s3-session-token` 
+| S3セッショントークン 
+
+| `--etcd-s3-bucket`
+| S3バケット名
+
+| `--etcd-s3-bucket-lookup-type`
+| S3バケットのルックアップタイプ、'auto'、'dns'、'path'のいずれか；設定されていない場合のデフォルトは'auto'です
+
+| `--etcd-s3-region`
+| S3リージョン/バケットの場所（オプション）。デフォルトはus-east-1です
+
+| `--etcd-s3-folder`
+| S3フォルダー
+
+| `--etcd-s3-retention`
+| S3保持制限（デフォルト：5)
+
+| `--etcd-s3-proxy`
+| S3に接続する際に使用するプロキシサーバー、プロキシ関連の環境変数を上書きします
+
+| `--etcd-s3-insecure`
+| HTTPS経由のS3を無効にします
+
+| `--etcd-s3-timeout`
+| S3タイムアウト (デフォルト: `5m0s`)
+
+| `--etcd-s3-config-secret`
+| etcd-s3 が有効で、他の etcd-s3 オプションが設定されていない場合に、S3 を構成するために kube-system ネームスペース内で使用される秘密の名前
+|===
+
+例えば、S3 でのオンデマンド etcd スナップショットの作成と削除は次のように機能します:
+
+[,shell-session]
+----
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret save
+INFO[0000] Snapshot on-demand-server-0-1754907117 saved.
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret ls
+Name                              Location                                                                          Size    Created
+on-demand-server-0-1754907117     s3://test-bucket/test-folder/on-demand-server-0-1754907117                        8937504 2025-07-22T10:02:03Z
+on-demand-server-0-1754907117     file:///var/lib/rancher/rke2/server/db/snapshots/on-demand-server-0-1754907117    8937504 2025-07-22T10:02:03Z
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret delete on-demand-server-0-1753178523
+INFO[0000] Snapshot on-demand-server-0-1754907117 deleted.
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret ls
+Name                              Location                                                                          Size    Created
+----
+
+=== S3 保持
+
+[IMPORTANT]
+.バージョンゲート
+====
+バージョンv1.34.0+rke2r1、v1.33.4+rke2r1、v1.32.8+rke2r1、v1.31.12+rke2r1から、RKE2にはS3保持用の新しいフラグが含まれています。それはローカルスナップショット保持と同じデフォルト値を持っています。
+====
+
+|===
+| フラグ | 説明
+
+| `--etcd-s3-retention`
+| 保持するS3のスナップショットの数（デフォルト：`5`）
+|===
+
+=== S3 構成秘密のサポート
+
+[IMPORTANT]
+.バージョンゲート
+====
+S3構成シークレットのサポートは、2024年8月のリリース：v1.30.4+rke2r1、v1.29.8+rke2r1、v1.28.13+rke2r1から利用可能です。
+====
+
+RKE2はKubernetesシークレットからetcd S3スナップショット構成を読み取ることをサポートしています。
+これは、セキュリティ上の理由からRKE2 CLIフラグや設定ファイルに資格情報をハードコーディングするよりも好まれる場合があります。また、RKE2を再起動せずに資格情報をローテーションする必要がある場合にも適しています。
+シークレットを介してS3スナップショット構成を渡すには、`--etcd-s3`と`--etcd-s3-config-secret=<SECRET-NAME>`でRKE2を起動します。
+RKE2が起動する際にシークレットは存在する必要はありませんが、スナップショットの保存/リスト/削除/プルーニング操作が行われるたびにチェックされます。
+
+S3 構成 Secret はスナップショットを復元する際には使用できません。なぜなら、復元中に秘密を提供するための apiserver が利用できないからです。
+S3 に保存されたスナップショットを復元する際には、CLI を介して S3 構成を渡す必要があります。
+
+[NOTE]
+====
+Secret を有効にするには、`--etcd-s3` と `--etcd-s3-config-secret` フラグのみを渡してください。 +
+他の S3 構成フラグが設定されている場合、Secret は無視されます。
+====
+
+Secret 内のキーは、上記の `--etcd-s3-*` CLI フラグに対応しています。
+`etcd-s3-endpoint-ca` キーは PEM エンコードされた CA バンドルを受け入れます。また、`etcd-s3-endpoint-ca-name` キーを使用して、`kube-system` ネームスペース内にある 1 つ以上の PEM エンコードされた CA バンドルを含む ConfigMap の名前を指定することができます。
+
+[,yaml]
+----
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rke2-etcd-snapshot-s3-config
+  namespace: kube-system
+type: etcd.k3s.cattle.io/s3-config-secret
+stringData:
+  etcd-s3-endpoint: ""
+  etcd-s3-endpoint-ca: ""
+  etcd-s3-endpoint-ca-name: ""
+  etcd-s3-skip-ssl-verify: "false"
+  etcd-s3-access-key: "AWS_ACCESS_KEY_ID"
+  etcd-s3-secret-key: "AWS_SECRET_ACCESS_KEY"
+  etcd-s3-bucket: "bucket"
+  etcd-s3-folder: "folder"
+  etcd-s3-region: "us-east-1"
+  etcd-s3-insecure: "false"
+  etcd-s3-timeout: "5m"
+  etcd-s3-proxy: ""
+----
+
+== スナップショットの復元
+
+RKE2はスナップショットを復元する際にいくつかのステップを実行します：
+
+. スナップショットがS3に保存されている場合、ファイルはスナップショットディレクトリにダウンロードされます。
+. スナップショットが圧縮されている場合、解凍されます。
+. 存在する場合、現在のetcdデータベースファイルは`${data-dir}/server/db/etcd-old-$TIMESTAMP/`に移動されます。
+. スナップショットの内容がディスクに抽出され、チェックサムが検証されます。
+. Etcdが起動し、現在のノードを除くすべてのetcdクラスターのメンバーがクラスターから削除されます。
+. CA証明書やその他の機密データがデータストアから抽出され、後で使用するためにディスクに書き込まれます。
+. 復元が完了し、RKE2は復元が行われたサーバーで再起動して通常通り使用できます。
+. （オプション）エージェントとコントロールプレーンサーバーは通常通り起動できます。
+. （オプション）古いデータベースファイルを削除した後、etcdサーバーを再起動してクラスターに再参加できます。
+
+スナップショットを復元する際、作成時と同じRKE2バージョンを使用する必要はありません。より高いマイナーバージョンも使用可能です。
+
+=== スナップショット復元手順
+
+クラスター構成に一致するタブを以下から選択してください。
+
+[tabs]
+=====
+単一サーバー::
++
+--
+
+. RKE2サービスを停止します：
++
+[,bash]
+----
+systemctl stop rke2-server
+----
+
+. `rke2 server`を`--cluster-reset`フラグで実行し、`--cluster-reset-restore-path`で復元するスナップショットのパスを指定します。
+スナップショットがS3に保存されている場合、S3設定フラグ（`--etcd-s3`、`--etcd-s3-bucket`など）を提供し、復元パスとしてスナップショットのファイル名のみを指定します。
++
+[NOTE]
+====
+復元するスナップショットを指定せずに`--cluster-reset`フラグを使用すると、スナップショットを復元せずにetcdクラスターを単一メンバーにリセットします。
+====
++
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+   --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+*結果:*RKE2はスナップショットを復元し、クラスターのメンバーシップをリセットし、再起動の準備ができたことを示すメッセージを表示します： +
+ `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.`
+
+. RKE2を再起動します:
++
+[,bash]
+----
+systemctl start rke2-server
+----
++
+RKE2の設定ファイル内にetcd-s3バックアップ設定が定義されている場合、RKE2の復元は設定されたS3バケットからスナップショットファイルを取得しようとします。この場合、引数`--cluster-reset-restore-path`にはスナップショットのファイル名のみを渡す必要があります。etcd-s3バックアップ構成が存在するローカルスナップショットファイルから復元するには、引数`--etcd-s3=false`を追加し、引数`--cluster-reset-restore-path`にローカルスナップショットファイルのフルパスを渡します。
+
+安全機構として、RKE2がクラスターをリセットするとき、`/var/lib/rancher/rke2/server/db/reset-flag`に空のファイルを作成し、ユーザーが連続して複数のクラスターリセットを誤って実行するのを防ぎます。このファイルはRKE2が通常通り起動すると削除されます。
+
+--
+
+複数のサーバ::
++
+--
+
+この例では、3つのサーバー、`S1`、`S2`、`S3`があります。スナップショットは`S1`にあります。
+
+. すべてのサーバーでRKE2を停止してください。
++
+[,bash]
+----
+systemctl stop rke2-server
+----
+
+. S1で、`rke2 server`を`--cluster-reset`オプションで実行し、`--cluster-reset-restore-path`には復元するスナップショットへのパスを指定します。
+スナップショットがS3に保存されている場合、S3設定フラグ（`--etcd-s3`、`--etcd-s3-bucket`など）を提供し、復元パスにはスナップショットのファイル名のみを指定します。
++
+[NOTE]
+====
+復元するスナップショットを指定せずに`--cluster-reset`フラグを使用すると、スナップショットを復元せずにetcdクラスターを単一メンバーにリセットします。
+====
++
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+  --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+*結果:*RKE2はスナップショットを復元し、クラスターのメンバーシップをリセットし、再起動の準備ができたことを示すメッセージを表示します： +
+ `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
+ `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
+
+. S1で、RKE2を再起動してください。
++
+[,bash]
+----
+systemctl start rke2-server
+----
+
+. S2とS3では、`/var/lib/rancher/rke2/server/db/`にあるデータディレクトリを削除してください。
++
+[,bash]
+----
+rm -rf /var/lib/rancher/rke2/server/db/
+----
+
+. S2とS3で、復元されたクラスターに参加するためにRKE2を再起動してください。
++
+[,bash]
+----
+systemctl start rke2-server
+----
+
+RKE2の設定ファイル内にetcd-s3バックアップ構成が定義されている場合、RKE2の復元は設定されたS3バケットからスナップショットファイルを取得しようとします。この場合、引数`--cluster-reset-restore-path`にはスナップショットのファイル名のみを渡す必要があります。etcd-s3バックアップ構成が存在するローカルスナップショットファイルから復元するには、引数`--etcd-s3=false`を追加し、引数`--cluster-reset-restore-path`にローカルスナップショットファイルのフルパスを渡します。
+
+安全機構として、RKE2がクラスターをリセットするとき、`/var/lib/rancher/rke2/server/db/reset-flag`に空のファイルを作成し、ユーザーが連続して複数のクラスターリセットを誤って実行するのを防ぎます。このファイルはRKE2が通常通り起動すると削除されます。
+
+--
+
+=====
+
+==== 新しいホストへの復元
+
+etcdスナップショットを取得したホストとは異なるホストに復元することが可能です。その際、スナップショットを取得する際に元々使用されたxref:security/token.adoc#_server[サーバートークン]を渡す必要があります。これはスナップショット内のブートストラップデータを復号化するために使用されます。プロセスは上記と同じですが、ステップ2を次のように変更します:
+
+. スナップショットを取得したノードで、次の値を保存します: `/var/lib/rancher/rke2/server/token`。これはステップ3の`<BACKED-UP-TOKEN-VALUE>`です。
+. スナップショットを新しいノードにコピーしてください。ノード内のパスはステップ3の`<PATH-TO-SNAPSHOT>`です。
+. 次のコマンドを使用して、最初のサーバーノードからスナップショットの復元を開始してください。
+
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+  --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+  --token=<BACKED-UP-TOKEN-VALUE>
+----
+
+トークンの値はRKE2の設定ファイルにも設定できます。
+
+[CAUTION]
+====
+. ノードのリソースもそのetcdスナップショットに含まれています。新しいノードセットに復元する場合、クラスターに存在しないすべての古いノードを手動で削除する必要があります。
+. RKE2の設定ファイルにトークンが設定されている場合、それが`<BACKED-UP-TOKEN-VALUE>`と同じであることを確認してください。そうでないと、RKE2は起動に失敗します。
+====
+
+== ETCDスナップショットファイル カスタムリソース
+
+スナップショットは、クラスター範囲の`ETCDSnapshotFile`リソースをリストまたは説明することで、任意のKubernetesクライアントを使用してリモートで表示できます。
+`rke2 etcd-snapshot list`コマンドがそのノードに表示されるスナップショットのみを表示するのとは異なり、`ETCDSnapshotFile`リソースはクラスターのメンバーに存在するすべてのスナップショットを追跡します。
+
+[,sh]
+----
+$ kubectl get etcdsnapshotfile
+Name                              Location                                                                           Size     Created
+etcd-snapshot-server-0-1754906881 s3://test-bucket/test-folder/etcd-snapshot-server-0-1754906881                     8937504  2025-08-11T10:08:01Z
+etcd-snapshot-server-0-1754906881 file:///var/lib/rancher/rke2/server/db/snapshots/etcd-snapshot-server-0-1754907185 8937504  2025-08-11T10:08:01Z
+etcd-snapshot-server-0-1754907185 s3://test-bucket/test-folder/etcd-snapshot-server-0-1754907185                     9633824  2025-08-11T10:13:05Z
+etcd-snapshot-server-0-1754907185 file:///var/lib/rancher/rke2/server/db/snapshots/etcd-snapshot-server-0-1754907185 9633824  2025-08-11T10:13:05Z
+----
+
+[,sh]
+----
+$ kubectl describe etcdsnapshotfile s3-etcd-snapshot-server-0-1754906881-e1e196
+Name:         s3-etcd-snapshot-server-0-1754906881-e1e196
+Namespace:
+Labels:       etcd.rke2.cattle.io/snapshot-storage-node=s3
+Annotations:  etcd.rke2.cattle.io/snapshot-token-hash: 2bb80d537b1d
+API Version:  k3s.cattle.io/v1
+Kind:         ETCDSnapshotFile
+Metadata:
+  Creation Timestamp:  2025-08-11T10:10:37Z
+  Finalizers:
+    wrangler.cattle.io/managed-etcd-snapshots-controller
+  Generation:        1
+  Resource Version:  2356
+  UID:               d4fa68e7-b692-4ad8-8740-77d2bb9c062f
+Spec:
+  Location:   s3://test-bucket/test-folder/etcd-snapshot-server-0-1754906881
+  Node Name:  server-0
+  s3:
+    Bucket:           test-bucket
+    Endpoint:         localhost:9090
+    Insecure:         true
+    Prefix:           test-folder
+    Region:           us-east-1
+    Skip SSL Verify:  true
+  Snapshot Name:      etcd-snapshot-server-0-1754906881
+Status:
+  Creation Time:  2025-08-11T10:08:01Z
+  Ready To Use:   true
+  Size:           8937504
+Events:
+  Type    Reason               Age    From             Message
+  ----    ------               ----   ----             -------
+  Normal  ETCDSnapshotCreated  6m24s  rke2-supervisor  Snapshot etcd-snapshot-server-0-1754906881 saved on server-0
+----
+
+[,sh]
+----
+$ kubectl describe etcdsnapshotfile s3-on-demand-k3s-server-1-1730308816-79b15c
+----
+
+== 外部DBバックアップ（実験的）
+
+[CAUTION]
+====
+データストア自体のバックアップに加えて、`/var/lib/rancher/rke2/server/token`にあるサーバートークンファイルもバックアップする必要があります。
+バックアップから復元する際には、このファイルを復元するか、その値を`token`オプションに渡す必要があります。
+復元時に同じトークン値を使用しない場合、スナップショットは使用できなくなります。トークンはデータストア内の機密データを暗号化するために使用されるためです。
+====
+
+=== SQLiteを使用したバックアップと復元
+
+SQLiteデータストアをバックアップまたは復元するために特別なコマンドは必要ありません。
+
+* SQLiteデータストアをバックアップするには、`/var/lib/rancher/rke2/server/db/`のコピーを取ります。
+* SQLiteデータストアを復元するには、`/var/lib/rancher/rke2/server/db`の内容を復元します（上記で説明したように、トークンも復元してください）。
+
+=== 外部データストアを使用したバックアップと復元
+
+外部データストアが使用される場合、バックアップおよびリストア操作はRKE2の外部で処理されます。データベース管理者は、外部データベースをバックアップするか、スナップショットまたはダンプから復元する必要があります。
+
+データベースが定期的にスナップショットを取得するように設定することをお勧めします。
+
+データベースのスナップショットを取得し、それらからデータベースを復元する方法の詳細については、公式のデータベースドキュメントを参照してください：
+
+* https://dev.mysql.com/doc/refman/8.0/en/replication-snapshot-method.html[公式MySQLドキュメント]
+* https://www.postgresql.org/docs/8.3/backup-dump.html[公式PostgreSQLドキュメント]
+* https://etcd.io/docs/latest/op-guide/recovery/[公式etcdドキュメント]

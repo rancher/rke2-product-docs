@@ -1,19 +1,27 @@
 = 安装方法
-:page-languages: [en, zh]
-:revdate: 2024-09-11
+:page-languages: 如果您的节点安装并启用了 NetworkManager，请确保它被配置为忽略 CNI 管理的接口。
+:revdate: 2025-08-06
 :page-revdate: {revdate}
 
-*重要*：如果你的节点安装并启用了 NetworkManager，请xref:../known_issues.adoc#_networkmanager[确保将其配置为忽略 CNI 管理的接口]。
+[IMPORTANT] 
+====
+如果您的节点已安装并启用了 NetworkManager，请确保xref:known_issues.adoc#_networkmanager[其配置为忽略 CNI 管理的接口]。
+====
 
-RKE2 可以通过多种方式安装到系统中，其中两种是首选和受支持的方法。这两种方法分别是 tarball 和 RPM。快速入门中提到的安装脚本是对这两种方法的一种封装。
+[IMPORTANT]
+====
+您可以使用 Prime Artifacts URL 上列出的任何 RKE2 Prime 版本来获取这些步骤中提到的资产。要了解有关 Prime Artifacts URL 的更多信息，请参阅我们的 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[仅限 Prime 的文档]。需要身份验证。使用您的 https://scc.suse.com/home[SUSE 客户中心 (SCC)] 凭据登录。
+====
 
-本文件更详细地解释了这些安装方法。
+RKE2 可以通过多种方式安装，其中两种是首选且受支持的方法。这些方法是 tarball 和 RPM。快速入门中引用的安装脚本是这两种方法的封装程序。
+
+本文档对这些安装方法进行了更详细的说明。
 
 == Tarball
 
-要安装 RKE2，你首先需要获得安装脚本。这可以通过多种方式实现。
+要通过安装方式安装 RKE2，您首先需要获取安装脚本。这可以通过多种方式完成。
 
-在这里，你可以获得脚本并立即开始安装。
+这将获取安装脚本并立即启动安装过程。
 
 [,sh]
 ----
@@ -21,16 +29,7 @@ RKE2 可以通过多种方式安装到系统中，其中两种是首选和受支
 curl -sfL https://get.rke2.io | sh -
 ----
 
-[NOTE]
-====
-中国用户，可以使用以下方法加速安装：
-
-----
-curl -sfL https://rancher-mirror.rancher.cn/rke2/install.sh | INSTALL_RKE2_MIRROR=cn sh -
-----
-====
-
-你也可以下载安装脚本并添加可执行权限。
+或者，您可以下载安装脚本并使其可执行。
 
 [,sh]
 ----
@@ -40,101 +39,91 @@ chmod +x install.sh
 
 === 安装
 
-默认安装最新的 RKE2 版本，不需要其他限定符。但是，如果你想指定一个版本，你需要设置 `INSTALL_RKE2_CHANNEL` 环境变量。下面是一个示例：
+运行安装程序，其中`INSTALL_RKE2_ARTIFACT_URL`是 Prime Artifacts URL，而`INSTALL_RKE2_CHANNEL`是您可以订阅的发布渠道，默认为稳定版。在此示例中，`INSTALL_RKE2_CHANNEL="latest"`为您提供了 RKE2 的最新版本。
 
 [,bash]
 ----
-INSTALL_RKE2_CHANNEL=latest ./install.sh
+sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" ./install.sh
 ----
 
-安装脚本被执行时，它会判断系统的类型。如果使用是 RPM 的操作系统（比如 CentOS 或 RHEL），它将执行基于 RPM 的安装，否则脚本会默认为 tarball。下面介绍了基于 RPM 的安装。
+如果您想指定一个版本，请设置`INSTALL_RKE2_VERSION`环境变量。
 
-下来，安装脚本下载 tarball，通过比较 SHA256 哈希值进行验证，最后将内容提取到 `/usr/local`。如果需要，操作者可以在安装后自由移动文件。这个操作只是提取 tarball，并没有做其他系统的修改。
+[,bash]
+----
+sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" ./install.sh
+----
 
-Tarball 结构/内容：
+这将把`rke2-server`服务及`rke2`二进制文件安装到您的机器上。由于其特性，除非以 root 用户身份运行或通过`sudo`运行，否则将会失败。
 
-* bin - 包含 RKE2 可执行文件以及 `rke2-killall.sh` 和 `rke2-uninstall.sh` 脚本
-* lib - 包含 server 和 agent systemd 单元文件
-* share - 包含 RKE2 许可证以及 RKE2 在 CIS 模式下运行时使用的 sysctl 配置文件
+当安装脚本执行时，它会判断系统的类型。如果系统采用 RPM（例如 CentOS 或 RHEL），则将执行基于 RPM 的安装；否则，脚本将默认为 tarball 安装。下面将介绍基于 RPM 的安装过程。
 
-要进一步配置系统，请参阅 xref:../reference/server_config.adoc[server] 或 xref:../reference/linux_agent_config.adoc[agent] 文档。
+接下来，安装脚本下载 tarball，通过比较 SHA256 哈希值进行验证，最后将内容提取到 `/usr/local`。如果需要，操作员可以在安装后自由移动文件。此操作仅提取 tarball，不会进行其他系统修改。
+
+Tarball 结构 / 内容：
+
+* bin - 包含 RKE2 可执行文件以及 `rke2-killall.sh` 和 `rke2-uninstall.sh` 脚本。
+* lib - 包含服务器和代理的 systemd 单元文件。
+* share - 包含 RKE2 许可证以及在 CIS 模式下运行 RKE2 时使用的 sysctl 配置文件。
+
+要进一步配置系统，您需要参考 xref:reference/server_config.adoc[server] 或 xref:reference/linux_agent_config.adoc[agent] 文档。
 
 == RPM
 
-要启动 RPM 的安装过程，你需要获得上面提到的安装脚本。该脚本将检查你的系统是否有 `rpm`、`yum` 或 `dnf`，如果存在任何一个，它会确定系统是基于 Redhat 的，并且启动 RPM 安装过程。
+要开始 RPM 安装过程，您需要获取上面提到的安装脚本。该脚本将检查您的系统是否存在 `rpm`、`yum` 或 `dnf`，如果存在其中任何一个，它将判断系统基于 Redhat，并开始 RPM 安装过程。
 
-安装文件时使用前缀 `/usr` 而不是 `/usr/local`。
+文件将以 `/usr` 前缀而不是 `/usr/local` 前缀安装。
 
-=== 仓库
+=== 储存库
 
-RKE2 的签名 RPM 在 `rpm-testing.rancher.io` 和 `rpm.rancher.io` RPM 仓库中发布。如果你在支持 RPM 的节点上运行 https://get.rke2.io 脚本，它将默认使用这些 RPM 仓库。你也可以自行安装它们。
+签名的 RPM 在 `rpm-testing.rancher.io` 和 `rpm.rancher.io` RPM 仓库中发布。如果您在支持 RPM 的节点上运行 https://get.rke2.io 脚本，它将默认使用这些 RPM 仓库。但您也可以自己安装它们。
 
-RPM 提供 `systemd` 单元来管理 `rke2`，但需要在首次启动服务之前通过配置文件进行配置。
+RPM 提供 `systemd` 单元来管理 `rke2`，但在第一次启动服务之前需要通过配置文件进行配置。
 
-=== Enterprise Linux 7
+=== Enterprise Linux 7/8/9
 
-要使用 RPM 仓库，在 CentOS 7 或 RHEL 7 系统上运行以下 bash 代码片段：
-
-[,bash]
-----
-cat << EOF > /etc/yum.repos.d/rancher-rke2-1-18-latest.repo
-[rancher-rke2-common-latest]
-name=Rancher RKE2 Common Latest
-baseurl=https://rpm.rancher.io/rke2/latest/common/centos/7/noarch
-enabled=1
-gpgcheck=1
-gpgkey=https://rpm.rancher.io/public.key
-
-[rancher-rke2-1-18-latest]
-name=Rancher RKE2 1.18 Latest
-baseurl=https://rpm.rancher.io/rke2/latest/1.18/centos/7/x86_64
-enabled=1
-gpgcheck=1
-gpgkey=https://rpm.rancher.io/public.key
-EOF
-----
-
-=== Enterprise Linux 8
-
-要使用 RPM 仓库，在 CentOS 8 或 RHEL 8 系统上运行以下 bash 代码片段：
+为了使用 RPM 储存库，在 CentOS 或 RHEL 系统上，运行以下 bash 代码片段：
 
 [,bash]
 ----
-cat << EOF > /etc/yum.repos.d/rancher-rke2-1-18-latest.repo
+export RKE2_MINOR=28
+export LINUX_MAJOR=7 # or 8 or 9 etc
+cat << EOF > /etc/yum.repos.d/rancher-rke2-1-${RKE2_MINOR}-latest.repo
 [rancher-rke2-common-latest]
 name=Rancher RKE2 Common Latest
-baseurl=https://rpm.rancher.io/rke2/latest/common/centos/8/noarch
+baseurl=https://rpm.rancher.io/rke2/latest/common/centos/${LINUX_MAJOR}/noarch
 enabled=1
 gpgcheck=1
+repo_gpgcheck=1
 gpgkey=https://rpm.rancher.io/public.key
 
-[rancher-rke2-1-18-latest]
-name=Rancher RKE2 1.18 Latest
-baseurl=https://rpm.rancher.io/rke2/latest/1.18/centos/8/x86_64
+[rancher-rke2-1-${RKE2_MINOR}-latest]
+name=Rancher RKE2 1.${RKE2_MINOR} Latest
+baseurl=https://rpm.rancher.io/rke2/latest/1.${RKE2_MINOR}/centos/${LINUX_MAJOR}/x86_64
 enabled=1
 gpgcheck=1
+repo_gpgcheck=1
 gpgkey=https://rpm.rancher.io/public.key
 EOF
 ----
 
 === 安装
 
-配置仓库后，你可以运行以下任一命令：
+在配置好储存库后，您可以运行以下任一命令：
 
 [,sh]
 ----
 yum -y install rke2-server
 ----
 
-或者
+或
 
 [,sh]
 ----
 yum -y install rke2-agent
 ----
 
-RPM 将安装相应的 `rke2-server.service` 或 `rke2-agent.service` systemd 单元，你可以使用 `systemctl start rke2-server` 进行调用。请确保在启动之前配置 `rke2`，可以按照下面的``配置文件``说明进行操作。
+RPM 将安装相应的 `rke2-server.service` 或 `rke2-agent.service` systemd 单元，可以像这样调用：`systemctl start rke2-server`。确保在启动 `rke2` 之前进行配置，按照下面的 `Configuration File` 指示进行。
 
 == 手动
 
-RKE2 二进制文件是静态编译和链接的，这使得 RKE2 二进制文件可以跨 Linux 发行版移植，而无需担心依赖性问题。最简单的安装方法是下载二进制文件，确保文件可执行，然后将其复制到 `+${PATH}+`，通常是 `/usr/local/bin`。第一次执行后，RKE2 将创建所有必要的目录和文件。要进一步配置系统，请参阅xref:./configuration.adoc[配置文件]文档。
+RKE2 二进制文件是静态编译和链接的，这使得 RKE2 二进制文件可以在不同的 Linux 发行套件之间便携，而无需担心依赖问题。最简单的安装方法是下载二进制文件，确保它是可执行的，然后将其复制到`${PATH}`，通常是`/usr/local/bin`。首次执行后，RKE2将创建所有必要的目录和文件。要进一步配置系统，您需要参考xref:install/configuration.adoc[配置文件]文档。

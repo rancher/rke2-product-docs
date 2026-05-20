@@ -5,17 +5,16 @@
 
 == 配置文件
 
-配置 RKE2 的主要方法是使用它的配置文件。你也可以使用命令行参数和环境变量，但 RKE2 作为 systemd 服务安装，因此这些方法较为复杂。
+配置 RKE2 的主要方式是通过其配置文件。命令行参数和环境变量也可用，但 RKE2 作为 systemd 服务安装，因此这些不太容易利用。
 
-默认情况下，RKE2 将使用 `/etc/rancher/rke2/config.yaml` YAML 文件中的值来启动。
+默认情况下，RKE2 将使用位于 `/etc/rancher/rke2/config.yaml` 的 YAML 文件中的值启动。
 
 [NOTE]
 ====
-RKE2 配置文件需要手动创建。你可以通过以特权用户身份运行 `touch /etc/rancher/rke2/config.yaml` 来实现这一点。
+RKE2 配置文件需要手动创建。您可以通过以特权用户身份运行 `touch /etc/rancher/rke2/config.yaml` 来完成此操作。如果在启动 RKE2 后更改配置，则必须重新启动服务以应用新配置。
 ====
 
-
-下面是一个 `server` 配置文件的基本示例：
+以下是基本`server`配置文件的示例：
 
 [,yaml]
 ----
@@ -28,9 +27,9 @@ node-label:
 debug: true
 ----
 
-配置文件参数直接映射到 CLI 参数，可重复的 CLI 参数呈现为 YAML 列表。布尔标志在 YAML 文件中表示为 `true` 或 `false`。
+配置文件参数直接映射到 CLI 参数，可重复的 CLI 参数表示为 YAML 列表。布尔标志在YAML文件中表示为`true`或`false`。
 
-下面展示了一个仅使用 CLI 参数的相同配置：
+下面展示了仅使用 CLI 参数的相同配置，以演示这一点：
 
 [,bash]
 ----
@@ -42,13 +41,15 @@ rke2 server \
   --debug
 ----
 
-也可以同时使用配置文件和 CLI 参数。 在这种情况下，值将从两个来源加载，但 CLI 参数将优先。 对于 `--node-label` 等可重复参数，CLI 参数将覆盖列表中的所有值。
+也可以同时使用配置文件和命令行参数。 在这些情况下，将从两个来源加载值，但命令行参数将优先。对于可重复的参数，例如`--node-label`，命令行参数将覆盖列表中的所有值。
 
-最后，配置文件的位置可以通过 CLI 参数 `--config FILE, -c FILE` 或者环境变量 `$RKE2_CONFIG_FILE` 来改变。
+最后，配置文件的位置可以通过 CLI 参数 `--config FILE, -c FILE` 或环境变量 `$RKE2_CONFIG_FILE` 更改。
 
 === 多个配置文件
 
-支持多个配置文件。默认情况下，配置从 `/etc/rancher/rke2/config.yaml` 和 `/etc/rancher/rke2/config.yaml.d/*.yaml` 按字母顺序加载。将使用给定键的最后一个值。切片会被替换。
+支持多个配置文件。默认情况下，配置文件按字母顺序从 `/etc/rancher/rke2/config.yaml` 和 `/etc/rancher/rke2/config.yaml.d/*.yaml` 中读取。
+
+默认情况下，将使用给定键找到的最后一个值。可以在键后附加一个`+`，将值附加到现有字符串或切片，而不是替换它。后续文件中此键的所有出现也将需要一个`+`以防止覆盖累积的值。
 
 多个配置文件的示例如下：
 
@@ -63,16 +64,19 @@ node-label:
 
 # config.yaml.d/test1.yaml
 write-kubeconfig-mode: 600
-
+node-taint:
+  - alice=bob:NoExecute
 
 # config.yaml.d/test2.yaml
 write-kubeconfig-mode: 777
 node-label:
   - other=what
   - foo=three
+node-taint+:
+  - charlie=delta:NoSchedule
 ----
 
-因此，最终配置如下：
+这将导致最终配置为：
 
 [,yaml]
 ----
@@ -81,41 +85,60 @@ token: boop
 node-label:
   - other=what
   - foo=three
+node-taint:
+  - alice=bob:NoExecute
+  - charlie=delta:NoSchedule
 ----
 
-=== Legacy kubelet logging flags
+== Kubelet 配置
 
-RKE2 supports additional flags to configure kubelet logging that were previously supported by the kubelet itself. These flags are intercepted by RKE2, and control how RKE2 wraps logs written to stdout and stderr by the kubelet:
+[NOTE]
+.版本门控
+====
+kubelet 配置文件的 drop-in 目录或配置文件（下文选项 1 和 2）仅在 v1.32 及以上版本中可用。对于较低的次要版本，您应该直接使用 kubelet 参数（以下选项 3）。
+====
+
+根据上游行为，kubelet 配置可以通过特定的 https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-configuration-merging-order[优先级顺序] 以不同方式进行更改。
+
+RKE2 使用默认的 kubelet 配置，该配置存储在 `/var/lib/rancher/rke2/agent/etc/kubelet.conf.d/00-rke2-defaults.conf` 下。如果您想更改默认配置参数，可以通过三种方式进行：
+
+. （推荐）将配置文件放入 `/var/lib/rancher/rke2/agent/etc/kubelet.conf.d/` 中。
+. 通过使用标志 `--kubelet-arg=config=$PATHTOFILE`，其中 `$PATHTOFILE` 是包含 kubelet 配置参数的文件的路径（例如 `/etc/rancher/rke2/kubelet.conf`），或使用标志 `--kubelet-arg=config-dir=$PATHTODIR`，其中 `$PATHTODIR` 是包含 kubelet 配置参数文件的目录路径（例如 `/etc/rancher/rke2/kubelet.conf.d`）。
+. 通过使用标志 `--kubelet-arg=$FLAG`，其中 `$FLAG` 是一个 kubelet 配置参数（例如 `image-gc-high-threshold=100`）。
+
+=== 遗留的 kubelet 日志标志
+
+RKE2 支持额外的标志来配置 kubelet 日志，这些标志之前由 kubelet 本身支持。这些标志被 RKE2 拦截，并控制 RKE2 如何包装 kubelet 写入 stdout 和 stderr 的日志：
 
 |===
-| Flag | Type | Description
+| 标志 | 类型 | 说明
 
 | `logtostderr`
-| bool
-| Controls whether log messages are written only to stderr (Default `false`)
+| 布尔
+| 控制日志消息是否仅写入 stderr（默认 `false`）
 
 | `alsologtostderr`
-| bool
-| Controls whether log messages are also written to stderr in addition to the specified log file (Default `false`)
+| 布尔
+| 控制日志消息是否除了写入指定的日志文件外，还写入 stderr（默认 `false`）
 
 | `stderrthreshold`
-| string
-| This flag is intercepted by RKE2, but not used (Default `FATAL`)
+| 字符串
+| 此标志被 RKE2 拦截，但未使用（默认 `FATAL`）
 
 | `log-file`
-| string
-| Specifies the absolute path and filename where the component's log messages should be written (Default `/var/lib/rancher/rke2/agent/logs/kubelet.log`)
+| 字符串
+| 指定组件的日志消息应写入的绝对路径和文件名（默认 `/var/lib/rancher/rke2/agent/logs/kubelet.log`）
 
 | `log-file-max-size`
-| int
-| Specifies the maximum size (in megabytes) a log file can reach before it is rotated (Default `50`)
+| 整数
+| 指定日志文件在旋转之前可以达到的最大大小（以兆字节为单位）（默认 `50`）
 |===
 
 == 配置 Linux 安装脚本
 
-如xref:./quickstart.adoc[快速入门指南]中所述，你可以使用 https://get.rke2.io 上提供的安装脚本将 RKE2 安装为服务。
+如 xref:install/quickstart.adoc[快速入门] 中所述，您可以使用位于 https://get.rke2.io 的安装脚本将 RKE2 安装为服务。
 
-此命令最简单的形式是以 root 用户身份或通过 `sudo` 运行，如下所示：
+此命令的最简单形式是以 root 用户身份或通过 `sudo` 运行，如下所示：
 
 [,sh]
 ----
@@ -123,58 +146,40 @@ RKE2 supports additional flags to configure kubelet logging that were previously
 curl -sfL https://get.rke2.io | sh -
 ----
 
-[NOTE]
-====
-中国用户，可以使用以下方法加速安装：
-
-----
-curl -sfL https://rancher-mirror.rancher.cn/rke2/install.sh | INSTALL_RKE2_MIRROR=cn sh -
-----
-====
-
-
-使用该方法安装 RKE2 时，你可以使用以下环境变量来配置安装：
+使用此方法安装 RKE2 时，可以使用以下环境变量来配置安装：
 
 |===
-| 环境变量 | 描述
+| 环境变量 | 说明
 
 | `INSTALL_RKE2_VERSION`
-| 从 GitHub 下载的 RKE2 版本。如果未指定，将尝试从 `stable` channel 下载最新版本。如果在基于 RPM 的系统上安装并且 `stable` channel 中不存在所需的版本，则也应设置 `INSTALL_RKE2_CHANNEL`。
+| 要从 GitHub 下载的 RKE2 版本。如果未指定，将尝试从 `stable` 通道下载最新版本。如果在 RPM 基础系统上安装且所需版本在 `stable` 通道中不存在，则还应设置 `INSTALL_RKE2_CHANNEL`。
 
 | `INSTALL_RKE2_TYPE`
-| 要创建的 systemd 服务类型，可以是 "server" 或 "agent"，默认值是 "server"。
+| 要创建的 systemd 服务类型，可以是 "server" 或 "agent"，默认是 "server"。
 
 | `INSTALL_RKE2_CHANNEL_URL`
-| 用于获取 RKE2 下载 URL 的 Channel URL。默认为 `+https://update.rke2.io/v1-release/channels+`。
+| 用于获取 RKE2 下载 URL 的通道 URL。默认值为 `https://update.rke2.io/v1-release/channels`。
 
 | `INSTALL_RKE2_CHANNEL`
-| 用于获取 RKE2 下载 URL 的 Channel。默认为 `stable`。可选项：`stable`、`latest`、`testing`。
+| 用于获取 RKE2 下载 URL 的通道。默认值为 `stable`。选项包括：`stable`、`latest`、`testing`。
 
 | `INSTALL_RKE2_METHOD`
-| 安装方法。默认是基于 RPM 的系统 `rpm`，所有其他系统都是 `tar`。
+| 要使用的安装方法。默认情况下，在基于 RPM 的系统上 `rpm`，其他系统 `tar`。
 |===
 
-这个安装脚本很简单，会执行以下操作：
+此安装脚本简单明了，将执行以下操作：
 
-. 根据以上参数获取需要安装的版本。如果没有指定参数，将使用最新的官方版本。
-. 确定并执行安装方法。有两种方法：rpm 和 tar。如果设置了 `INSTALL_RKE2_METHOD` 变量，将遵守该变量，否则，将在使用此包管理系统的操作系统上使用 `rpm`。在其他系统上将使用 tar。如果使用 tar，脚本将简单地解压缩所需版本的 tar 包。如果使用 rpm，将设置一个 yum 仓库，并使用 yum 安装 rpm。
+. 根据上述参数获取要安装的版本。如果未提供参数，将使用最新的官方版本。
+. 确定并执行安装方法。有两种方法：rpm 和 tar。如果设置了 `INSTALL_RKE2_METHOD` 变量，将尊重该设置。否则，将在使用此软件包管理系统的操作系统上使用 `rpm`。在所有其他系统上，将使用 tar。在 Tar 包方法的情况下，脚本将简单地解压与所需版本相关的 Tar 包。在 rpm 的情况下，将设置一个 yum 储存库，并使用 yum 安装 rpm。
 
 == 配置 Windows 安装脚本
 
-[IMPORTANT]
-.版本
-====
-从 v1.21.3+rke2r1 开始，Windows 支持处于试验阶段。
-====
-
-
 [NOTE]
 ====
-Windows 支持要求选择 Calico 作为 RKE2 集群的 CNI。
+Windows 支持需要选择 Calico 或 Flannel 作为 RKE2 集群的 CNI。
 ====
 
-
-正如xref:./quickstart.adoc[快速入门指南]中所述，你可以使用位于 https://github.com/rancher/rke2/blob/master/install.ps1 的安装脚本在 Windows Agent 节点上安装 RKE2。
+如 xref:install/quickstart.adoc[快速入门] 中所述，您可以使用位于 https://github.com/rancher/rke2/blob/master/install.ps1 的安装脚本在 Windows Agent 节点上安装 RKE2。
 
 此命令的最简单形式如下：
 
@@ -183,7 +188,7 @@ Windows 支持要求选择 Calico 作为 RKE2 集群的 CNI。
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
 ----
 
-使用该方法安装 Windows RKE2 agent 时，你可以传入以下参数配置安装脚本：
+使用此方法安装 Windows RKE2 代理时，可以传递以下参数以配置安装脚本：
 
 [,console]
 ----
@@ -196,7 +201,7 @@ OPTIONS
 -Channel           Channel to use for fetching RKE2 download URL (Default: "stable")
 -Method            The installation method to use. Currently tar or choco installation supported. (Default: "tar")
 -Type              Type of RKE2 service. Only the "agent" type is supported on Windows. (Default: "agent")
--Version           Version of rke2 to download from Github
+-Version           Version of RKE2 to download from Github
 -TarPrefix         Installation prefix when using the tar installation method. (Default: `C:/usr/local` unless `C:/usr/local` is read-only or has a dedicated mount point, in which case `C:/opt/rke2` is used instead)
 -Commit            (experimental/agent) Commit of RKE2 to download from temporary cloud storage. If set, this forces `--Method=tar`. Intended for development purposes only.
 -AgentImagesDir    Installation path for airgap images when installing from CI commit. (Default: `C:/var/lib/rancher/rke2/agent/images`)
@@ -205,7 +210,7 @@ OPTIONS
 
 === 其他 Windows 安装脚本使用示例
 
-==== 安装最新版本而不是稳定版
+==== 安装最新版本而不是稳定版本
 
 [,powershell]
 ----
@@ -213,7 +218,7 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/ins
 ./install.ps1 -Channel Latest
 ----
 
-==== 使用 Tar 安装方法安装最新版本
+==== 使用 tar 安装方法安装最新版本
 
 [,powershell]
 ----
@@ -223,25 +228,25 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/ins
 
 == 直接运行二进制文件
 
-如前所述，安装脚本主要与将 RKE2 配置为服务运行有关。如果你选择不使用该脚本，只需从我们的 https://github.com/rancher/k3s/releases/latest[releases 页面]下载二进制文件，将文件放在你的路径上并执行即可运行 RKE2。重要命令：
+如前所述，安装脚本主要关注将 RKE2 配置为服务。如果您选择不使用脚本，您可以通过从我们的 https://github.com/rancher/rke2/releases/latest[发布页面] 下载二进制文件，将其放置到您的路径中并执行来运行 RKE2。重要的命令包括：
 
 |===
-| 命令 | 描述
+| 命令 | 说明
 
 | `rke2 server`
-| 运行 RKE2 management server，它还将启动 Kubernetes control plane 组件，例如 API Server、controller-manager 和 scheduler。仅在 Linux 上支持。
+| 运行 RKE2 管理服务器，这将启动 Kubernetes 控制平面组件，如 API 服务器、控制器管理器和调度器。仅支持 Linux。
 
 | `rke2 agent`
-| 运行 RKE2 Node Agent。这将使 RKE2 作为 Worker 节点运行，同时启动 Kubernetes 节点服务 `kubelet` 和 `kube-proxy`。在 Linux 和 Windows 上支持。
+| 运行 RKE2 节点代理。这将使 RKE2 作为工作节点运行，启动 Kubernetes 节点服务 `kubelet` 和 `kube-proxy`。支持 Linux 和 Windows。
 
 | `rke2 --help`
-| 显示命令列表或某个命令的帮助
+| 显示命令列表或某个命令的帮助信息。
 |===
 
 == 更多信息
 
-关于配置 RKE2 Server 的详细信息，请参阅 xref:../reference/server_config.adoc[Server 配置参考]。
+有关配置 RKE2 服务器的详细信息，请参阅 xref:reference/server_config.adoc[服务器配置参考]。
 
-关于配置 RKE2 Agent 的详细信息，请参阅 xref:../reference/linux_agent_config.adoc[Agent 配置参考]
+有关配置 RKE2 代理的详细信息，请参阅 xref:reference/linux_agent_config.adoc[代理配置参考]。
 
-有关配置 RKE2 Windows Agent 的详细信息，请参阅 xref:../reference/windows_agent_config.adoc[Windows Agent 配置参考]。
+有关配置 RKE2 Windows 代理的详细信息，请参阅 xref:reference/windows_agent_config.adoc[Windows 代理配置参考]。

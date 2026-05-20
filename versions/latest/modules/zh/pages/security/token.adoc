@@ -1,93 +1,93 @@
-= Token Management
+= 令牌管理
 :page-languages: [en, zh]
 :revdate: 2026-02-27
 :page-revdate: {revdate}
 
-RKE2 uses tokens to secure the node join process and to encrypt confidential information that is persisted to the datastore. Tokens authenticate the cluster to the joining node, and the node to the cluster.
+RKE2 使用词元来保护节点加入过程，并加密持久化到数据存储中的机密信息。词元用于验证集群对加入节点的身份，以及加入节点对集群的身份。
 
-== Token Format
+== 词元格式
 
-RKE2 tokens can be specified in either secure or short format. The secure format is preferred, as it enables the client to authenticate the identity of the cluster it is joining, before sending credentials.
+RKE2 词元可以以安全格式或简短格式指定。安全格式是首选，因为它使客户端能够在发送凭据之前验证其要加入的集群的身份。
 
-=== Secure
+=== 安全
 
-The secure token format (occasionally referred to as a "full" token) contains the following parts:
+安全词元格式（有时称为 "完整" 词元）包含以下部分：
 
 `<prefix><cluster CA hash>::<credentials>`
 
-* `prefix`: a fixed `K10` prefix that identifies the token format
-* `cluster CA hash`: The hash of the cluster's server CA certificate, used to authenticate the server to the joining node.
- ** For self-signed CA certificates, this is the SHA256 sum of the PEM-formatted certificate, as stored on disk.
- ** For custom CA certificates, this is the SHA256 sum of the DER encoding of the root certificate; commonly known as the certificate fingerprint.
-* `credentials`: The username and password, or bearer token, used to authenticate the joining node to the cluster.
+* `prefix`：一个固定的 `K10` 前缀，用于标识词元格式
+* `cluster CA hash`：集群服务器 CA 证书的哈希值，用于验证服务器与加入节点之间的身份。
+ ** 对于自签名 CA 证书，这是存储在磁盘上的 PEM 格式证书的 SHA256 摘要。
+ ** 对于自定义 CA 证书，这是根证书的 DER 编码的 SHA256 摘要；通常称为证书指纹。
+* `credentials`：用于验证加入节点与集群之间身份的用户名和密码或词元。
 
-==== TLS Bootstrapping
+==== TLS 启动
 
-When a secure token is specified, the joining node performs the following steps to validate the identity of the server it has connected to, before transmitting credentials:
+当指定安全词元时，加入节点执行以下步骤以验证其连接的服务器的身份，然后再传输凭据：
 
-. With TLS verification disabled, download the CA bundle from `/cacerts` on the server it is joining.
-. Calculate the SHA256 hash of the CA certificate, as described above.
-. Compare the calculated SHA256 hash to the hash from the token.
-. If the hash matches, validate that the certificate presented by the server can be validated by the server's CA bundle.
-. If the server certificate is valid, present credentials to join the cluster using either basic or bearer token authentication, depending on the token type.
+. 在禁用 TLS 验证的情况下，从其要加入的服务器上的 `/cacerts` 下载 CA 包。
+. 计算 CA 证书的 SHA256 哈希值，如上所述。
+. 将计算出的 SHA256 哈希与词元中的哈希进行比较。
+. 如果哈希匹配，验证服务器提供的证书是否可以通过服务器的 CA 包进行验证。
+. 如果服务器证书有效，则根据词元类型，使用基本或词元身份验证提供凭据以加入集群。
 
-=== Short
+=== 短
 
-The short token format includes only the password or bearer token used to authenticate the joining node to the cluster.
+短词元格式仅包括用于验证加入节点与集群之间身份的密码或词元。
 
-If a short token is used, the joining node implicitly trusts the CA bundle presented by the server; steps 2-4 in the TLS Bootstrapping process are skipped. The initial connection may be vulnerable to https://en.wikipedia.org/wiki/Man-in-the-middle_attack[man-in-the-middle] attack.
+如果使用短词元，加入节点会隐式信任服务器提供的 CA 包；TLS 启动过程中的步骤 2-4 被跳过。初始连接可能会受到 https://en.wikipedia.org/wiki/Man-in-the-middle_attack[中间人] 攻击的威胁。
 
-== Token Types
+== 令牌类型
 
-RKE2 supports three types of tokens. Only the server token is available by default; additional token types must be configured or created by the administrator.
+RKE2 支持三种类型的词元。默认情况下，仅提供服务器词元；其他词元类型必须由管理员配置或创建。
 
 |===
-| Type | CLI Option | Environment Variable
+| 类型 | CLI 选项 | 环境变量
 
-| Server
+| 服务器
 | `--token`
 | `RKE2_TOKEN`
 
-| Agent
+| 代理
 | `--agent-token`
 | `RKE2_AGENT_TOKEN`
 
-| Bootstrap
+| 引导
 | `n/a`
 | `n/a`
 |===
 
-=== Server
+=== 服务器
 
-If no token is provided when starting the first server in the cluster, one is created with a random password. The server token is always written to `/var/lib/rancher/rke2/server/token`, in secure format.
+如果在集群中启动第一个服务器时未提供词元，则会创建一个随机密码的词元。服务器词元始终以安全格式写入 `/var/lib/rancher/rke2/server/token`。
 
-The server token can be used to join both server and agent nodes to the cluster. Anyone with access to the server token essentially has full administrator access to the cluster. This token should be guarded carefully.
+服务器词元可用于将服务器和代理节点加入集群。任何拥有服务器词元的人基本上都拥有对集群的完全管理员访问权限。此词元应谨慎保管。
 
-The server token is also used as the https://en.wikipedia.org/wiki/PBKDF2[PBKDF2] passphrase to encrypt confidential information that is persisted to the datastore known as bootstrap data. Bootstrap data is essential to set up new server nodes or restore from a snapshot. For this reason, the token must be backed up alongside the cluster datastore itself.
+服务器词元还用作 https://en.wikipedia.org/wiki/PBKDF2[PBKDF2] 密码短语，以加密持久化到称为启动数据的数据存储中的机密信息。启动数据对于设置新的服务器节点或从快照恢复至关重要。因此，词元必须与集群数据存储本身一起备份。
 
 [WARNING]
 ====
-Unless custom CA certificates are in use, only the short (password-only) token format can be used when starting the first server in the cluster. This is because the cluster CA hash cannot be known until after the server has generated the self-signed cluster CA certificates.
+除非使用自定义 CA 证书，否则在启动集群中的第一个服务器时只能使用短（仅密码）词元格式。这是因为在服务器生成自签名集群 CA 证书之前，无法知道集群 CA 哈希。
 ====
 
-For more information on using custom CA certificates, see the xref:security/certificates.adoc[`rke2 certificate` documentation].
+有关使用自定义 CA 证书的更多信息，请参见 xref:security/certificates.adoc[`rke2 certificate` 文档]。
 
-=== Agent
+=== 代理
 
-By default, the agent token is the same as the server token. The agent token can be set before or after the cluster has been started, by changing the CLI option or environment variable on all servers in the cluster. The agent token is similar to the server token in that is it statically configured, and does not expire.
+默认情况下，代理词元与服务器词元相同。可以在集群启动之前或之后，通过更改集群中所有服务器上的 CLI 选项或环境变量来设置代理词元。代理词元与服务器词元类似，都是静态配置的，并且不会过期。
 
-The agent token is written to `/var/lib/rancher/rke2/server/agent-token`, in secure format. If no agent token is specified, this file is a link to the server token.
+代理词元以安全格式写入 `/var/lib/rancher/rke2/server/agent-token`。如果未指定代理词元，则此文件是服务器词元的链接。
 
-=== Bootstrap
+=== 引导
 
-RKE2 supports dynamically generated, automatically expiring agent https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/[bootstrap tokens].
+RKE2 支持动态生成、自动过期的代理 https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/[启动词元]。
 
-== RKE2 Token CLI
+== RKE2 词元 CLI
 
-The RKE2 token CLI tool handles:
+RKE2 词元 CLI 工具处理：
 
-* The life cycle of bootstrap tokens, using the same generation and validation code as kubeadm token bootstrap tokens. Note that both CLIs are similar.
-* The rotation of the server token
+* 启动词元的生命周期，使用与 kubeadm 启动词元相同的生成和验证代码。请注意，这两个 CLI 是相似的。
+* 服务器词元的轮换
 
 ----
 NAME:
@@ -109,103 +109,103 @@ OPTIONS:
 
 === `rke2 token create [token]`
 
-Create a new bootstrap token. The `[token]` is the actual token to write, as generated by `rke2 token generate`. If no token is given, a random one will be generated.
+创建一个新的启动词元。`[token]` 是实际要写入的词元，由 `rke2 token generate` 生成。如果未提供词元，将生成一个随机词元。
 
-A token in secure format, including the cluster CA hash, will be written to stdout. The output of this command should be saved, as the secret portion of the token cannot be shown again.
+以安全格式写入的词元，包括集群CA哈希，将输出到标准输出。此命令的输出应保存，因为词元的秘密部分无法再次显示。
 
 |===
-| Flag | Description
+| 标志 | 说明
 
-| `--data-dir` value
-| Folder to hold state (default: "/var/lib/rancher/rke2")
+| `--data-dir`值
+| 用于保存状态的文件夹（默认："/var/lib/rancher/rke2"）
 
-| `--kubeconfig` value
-| Server to connect to [$KUBECONFIG]
+| `--kubeconfig`值
+| 要连接的服务器[$KUBECONFIG]
 
-| `--description` value
-| A human friendly description of how this token is used
+| `--description`值
+| 对该词元使用方式的友好描述
 
-| `--groups` value
-| Extra groups that this token will authenticate as when used for authentication
+| `--groups`值
+| 当用于身份验证时，此词元将被认证为附加组。
 
-| `--ttl` value
-| The duration before the token is automatically deleted (e.g. 1s, 2m, 3h). If set to '0', the token will never expire (default: 24h0m0s)
+| `--ttl`值
+| 词元自动删除之前的持续时间（例如：1s, 2m, 3h）。如果设置为 '0'，则词元将永远不会过期（默认：24h0m0s)
 
-| `--usages` value
-| Describes the ways in which this token can be used. (default: "signing,authentication")
+| `--usages`值
+| 描述此词元可以使用的方式。（默认："签名，认证"）
 |===
 
 === `rke2 token delete`
 
-Delete one or more bootstrap tokens. The full token can be provided, or just the token ID.
+删除一个或多个启动词元。可以提供完整的词元，或仅提供词元 ID。
 
 |===
-| Flag | Description
+| 标志 | 说明
 
-| `--data-dir` value
-| Folder to hold state (default: /var/lib/rancher/rke2)
+| `--data-dir`值
+| 用于保存状态的文件夹（默认：/var/lib/rancher/rke2）
 
-| `--kubeconfig` value
-| Server to connect to [$KUBECONFIG]
+| `--kubeconfig`值
+| 要连接的服务器[$KUBECONFIG]
 |===
 
 === `rke2 token generate`
 
-Generate a randomly-generated bootstrap token.
+生成一个随机生成的启动词元。
 
-You don't have to use this command in order to generate a token. You can do so yourself as long as it is in the format `+[a-z0-9]{6}.[a-z0-9]{16}+`, where the first portion is the token ID, and the second portion is the secret.
+您不必使用此命令来生成词元。只要格式为 `[a-z0-9]{6}.[a-z0-9]{16}`，您可以自己完成，其中第一部分是词元 ID，第二部分是密钥。
 
 |===
-| Flag | Description
+| 标志 | 说明
 
-| `--data-dir` value
-| Folder to hold state (default: /var/lib/rancher/rke2)
+| `--data-dir`值
+| 用于保存状态的文件夹（默认：/var/lib/rancher/rke2）
 
-| `--kubeconfig` value
-| Server to connect to [$KUBECONFIG]
+| `--kubeconfig`值
+| 要连接的服务器[$KUBECONFIG]
 |===
 
 === `rke2 token list`
 
-List bootstrap tokens, showing their ID, description, and remaining time-to-live.
+列出启动词元，显示其 ID、描述和剩余生存时间。
 
 |===
-| Flag | Description
+| 标志 | 说明
 
-| `--data-dir` value
-| Folder to hold state (default: /var/lib/rancher/rke2)
+| `--data-dir`值
+| 用于保存状态的文件夹（默认：/var/lib/rancher/rke2）
 
-| `--kubeconfig` value
-| Server to connect to [$KUBECONFIG]
+| `--kubeconfig`值
+| 要连接的服务器[$KUBECONFIG]
 
-| `--output` value
-| Output format. Valid options: text, json (default: "text")
+| `--output`值
+| 输出格式。有效选项：文本，json（默认："文本"）
 |===
 
-== Server Token Rotation
+== 服务器词元轮换
 
-The `rke2 token rotate` command allows you to rotate and replace the original token used for server bootstrap. After running the command on a single server, all servers and agents that used the original token should be restarted with the new token. The original token will be invalidated and cannot be used to join any new servers or agents to the cluster.
+`rke2 token rotate` 命令允许您轮换并替换用于服务器启动的原始词元。在单个服务器上运行命令后，所有使用原始词元的服务器和代理应使用新词元重新启动。原始词元将被作废，无法用于将任何新服务器或代理加入集群。
 
 |===
-| Flag | Description | Default
+| 标志 | 说明 | 默认值
 
-| `--data-dir` value
-| Folder to hold state
+| `--data-dir`值
+| 用于保存状态的文件夹
 | /var/lib/rancher/rke2
 
-| `--kubeconfig` value
-| Kubeconfig for authentication to server
+| `--kubeconfig`值
+| 用于对服务器进行身份验证的 Kubeconfig
 | /etc/rancher/rke2/rke2.yaml
 
-| `--server` value
-| Server to connect to
+| `--server`值
+| 要连接的服务器
 | "https://127.0.0.1:9345"
 
-| `--token` value
-| Existing token used to join a server or agent to a cluster
-| N/A
+| `--token`值
+| 用于将服务器或代理加入集群的现有词元
+| 不适用
 
-| `--new-token` value
-| New token to replace the original token
-| If not specified, a random 16 character token will be generated
+| `--new-token`值
+| 用于替换原始词元的新词元
+| 如果未指定，将生成一个随机的 16 个字符的词元
 |===

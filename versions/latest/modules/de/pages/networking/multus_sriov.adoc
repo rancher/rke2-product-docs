@@ -1,0 +1,173 @@
+= Multus und SR-IOV
+:page-languages: [en, zh]
+:revdate: 2026-01-08
+:page-revdate: {revdate}
+
+== Multus verwenden
+
+https://github.com/k8snetworkplumbingwg/multus-cni[Multus CNI] ist ein CNI-Plugin, das das Anfügen mehrerer Netzwerkschnittstellen an Pods ermöglicht. Multus ersetzt keine CNI-Plugins, sondern fungiert als Multiplexer für CNI-Plugins. Multus ist in bestimmten Anwendungsfällen nützlich, insbesondere wenn Pods netzwerkintensiv sind und zusätzliche Netzwerkschnittstellen benötigen, die Techniken zur Beschleunigung des Datenpfads wie SR-IOV unterstützen.
+
+Multus kann nicht eigenständig bereitgestellt werden. Es erfordert immer mindestens ein konventionelles CNI-Plugin, das die Netzwerkanforderungen des Kubernetes-Clusters erfüllt. Dieses CNI-Plugin wird zum Standard für Multus und wird verwendet, um das primäre Interface für alle Pods bereitzustellen.
+
+Um Multus zu aktivieren, geben Sie `multus` als ersten Listeneintrag im Schlüssel der `cni`-Konfigurationsdatei an, gefolgt vom Namen des Plugins, das Sie zusammen mit Multus verwenden möchten (oder `none`, wenn Sie Ihr eigenes Standard-Plugin bereitstellen). Beachten Sie, dass Multus immer an erster Stelle der Liste stehen muss. Um Multus beispielsweise mit Canal als primärem CNI-Plugin zu verwenden:
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+cni:
+- multus
+- canal
+----
+
+Für weitere Informationen über Multus siehe die https://github.com/k8snetworkplumbingwg/multus-cni/tree/master/docs[multus-cni] Dokumentation.
+
+== Verwendung von Multus mit Cilium
+
+[NOTE]
+.Versionssperre
+====
+Das Deaktivieren des `exclusive`-Flags ist ab den November 2025-Versionen nicht mehr erforderlich: v1.31.14+rke2r1, v1.32.10+rke2r1, v1.33.6+rke2r1 und v1.34.2+rke2r1.
+====
+
+Um Cilium mit Multus zu verwenden, muss die `exclusive`-Konfiguration deaktiviert werden.
+Sie können dies tun, indem Sie die folgende HelmChartConfig verwenden:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-cilium
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    cni:
+      exclusive: false
+----
+
+== Verwendung von Multus mit den Containernetzwerk-Plugins
+
+Jedes CNI-Plugin kann als sekundäres CNI-Plugin für Multus verwendet werden, um zusätzliche Netzwerkschnittstellen an einen Pod anzuschließen. Es ist jedoch am häufigsten, die vom Kubernetes ContainerNetworking-Team verwalteten CNI-Plugins (bridge, host-device, macvlan usw.) als sekundäre CNI-Plugins für Multus zu verwenden. Die Plugins des Kubernetes ContainerNetworking-Teams werden automatisch bereitgestellt, wenn Multus installiert wird. Für weitere Informationen zu diesen Plugins verweisen Sie auf die https://www.cni.dev/plugins/current[ContainerNetworking Plugins]-Dokumentation.
+
+Um eines dieser Plugins zu verwenden, muss ein entsprechendes NetworkAttachmentDefinition-Objekt erstellt werden, um die Konfiguration des sekundären Netzwerks zu definieren. Die Definition wird dann durch Pod-Annotationen referenziert, die Multus verwenden wird, um zusätzliche Schnittstellen für diesen Pod bereitzustellen. Ein Beispiel für die Verwendung des `macvlan` CNI-Plugins mit Multus ist im https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md#storing-a-configuration-as-a-custom-resource[multus-cni-Repo] verfügbar.
+
+== Multus IPAM-Plugin-Optionen
+
+[tabs,sync-group-id=MultusIPAMplugins]
+=====
+host-local::
++
+Das host-local IPAM-Plugin weist IP-Adressen aus einem Satz von Adressbereichen zu. Es speichert den Zustand lokal im Dateisystem des Hosts und gewährleistet somit die Einzigartigkeit der IP-Adressen auf einem einzelnen Host. Daher empfehlen wir es nicht für Multi-Node-Cluster. Dieses IPAM-Plugin erfordert keine zusätzliche Bereitstellung. Für weitere Informationen: https://www.cni.dev/plugins/current/ipam/host-local/. 
+
+Multus DHCP-Daemon::
++
+--
+Multus bietet ein optionales Daemonset zur Bereitstellung des DHCP-Daemons, der erforderlich ist, um das https://www.cni.dev/plugins/current/ipam/dhcp/[DHCP IPAM-Plugin] auszuführen. Sie können dies tun, indem Sie die folgende xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig] verwenden:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-multus-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-multus
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    manifests:
+      dhcpDaemonSet: true
+----
+
+Dies konfiguriert das Chart für Multus, um das DHCP-Daemonset bereitzustellen. Dieses Feature ist ab den Releases 2024-01 (v1.29.1+rke2r1, v1.28.6+rke2r1, v1.27.10+rke2r1, v1.26.13+rke2r1) verfügbar. 
+
+[NOTE]
+====
+Sie sollten diese Datei vor dem Start von RKE2 schreiben. 
+====
+--
+
+Whereabouts::
++
+--
+https://github.com/k8snetworkplumbingwg/whereabouts[Whereabouts] ist ein IP-Adressmanagement (IPAM) CNI-Plugin, das IP-Adressen clusterweit zuweist. RKE2 bietet die Möglichkeit, Whereabouts mit Multus zu verwenden, um die IP-Adressen der zusätzlichen Netzwerkschnittstellen zu verwalten, die durch Multus erstellt werden. Um dies zu tun, müssen Sie xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig] verwenden, um das Multus CNI so zu konfigurieren, dass es Whereabouts verwendet. 
+
+Sie können dies tun, indem Sie die folgende HelmChartConfig verwenden:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-multus-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-multus
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    rke2-whereabouts:
+      enabled: true
+----
+
+Dies konfiguriert das Chart für Multus, um `rke2-whereabouts` als Abhängigkeit zu verwenden. 
+
+[NOTE]
+====
+Sie sollten diese Datei vor dem Start von RKE2 schreiben.
+====
+--
+=====
+
+=== Aktivierung des Multus Dynamic Networks Controller
+
+Ein Anwendungsfall für die Verwendung des "dicken Plugins" von Multus besteht darin, den https://github.com/k8snetworkplumbingwg/multus-dynamic-networks-controller[Dynamic Networks Controller] bereitzustellen. Dies erfolgt über die folgende HelmChartConfig:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-multus-config.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-multus
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    thickPlugin:
+      enabled: true
+    dynamicNetworksController:
+      enabled: true
+----
+
+[NOTE]
+====
+Der Dynamic Networks Controller kann nur mit Multus im "dicken Plugin"-Modus bereitgestellt werden.
+====
+
+== Verwendung von Multus mit SR-IOV
+
+Die Verwendung des SR-IOV CNI mit Multus kann bei Anwendungsfällen zur Beschleunigung des Datenpfads helfen, indem eine zusätzliche Schnittstelle im Pod bereitgestellt wird, die sehr hohe Durchsatzraten erreichen kann. SR-IOV funktioniert nicht in allen Umgebungen, und es gibt mehrere Anforderungen, die erfüllt sein müssen, um den Knoten als SR-IOV-fähig zu betrachten:
+
+* Physische NIC muss SR-IOV unterstützen (z. B. durch Überprüfung von /sys/class/net/$NIC/device/sriov_totalvfs)
+* Das Host-Betriebssystem muss die IOMMU-Virtualisierung aktivieren
+* Das Host-Betriebssystem enthält Treiber, die SR-IOV unterstützen (z. B. i40e, vfio-pci usw.)
+
+Das SR-IOV CNI-Plugin kann nicht als Standard-CNI-Plugin für Multus verwendet werden; es muss zusammen mit Multus und einem traditionellen CNI-Plugin bereitgestellt werden. Das SR-IOV CNI Helm-Chart befindet sich im `rancher-charts` Helm-Repo. Für weitere Informationen siehe https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-admin/helm-charts-in-rancher/helm-charts-in-rancher.html[Rancher Helm Charts-Dokumentation].
+
+Nach der Installation des SR-IOV CNI-Charts wird der SR-IOV-Operator bereitgestellt. Anschließend muss der Benutzer angeben, welche Knoten im Cluster SR-IOV-fähig sind, indem er sie mit `feature.node.kubernetes.io/network-sriov.capable=true` kennzeichnet:
+
+[,bash]
+----
+kubectl label node $NODE-NAME feature.node.kubernetes.io/network-sriov.capable=true
+----
+
+Sobald sie gekennzeichnet sind, wird das sriov-network-config Daemonset einen Pod auf dem Knoten bereitstellen, um Informationen über die Netzwerkschnittstellen zu sammeln. Diese Informationen sind über die `sriovnetworknodestates` benutzerdefinierte Ressourcendefinition verfügbar. Einige Minuten nach der Bereitstellung wird es pro Knoten eine `sriovnetworknodestates` Ressource geben, mit dem Namen des Knotens als Ressourcennamen.
+
+[NOTE]
+====
+Das SR-IOV CNI-Chart von `rancher-charts` enthält jetzt das `node-feature-discovery`-Chart als automatische Abhängigkeit. Dieses Chart stellt ein kleines Daemonset bereit, das automatisch jeden Knoten basierend auf den auf diesem Knoten erkannten Fähigkeiten kennzeichnet. Dies funktioniert sowohl für Hardware- als auch für Softwarefunktionen. Insbesondere kann `node-feature-discovery` automatisch das Label `feature.node.kubernetes.io/network-sriov.capable=true` hinzufügen, wenn es einen kompatiblen Knoten erkennt. Für weitere Informationen siehe die https://kubernetes-sigs.github.io/node-feature-discovery/v0.11/get-started/introduction.html[NFD-Dokumentation].
+====
+
+Die neuesten Versionen des sriov-network-operators enthalten jedoch auch eine Whitelist unterstützter Hardware, sodass SR-IOV tatsächlich nur mit den NICs auf https://github.com/k8snetworkplumbingwg/sriov-network-operator/blob/master/doc/supported-hardware.md[dieser Liste] verfügbar ist. Wenn Sie das SR-IOV CNI mit einer NIC verwenden möchten, die nicht auf der Liste steht, müssen Sie die `supported-nic-ids` ConfigMap selbst aktualisieren.
+
+Für weitere Informationen zur Verwendung des SR-IOV-Operators verweisen Sie bitte auf https://github.com/k8snetworkplumbingwg/sriov-network-operator/blob/master/doc/quickstart.md#configuration[sriov-network-operator].

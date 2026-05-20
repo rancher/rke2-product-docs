@@ -1,0 +1,134 @@
+= Miroir de registre intégré
+:page-languages: [en, zh]
+:revdate: 2025-10-29
+:page-revdate: {revdate}
+
+[NOTE]
+.Version Gate
+====
+Le miroir de registre intégré est disponible en tant que fonctionnalité expérimentale à partir des versions de janvier 2024{nbsp}: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1 et en version GA à partir des versions de décembre 2024{nbsp}: v1.29.12+rke2r1, v1.30.8+rke2r1, v1.31.4+rke2r1.
+====
+
+RKE2 intègre https://github.com/spegel-org/spegel[Spegel], un miroir de registre OCI distribué sans état qui permet le partage de pair à pair d'images de conteneur entre les nœuds d'un cluster Kubernetes. Le miroir de registre distribué est désactivé par défaut. Pour que RKE2 puisse l'utiliser, vous devez activer à la fois le <<Enabling The Distributed OCI Registry Mirror,miroir de registre OCI distribué>> et le <<Enabling Registry Mirroring,miroir de registre>> comme expliqué dans les sous-sections suivantes.
+
+== Activation du miroir de registre OCI distribué
+
+Pour activer le miroir de registre intégré, les nœuds serveurs doivent être configurés avec `embedded-registry: true`. Cette option active le miroir intégré pour une utilisation sur tous les nœuds du cluster.
+
+Lorsqu'il est activé au niveau du cluster, tous les nœuds hébergeront un registre OCI local sur le port 6443 et publieront une liste d'images disponibles via un réseau de pair à pair sur le port 5001. Toute image disponible dans le magasin d'images containerd sur n'importe quel nœud peut être récupérée par d'autres membres du cluster sans accès à un registre externe. Les images importées via xref:install/airgap.adoc#_tarball_method[fichiers tar d'images en isolation physique] ou xref:add-ons/import_images.adoc#_pre_import_images[pré-importées] sont fixées dans containerd pour garantir qu'elles restent disponibles et ne sont pas supprimées par la collecte des ordures de Kubelet.
+
+=== Configuration requise
+
+Lorsque le miroir de registre intégré est activé, tous les nœuds doivent être capables de se joindre via leurs adresses IP internes, sur les ports TCP 5001 et 9345. Si les nœuds ne peuvent pas se rejoindre, il peut falloir plus de temps pour récupérer les images, car le registre distribué sera essayé en premier par containerd, avant de revenir à d'autres points de terminaison.
+
+=== Métriques
+
+Spegel fournit quelques métriques qui peuvent être utiles pour suivre son activité et peuvent être interrogées dans le superviseur. Cependant, les métriques du superviseur sont désactivées par défaut. Pour les activer, les nœuds serveurs doivent être démarrés avec `supervisor-metrics: true` dans le fichier de configuration.
+
+Une fois activé, interrogez{nbsp}:
+
+----
+kubectl get --server https://$SERVER_NAME:9345 --raw /metrics | grep spegel
+----
+
+== Activation du miroir de registre
+
+Activer le miroir pour un registre permet à un nœud de récupérer des images de ce registre à partir d'autres nœuds et de partager les images du registre avec d'autres nœuds. Si un registre est activé pour le miroir sur certains nœuds, mais pas sur d'autres, seuls les nœuds avec le registre activé échangeront des images de ce registre.
+
+Pour activer le miroir des images d'un registre de conteneurs en amont, les nœuds doivent avoir une entrée dans la section `mirrors` de `registries.yaml` pour ce registre. Le registre n'a pas besoin d'avoir des points de terminaison répertoriés, il doit simplement être présent. Par exemple, pour activer le miroir distribué des images de `docker.io` et `registry.k8s.io`, configurez `registries.yaml` avec le contenu suivant sur tous les nœuds du cluster :
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+  registry.k8s.io:
+----
+
+Les points de terminaison pour les miroirs de registre peuvent également être ajoutés comme d'habitude. Dans la configuration suivante, les tentatives de tirage d'images essaieront d'abord le miroir intégré, puis `mirror.example.com`, puis enfin `docker.io` :
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - https://mirror.example.com
+----
+
+Si vous utilisez un registre privé directement, au lieu de l'utiliser comme miroir pour un registre en amont, vous pouvez activer le miroir distribué de la même manière que les registres publics sont activés{nbsp}: en le répertoriant dans la section des miroirs{nbsp}:
+
+[,yaml]
+----
+mirrors:
+  mirror.example.com:
+----
+
+[NOTE]
+.Version Gate
+====
+Le support des caractères génériques est disponible à partir des versions de mars 2024{nbsp}: v1.26.15+rke2r1, v1.27.12+rke2r1, v1.28.8+rke2r1, v1.29.3+rke2r1
+====
+
+L'entrée de miroir joker `"*"` peut être utilisée pour activer le miroir distribué de tous les registres. Notez que l'astérisque DOIT être cité :
+
+[,yaml]
+----
+mirrors:
+  "*":
+----
+
+Si aucun registre n'est activé pour le miroir sur un nœud, ce nœud ne participe à aucun titre au registre distribué.
+
+Pour plus d'informations sur la structure du fichier `registries.yaml`, voir xref:install/private_registry.adoc[Configuration du registre privé].
+
+=== Repli par défaut du point de terminaison
+
+Par défaut, containerd reviendra au point de terminaison par défaut lors du tirage à partir de registres avec des points de terminaison de miroir configurés. Si vous souhaitez désactiver cela et ne tirer que des images des miroirs configurés et/ou du miroir intégré, consultez la section xref:install/private_registry.adoc#_default_endpoint_fallback[Repli par défaut du point de terminaison] de la documentation de configuration du registre privé.
+
+Notez que si vous utilisez l'option `disable-default-endpoint` et souhaitez autoriser le tirage directement à partir d'un registre particulier, tout en interdisant les autres, vous pouvez fournir explicitement un point de terminaison afin de permettre au tirage d'images de revenir au registre lui-même{nbsp}:
+
+[,yaml]
+----
+mirrors:
+  docker.io:           # no default endpoint, pulls will fail if not available on a node
+  registry.k8s.io:     # no default endpoint, pulls will fail if not available on a node
+  mirror.example.com:  # explicit default endpoint, can pull from upstream if not available on a node
+    endpoint:
+      - https://mirror.example.com
+----
+
+=== Dernière étiquette
+
+Lorsque aucune étiquette n'est spécifiée pour une image de conteneur, l'étiquette par défaut implicite est `latest`. Cette étiquette est fréquemment mise à jour pour pointer vers la version la plus récente de l'image. Parce que cette étiquette pointera vers différentes révisions d'une image selon le moment où elle est extraite, le registre distribué *ne tirera pas* l'étiquette `latest` d'autres nœuds. Cela force containerd à se connecter à un registre en amont ou à un miroir de registre pour garantir une vue cohérente de ce à quoi fait référence l'étiquette `latest`.
+
+Cela s'aligne avec le https://kubernetes.io/docs/concepts/containers/images/#imagepullpolicy-defaulting[comportement spécial `imagePullPolicy` de mise par défaut] observé par Kubernetes lors de l'utilisation de l'étiquette `latest` pour une image de conteneur.
+
+== Sécurité
+
+=== Authentification
+
+L'accès à l'API du registre du miroir intégré nécessite un certificat client valide, signé par l'autorité de certification du certificat client du cluster.
+
+L'accès au réseau pair-à-pair de la table de hachage distribuée nécessite une clé prépartagée contrôlée par les nœuds serveurs. Les nœuds s'authentifient mutuellement en utilisant à la fois la clé prépartagée et un certificat signé par l'autorité de certification du cluster.
+
+=== Préoccupations potentielles
+
+[WARNING]
+====
+Le registre distribué est construit sur des principes de pair-à-pair et suppose un niveau de privilège et de confiance égal entre tous les membres du cluster. Si cela ne correspond pas à la posture de sécurité de votre cluster, vous ne devez pas activer le registre distribué intégré.
+====
+
+Le registre intégré peut rendre disponibles des images auxquelles un nœud n'aurait autrement pas accès. Par exemple, si certaines de vos images sont tirées d'un registre, d'un projet ou d'un dépôt nécessitant une authentification via les Kubernetes Image Pull Secrets, ou des identifiants dans `registries.yaml`, le registre distribué permettra à d'autres nœuds de partager ces images sans fournir d'identifiants au registre en amont.
+
+Les utilisateurs ayant accès pour pousser des images dans le magasin d'images containerd sur un nœud peuvent être en mesure d'utiliser cela pour 'empoisonner' l'image pour d'autres nœuds du cluster, car d'autres nœuds feront confiance au tag annoncé par le nœud et l'utiliseront sans vérifier avec le registre en amont. Si l'intégrité de l'image est importante, vous devez utiliser des résumés d'images au lieu de tags, car le résumé ne peut pas être empoisonné de cette manière.
+
+== Partage d'images en isolation physique ou chargées manuellement
+
+Le partage d'images est contrôlé en fonction du registre source. Les images chargées directement dans containerd via xref:install/airgap.adoc#_tarball_method[fichiers tar d'images en isolation physique], xref:add-ons/import_images.adoc#_pre_import_images[pré-importées] ou chargées directement dans le magasin d'images de containerd à l'aide de l'outil de ligne de commande `ctr` seront partagées entre les nœuds si elles sont étiquetées comme provenant d'un registre activé pour la mise en miroir.
+
+Notez que le registre en amont dont les images semblent provenir n'a pas nécessairement à exister ou à être accessible. Par exemple, vous pourriez étiqueter des images comme provenant d'un registre en amont fictif et importer ces images dans le magasin d'images de containerd. Vous pourriez alors être en mesure de tirer ces images de tous les membres du cluster, tant que ce registre est répertorié dans `registries.yaml`.
+
+== Pousser des images
+
+Le registre intégré est en lecture seule et ne peut pas être poussé directement en utilisant `docker push` ou d'autres outils courants qui interagissent avec les registres OCI.
+
+Les images peuvent être mises à disposition manuellement via le registre intégré en exécutant `ctr -n k8s.io image pull` pour tirer une image, ou en chargeant des archives d'images créées par `docker save` via la commande `ctr -n k8s.io image import` ou la fonctionnalité xref:add-ons/import_images.adoc#_pre_import_images[pré-import]. Notez que l'espace de noms `k8s.io` doit être spécifié lors de la gestion des images via `ctr` afin qu'elles soient visibles par le kubelet.

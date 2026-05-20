@@ -1,0 +1,181 @@
+= Rollback von RKE2
+:page-languages: [en, zh]
+:revdate: 2025-12-04
+:page-revdate: {revdate}
+
+Sie können nach einem Upgrade einen Rollback der RKE2 Kubernetes-Version durchführen, indem Sie eine Kombination aus einem RKE2-Binär-Downgrade und der Wiederherstellung des Datenspeichers anwenden. Rollback kann auf Clustern aller Art durchgeführt werden, einschließlich eines einzelnen SQLite-Knotens, eines externen Datenspeichers oder eines eingebetteten etcd. Beim Rollback auf eine frühere Kubernetes-Nebenversion müssen Sie einen Datenspeicher-Snapshot besitzen, der auf der gewünschten Kubernetes-Nebenversion aufgenommen wurde.
+
+[CAUTION]
+====
+Wenn Sie die Datenbank nicht wiederherstellen können, ist ein Rollback auf eine frühere Nebenversion nicht möglich.
+====
+
+== Wichtige Überlegungen
+
+* *Sicherungen:* Stellen Sie vor dem Upgrade sicher, dass Sie einen gültigen Datenbank- oder etcd-Snapshot von Ihrem Cluster haben, das die ältere Version von RKE2 ausführt. Ohne eine Sicherung ist ein Rollback unmöglich.
+* *Potentieller Datenverlust:* Das `rke2-killall.sh` Skript beendet RKE2-Prozesse gewaltsam und kann zu Datenverlust führen, wenn Anwendungen nicht ordnungsgemäß heruntergefahren werden.
+* *Versionsspezifika:* Überprüfen Sie immer die RKE2- und Komponenten-Versionen vor und nach dem Rollback.
+
+== Rollback eines RKE2-Clusters
+
+[tabs]
+=====
+SQLite::
++
+--
+
+Um einen Rollback eines RKE2-Clusters mit einer SQLite-Datenbank durchzuführen, ersetzen Sie die `.db` Datei durch die Kopie der `.db` Datei, die Sie bei der Sicherung Ihrer Datenbank erstellt haben.
+
+--
+
+Embedded etcd::
++
+--
+
+Um einen Rollback eines RKE2-Clusters mit einem eingebetteten etcd (Standard) durchzuführen, befolgen Sie diese Schritte:
+
+. Wenn der Cluster läuft und die Kubernetes-API verfügbar ist, stoppen Sie die Arbeitslasten ordnungsgemäß, indem Sie alle Knoten entleeren:
++
+[,bash]
+----
+ kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
+----
+
+. Beenden Sie den RKE2-Dienst und alle laufenden Pod-Prozesse auf jedem Knoten:
++
+[,bash]
+----
+ rke2-killall.sh
+----
+
+. Führen Sie auf jedem Knoten ein Rollback der RKE2-Binärdatei auf die vorherige Version durch.
+ ** Cluster mit Internetzugang:
+  *** Serverknoten:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
+----
+
+  *** Agentenknoten:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
+----
+ ** Air-gapped Cluster:
+  *** Laden Sie die Artefakte herunter und führen Sie das xref:install/airgap.adoc#_install_rke2[Installationsskript] lokal aus.
+. Initiieren Sie die Cluster-Wiederherstellung auf dem ersten Serverknoten oder dem Knoten ohne einen `server:` Eintrag in seiner xref:install/configuration.adoc[RKE2-Konfigurationsdatei]. Siehe die xref:datastore/backup_restore.adoc#_snapshot_restore_steps[Schritte zur Snapshot-Wiederherstellung] für weitere Informationen:
++
+[,bash]
+----
+ rke2 server --cluster-reset --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+[WARNING]
+==== 
+Dies überschreibt alle Daten im etcd-Datenspeicher. Überprüfen Sie die Integrität des Snapshots, bevor Sie ihn wiederherstellen. Seien Sie sich bewusst, dass große Snapshots lange dauern können, um wiederhergestellt zu werden.
+====
+
+. Starten Sie den RKE2-Dienst auf dem ersten Serverknoten:
++
+[,bash]
+----
+ systemctl start rke2-server
+----
+
+. Entfernen Sie auf den anderen Serverknoten das RKE2-Datenbankverzeichnis:
++
+[,bash]
+----
+ rm -rf /var/lib/rancher/rke2/server/db
+----
+
+. Starten Sie den RKE2-Dienst auf den anderen Serverknoten:
++
+[,bash]
+----
+ systemctl start rke2-server
+----
+
+. Starten Sie den RKE2-Dienst auf allen Agentenknoten:
++
+[,bash]
+----
+ systemctl start rke2-agent
+----
+
+. Überprüfen Sie den RKE2-Dienststatus mit `systemctl status rke2-server` oder `systemctl status rke2-agent`.
+
+--
+
+Externe Datenbank::
++
+--
+
+Um einen Rollback eines RKE2-Clusters bei Verwendung einer externen Datenbank (z. B. PostgreSQL, MySQL) durchzuführen, befolgen Sie diese Schritte:
+
+. Wenn der Cluster läuft und die Kubernetes-API verfügbar ist, stoppen Sie die Arbeitslasten ordnungsgemäß, indem Sie alle Knoten entleeren:
++
+[,bash]
+----
+ kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
+----
++
+[NOTE]
+==== 
+Dieser Prozess kann laufende Anwendungen stören.
+====
+
+. Beenden Sie den RKE2-Dienst und alle laufenden Pod-Prozesse auf jedem Knoten:
++
+[,bash]
+----
+ rke2-killall.sh
+----
+
+. Stellen Sie einen Datenbank-Snapshot wieder her, der vor dem Upgrade von RKE2 erstellt wurde, und überprüfen Sie die Integrität der Datenbank. Wenn Sie beispielsweise PostgreSQL verwenden, führen Sie den folgenden Befehl aus:
++
+[,bash]
+----
+ pg_restore -U <DB-USER> -d <DB-NAME> <BACKUP-FILE>
+----
+
+. Führen Sie auf jedem Knoten ein Rollback der RKE2-Binärdatei auf die vorherige Version durch.
+ ** Cluster mit Internetzugang:
+  *** Serverknoten:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
+----
+
+  *** Agentenknoten:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
+----
+ ** Air-gapped Cluster:
+  *** Laden Sie die Artefakte herunter und führen Sie das xref:install/airgap.adoc#_install_rke2[Installationsskript] lokal aus.
+. Starten Sie den RKE2-Dienst auf jedem Knoten:
++
+[,bash]
+----
+ systemctl start rke2-server #or rke2-agent
+----
+
+. Überprüfen Sie den RKE2-Dienststatus mit `systemctl status rke2-server` oder `systemctl status rke2-agent`.
+
+--
+
+=====
+
+== Überprüfung
+
+Überprüfen Sie nach dem Rollback Folgendes:
+
+* RKE2-Version: `rke2 --version`
+* Gesundheit des Kubernetes-Clusters: `kubectl get nodes`
+* Funktionalität der Anwendung.
+* Überprüfen Sie die RKE2-Protokolle auf Fehler.

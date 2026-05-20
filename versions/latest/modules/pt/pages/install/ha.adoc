@@ -1,0 +1,135 @@
+= Alta Disponibilidade
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Esta seção descreve como instalar um cluster RKE2 de alta disponibilidade (HA). Um cluster RKE2 de HA consiste em:
+
+* Um *endereço de registro fixo* que é colocado na frente dos nós de servidor para permitir que outros nós se registrem no cluster.
+* Um número ímpar (três recomendado) de *nós de servidor* que executarão etcd, a API do Kubernetes e outros serviços do plano de controle.
+* Zero ou mais *nós de agente* que são designados para executar seus apps e serviços.
+
+[%collapsible]
+.Por que um número ímpar de nós de servidor?
+======
+Um cluster de etcd deve ser composto por um número ímpar de nós de servidor para que o etcd mantenha o quórum. Para um cluster com n servidores, o quórum é (n/2)+1. Para qualquer cluster de tamanho ímpar, adicionar um nó sempre aumentará o número de nós necessários para o quórum. Embora adicionar um nó a um cluster de tamanho ímpar pareça melhor, já que há mais máquinas, a tolerância a falhas é pior. Exatamente o mesmo número de nós pode falhar sem perder o quórum, mas agora há mais nós que podem falhar.
+======
+
+image:rke2-production-setup.svg[]
+
+Os agentes se registram através do endereço de registro fixo. No entanto, quando o RKE2 inicia o kubelet e ele deve se conectar ao servidor API do Kubernetes, ele o faz através do `rke2 agent` processo, que atua como um balanceador de carga do lado do cliente.
+
+Configurar um cluster de alta disponibilidade requer os seguintes passos:
+
+. Configure um endereço de registro fixo
+. Inicie o primeiro nó de servidor
+. Adicione nós de servidor adicionais
+. Adicione nós de agente.
+
+== 1. Configure o Endereço de Registro Fixo
+
+Os nós de servidor além do primeiro e todos os nós de agente precisam de uma URL para se registrar. Isso pode ser o IP ou o nome do host de qualquer um dos nós de servidor, mas em muitos casos esses podem mudar ao longo do tempo à medida que os nós são criados e destruídos. Portanto, você deve ter um ponto de extremidade estável na frente dos nós de servidor.
+
+Esse ponto de extremidade pode ser configurado usando várias abordagens, como:
+
+* Um balanceador de carga de camada 4 (TCP)
+* DNS round-robin
+* Endereços IP virtuais ou elásticos
+
+Esse ponto de extremidade também pode ser usado para acessar a API do Kubernetes. Assim, você pode, por exemplo, modificar seu arquivo https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig] para apontar para ele em vez de um nó específico.
+
+Observe que o processo `rke2 server` escuta na porta `9345` para novos nós se registrarem. A API do Kubernetes é servida na porta `6443`, como de costume. Configure seu balanceador de carga de acordo.
+
+== 2. Inicie o primeiro nó de servidor
+
+O primeiro nó de servidor estabelece o token secreto com o qual outros nós de servidor ou nós de agente se registrarão ao conectar-se ao cluster.
+
+Para especificar seu próprio segredo pré-compartilhado como o token, defina o argumento `token` na inicialização.
+
+Se você não especificar um segredo pré-compartilhado, o RKE2 gerará um e o colocará em `/var/lib/rancher/rke2/server/node-token`.
+
+Para evitar erros de certificado com o endereço de registro fixo, você deve iniciar o servidor com o parâmetro `tls-san` definido. Essa opção adiciona um nome de host ou IP adicional como um Nome Alternativo de Assunto no certificado TLS do servidor, e pode ser especificada como uma lista se você quiser acessar tanto pelo IP quanto pelo nome do host.
+
+Exemplo de arquivo de configuração do RKE2 para o primeiro servidor:
+
+[NOTE]
+====
+O arquivo de configuração do RKE2 precisa ser criado manualmente. Você pode fazer isso executando `touch /etc/rancher/rke2/config.yaml` como um usuário privilegiado.
+====
+
+[,yaml]
+----
+token: my-shared-secret
+tls-san:
+  - my-kubernetes-domain.com
+  - another-kubernetes-domain.com
+----
+
+=== 2a. Opcional: Considere os taints dos nós de servidor
+
+Por padrão, os nós de servidor serão agendáveis e, portanto, suas cargas de trabalho podem ser iniciadas neles. Se você deseja ter um plano de controle dedicado onde nenhuma carga de trabalho de usuário será executada, pode usar taints. O parâmetro `node-taint` permitirá que você configure nós com taints. Aqui está um exemplo de como adicionar um taint de nó ao arquivo de configuração:
+
+[,yaml]
+----
+node-taint:
+  - "CriticalAddonsOnly=true:NoExecute"
+----
+
+[NOTE]
+====
+Os add-ons NGINX Ingress e Metrics Server *não* serão implantados quando todos os nós estiverem com o taint `CriticalAddonsOnly`. Se seus nós de servidor estiverem com taint, esses add-ons permanecerão pendentes até que nós de agente sem taint sejam adicionados ao cluster.
+====
+
+== 3. Inicie nós de servidor adicionais.
+
+Nós de servidor adicionais são lançados de forma semelhante ao primeiro, exceto que você deve especificar os parâmetros `server` e `token` para que possam conectar-se com sucesso ao nó de servidor inicial.
+
+[IMPORTANT]
+.Configuração correspondente
+====
+É importante corresponder as flags críticas em seus nós de servidor. Por exemplo, se você usar a flag `cluster-cidr: 10.200.0.0/16` em seu primeiro nó de servidor, mas não a definir em outros nós de servidor, os nós não conseguirão juntar-se. Eles imprimirão erros como: `failed to validate server configuration: critical configuration value mismatch.` Veja xref:reference/server_config.adoc#_critical_configuration_values[Configuração do servidor] para mais informações sobre quais flags devem ser definidas de forma idêntica nos nós de servidor.
+====
+
+Exemplo de arquivo de configuração do RKE2 para nós de servidor adicionais:
+
+[,yaml]
+----
+server: https://my-kubernetes-domain.com:9345
+token: my-shared-secret
+tls-san:
+  - my-kubernetes-domain.com
+  - another-kubernetes-domain.com
+----
+
+Como mencionado anteriormente, você deve ter um número ímpar de nós de servidor ao todo.
+
+Se um datastore etcd for encontrado no disco, seja porque aquele nó já foi inicializado ou já ingressou em um cluster, a configuração `server: <XXX>` é ignorada.
+
+== 4. Confirme se o cluster está funcional.
+
+Uma vez que você tenha iniciado o processo `rke2 server` em todos os nós de servidor, certifique-se de que o cluster foi iniciado corretamente com:
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl get nodes \
+  --kubeconfig /etc/rancher/rke2/rke2.yaml
+----
+
+Você deve ver seus nós de servidor no estado Pronto.
+
+[NOTE]
+====
+Por padrão, qualquer comando `kubectl` exigirá acesso do usuário root, a menos que um override `RKE2_KUBECONFIG_MODE` seja fornecido. Leia mais sobre isso na xref:cluster_access.adoc[página de acesso ao cluster].
+====
+
+== 5. Opcional: Adicionar nós agentes
+
+Como os nós de servidor RKE2 são agendáveis por padrão, o número mínimo de nós para um cluster de servidor HA RKE2 é três nós de servidor e zero nós de agente. Para adicionar nós designados para executar seus aplicativos e serviços, junte nós de agente ao seu cluster.
+
+A junção de nós de agente em um cluster HA é a mesma que xref:install/quickstart.adoc#_linux_agent_worker_node_installation[juntar nós de agente em um cluster de servidor único]. Você só precisa especificar a URL à qual o agente deve se registrar e o token que deve usar.
+
+[,yaml]
+----
+server: https://my-kubernetes-domain.com:9345
+token: my-shared-secret
+----

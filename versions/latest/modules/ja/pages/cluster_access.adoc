@@ -1,0 +1,32 @@
+= クラスターアクセス
+:page-languages: に保存されているkubeconfigファイルは、Kubernetesクラスターへのアクセスを構成するために使用されます。
+:revdate: 2025-07-10
+:page-revdate: {revdate}
+
+`/etc/rancher/rke2/rke2.yaml` に保存されている kubeconfig ファイルは、Kubernetes クラスターへのアクセスを構成するために使用されます。kubectlやhelmなどのアップストリームKubernetesコマンドラインツールをインストールしている場合は、正しい kubeconfig パスでそれらを構成する必要があります。これは、`KUBECONFIG`環境変数をエクスポートするか、`--kubeconfig`コマンドラインフラグを呼び出すことで行うことができます。詳しくは、以下の例を参照してください。
+
+[NOTE]
+====
+kubectlなどのツールは、デフォルトで`/var/lib/rancher/rke2/bin`にインストールされます。
+====
+
+KUBECONFIG 環境変数を活用します：
+
+[,sh]
+----
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+kubectl get pods --all-namespaces
+helm ls --all-namespaces
+----
+
+あるいは、コマンド内で kubeconfig ファイルの場所を指定します：
+
+[,sh]
+----
+kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods --all-namespaces
+helm --kubeconfig /etc/rancher/rke2/rke2.yaml ls --all-namespaces
+----
+
+== kubectlを使用して外部からクラスターにアクセスする
+
+クラスターの外にあるあなたのマシン上で `/etc/rancher/rke2/rke2.yaml` を `~/.kube/config` としてコピーします。次に、`127.0.0.1` をあなたの RKE2 サーバーの IP またはホスト名に置き換えます。これで、`kubectl` があなたの RKE2 クラスターを管理できるようになります。

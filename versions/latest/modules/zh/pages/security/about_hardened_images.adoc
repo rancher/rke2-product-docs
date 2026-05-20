@@ -1,16 +1,16 @@
-= 强化镜像
+= 关于强化镜像
 :page-languages: [en, zh]
 :revdate: 2026-02-05
 :page-revdate: {revdate}
 
-{product-name} 强化镜像的漏洞会在构建时扫描，并支持额外的安全保护以减少潜在的漏洞：
+{product-name} 强化镜像在构建时会扫描漏洞，并增加额外的安全保护以减少潜在的弱点：
 
-* 镜像不是简单地从上游构建。镜像是在一个强化的最小基础镜像上从源头构建的，目前是 https://www.suse.com/products/base-container-images/[SLE 基础容器镜像 (BCI)]。
-* 任何用 Go 编写的二进制文件都使用符合 FIPS 140-3 标准的编译过程进行编译。有关此编译器的更多信息，请参阅xref:security/fips3_support.adoc#_使用_fips_兼容的_go_编译器[此处]。
+* 镜像并不仅仅是从上游构建复制而来的。这些镜像是从源代码构建的，并基于一个经过强化的最小基础镜像，目前该基础镜像为 https://www.suse.com/products/base-container-images/[SLE 容器基础镜像 (BCI)]。
+* 任何用 Go 编写的二进制文件都是使用符合 FIPS 140-3 标准的构建过程编译的。有关此编译器的更多信息，请参考 xref:security/fips3_support.adoc#_use_of_fips_compatible_go_compiler[这里]。
 
-你可以通过镜像名称知道镜像是否已经过上述加强处理。RKE2 在每个版本中都会公布镜像列表。请参阅link:https://github.com/rancher/rke2/releases/download/v1.23.14%2Brke2r1/rke2-images-all.linux-amd64.txt[此处]公布的镜像列表例子。
+您可以通过镜像名称知道镜像是否已如上所述进行强化。RKE2 在每次发布时都会发布镜像列表。请参考 https://github.com/rancher/rke2/releases/download/v1.23.14%2Brke2r1/rke2-images-all.linux-amd64.txt[这里] 以获取已发布镜像列表的示例。
 
 [NOTE]
 ====
-目前，RKE2 加强镜像是多架构的。只有 Linux 的 AMD64 架构是符合 FIPS 标准的。Windows 和 s390x 架构不符合 FIPS 标准。
+目前，RKE2 强化镜像支持多架构。只有 Linux AMD64 架构符合 FIPS 标准。Windows 和 s390x 架构不符合 FIPS 标准。
 ====

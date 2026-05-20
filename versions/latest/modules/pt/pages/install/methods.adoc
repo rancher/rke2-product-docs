@@ -1,0 +1,129 @@
+= Métodos de instalação
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+[IMPORTANT] 
+====
+Se o seu nó tiver o NetworkManager instalado e habilitado, xref:known_issues.adoc#_networkmanager[certifique-se de que ele está configurado para ignorar interfaces gerenciadas pelo CNI].
+====
+
+[IMPORTANT]
+====
+Você pode usar qualquer versão do RKE2 Prime listada na URL de Artefatos Prime para os ativos mencionados nestes passos. Para saber mais sobre a URL de Artefatos Prime, consulte nossa https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[documentação exclusiva do Prime]. A autenticação é necessária. Use suas credenciais do https://scc.suse.com/home[Centro de Clientes SUSE (SCC)] para fazer login.
+====
+
+O RKE2 pode ser instalado em um sistema de várias maneiras, duas das quais são os métodos preferidos e suportados. Esses métodos são tarball e RPM. O script de instalação mencionado no Início Rápido é um agrupador em torno desses dois métodos.
+
+Este documento explica esses métodos de instalação em maior detalhe.
+
+== Tarball
+
+Para instalar o RKE2 via instalação, você primeiro precisa obter o script de instalação. Isso pode ser feito de várias maneiras.
+
+Isso obtém o script e inicia imediatamente o processo de instalação.
+
+[,sh]
+----
+# curl -sfL https://get.rke2.io | sudo sh -
+curl -sfL https://get.rke2.io | sh -
+----
+
+Alternativamente, você pode baixar o script de instalação e torná-lo executável.
+
+[,sh]
+----
+curl -sfL https://get.rke2.io --output install.sh
+chmod +x install.sh
+----
+
+=== Instalação
+
+Execute o instalador, onde `INSTALL_RKE2_ARTIFACT_URL` é a URL de Artefatos Prime e `INSTALL_RKE2_CHANNEL` é um canal de lançamento ao qual você pode se inscrever e que por padrão é estável. Neste exemplo, `INSTALL_RKE2_CHANNEL="latest"` fornece a versão mais recente do RKE2.
+
+[,bash]
+----
+sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" ./install.sh
+----
+
+Se você quiser especificar uma versão, defina a variável de ambiente `INSTALL_RKE2_VERSION`.
+
+[,bash]
+----
+sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" ./install.sh
+----
+
+Isso instalará o serviço `rke2-server` e o binário `rke2` na sua máquina. Devido à sua natureza, ele falhará a menos que seja executado como usuário root ou através de `sudo`.
+
+Quando o script de instalação é executado, ele determina que tipo de sistema é. Se for um sistema operacional que usa RPMs (como CentOS ou RHEL), ele realizará uma instalação baseada em RPM, caso contrário, o script padrão é tarball. A instalação baseada em RPM é abordada abaixo.
+
+Em seguida, o script de instalação baixa o tarball, verifica-o comparando os hashes SHA256 e, por último, extrai o conteúdo para `/usr/local`. Um operador pode mover os arquivos após a instalação, se desejar. Esta operação simplesmente extrai o tarball e nenhuma outra modificação no sistema é feita.
+
+Estrutura / conteúdo do tarball:
+
+* bin - contém o executável RKE2, bem como os scripts `rke2-killall.sh` e `rke2-uninstall.sh`.
+* lib - contém os arquivos de unidade systemd para o servidor e o agente.
+* share - contém a licença do RKE2, bem como um arquivo de configuração sysctl usado quando o RKE2 é executado em modo CIS.
+
+Para configurar o sistema ainda mais, você vai querer consultar a documentação do xref:reference/server_config.adoc[servidor] ou xref:reference/linux_agent_config.adoc[agente].
+
+== RPM
+
+Para iniciar o processo de instalação do RPM, você precisa obter o script de instalação que foi abordado acima. O script verificará seu sistema em busca de `rpm`, `yum` ou `dnf` e, se algum deles existir, determina que o sistema é baseado em Redhat e inicia o processo de instalação do RPM.
+
+Os arquivos são instalados com o prefixo `/usr` em vez de `/usr/local`.
+
+=== Repositórios
+
+RPMs assinados são publicados para o RKE2 dentro dos repositórios RPM `rpm-testing.rancher.io` e `rpm.rancher.io`. Se você executar o script https://get.rke2.io em nós que suportam RPMs, ele usará esses repositórios RPM por padrão. Mas você também pode instalá-los você mesmo.
+
+Os RPMs fornecem as unidades `systemd` para gerenciar `rke2`, mas precisarão ser configuradas via arquivo de configuração antes de iniciar os serviços pela primeira vez.
+
+=== Enterprise Linux 7/8/9
+
+Para usar o repositório RPM, em um sistema CentOS ou RHEL, execute o seguinte trecho de bash:
+
+[,bash]
+----
+export RKE2_MINOR=28
+export LINUX_MAJOR=7 # or 8 or 9 etc
+cat << EOF > /etc/yum.repos.d/rancher-rke2-1-${RKE2_MINOR}-latest.repo
+[rancher-rke2-common-latest]
+name=Rancher RKE2 Common Latest
+baseurl=https://rpm.rancher.io/rke2/latest/common/centos/${LINUX_MAJOR}/noarch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://rpm.rancher.io/public.key
+
+[rancher-rke2-1-${RKE2_MINOR}-latest]
+name=Rancher RKE2 1.${RKE2_MINOR} Latest
+baseurl=https://rpm.rancher.io/rke2/latest/1.${RKE2_MINOR}/centos/${LINUX_MAJOR}/x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://rpm.rancher.io/public.key
+EOF
+----
+
+=== Instalação
+
+Após o repositório ser configurado, você pode executar um dos seguintes comandos:
+
+[,sh]
+----
+yum -y install rke2-server
+----
+
+ou
+
+[,sh]
+----
+yum -y install rke2-agent
+----
+
+O RPM instalará uma unidade systemd `rke2-server.service` ou `rke2-agent.service` correspondente que pode ser invocada como: `systemctl start rke2-server`. Certifique-se de configurar `rke2` antes de iniciá-lo, seguindo as instruções `Configuration File` abaixo.
+
+== Regressão
+
+O binário RKE2 é compilado e vinculado estaticamente, o que permite que o binário RKE2 seja portátil entre distribuições Linux sem a preocupação com problemas de dependência. A instalação mais simples é baixar o binário, garantir que ele seja executável e copiá-lo para o `${PATH}`, geralmente `/usr/local/bin`. Após a primeira execução, o RKE2 criará todos os diretórios e arquivos necessários. Para configurar o sistema ainda mais, você vai querer consultar a documentação do xref:install/configuration.adoc[arquivo de configuração].

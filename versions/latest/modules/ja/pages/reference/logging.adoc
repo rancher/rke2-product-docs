@@ -1,0 +1,30 @@
+= ログ記録
+:page-languages: [en, zh]
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+systemdで実行している場合、ログはjournaldに送信され、`journalctl -u rke2-server`または`journalctl -u rke2-agent`を使用して表示できます。一部のsystemd設定では、`/var/log/syslog`に結合ログが書き込まれることがあり、その場合、RKE2のログもそこに利用可能です。
+
+Containerdのログは`/var/lib/rancher/rke2/agent/containerd/containerd.log`に書き込まれます。
+
+kubeletのログは`/var/lib/rancher/rke2/agent/logs/kubelet.log`に書き込まれます。
+
+EtcdとKubernetesコントロールプレーンコンポーネントは、`kube-system`ネームスペース内で静的Podとして実行されます。
+
+各Kubernetes Podからのログは`kubectl`でアクセスできます：
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml logs -n kube-system -l component=kube-apiserver
+----
+
+各コンテナからのログは`/var/log/pods`に書き込まれるか、`crictl`でアクセスできます：
+
+[,bash]
+----
+export CONTAINER_RUNTIME_ENDPOINT=unix:///run/k3s/containerd/containerd.sock
+# list running containers
+/var/lib/rancher/rke2/bin/crictl ps
+# get logs from container by container id
+/var/lib/rancher/rke2/bin/crictl logs <container_id>
+----

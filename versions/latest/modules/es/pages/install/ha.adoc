@@ -1,0 +1,135 @@
+= Alta disponibilidad
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Esta sección describe cómo instalar un clúster RKE2 de alta disponibilidad (HA). Un clúster RKE2 de alta disponibilidad (HA) consiste en:
+
+* Una *dirección de registro fija* que se coloca delante de los nodos de servidor para permitir que otros nodos se registren en el clúster.
+* Un número impar (tres recomendados) de *nodos de servidor* que ejecutarán etcd, la API de Kubernetes y otros servicios del plano de control.
+* Cero o más *nodos agentes* que están designados para ejecutar tus aplicaciones y servicios.
+
+[%collapsible]
+.¿Por qué un número impar de nodos de servidor?
+======
+Un clúster de etcd debe estar compuesto por un número impar de nodos de servidor para que etcd mantenga el quórum. Para un clúster con n servidores, el quórum es (n/2)+1. Para cualquier clúster de tamaño impar, añadir un nodo siempre aumentará el número de nodos necesarios para el quórum. Aunque añadir un nodo a un clúster de tamaño impar parece mejor ya que hay más máquinas, la tolerancia a fallos es peor. Exactamente el mismo número de nodos puede fallar sin perder el quórum, pero ahora hay más nodos que pueden fallar.
+======
+
+image:rke2-production-setup.svg[]
+
+Los agentes se registran a través de la dirección de registro fija. Sin embargo, cuando RKE2 lanza el kubelet y debe conectarse al api-server de Kubernetes, lo hace a través del `rke2 agent` proceso, que actúa como un equilibrador de carga del lado del cliente.
+
+Configurar un clúster de HA requiere los siguientes pasos:
+
+. Configura una dirección de registro fija
+. Lanza el primer nodo de servidor
+. Une nodos de servidor adicionales
+. Une nodos agentes
+
+== 1. Configura la Dirección de Registro Fija
+
+Los nodos de servidor más allá del primero y todos los nodos agentes necesitan una URL para registrarse. Esto puede ser la IP o el nombre de host de cualquiera de los nodos de servidor, pero en muchos casos estos pueden cambiar con el tiempo a medida que se crean y destruyen nodos. Por lo tanto, deberías tener un punto final estable delante de los nodos de servidor.
+
+Este punto final puede configurarse utilizando cualquier número de enfoques, tales como:
+
+* Un balanceador de carga de capa 4 (TCP)
+* DNS round-robin
+* Direcciones IP virtuales o elásticas
+
+Este punto final también puede utilizarse para acceder a la API de Kubernetes. Así que puedes, por ejemplo, modificar tu archivo https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig] para que apunte a él en lugar de a un nodo específico.
+
+Ten en cuenta que el proceso `rke2 server` escucha en el puerto `9345` para que se registren nuevos nodos. La API de Kubernetes se sirve en el puerto `6443`, como es habitual. Configura tu balanceador de carga en consecuencia.
+
+== 2. Lanza el primer nodo de servidor
+
+El primer nodo de servidor establece el token secreto con el que otros nodos de servidor o agentes se registrarán al conectarse al clúster.
+
+Para especificar tu propio secreto compartido previamente como el token, establece el argumento `token` al iniciar.
+
+Si no especificas un secreto compartido previamente, RKE2 generará uno y lo colocará en `/var/lib/rancher/rke2/server/node-token`.
+
+Para evitar errores de certificado con la dirección de registro fija, deberías lanzar el servidor con el parámetro `tls-san` establecido. Esta opción añade un nombre de host o IP adicional como un Nombre Alternativo del Sujeto en el certificado TLS del servidor, y puede especificarse como una lista si deseas acceder tanto a través de la IP como del nombre de host.
+
+Ejemplo de archivo de configuración de RKE2 para el primer servidor:
+
+[NOTE]
+====
+El archivo de configuración de RKE2 necesita ser creado manualmente. Puedes hacerlo ejecutando `touch /etc/rancher/rke2/config.yaml` como un usuario privilegiado.
+====
+
+[,yaml]
+----
+token: my-shared-secret
+tls-san:
+  - my-kubernetes-domain.com
+  - another-kubernetes-domain.com
+----
+
+=== 2a. Opcional: Considera los taints de los nodos de servidor
+
+Por defecto, los nodos de servidor serán programables y, por lo tanto, tus cargas de trabajo pueden lanzarse en ellos. Si deseas tener un plano de control dedicado donde no se ejecuten cargas de trabajo de usuarios, puedes utilizar taints. El parámetro `node-taint` te permitirá configurar nodos con taints. Aquí tienes un ejemplo de cómo añadir un taint de nodo al archivo de configuración:
+
+[,yaml]
+----
+node-taint:
+  - "CriticalAddonsOnly=true:NoExecute"
+----
+
+[NOTE]
+====
+Los complementos de NGINX Ingress y Metrics Server *no* se desplegarán cuando todos los nodos estén marcados con un taint `CriticalAddonsOnly`. Si tus nodos de servidor están marcados con un taint, estos complementos permanecerán pendientes hasta que se añadan nodos de agente sin taint al clúster.
+====
+
+== 3. Lanza nodos de servidor adicionales
+
+Los nodos de servidor adicionales se lanzan de manera similar al primero, excepto que debes especificar los parámetros `server` y `token` para que puedan conectarse con éxito al nodo de servidor inicial.
+
+[IMPORTANT]
+.Configuración coincidente
+====
+Es importante que las banderas críticas coincidan en los nodos de servidor. Por ejemplo, si usas el parámetro `cluster-cidr: 10.200.0.0/16` en tu primer nodo de servidor, pero no lo configuras en otros nodos de servidor, los nodos no podrán unirse. Imprimirán errores como: `failed to validate server configuration: critical configuration value mismatch.` Consulta xref:reference/server_config.adoc#_critical_configuration_values[Configuración del Servidor] para más información sobre qué parámetros deben configurarse de manera idéntica en los nodos de servidor.
+====
+
+Ejemplo de archivo de configuración de RKE2 para nodos de servidor adicionales:
+
+[,yaml]
+----
+server: https://my-kubernetes-domain.com:9345
+token: my-shared-secret
+tls-san:
+  - my-kubernetes-domain.com
+  - another-kubernetes-domain.com
+----
+
+Como se mencionó anteriormente, debes tener un número impar de nodos de servidor en total.
+
+Si se encuentra un almacén de datos etcd en el disco, ya sea porque ese nodo se ha inicializado o se ha unido a un clúster, se ignora la configuración `server: <XXX>`.
+
+== 4. Confirma que el clúster es funcional
+
+Una vez que hayas lanzado el proceso `rke2 server` en todos los nodos de servidor, asegúrate de que el clúster se haya iniciado correctamente con:
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl get nodes \
+  --kubeconfig /etc/rancher/rke2/rke2.yaml
+----
+
+Deberías ver tus nodos de servidor en estado Listos.
+
+[NOTE]
+====
+Por defecto, cualquier comando `kubectl` requerirá acceso de usuario raíz, a menos que se proporcione una anulación `RKE2_KUBECONFIG_MODE`. Lee más sobre ello en xref:cluster_access.adoc[página de acceso al clúster].
+====
+
+== 5. Opcional: Unir Nodos Agentes
+
+Debido a que los nodos de servidor RKE2 son programables por defecto, el número mínimo de nodos para un clúster de servidor RKE2 de alta disponibilidad es de tres nodos de servidor y cero nodos agentes. Para añadir nodos designados para ejecutar tus aplicaciones y servicios, une nodos de agente a tu clúster.
+
+Unir nodos de agente en un clúster de alta disponibilidad es lo mismo que xref:install/quickstart.adoc#_linux_agent_worker_node_installation[unir nodos de agente en un clúster de un solo servidor]. Solo necesitas especificar la URL a la que el agente debe registrarse y el token que debe usar.
+
+[,yaml]
+----
+server: https://my-kubernetes-domain.com:9345
+token: my-shared-secret
+----

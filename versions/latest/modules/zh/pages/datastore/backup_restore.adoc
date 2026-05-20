@@ -1,186 +1,187 @@
-= Backup and Restore
-:page-languages: [en, zh]
+
+= 备份和恢复
+:page-languages: RKE2 使用 etcd 快照备份集群信息。
 :revdate: 2026-02-27
 :page-revdate: {revdate}
 :page-aliases: backup_restore.adoc
 
-RKE2 backups up the cluster information using etcd snapshots. This page describes how to use the rke2 etcd-snapshot CLI tool to manage etcd snapshots and how to restore from an etcd snapshot. Snapshots are for embedded etcd only, if you use another datastore with `datastore-endpoint` config go to xref:backup_restore.adoc#_external_db_backups_experimental[Experimental].
+RKE2 使用 etcd 快照来备份集群信息。本页面介绍如何使用 rke2 etcd-snapshot CLI 工具来管理 etcd 快照，以及如何从 etcd 快照中恢复。快照仅适用于嵌入式 etcd，如果您使用其他数据存储，请使用 `datastore-endpoint` 配置，前往 xref:backup_restore.adoc#_external_db_backups_experimental[实验性]。
 
-RKE2 etcd snapshots are stored on the node file system, and may optionally be uploaded to an S3 compatible object store for disaster recovery scenarios. Snapshots can be both automated on a reoccurring schedule, and taken manually on-demand.  The `rke2 etcd-snapshot` CLI tool offers a set of subcommands that can be used to create, delete, and manage snapshots.
+RKE2 etcd 快照存储在节点的文件系统上，并可选地上传至兼容 S3 的对象存储，用于灾难恢复场景。快照可以按计划自动生成，也可以根据需要手动生成。 `rke2 etcd-snapshot` CLI 工具提供了一组子命令，可用于创建、删除和管理快照。
 
 |===
-| Subcommand | Description
+| 子命令 | 说明
 
 | delete
-| Delete given snapshot(s)
+| 删除指定的快照
 
 | ls, list, l
-| List snapshots
+| 列出快照
 
-| prune
-| Remove snapshots that exceed the configured retention count
+| 修剪
+| 去除超过配置保留数量的快照
 
-| save
-| Trigger an on-demand etcd snapshot
+| 保存
+| 触发按需 etcd 快照
 |===
 
-For additional information on the etcd snapshot subcommands, run `rke2 etcd-snapshot --help`.
+有关 etcd 快照子命令的更多信息，请运行 `rke2 etcd-snapshot --help`。
 
-== Creating Snapshots
+== 创建快照
 
 [tabs,sync-group-id=snapshots]
 =====
-Scheduled::
+已安排::
 +
 --
 
-Scheduled snapshots are enabled by default, at 00:00 and 12:00 system time, with 5 snapshots retained. Scheduled snapshots have a name that starts with `etcd-snapshot`, followed by the node name and timestamp.
+计划快照默认启用，在系统时间的 00:00 和 12:00 生成，保留 5 个快照。计划快照的名称以 `etcd-snapshot` 开头，后跟节点名称和时间戳。
 
-The following options control the operation of scheduled snapshots:
+以下选项控制计划快照的操作：
 
 |===
-| Flag | Description
+| 标志 | 说明
 
 | `--etcd-disable-snapshots`
-| Disable scheduled snapshots
+| 禁用计划快照
 
 | `--etcd-snapshot-name`
-| Sets the base name of etcd scheduled snapshots. (Default: `etcd-snapshot`)
+| 设置 etcd 计划快照的基本名称。（默认值：`etcd-snapshot`）
 
 | `--etcd-snapshot-compress`
-| Compress etcd snapshots
+| 压缩 etcd 快照
 
 | `--etcd-snapshot-dir`
-| Directory to save db snapshots. (Default location: `+${data-dir}/db/snapshots+`)
+| 保存数据库快照的目录。（默认位置：`${data-dir}/db/snapshots`）
 
 | `--etcd-snapshot-retention`
-| Number of snapshots to retain (default: 5)
+| 要保留的快照数量（默认：5)
 
 | `--etcd-snapshot-schedule-cron`
-| Snapshot interval time in cron spec. eg. every 5 hours `0 */5 * * *` (default: `0 */12 * * *`)
+| 快照间隔时间的 cron 规范。例如，每 5 小时 `0 */5 * * *`（默认：`0 */12 * * *`）
 |===
 
-The data-dir value defaults to `/var/lib/rancher/rke2` and can be changed independently by setting the `--data-dir` flag.
+data-dir 的默认值为 `/var/lib/rancher/rke2`，可以通过设置 `--data-dir` 标志来独立更改。
 
-Scheduled snapshots are saved to the path set by the server's `--etcd-snapshot-dir` value. If you want them replicated in S3 compatible object stores, refer to <<_s3_compatible_object_store_support,S3 configuration options>>
+计划快照保存到服务器的 `--etcd-snapshot-dir` 值设置的路径。如果您希望它们复制到 S3 兼容的对象存储中，请参阅 <<_s3_compatible_object_store_support,S3 配置选项>>。
 
 --
 
-On-demand::
+按需::
 +
 --
 
-Snapshots can be saved manually by running the `rke2 etcd-snapshot save` command. There is no retention for these on-demand snapshots and the user needs to remove them manually by using `rke2 etcd-snapshot delete` or `rke2 etcd-snapshot prune` commands. On-demand snapshots have a name that starts with `on-demand`, followed by the node name and timestamp.
+可以通过运行 `rke2 etcd-snapshot save` 命令手动保存快照。这些按需快照没有保留，用户需要通过使用 `rke2 etcd-snapshot delete` 或 `rke2 etcd-snapshot prune` 命令手动去除它们。按需快照的名称以 `on-demand` 开头，后跟节点名称和时间戳。
 
-The following options control the operation of on-demand snapshots:
+以下选项控制按需快照的操作：
 
 |===
-| Flag | Description
+| 标志 | 说明
 
 | `--name`
-| Sets the base name of etcd on-demand snapshots. (Default: `on-demand`)
+| 设置 etcd 按需快照的基本名称。（默认值：`on-demand`）
 
 | `--etcd-snapshot-compress`
-| Compress etcd snapshots
+| 压缩 etcd 快照
 
 | `--etcd-snapshot-dir`
-| Directory to save db snapshots. (Default location: `+${data-dir}/db/snapshots+`)
+| 保存数据库快照的目录。（默认位置：`${data-dir}/db/snapshots`）
 |===
 
-The data-dir value defaults to `/var/lib/rancher/rke2` and can be changed independently by setting the `--data-dir` flag.
+data-dir 的默认值为 `/var/lib/rancher/rke2`，可以通过设置 `--data-dir` 标志来单独更改。
 
-The `--name` flag can only be set when running the `rke2 etcd-snapshot save` command. The other two can also be part of the `rke2 server` xref:install/configuration.adoc#_configuration_file[configuration file].
+只有在运行 `rke2 etcd-snapshot save` 命令时，才能设置 `--name` 标志。另外两个也可以作为 `rke2 server`xref:install/configuration.adoc#_configuration_file[配置文件] 的一部分。
 
-On-demand snapshots are saved to the path set by the server's `--etcd-snapshot-dir` value. If you want them replicated in S3 compatible object stores, refer to <<_s3_compatible_object_store_support,S3 configuration options>>.
+按需快照保存到服务器的 `--etcd-snapshot-dir` 值设置的路径。如果您希望它们在 S3 兼容的对象存储中复制，请参阅 <<_s3_compatible_object_store_support,S3 配置选项>>。
 
 --
 
 =====
 
-== Deleting Snapshots
+== 删除快照
 
-Scheduled snapshots are deleted automatically when the number of snapshots exceeds the configured retention count (5 by default). The oldest snapshots are removed first.
+当快照数量超过配置的保留计数（默认5）时，计划快照会自动删除。最旧的快照会被优先去除。
 
-To manually delete scheduled snapshot(s) or on-demand snapshot(s), you can use the `rke2 etcd-snapshot delete` command:
+要手动删除计划快照或按需快照，可以使用 `rke2 etcd-snapshot delete` 命令：
 
 [,bash]
 ----
 rke2 etcd-snapshot delete <SNAPSHOT-NAME-1> <SNAPSHOT-NAME-2> ...
 ----
 
-The `prune` subcommand removes snapshots that match the name prefix (`on-demand` by default) and exceed the configured retention count. It includes the flag `--snapshot-retention` to set the retention count. For scheduled snapshots, it overrides the default retention policy. On-demand snapshots have no retention policy and hence this flag is required.
+`prune` 子命令会去除与名称前缀（默认 `on-demand`）匹配且超过配置保留计数的快照。它包括标志 `--snapshot-retention` 来设置保留计数。对于计划快照，它会覆盖默认的保留策略。按需快照没有保留策略，因此此标志是必需的。
 
-Prune "on-demand" snapshots down to a smaller amount:
+将 "按需" 快照修剪到更少的数量：
 
 [,bash]
 ----
 rke2 etcd-snapshot prune --snapshot-retention  <NUM-OF-SNAPSHOTS-TO-RETAIN>
 ----
 
-Prune "scheduled" snapshots down to a smaller amount:
+将 "计划" 快照修剪到更少的数量：
 
 [,bash]
 ----
 rke2 etcd-snapshot prune --name etcd-snapshot --etcd-snapshot-retention <NUM-OF-SNAPSHOTS-TO-RETAIN>
 ----
 
-== S3 Compatible Object Store Support
+== S3 兼容对象存储支持
 
-RKE2 supports replicating etcd snapshots to and restoring etcd snapshots from S3-compatible object stores. S3 support is available for both on-demand and scheduled snapshots.
+RKE2 支持将 etcd 快照复制到 S3 兼容对象存储，并从中恢复 etcd 快照。S3 支持适用于按需和计划快照。
 
 |===
-| Flag | Description
+| 标志 | 说明
 
 | `--etcd-s3`
-| Enable backup to S3
+| 启用备份到 S3
 
 | `--etcd-s3-endpoint`
-| S3 endpoint url
+| S3 端点 URL
 
 | `--etcd-s3-endpoint-ca`
-| S3 custom CA cert to connect to S3 endpoint
+| 连接到 S3 端点的 S3 自定义 CA 证书
 
 | `--etcd-s3-skip-ssl-verify`
-| Disables S3 SSL certificate validation
+| 禁用 S3 SSL 证书验证
 
 | `--etcd-s3-access-key`
-| S3 access key
+| S3 访问密钥
 
 | `--etcd-s3-secret-key`
-| S3 secret key
+| S3 秘密密钥
 
 | `--etcd-s3-session-token` 
-| S3 session token 
+| S3 会话令牌 
 
 | `--etcd-s3-bucket`
-| S3 bucket name
+| S3 存储桶名称
 
 | `--etcd-s3-bucket-lookup-type`
-| S3 bucket lookup type, one of 'auto', 'dns', 'path'; default is 'auto' if not set
+| S3 存储桶查找类型，选项包括 'auto'、'dns'、'path'；如果未设置，默认值为 'auto'
 
 | `--etcd-s3-region`
-| S3 region / bucket location (optional). defaults to us-east-1
+| S3 区域/存储桶位置（可选）。默认为 us-east-1
 
 | `--etcd-s3-folder`
-| S3 folder
+| S3 文件夹
 
 | `--etcd-s3-retention`
-| S3 retention limit (default: 5)
+| S3 保留限制（默认：5)
 
 | `--etcd-s3-proxy`
-| Proxy server to use when connecting to S3, overriding any proxy-releated environment variables
+| 连接到 S3 时使用的代理服务器，覆盖任何与代理相关的环境变量
 
 | `--etcd-s3-insecure`
-| Disables S3 over HTTPS
+| 禁用 S3 通过 HTTPS
 
 | `--etcd-s3-timeout`
-| S3 timeout (default: `5m0s`)
+| S3 超时（默认：`5m0s`）
 
 | `--etcd-s3-config-secret`
-| Name of secret in the kube-system namespace used to configure S3, if etcd-s3 is enabled and no other etcd-s3 options are set
+| 在 kube-system 命名空间中用于配置 S3 的秘密名称，如果启用了 etcd-s3 且未设置其他 etcd-s3 选项。
 |===
 
-For example, this is how the creation and deletion of on-demand etcd snapshots in S3 would work:
+例如，这就是如何在 S3 中创建和去除按需 etcd 快照的工作方式：
 
 [,shell-session]
 ----
@@ -199,45 +200,45 @@ $ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secr
 Name                              Location                                                                          Size    Created
 ----
 
-=== S3 Retention
+=== S3 保留
 
 [IMPORTANT]
-.Version Gate
+.版本门控
 ====
-Starting in versions v1.34.0+rke2r1, v1.33.4+rke2r1, v1.32.8+rke2r1, v1.31.12+rke2r1, RKE2 includes a new flag for S3 retention. It has the same default value as the local snapshot retention.
+从版本 v1.34.0+rke2r1、v1.33.4+rke2r1、v1.32.8+rke2r1、v1.31.12+rke2r1 开始，RKE2 包含一个新的 S3 保留标志。它的默认值与本地快照保留相同。
 ====
 
 |===
-| Flag | Description
+| 标志 | 说明
 
 | `--etcd-s3-retention`
-| Number of snapshots in S3 to retain (default: `5`)
+| 在 S3 中保留的快照数量（默认：`5`）
 |===
 
-=== S3 Configuration Secret Support
+=== S3 配置秘密支持
 
 [IMPORTANT]
-.Version Gate
+.版本门控
 ====
-S3 Configuration Secret support is available as of the August 2024 releases: v1.30.4+rke2r1, v1.29.8+rke2r1, v1.28.13+rke2r1
+自 2024 年 8 月发布以来，S3 配置 Secret 支持已可用：v1.30.4+rke2r1、v1.29.8+rke2r1、v1.28.13+rke2r1。
 ====
 
-RKE2 supports reading etcd S3 snapshot configuration from a Kubernetes Secret.
-This may be preferred to hardcoding credentials in RKE2 CLI flags or config files for security reasons, or if credentials need to be rotated without restarting RKE2.
-To pass S3 snapshot configuration via a Secret, start RKE2 with `--etcd-s3` and `--etcd-s3-config-secret=<SECRET-NAME>`.
-The Secret does not need to exist when RKE2 is started, but it will be checked for every time a snapshot save/list/delete/prune operation is performed.
+RKE2 支持从 Kubernetes Secret 中读取 etcd S3 快照配置。
+出于安全考虑，当需要在不重启 RKE2 的情况下轮换凭据时，从 Kubernetes Secret 中读取 S3 快照配置可能比在 RKE2 CLI 标志或配置文件中硬编码凭据更为理想。
+要通过 Secret 传递 S3 快照配置，请使用 `--etcd-s3` 和 `--etcd-s3-config-secret=<SECRET-NAME>` 启动 RKE2。
+在启动 RKE2 时，Secret 不需要存在，但在每次执行快照保存/列出/删除/修剪操作时都会进行检查。
 
-The S3 config Secret cannot be used when restoring a snapshot, as the apiserver is not available to provide the secret during a restore.
-S3 configuration must be passed via the CLI when restoring a snapshot stored on S3.
+在恢复快照时，无法使用 S3 配置 Secret，因为在恢复期间 apiserver 不可用以提供 Secret。
+在恢复存储在 S3 上的快照时，必须通过 CLI 传递 S3 配置。
 
 [NOTE]
 ====
-Pass only the the `--etcd-s3` and `--etcd-s3-config-secret` flags to enable the Secret. +
-If any other S3 configuration flags are set, the Secret will be ignored.
+仅传递 `--etcd-s3` 和 `--etcd-s3-config-secret` 标志以启用 Secret。 +
+如果设置了任何其他 S3 配置标志，则将忽略该 Secret。
 ====
 
-Keys in the Secret correspond to the `--etcd-s3-*` CLI flags listed above.
-The `etcd-s3-endpoint-ca` key accepts a PEM-encoded CA bundle, or the `etcd-s3-endpoint-ca-name` key may be used to specify the name of a ConfigMap in the `kube-system` namespace containing one or more PEM-encoded CA bundles.
+Secret 中的键对应于上述 `--etcd-s3-*` CLI 标志。
+`etcd-s3-endpoint-ca` 键接受 PEM 编码的 CA 包，或者可以使用 `etcd-s3-endpoint-ca-name` 键指定 `kube-system` 命名空间中包含一个或多个 PEM 编码 CA 包的 ConfigMap 的名称。
 
 [,yaml]
 ----
@@ -262,45 +263,45 @@ stringData:
   etcd-s3-proxy: ""
 ----
 
-== Restoring Snapshots
+== 恢复快照
 
-RKE2 runs through several steps when restoring a snapshot:
+RKE2 在恢复快照时经过几个步骤：
 
-. If the snapshot is stored on S3, the file is downloaded into the snapshot directory.
-. If the snapshot is compressed, it is decompressed.
-. If present, the current etcd database files are moved to `+${data-dir}/server/db/etcd-old-$TIMESTAMP/+`.
-. The snapshot's contents are extracted out to disk, and the checksum is verified.
-. Etcd is started, and all etcd cluster members except the current node are removed from the cluster.
-. CA Certificates and other confidential data are extracted from the datastore and written to disk, for later use.
-. The restore is complete, and RKE2 can be restarted and used normally on the server where the restore was performed.
-. (optional) Agents and control-plane servers can be started normally.
-. (optional) Etcd servers can be restarted to rejoin to the cluster after removing old database files.
+. 如果快照存储在 S3 上，文件将下载到快照目录中。
+. 如果快照被压缩，则会进行解压。
+. 如果存在，当前的 etcd 数据库文件将被移动到 `${data-dir}/server/db/etcd-old-$TIMESTAMP/`。
+. 快照的内容被提取到磁盘，并验证校验和。
+. 启动 Etcd，除了当前节点外，所有 etcd 集群成员将从集群中移除。
+. CA 证书和其他机密数据从数据存储中提取并写入磁盘，以备后用。
+. 恢复完成，RKE2 可以在执行恢复的服务器上正常重启和使用。
+. （可选）代理和控制平面服务器可以正常启动。
+. （可选）在移除旧数据库文件后，可以重启 Etcd 服务器以重新加入集群。
 
-When restoring a snapshot, you don't need to use the same RKE2 version that created it; a higher minor version is also acceptable.
+在恢复快照时，您不需要使用创建快照的相同 RKE2 版本；更高的次要版本也是可以接受的。
 
-=== Snapshot Restore Steps
+=== 快照恢复步骤
 
-Select the tab below that matches your cluster configuration.
+选择下面与您的集群配置匹配的选项卡。
 
 [tabs]
 =====
-Single Server::
+单服务器::
 +
 --
 
-. Stop the RKE2 service:
+. 停止 RKE2 服务：
 +
 [,bash]
 ----
 systemctl stop rke2-server
 ----
 
-. Run `rke2 server` with the `--cluster-reset` flag, and `--cluster-reset-restore-path` indicating the path to the snapshot to restore.
-If the snapshot is stored on S3, provide S3 configuration flags (`--etcd-s3`, `--etcd-s3-bucket`, and so on), and give only the filename name of the snapshot as the restore path.
+. 运行 `rke2 server`，带上 `--cluster-reset` 标志，并用 `--cluster-reset-restore-path` 指定要恢复的快照路径。
+如果快照存储在 S3 上，请提供 S3 配置标志（`--etcd-s3`、`--etcd-s3-bucket` 等），并仅将快照的文件名作为恢复路径。
 +
 [NOTE]
 ====
-Using the `--cluster-reset` flag without specifying a snapshot to restore simply resets the etcd cluster to a single member without restoring a snapshot.
+使用 `--cluster-reset` 标志而不指定要恢复的快照，仅会将 etcd 集群重置为单个成员，而不恢复快照。
 ====
 +
 [,bash]
@@ -310,41 +311,41 @@ rke2 server \
    --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
 ----
 +
-*Result:* RKE2 restores the snapshot and resets cluster membership, then prints a message indicating that it is ready to be restarted: +
+*结果：*RKE2 恢复快照并重置集群成员资格，然后打印一条消息，指示它已准备好重新启动： +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.`
 
-. Start RKE2 again:
+. 再次启动 RKE2：
 +
 [,bash]
 ----
 systemctl start rke2-server
 ----
 +
-If an etcd-s3 backup configuration is defined within the RKE2 config file, the RKE2 restore will attempt to pull the snapshot file from the configured S3 bucket. In this instance only the snapshot filename should be passed in the argument `--cluster-reset-restore-path`. To restore from a local snapshot file, where an etcd-s3 backup configuration is present, add the argument `--etcd-s3=false` and pass the full path to the local snapshot file in the argument `--cluster-reset-restore-path`.
+如果在 RKE2 配置文件中定义了 etcd-s3 备份配置，RKE2 恢复将尝试从配置的 S3 存储桶中提取快照文件。在这种情况下，只有快照文件名应作为参数 `--cluster-reset-restore-path` 传递。要从本地快照文件恢复（当存在 etcd-s3 备份配置时），请添加参数 `--etcd-s3=false`，并在参数 `--cluster-reset-restore-path` 中传递本地快照文件的完整路径。
 
-As a safety mechanism, when RKE2 resets the cluster, it creates an empty file at `/var/lib/rancher/rke2/server/db/reset-flag` that prevents users from accidentally running multiple cluster resets in succession. This file is deleted when RKE2 starts normally.
+作为安全机制，当 RKE2 重置集群时，它会在 `/var/lib/rancher/rke2/server/db/reset-flag` 创建一个空文件，以防止用户意外连续运行多个集群重置。当 RKE2 正常启动时，此文件将被删除。
 
 --
 
-Multiple Servers::
+多台服务器::
 +
 --
 
-In this example there are 3 servers, `S1`, `S2`, and `S3`. The snapshot is located on `S1`.
+在此示例中，有 3 台服务器，`S1`、`S2` 和 `S3`。快照位于 `S1`。
 
-. Stop RKE2 on all servers:
+. 在所有服务器上停止 RKE2：
 +
 [,bash]
 ----
- systemctl stop rke2-server
+systemctl stop rke2-server
 ----
 
-. On S1, run `rke2 server` with the `--cluster-reset` option, and `--cluster-reset-restore-path` indicating the path to the snapshot to restore.
-If the snapshot is stored on S3, provide S3 configuration flags (`--etcd-s3`, `--etcd-s3-bucket`, and so on), and give only the filename name of the snapshot as the restore path.
+. 在 S1 上，运行 `rke2 server`，并使用 `--cluster-reset` 选项，`--cluster-reset-restore-path` 指定要恢复的快照路径。
+如果快照存储在 S3 上，请提供 S3 配置标志（`--etcd-s3`、`--etcd-s3-bucket` 等），并仅将快照的文件名作为恢复路径。
 +
 [NOTE]
 ====
-Using the `--cluster-reset` flag without specifying a snapshot to restore simply resets the etcd cluster to a single member without restoring a snapshot.
+使用 `--cluster-reset` 标志而不指定要恢复的快照，仅会将 etcd 集群重置为单个成员，而不恢复快照。
 ====
 +
 [,bash]
@@ -354,46 +355,46 @@ rke2 server \
   --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
 ----
 +
-*Result:* RKE2 restores the snapshot and resets cluster membership, then prints a message indicating that it is ready to be restarted: +
+*结果：*RKE2 恢复快照并重置集群成员资格，然后打印一条消息，指示它已准备好重新启动： +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
- `+Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.+`
+ `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
 
-. On S1, start RKE2 again:
+. 在 S1 上，再次启动 RKE2：
 +
 [,bash]
 ----
 systemctl start rke2-server
 ----
 
-. On S2 and S3, delete the data directory, `/var/lib/rancher/rke2/server/db/`:
+. 在 S2 和 S3 上，删除数据目录 `/var/lib/rancher/rke2/server/db/`：
 +
 [,bash]
 ----
 rm -rf /var/lib/rancher/rke2/server/db/
 ----
 
-. On S2 and S3, start RKE2 again to join the restored cluster:
+. 在 S2 和 S3 上，再次启动 RKE2 以加入恢复的集群：
 +
 [,bash]
 ----
 systemctl start rke2-server
 ----
 
-If an etcd-s3 backup configuration is defined within the RKE2 config file, the RKE2 restore will attempt to pull the snapshot file from the configured S3 bucket. In this instance only the snapshot filename should be passed in the argument `--cluster-reset-restore-path`. To restore from a local snapshot file, where an etcd-s3 backup configuration is present, add the argument `--etcd-s3=false` and pass the full path to the local snapshot file in the argument `--cluster-reset-restore-path`.
+如果在 RKE2 配置文件中定义了 etcd-s3 备份配置，RKE2 恢复将尝试从配置的 S3 存储桶中提取快照文件。在这种情况下，只有快照文件名应作为参数 `--cluster-reset-restore-path` 传递。要从本地快照文件恢复（当存在 etcd-s3 备份配置时），请添加参数 `--etcd-s3=false`，并在参数 `--cluster-reset-restore-path` 中传递本地快照文件的完整路径。
 
-As a safety mechanism, when RKE2 resets the cluster, it creates an empty file at `/var/lib/rancher/rke2/server/db/reset-flag` that prevents users from accidentally running multiple cluster resets in succession. This file is deleted when RKE2 starts normally.
+作为安全机制，当 RKE2 重置集群时，它会在 `/var/lib/rancher/rke2/server/db/reset-flag` 创建一个空文件，以防止用户意外连续运行多个集群重置。当 RKE2 正常启动时，此文件将被删除。
 
 --
 
 =====
 
-==== Restoring To New Hosts
+==== 恢复到新主机
 
-It is possible to restore an etcd snapshot to a different host than it was taken on. When doing so, you must pass the xref:security/token.adoc#_server[server token] that was originally used when taking the snapshot, as it is used to decrypt the bootstrap data inside the snapshot. The process is the same as above but changing step 2 by:
+可以将 etcd 快照恢复到与创建该快照时所在主机不同的主机上。这样做时，必须传递在创建快照时原本使用的 xref:security/token.adoc#_server[server 词元]，因为它用于解密快照中的启动数据。该过程与上述相同，但将步骤 2 更改为：
 
-. In the node that took the snapshot save the value of: `/var/lib/rancher/rke2/server/token`. This is `<BACKED-UP-TOKEN-VALUE>` in step 3.
-. Copy the snapshot to the new node. The path in the node is `<PATH-TO-SNAPSHOT>` in step 3
-. Initiate the restore from snapshot on the first server node with the following commands:
+. 在创建快照的节点中保存以下值：`/var/lib/rancher/rke2/server/token`。这就是步骤 3 中的 `<BACKED-UP-TOKEN-VALUE>`。
+. 将快照复制到新节点。节点中的路径在第 3 步中为 `<PATH-TO-SNAPSHOT>`。
+. 使用以下命令在第一个服务器节点上启动从快照恢复：
 
 [,bash]
 ----
@@ -403,18 +404,18 @@ rke2 server \
   --token=<BACKED-UP-TOKEN-VALUE>
 ----
 
-The token value can also be set in the RKE2 config file.
+词元值也可以在 RKE2 配置文件中设置。
 
 [CAUTION]
 ====
-. Node resources are also included in the etcd snapshot. If restoring to a new set of nodes, you will need to manually delete any old nodes that are no longer present in the cluster.
-. If there is a token set in the RKE2 config file, make sure it is the same as the `<BACKED-UP-TOKEN-VALUE>`, otherwise RKE2 will fail to start.
+. 节点资源也包含在 etcd 快照中。如果要恢复到一组新节点，您需要手动删除集群中不再存在的旧节点。
+. 如果在 RKE2 配置文件中设置了词元，请确保它与 `<BACKED-UP-TOKEN-VALUE>` 相同，否则 RKE2 将无法启动。
 ====
 
-== ETCDSnapshotFile Custom Resources
+== ETCD快照文件自定义资源
 
-Snapshots can be viewed remotely using any Kubernetes client by listing or describing cluster-scoped `ETCDSnapshotFile` resources.
-Unlike the `rke2 etcd-snapshot list` command, which only shows snapshots visible to that node, `ETCDSnapshotFile` resources track all snapshots present on cluster members.
+可以通过列出或描述集群范围的 `ETCDSnapshotFile` 资源，使用任何 Kubernetes 客户端远程查看快照。
+与 `rke2 etcd-snapshot list` 命令只显示该节点可见的快照不同，`ETCDSnapshotFile` 资源会跟踪集群所有成员上存在的所有快照。
 
 [,sh]
 ----
@@ -468,30 +469,30 @@ Events:
 $ kubectl describe etcdsnapshotfile s3-on-demand-k3s-server-1-1730308816-79b15c
 ----
 
-== External DB Backups (Experimental)
+== 外部数据库备份（实验性）
 
 [CAUTION]
 ====
-In addition to backing up the datastore itself, you must also back up the server token file at `/var/lib/rancher/rke2/server/token`.
-You must restore this file, or pass its value into the `token` option, when restoring from backup.
-If you do not use the same token value when restoring, the snapshot will be unusable, as the token is used to encrypt confidential data within the datastore itself.
+除了备份数据存储本身外，您还必须备份位于 `/var/lib/rancher/rke2/server/token` 的服务器词元文件。
+在从备份恢复时，您必须恢复此文件，或将其值传递给 `token` 选项。
+如果在恢复时不使用相同的词元值，则快照将无法使用，因为该词元用于加密存储本身的机密数据。
 ====
 
-=== Backup and Restore with SQLite
+=== 使用 SQLite 进行备份和恢复
 
-No special commands are required to back up or restore the SQLite datastore.
+备份或恢复 SQLite 存储不需要特殊命令。
 
-* To back up the SQLite datastore, take a copy of `/var/lib/rancher/rke2/server/db/`.
-* To restore the SQLite datastore, restore the contents of `/var/lib/rancher/rke2/server/db` (and the token, as discussed above).
+* 要备份 SQLite 存储，请复制 `/var/lib/rancher/rke2/server/db/`。
+* 要恢复 SQLite 存储，请恢复 `/var/lib/rancher/rke2/server/db` 的内容（以及上述讨论的词元）。
 
-=== Backup and Restore with External Datastore
+=== 使用外部存储进行备份和恢复
 
-When an external datastore is used, backup and restore operations are handled outside of RKE2. The database administrator will need to back up the external database, or restore it from a snapshot or dump.
+当使用外部存储时，备份和恢复操作在 RKE2 之外处理。数据库管理员需要备份外部数据库，或从快照或转储中恢复它。
 
-We recommend configuring the database to take recurring snapshots.
+我们建议配置数据库以进行定期快照。
 
-For details on taking database snapshots and restoring your database from them, refer to the official database documentation:
+有关如何进行数据库快照和从中恢复数据库的详细信息，请参阅官方数据库文档：
 
-* https://dev.mysql.com/doc/refman/8.0/en/replication-snapshot-method.html[Official MySQL documentation]
-* https://www.postgresql.org/docs/8.3/backup-dump.html[Official PostgreSQL documentation]
-* https://etcd.io/docs/latest/op-guide/recovery/[Official etcd documentation]
+* https://dev.mysql.com/doc/refman/8.0/en/replication-snapshot-method.html[官方 MySQL 文档]
+* https://www.postgresql.org/docs/8.3/backup-dump.html[官方 PostgreSQL 文档]
+* https://etcd.io/docs/latest/op-guide/recovery/[官方 etcd 文档]

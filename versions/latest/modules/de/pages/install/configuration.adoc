@@ -1,0 +1,252 @@
+= Konfigurationsoptionen
+:page-languages: [en, zh]
+:revdate: 2026-01-16
+:page-revdate: {revdate}
+
+== Konfigurationsdatei
+
+Der Hauptweg, RKE2 zu konfigurieren, erfolgt über die Konfigurationsdatei. Befehlszeilenargumente und Umgebungsvariablen sind ebenfalls verfügbar, aber RKE2 wird als systemd-Dienst installiert, sodass diese nicht so einfach genutzt werden können.
+
+Standardmäßig wird RKE2 mit den Werten gestartet, die in der YAML-Datei unter `/etc/rancher/rke2/config.yaml` vorhanden sind.
+
+[NOTE]
+====
+Die RKE2-Konfigurationsdatei muss manuell erstellt werden. Sie können dies tun, indem Sie `touch /etc/rancher/rke2/config.yaml` als privilegierter Benutzer ausführen. Wenn die Konfiguration nach dem Start von RKE2 geändert wird, muss der Dienst neu gestartet werden, um die neue Konfiguration anzuwenden.
+====
+
+Ein Beispiel für eine grundlegende `server` Konfigurationsdatei ist unten:
+
+[,yaml]
+----
+write-kubeconfig-mode: "0644"
+tls-san:
+  - "foo.local"
+node-label:
+  - "foo=bar"
+  - "something=amazing"
+debug: true
+----
+
+Die Parameter der Konfigurationsdatei entsprechen direkt den CLI-Argumenten, wobei wiederholbare CLI-Argumente als YAML-Listen dargestellt werden. Boolean-Flags werden im YAML-Dokument als `true` oder `false` dargestellt.
+
+Eine identische Konfiguration, die ausschließlich CLI-Argumente verwendet, wird unten gezeigt, um dies zu demonstrieren:
+
+[,bash]
+----
+rke2 server \
+  --write-kubeconfig-mode "0644"    \
+  --tls-san "foo.local"             \
+  --node-label "foo=bar"            \
+  --node-label "something=amazing"  \
+  --debug
+----
+
+Es ist auch möglich, sowohl eine Konfigurationsdatei als auch CLI-Argumente zu verwenden.  In diesen Situationen werden Werte aus beiden Quellen geladen, aber CLI-Argumente haben Vorrang. Für wiederholbare Argumente wie `--node-label` überschreiben die CLI-Argumente alle Werte in der Liste.
+
+Schließlich kann der Speicherort der Konfigurationsdatei entweder über das CLI-Argument `--config FILE, -c FILE` oder die Umgebungsvariable `$RKE2_CONFIG_FILE` geändert werden.
+
+=== Mehrere Konfigurationsdateien
+
+Mehrere Konfigurationsdateien werden unterstützt. Standardmäßig werden Konfigurationsdateien in alphabetischer Reihenfolge von `/etc/rancher/rke2/config.yaml` und `/etc/rancher/rke2/config.yaml.d/*.yaml` gelesen.
+
+Standardmäßig wird der zuletzt gefundene Wert für einen bestimmten Schlüssel verwendet. Ein `+` kann an den Schlüssel angehängt werden, um den Wert an die vorhandene Zeichenkette oder den Abschnitt anzuhängen, anstatt ihn zu ersetzen. Alle Vorkommen dieses Schlüssels in nachfolgenden Dateien erfordern ebenfalls ein `+`, um das Überschreiben des angesammelten Wertes zu verhindern.
+
+Ein Beispiel für mehrere Konfigurationsdateien ist unten aufgeführt:
+
+[,yaml]
+----
+# config.yaml
+token: boop
+node-label:
+  - foo=bar
+  - bar=baz
+
+
+# config.yaml.d/test1.yaml
+write-kubeconfig-mode: 600
+node-taint:
+  - alice=bob:NoExecute
+
+# config.yaml.d/test2.yaml
+write-kubeconfig-mode: 777
+node-label:
+  - other=what
+  - foo=three
+node-taint+:
+  - charlie=delta:NoSchedule
+----
+
+Dies führt zu einer endgültigen Konfiguration von:
+
+[,yaml]
+----
+write-kubeconfig-mode: 777
+token: boop
+node-label:
+  - other=what
+  - foo=three
+node-taint:
+  - alice=bob:NoExecute
+  - charlie=delta:NoSchedule
+----
+
+== Kubelet-Konfiguration
+
+[NOTE]
+.Versionssperre
+====
+Das Drop-in-Verzeichnis für Kubelet-Konfigurationsdateien oder die Konfigurationsdatei (Optionen 1 und 2 unten) ist nur in v1.32 und höher verfügbar. Für niedrigere Minor-Versionen sollten Sie die Kubelet-Argumente direkt verwenden (Option Nummer 3 unten).
+====
+
+In Übereinstimmung mit dem Verhalten upstream kann die Kubelet-Konfiguration auf verschiedene Weise mit einer spezifischen https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-configuration-merging-order[Reihenfolge der Priorität] geändert werden.
+
+RKE2 verwendet eine Standard-Kubelet-Konfiguration, die unter `/var/lib/rancher/rke2/agent/etc/kubelet.conf.d/00-rke2-defaults.conf` gespeichert ist. Wenn Sie die Standardkonfigurationsparameter ändern möchten, gibt es drei Möglichkeiten, dies zu tun:
+
+. (Empfohlen) Legen Sie eine Konfigurationsdatei in `/var/lib/rancher/rke2/agent/etc/kubelet.conf.d/` ab.
+. Durch die Verwendung des Flags `--kubelet-arg=config=$PATHTOFILE`, wobei `$PATHTOFILE` der Pfad zu einer Datei ist, die Kubelet-Konfigurationsparameter enthält (z. B. `/etc/rancher/rke2/kubelet.conf`), oder des Flags `--kubelet-arg=config-dir=$PATHTODIR`, wobei `$PATHTODIR` der Pfad zu einem Verzeichnis ist, das Dateien enthalten kann, die Kubelet-Konfigurationsparameter enthalten (z. B. `/etc/rancher/rke2/kubelet.conf.d`).
+. Durch die Verwendung des Flags `--kubelet-arg=$FLAG`, wobei `$FLAG` ein Kubelet-Konfigurationsparameter ist (z. B. `image-gc-high-threshold=100`).
+
+=== Veraltete Kubelet-Logging-Flags
+
+RKE2 unterstützt zusätzliche Flags zur Konfiguration des Kubelet-Loggings, die zuvor vom Kubelet selbst unterstützt wurden. Diese Flags werden von RKE2 abgefangen und steuern, wie RKE2 Protokolle, die vom Kubelet an stdout und stderr geschrieben werden, umschließt:
+
+|===
+| Flaggen | Typ | Beschreibung
+
+| `logtostderr`
+| bool
+| Steuert, ob Protokollnachrichten nur an stderr geschrieben werden (Standard `false`)
+
+| `alsologtostderr`
+| bool
+| Steuert, ob Protokollnachrichten zusätzlich zu der angegebenen Protokolldatei auch an stderr geschrieben werden (Standard `false`)
+
+| `stderrthreshold`
+| Zeichenfolge
+| Dieses Flag wird von RKE2 abgefangen, aber nicht verwendet (Standard `FATAL`)
+
+| `log-file`
+| Zeichenfolge
+| Gibt den absoluten Pfad und Dateinamen an, in dem die Protokollnachrichten der Komponente geschrieben werden sollen (Standard `/var/lib/rancher/rke2/agent/logs/kubelet.log`)
+
+| `log-file-max-size`
+| int
+| Gibt die maximale Größe (in Megabyte) an, die eine Protokolldatei erreichen kann, bevor sie rotiert wird (Standard `50`)
+|===
+
+== Konfiguration des Linux-Installationsskripts
+
+Wie in der xref:install/quickstart.adoc[Kurzanleitung] erwähnt, können Sie das unter https://get.rke2.io verfügbare Installationsskript verwenden, um RKE2 als Dienst zu installieren.
+
+Die einfachste Form dieses Befehls besteht darin, als Root-Benutzer oder über `sudo` Folgendes auszuführen:
+
+[,sh]
+----
+# curl -sfL https://get.rke2.io | sudo sh -
+curl -sfL https://get.rke2.io | sh -
+----
+
+Bei der Verwendung dieser Methode zur Installation von RKE2 können die folgenden Umgebungsvariablen zur Konfiguration der Installation verwendet werden:
+
+|===
+| Umgebungsvariable | Beschreibung
+
+| `INSTALL_RKE2_VERSION`
+| Version von RKE2, die von GitHub heruntergeladen werden soll. Es wird versucht, die neueste Version aus dem `stable` Kanal herunterzuladen, wenn nicht angegeben. `INSTALL_RKE2_CHANNEL` sollte ebenfalls festgelegt werden, wenn auf einem RPM-basierten System installiert wird und die gewünschte Version im `stable` Kanal nicht vorhanden ist.
+
+| `INSTALL_RKE2_TYPE`
+| Art des zu erstellenden systemd-Dienstes, kann entweder "server" oder "agent" sein. Standard ist "server".
+
+| `INSTALL_RKE2_CHANNEL_URL`
+| Channel-URL zum Abrufen der RKE2-Download-URL. Der Standardwert ist `https://update.rke2.io/v1-release/channels`.
+
+| `INSTALL_RKE2_CHANNEL`
+| Channel, der zum Abrufen der RKE2-Download-URL verwendet werden soll. Der Standardwert ist `stable`. Die gültigen Optionen sind: `stable`, `latest`, `testing`.
+
+| `INSTALL_RKE2_METHOD`
+| Methode der Installation, die verwendet werden soll. Standardmäßig auf RPM-basierten Systemen `rpm`, alles andere `tar`.
+|===
+
+Dieses Installationsskript ist unkompliziert und wird Folgendes tun:
+
+. Die gewünschte Version basierend auf den obigen Parametern abrufen. Wenn keine Parameter angegeben sind, wird die neueste offizielle Version verwendet.
+. Die Installationsmethode bestimmen und ausführen. Es gibt zwei Methoden: rpm und tar. Wenn die `INSTALL_RKE2_METHOD` Variable gesetzt ist, wird diese respektiert. Andernfalls wird `rpm` auf Betriebssystemen verwendet, die dieses Paketverwaltungssystem nutzen. Auf allen anderen Systemen wird tar verwendet. Im Falle der tar-Methode wird das Skript einfach das tar-Archiv, das mit der gewünschten Version verbunden ist, entpacken. Im Falle von rpm wird ein yum-Repository eingerichtet und das rpm wird mit yum installiert.
+
+== Konfiguration des Windows-Installationsskripts
+
+[NOTE]
+====
+Windows-Unterstützung erfordert die Wahl von Calico oder Flannel als CNI für den RKE2-Cluster.
+====
+
+Wie in der xref:install/quickstart.adoc[Kurzanleitung] erwähnt, können Sie das Skript, das unter https://github.com/rancher/rke2/blob/master/install.ps1 verfügbar ist, verwenden, um RKE2 auf einem Windows-Agenten-Knoten zu installieren.
+
+Die einfachste Form dieses Befehls ist wie folgt:
+
+[,powershell]
+----
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
+----
+
+Bei der Verwendung dieser Methode zur Installation des Windows RKE2-Agenten können die folgenden Parameter übergeben werden, um das Installationsskript zu konfigurieren:
+
+[,console]
+----
+SYNTAX
+
+install.ps1 [[-Channel] <String>] [[-Method] <String>] [[-Type] <String>] [[-Version] <String>] [[-TarPrefix] <String>] [-Commit] [[-AgentImagesDir] <String>] [[-ArtifactPath] <String>] [[-ChannelUrl] <String>] [<CommonParameters>]
+
+OPTIONS
+
+-Channel           Channel to use for fetching RKE2 download URL (Default: "stable")
+-Method            The installation method to use. Currently tar or choco installation supported. (Default: "tar")
+-Type              Type of RKE2 service. Only the "agent" type is supported on Windows. (Default: "agent")
+-Version           Version of RKE2 to download from Github
+-TarPrefix         Installation prefix when using the tar installation method. (Default: `C:/usr/local` unless `C:/usr/local` is read-only or has a dedicated mount point, in which case `C:/opt/rke2` is used instead)
+-Commit            (experimental/agent) Commit of RKE2 to download from temporary cloud storage. If set, this forces `--Method=tar`. Intended for development purposes only.
+-AgentImagesDir    Installation path for airgap images when installing from CI commit. (Default: `C:/var/lib/rancher/rke2/agent/images`)
+-ArtifactPath      If set, the install script will use the local path for sourcing the `rke2.windows-$SUFFIX` and `sha256sum-$ARCH.txt` files rather than the downloading the files from GitHub. Disabled by default.
+----
+
+=== Weitere Beispiele zur Verwendung des Windows-Installationsskripts
+
+==== Installieren Sie die neueste Version anstelle der stabilen Version.
+
+[,powershell]
+----
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
+./install.ps1 -Channel Latest
+----
+
+==== Installieren Sie die neueste Version mit der Tar-Installationsmethode.
+
+[,powershell]
+----
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
+./install.ps1 -Channel Latest -Method Tar
+----
+
+== Die Binärdatei direkt ausführen.
+
+Wie bereits erwähnt, befasst sich das Installationsskript hauptsächlich mit der Konfiguration von RKE2, um als Dienst zu laufen. Wenn Sie sich entscheiden, das Skript nicht zu verwenden, können Sie RKE2 einfach ausführen, indem Sie die Binärdatei von unserer https://github.com/rancher/rke2/releases/latest[Release-Seite] herunterladen, sie in Ihren Pfad legen und sie ausführen. Die wichtigen Befehle sind:
+
+|===
+| Kommando | Beschreibung
+
+| `rke2 server`
+| Führen Sie den RKE2-Management-Server aus, der auch die Komponenten der Kubernetes-Steuerungsebene wie den API-Server, den Controller-Manager und den Scheduler startet. Wird nur unter Linux unterstützt.
+
+| `rke2 agent`
+| Führen Sie den RKE2-Knotenagenten aus. Dies bewirkt, dass RKE2 als Arbeitsknoten läuft und die Kubernetes-Knotendienste `kubelet` und `kube-proxy` startet. Wird unter Linux und Windows unterstützt.
+
+| `rke2 --help`
+| Zeigt eine Liste von Befehlen oder Hilfe für einen Befehl an.
+|===
+
+== Weitere Informationen
+
+Für Details zur Konfiguration des RKE2-Servers siehe die xref:reference/server_config.adoc[Referenz zur Serverkonfiguration].
+
+Für Details zur Konfiguration des RKE2-Agenten siehe die xref:reference/linux_agent_config.adoc[Referenz zur Agentenkonfiguration].
+
+Für Details zur Konfiguration des RKE2-Windows-Agenten siehe die xref:reference/windows_agent_config.adoc[Referenz zur Windows-Agentenkonfiguration].

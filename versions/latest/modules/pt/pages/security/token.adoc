@@ -1,0 +1,211 @@
+= Gerenciamento de token
+:page-languages: [en, zh]
+:revdate: 2026-02-27
+:page-revdate: {revdate}
+
+O RKE2 usa tokens para garantir o processo de junção do nó e para criptografar informações confidenciais que são persistidas no datastore. Tokens autenticam o cluster para o nó que está se juntando, e o nó para o cluster.
+
+== Formato do Token
+
+Tokens RKE2 podem ser especificados em formato seguro ou curto. O formato seguro é preferido, pois permite que o cliente autentique a identidade do cluster ao qual está se juntando, antes de enviar credenciais.
+
+=== Seguro
+
+O formato de token seguro (ocasionalmente referido como um token "completo") contém as seguintes partes:
+
+`<prefix><cluster CA hash>::<credentials>`
+
+* `prefix`: um prefixo fixo `K10` que identifica o formato do token
+* `cluster CA hash`: O hash do certificado CA do servidor do cluster, usado para autenticar o servidor ao nó que está se juntando.
+ ** Para certificados CA autoassinados, este é o somatório SHA256 do certificado formatado em PEM, conforme armazenado no disco.
+ ** Para certificados CA personalizados, este é o somatório SHA256 da codificação DER do certificado raiz; comumente conhecido como a impressão digital do certificado.
+* `credentials`: O nome de usuário e a senha, ou token de portador, usados para autenticar o nó que está se juntando ao cluster.
+
+==== Inicialização TLS
+
+Quando um token seguro é especificado, o nó que está se juntando realiza os seguintes passos para validar a identidade do servidor ao qual se conectou, antes de transmitir credenciais:
+
+. Com a verificação TLS desativada, baixe o pacote CA de `/cacerts` no servidor ao qual está se juntando.
+. Calcule o hash SHA256 do certificado CA, conforme descrito acima.
+. Compare o hash SHA256 calculado com o hash do token.
+. Se o hash corresponder, valide se o certificado apresentado pelo servidor pode ser validado pelo pacote CA do servidor.
+. Se o certificado do servidor for válido, apresente credenciais para ingressar no cluster usando autenticação básica ou por token de portador, dependendo do tipo de token.
+
+=== Curto
+
+O formato de token curto inclui apenas a senha ou o token de portador usado para autenticar o nó que está se juntando ao cluster.
+
+Se um token curto for usado, o nó que está se juntando confia implicitamente no pacote CA apresentado pelo servidor; as etapas 2-4 no processo de inicialização TLS são puladas. A conexão inicial pode ser vulnerável a um ataque https://en.wikipedia.org/wiki/Man-in-the-middle_attack[man-in-the-middle].
+
+== Tipos de token
+
+O RKE2 suporta três tipos de tokens. Apenas o token do servidor está disponível por padrão; tipos de tokens adicionais devem ser configurados ou criados pelo administrador.
+
+|===
+| Tipo | Opção de CLI | Variável de ambiente
+
+| auditoria
+| `--token`
+| `RKE2_TOKEN`
+
+| Agente
+| `--agent-token`
+| `RKE2_AGENT_TOKEN`
+
+| Inicialização
+| `n/a`
+| `n/a`
+|===
+
+=== auditoria
+
+Se nenhum token for fornecido ao iniciar o primeiro servidor no cluster, um é criado com uma senha aleatória. O token do servidor é sempre gravado em `/var/lib/rancher/rke2/server/token`, em formato seguro.
+
+O token do servidor pode ser usado para ingressar tanto nós de servidor quanto de agente no cluster. Qualquer pessoa com acesso ao token do servidor essencialmente tem acesso total de administrador ao cluster. Este token deve ser guardado com cuidado.
+
+O token do servidor também é usado como a https://en.wikipedia.org/wiki/PBKDF2[senha PBKDF2] para criptografar informações confidenciais que são persistidas no datastore conhecido como dados de bootstrap. Os dados de bootstrap são essenciais para configurar novos nós de servidor ou restaurar a partir de um instantâneo. Por essa razão, o token deve ser feito backup juntamente com o datastore do cluster.
+
+[WARNING]
+====
+A menos que certificados CA personalizados estejam em uso, apenas o formato de token curto (apenas senha) pode ser usado ao iniciar o primeiro servidor no cluster. Isso ocorre porque o hash CA do cluster não pode ser conhecido até que o servidor tenha gerado os certificados CA autoassinados do cluster.
+====
+
+Para mais informações sobre o uso de certificados CA personalizados, consulte a xref:security/certificates.adoc[`rke2 certificate` documentação].
+
+=== Agente
+
+Por padrão, o token do agente é o mesmo que o token do servidor. O token do agente pode ser definido antes ou depois que o cluster foi iniciado, alterando a opção do CLI ou a variável de ambiente em todos os servidores do cluster. O token do agente é semelhante ao token do servidor, pois é configurado estaticamente e não expira.
+
+O token do agente é escrito em `/var/lib/rancher/rke2/server/agent-token`, em formato seguro. Se nenhum token de agente for especificado, este arquivo é um link para o token do servidor.
+
+=== Inicialização
+
+O RKE2 suporta tokens de inicialização de agente https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/[tokens de inicialização] gerados dinamicamente e que expiram automaticamente.
+
+== CLI de Token RKE2
+
+A ferramenta CLI de token RKE2 lida com:
+
+* O ciclo de vida dos tokens de inicialização, usando o mesmo código de geração e validação que os tokens de inicialização do kubeadm. Observe que ambas as CLIs são semelhantes.
+* A rotação do token do servidor
+
+----
+NAME:
+   rke2 token - Manage tokens
+
+USAGE:
+   rke2 token command [command options] [arguments...]
+
+COMMANDS:
+   create    Create bootstrap tokens on the server
+   delete    Delete bootstrap tokens on the server
+   generate  Generate and print a bootstrap token, but do not create it on the server
+   list      List bootstrap tokens on the server
+   rotate    Rotate original server token with a new server token
+
+OPTIONS:
+   --help, -h  show help
+----
+
+=== `rke2 token create [token]`
+
+Crie um novo token de inicialização. O `[token]` é o token real a ser escrito, conforme gerado por `rke2 token generate`. Se nenhum token for fornecido, um aleatório será gerado.
+
+Um token em formato seguro, incluindo o hash CA do cluster, será escrito no stdout. A saída deste comando deve ser salva, pois a parte secreta do token não pode ser mostrada novamente.
+
+|===
+| Flag | Descrição
+
+| `--data-dir` valor
+| Pasta para armazenar o estado (padrão: "/var/lib/rancher/rke2")
+
+| `--kubeconfig` valor
+| Servidor para se conectar [$KUBECONFIG]
+
+| `--description` valor
+| Uma descrição amigável para humanos de como este token é usado
+
+| `--groups` valor
+| Grupos extras que este token assumirá na autenticação.
+
+| `--ttl` valor
+| A duração antes que o token seja automaticamente excluído (por exemplo, 1s, 2m, 3h). Se definido como '0', o token nunca expirará (padrão: 24h0m0s)
+
+| `--usages` valor
+| Descreve as maneiras pelas quais este token pode ser usado. (padrão: "assinatura, autenticação")
+|===
+
+=== `rke2 token delete`
+
+Exclua um ou mais tokens de inicialização. O token completo pode ser fornecido, ou apenas o ID do token.
+
+|===
+| Flag | Descrição
+
+| `--data-dir` valor
+| Pasta para armazenar o estado (padrão: /var/lib/rancher/rke2)
+
+| `--kubeconfig` valor
+| Servidor para se conectar [$KUBECONFIG]
+|===
+
+=== `rke2 token generate`
+
+Gerar um token de bootstrap gerado aleatoriamente.
+
+Você não precisa usar este comando para gerar um token. Você pode fazer isso, desde que esteja no formato `[a-z0-9]{6}.[a-z0-9]{16}`, onde a primeira parte é o ID do token e a segunda parte é o segredo.
+
+|===
+| Flag | Descrição
+
+| `--data-dir` valor
+| Pasta para armazenar o estado (padrão: /var/lib/rancher/rke2)
+
+| `--kubeconfig` valor
+| Servidor para se conectar [$KUBECONFIG]
+|===
+
+=== `rke2 token list`
+
+Listar tokens de bootstrap, mostrando seu ID, descrição e tempo restante de vida.
+
+|===
+| Flag | Descrição
+
+| `--data-dir` valor
+| Pasta para armazenar o estado (padrão: /var/lib/rancher/rke2)
+
+| `--kubeconfig` valor
+| Servidor para se conectar [$KUBECONFIG]
+
+| `--output` valor
+| Formato de saída. Opções válidas: texto, json (padrão: "texto")
+|===
+
+== Rotação do Token do Servidor
+
+O comando `rke2 token rotate` permite que você rotacione e substitua o token original usado para a inicialização do servidor. Após executar o comando em um único servidor, todos os servidores e agentes que usaram o token original devem ser reiniciados com o novo token. O token original será invalidado e não poderá ser usado para juntar novos servidores ou agentes ao cluster.
+
+|===
+| Flag | Descrição | Default
+
+| `--data-dir` valor
+| Pasta para manter o estado
+| /var/lib/rancher/rke2
+
+| `--kubeconfig` valor
+| Kubeconfig para autenticação no servidor
+| /etc/rancher/rke2/rke2.yaml
+
+| `--server` valor
+| Servidor para o qual se conectar
+| "https://127.0.0.1:9345"
+
+| `--token` valor
+| Token existente usado para juntar um servidor ou agente a um cluster
+| N/A
+
+| `--new-token` valor
+| Novo token para substituir o token original
+| Se não especificado, um token aleatório de 16 caracteres será gerado
+|===

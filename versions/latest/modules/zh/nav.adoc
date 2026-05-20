@@ -1,6 +1,6 @@
 * xref:introduction.adoc[]
 
-* Installation
+* 安装
 ** xref:install/quickstart.adoc[]
 ** xref:install/requirements.adoc[]
 ** xref:install/configuration.adoc[]
@@ -15,13 +15,13 @@
 ** xref:install/packaged_components.adoc[]
 ** xref:install/uninstall.adoc[]
 
-* Upgrades
+* 升级
 ** xref:upgrade/upgrade.adoc[]
 ** xref:upgrade/manual_upgrade.adoc[]
 ** xref:upgrade/automated_upgrade.adoc[]
 ** xref:upgrade/roll_back.adoc[]
 
-* Security
+* 安全性
 ** xref:security/about_hardened_images.adoc[]
 ** xref:security/hardening_guide.adoc[]
 ** xref:security/cis_self_assessment111.adoc[]
@@ -35,29 +35,29 @@
 ** xref:security/certificates.adoc[]
 ** xref:security/token.adoc[]
 
-* Datastore
+* 数据存储
 ** xref:datastore/embedded.adoc[]
 ** xref:datastore/external.adoc[]
 ** xref:datastore/backup_restore.adoc[]
 
-* xref:architecture.adoc[]
+* xref:architecture.adoc[体系结构]
 
 * xref:cluster_access.adoc[]
 
-* Networking
+* 网络
 ** xref:networking/basic_network_options.adoc[]
 ** xref:networking/multus_sriov.adoc[]
 ** xref:networking/networking_services.adoc[]
 ** xref:networking/windows_bgp.adoc[]
 
-* xref:advanced.adoc[]
-
-* Add-ons
+* 附加组件
 ** xref:add-ons/helm.adoc[]
 ** xref:add-ons/import_images.adoc[]
 ** xref:add-ons/gpu_operators.adoc[]
 
-* References
+* xref:advanced.adoc[]
+
+* 参考资料
 ** xref:reference/ai_conformance.adoc[]
 ** xref:reference/cli_tools.adoc[]
 ** xref:reference/linux_agent_config.adoc[]
@@ -67,14 +67,12 @@
 ** xref:reference/server_config.adoc[]
 ** xref:reference/windows_agent_config.adoc[]
 
-* xref:known_issues.adoc[]
-
-* Release Notes
+* 发行说明
 ** xref:release-notes/v1.35.X.adoc[]
 ** xref:release-notes/v1.34.X.adoc[]
 ** xref:release-notes/v1.33.X.adoc[]
 ** xref:release-notes/v1.32.X.adoc[]
-** Older...
+** 较旧...
 *** xref:release-notes-old/v1.31.X.adoc[]
 *** xref:release-notes-old/v1.30.X.adoc[]
 *** xref:release-notes-old/v1.29.X.adoc[]
@@ -83,3 +81,5 @@
 *** xref:release-notes-old/v1.26.X.adoc[]
 *** xref:release-notes-old/v1.25.X.adoc[]
 *** xref:release-notes-old/v1.24.X.adoc[]
+
+* xref:known_issues.adoc[]

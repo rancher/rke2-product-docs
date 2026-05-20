@@ -1,0 +1,181 @@
+= Reversión de RKE2
+:page-languages: [en, zh]
+:revdate: 2025-12-04
+:page-revdate: {revdate}
+
+Puedes revertir la versión de Kubernetes de RKE2 después de actualizar la versión, utilizando una combinación de degradación del binario de RKE2 y restauración del almacén de datos. La reversión se puede realizar en clústeres de todos los tipos, incluyendo un SQLite de un solo nodo, un almacén de datos externo o un etcd embebido. Al revertir a una versión menor anterior de Kubernetes, debes tener una instantánea del almacén de datos tomada en la versión menor de Kubernetes a la que deseas revertir.
+
+[CAUTION]
+====
+Si no puedes restaurar la base de datos, no puedes revertir a una versión menor anterior.
+====
+
+== Consideraciones Importantes
+
+* *Copias de seguridad:* Antes de actualizar, asegúrate de tener una base de datos válida o una instantánea de etcd de tu clúster que esté ejecutando la versión anterior de RKE2. Sin una copia de seguridad, una reversión es imposible.
+* *Posible Pérdida de Datos:* El script `rke2-killall.sh` termina forzosamente los procesos de RKE2 y puede resultar en pérdida de datos si las aplicaciones no se cierran correctamente.
+* *Especificaciones de Versión:* Siempre verifica las versiones de RKE2 y de los componentes antes y después de la reversión.
+
+== Reversión de un Clúster de RKE2
+
+[tabs]
+=====
+SQLite::
++
+--
+
+Para realizar la reversión de un clúster de RKE2 cuando se utiliza una base de datos SQLite, reemplaza el archivo `.db` con la copia del archivo `.db` que hiciste al respaldar tu base de datos.
+
+--
+
+etcd embebido::
++
+--
+
+Para realizar la reversión de un clúster de RKE2 cuando se utiliza un etcd embebido (por defecto), sigue estos pasos:
+
+. Si el clúster está en funcionamiento y la API de Kubernetes está disponible, detén de manera ordenada las cargas de trabajo drenando todos los nodos:
++
+[,bash]
+----
+ kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
+----
+
+. En cada nodo, detén el servicio RKE2 y todos los procesos de pod en ejecución:
++
+[,bash]
+----
+ rke2-killall.sh
+----
+
+. En cada nodo, realiza la reversión del binario de RKE2 a la versión anterior.
+ ** Clústeres con acceso a Internet:
+  *** Nodos de servidor:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
+----
+
+  *** Nodos de agente:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
+----
+ ** Clústeres en entorno aislado:
+  *** Descarga los artefactos y ejecuta el xref:install/airgap.adoc#_install_rke2[script de instalación] localmente.
+. En el primer nodo de servidor o en el nodo sin una entrada de `server:` en su xref:install/configuration.adoc[archivo de configuración de RKE2], inicia la restauración del clúster. Consulta los xref:datastore/backup_restore.adoc#_snapshot_restore_steps[Pasos de Restauración de Instantáneas] para más información:
++
+[,bash]
+----
+ rke2 server --cluster-reset --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+[WARNING]
+==== 
+Esto sobrescribe todos los datos en el almacén de datos etcd. Verifica la integridad de la instantánea antes de restaurarla. Ten en cuenta que las instantáneas grandes pueden tardar mucho en restaurarse.
+====
+
+. Inicia el servicio RKE2 en el primer nodo de servidor:
++
+[,bash]
+----
+ systemctl start rke2-server
+----
+
+. En los otros nodos de servidor, elimina el directorio de base de datos de RKE2:
++
+[,bash]
+----
+ rm -rf /var/lib/rancher/rke2/server/db
+----
+
+. Inicia el servicio de RKE2 en los otros nodos de servidor:
++
+[,bash]
+----
+ systemctl start rke2-server
+----
+
+. Inicia el servicio de RKE2 en todos los nodos de agente:
++
+[,bash]
+----
+ systemctl start rke2-agent
+----
+
+. Verifica el estado del servicio RKE2 con `systemctl status rke2-server` o `systemctl status rke2-agent`.
+
+--
+
+Base de datos externa::
++
+--
+
+Para realizar la reversión de un clúster de RKE2 cuando se utiliza una base de datos externa (por ejemplo, PostgreSQL, MySQL), sigue estos pasos:
+
+. Si el clúster está en funcionamiento y la API de Kubernetes está disponible, detén de manera ordenada las cargas de trabajo drenando todos los nodos:
++
+[,bash]
+----
+ kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
+----
++
+[NOTE]
+==== 
+Este proceso puede interrumpir las aplicaciones en ejecución.
+====
+
+. En cada nodo, detén el servicio RKE2 y todos los procesos de pod en ejecución:
++
+[,bash]
+----
+ rke2-killall.sh
+----
+
+. Restaura una instantánea de la base de datos tomada antes de actualizar RKE2 y verifica la integridad de la base de datos. Por ejemplo, si estás utilizando PostgreSQL, ejecuta el siguiente comando:
++
+[,bash]
+----
+ pg_restore -U <DB-USER> -d <DB-NAME> <BACKUP-FILE>
+----
+
+. En cada nodo, realiza la reversión del binario de RKE2 a la versión anterior.
+ ** Clústeres con acceso a Internet:
+  *** Nodos de servidor:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
+----
+
+  *** Nodos de agente:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
+----
+ ** Clústeres en entorno aislado:
+  *** Descarga los artefactos y ejecuta el xref:install/airgap.adoc#_install_rke2[script de instalación] localmente.
+. Inicia el servicio de RKE2 en cada nodo:
++
+[,bash]
+----
+ systemctl start rke2-server #or rke2-agent
+----
+
+. Verifica el estado del servicio RKE2 con `systemctl status rke2-server` o `systemctl status rke2-agent`.
+
+--
+
+=====
+
+== Verificación
+
+Después de la reversión, verifica lo siguiente:
+
+* Versión de RKE2: `rke2 --version`
+* Salud del clúster de Kubernetes: `kubectl get nodes`
+* Funcionalidad de la aplicación.
+* Revisa los registros de RKE2 en busca de errores.

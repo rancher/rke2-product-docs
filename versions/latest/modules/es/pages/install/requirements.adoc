@@ -1,0 +1,319 @@
+= Requisitos
+:page-languages: [en, zh]
+:revdate: 2026-02-06
+:page-revdate: {revdate}
+
+RKE2 es muy ligero, pero tiene algunos requisitos mínimos que se detallan a continuación.
+
+== Requisitos previos
+
+Dos nodos de RKE2 no pueden tener el mismo nombre de nodo. Por defecto, el nombre del nodo se toma del nombre del host de la máquina.
+
+Si dos o más de tus máquinas tienen el mismo nombre de host, debes hacer una de las siguientes acciones:
+
+* Actualizar el nombre del host a un valor único.
+* Establecer el parámetro `node-name` en el archivo de configuración a un valor único.
+* Establecer el parámetro `with-node-id` en el archivo de configuración a `true` para añadir un número de ID generado aleatoriamente al nombre del host.
+
+Si el tiempo de ida y vuelta (RTT) entre los nodos del plano de control supera los 2 ms, consulta la siguiente https://support.scc.suse.com/s/kb/Maximum-RTT-Round-Trip-Time-for-an-RKE2-cluster?language=en_US[guía].
+
+== Arquitectura
+
+RKE2 está disponible para x86_64 y arm64/aarch64.
+
+== Sistemas operativos
+
+=== Linux
+
+Consulta la https://www.suse.com/suse-rke2/support-matrix/all-supported-versions[Matriz de Soporte de RKE2] para todas las versiones de SO que han sido validadas con RKE2. En general, RKE2 debería funcionar en cualquier distribución de Linux que utilice systemd e iptables.
+
+==== RHEL 10
+
+En RHEL 10 (y sus derivados como Rocky Linux) se requiere un paquete adicional para permitir nf_conntrack.
+
+[,bash]
+----
+sudo dnf install kernel-modules-extra -y
+----
+
+=== Windows
+
+[IMPORTANT]
+====
+El soporte para Windows requiere elegir Calico o Flannel como el CNI para el clúster de RKE2.
+====
+
+[NOTE] 
+====
+La función de Contenedores de Servidor de Windows necesita ser habilitada para que el agente de Windows de RKE2 funcione.
+====
+
+El agente de Nodo de Windows de RKE2 (Trabajador) ha sido probado y validado en los siguientes sistemas operativos, y sus posteriores lanzamientos no mayores:
+
+* Windows Server 2019 LTSC (amd64) (Construcción del SO 17763.2061)
+* Windows Server 2022 LTSC (amd64) (Construcción del SO 20348.169)
+
+Abre una nueva ventana de Powershell con privilegios de Administrador.
+
+[,powershell]
+----
+powershell -Command "Start-Process PowerShell -Verb RunAs"
+----
+
+En la nueva ventana de Powershell, ejecuta el siguiente comando.
+
+[,powershell]
+----
+Enable-WindowsOptionalFeature -Online -FeatureName Containers -All
+----
+
+Esto requerirá un reinicio para que la función `Containers` funcione correctamente.
+
+== Hardware
+
+Los requisitos de hardware escalan según el tamaño de tus implementaciones. Las recomendaciones mínimas se describen aquí.
+
+=== Linux/Windows
+
+* RAM: 4 GB mínimo (recomendamos al menos 8 GB)
+* CPU: 2 mínimo (recomendamos al menos 4 CPU)
+
+=== Guía de Dimensionamiento de VM
+
+Cuando hay limitaciones en la CPU y la RAM en los nodos del plano de control + etcd, podría haber limitaciones en la cantidad de nodos agentes que pueden unirse bajo condiciones de carga de trabajo estándar.
+
+|===
+| CPU del Servidor | Server RAM | Número de Agentes
+
+| 2
+| 4 GB
+| 0-225
+
+| 4
+| 8 GB
+| 226-450
+
+| 8
+| 16 GB
+| 451-1300
+
+| 16+
+| 32 GB
+| 1300+
+|===
+
+Se recomienda unir nodos de agentes en lotes de 50 o menos para permitir que la CPU libere espacio, ya que hay un pico al unirse a un nodo. ¡Recuerda modificar el valor predeterminado `cluster-cidr` si deseas más de 255 nodos!
+
+Estos datos se recuperaron bajo condiciones de prueba específicas. Variará dependiendo del entorno y las cargas de trabajo. Los pasos a continuación ofrecen una visión general de la prueba que se realizó para recuperar esto. Se realizó por última vez en v1.27.4+rke2r1. Todas las máquinas fueron aprovisionadas en AWS con volúmenes gp3 estándar de 20 GiB.
+
+. Monitorea los recursos en Grafana utilizando la fuente de datos de Prometheus.
+. Despliega cargas de trabajo de tal manera que simulen una actividad continua del clúster:
+** Una carga de trabajo básica que escala hacia arriba y hacia abajo continuamente
+** Una carga de trabajo que se elimina y se recrea en un bucle
+** Una carga de trabajo constante que contiene múltiples otros recursos, incluidos CRD.
+. Agrega nodos agentes en lotes de 30-50 a la vez.
+
+==== Discos
+
+El rendimiento de RKE2 depende del rendimiento de la base de datos, y dado que RKE2 ejecuta etcd embebido y almacena el directorio de datos en disco, recomendamos utilizar un SSD cuando sea posible para asegurar un rendimiento óptimo.
+
+== Conectividad
+
+[IMPORTANT]
+====
+Si tu nodo tiene NetworkManager instalado y habilitado, xref:known_issues.adoc#_networkmanager[asegúrate de que esté configurado para ignorar las interfaces gestionadas por CNI]. Si tu nodo tiene Wicked instalado y habilitado, xref:known_issues.adoc#_wicked[asegúrate de que la configuración sysctl de reenvío esté habilitada].
+====
+
+El servidor RKE2 necesita que los puertos 6443 y 9345 sean accesibles por otros nodos en el clúster.
+
+Todos los nodos necesitan poder alcanzar a otros nodos a través del puerto UDP 8472 cuando se utiliza Flannel VXLAN.
+
+Si deseas utilizar el servidor de métricas, necesitarás abrir el puerto 10250 en cada nodo.
+
+[IMPORTANT] 
+====
+El puerto VXLAN en los nodos no debe exponerse al mundo, ya que permite que tu red de clúster sea accesible para cualquiera. Ejecuta tus nodos detrás de un firewall/grupo de seguridad que desactive el acceso al puerto 8472.
+====
+
+=== Reglas de Red de Entrada
+
+|===
+| Puerto | Protocolo | Fuente | Destino | Descripción
+
+| 6443
+| TCP
+| Todos los nodos RKE2
+| Nodos de servidor RKE2
+| API de Kubernetes
+
+| 9345
+| TCP
+| Todos los nodos RKE2
+| Nodos de servidor RKE2
+| API de supervisor RKE2
+
+| 10250
+| TCP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Métricas de kubelet
+
+| 2379
+| TCP
+| Nodos de servidor RKE2
+| Nodos de servidor RKE2
+| Puerto del cliente etcd
+
+| 2380
+| TCP
+| Nodos de servidor RKE2
+| Nodos de servidor RKE2
+| Puerto de pares etcd
+
+| 2381
+| TCP
+| Nodos de servidor RKE2
+| Nodos de servidor RKE2
+| Puerto de métricas de etcd
+
+| 30000-32767
+| TCP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Rango de puertos NodePort
+|===
+
+==== Reglas de red de entrada específicas de CNI
+
+[tabs]
+======
+
+Canal::
++
+|===
+| Puerto | Protocolo | Fuente | Destino | Descripción
+
+| 8472
+| UDP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Canal CNI con VXLAN
+
+| 9099
+| TCP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Comprobaciones de salud del canal CNI
+
+| 51820
+| UDP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Canal CNI con WireGuard IPv4
+
+| 51821
+| UDP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Canal CNI con WireGuard IPv6/dual-stack
+|===
+
+Cilium::
++
+|===
+| Puerto | Protocolo | Fuente | Destino | Descripción
+
+| 8/0
+| ICMP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Comprobaciones de salud de Cilium CNI
+
+| 4240
+| TCP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Comprobaciones de salud de Cilium CNI
+
+| 8472
+| UDP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Cilium CNI con VXLAN
+
+| 51871
+| UDP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Cilium CNI con WireGuard
+
+|===
+
+Calico::
++
+|===
+| Puerto | Protocolo | Fuente | Destino | Descripción
+
+| 179
+| TCP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Calico CNI con BGP
+
+| 4789
+| UDP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Calico CNI con VXLAN
+
+| 5473
+| TCP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Calico CNI con Typha
+
+| 9098
+| TCP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Comprobaciones de salud de Calico Typha
+
+| 9099
+| TCP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Comprobaciones de salud de Calico
+|===
+
+Flannel::
++
+|===
+| Puerto | Protocolo | Fuente | Destino | Descripción
+
+| 4789
+| UDP
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Flannel CNI con VXLAN
+|===
+======
+
+=== Reglas de red de entrada específicas de Windows
+
+|===
+| Protocolo | Puerto | Fuente | Destino | Descripción
+
+| UDP
+| 4789
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Requerido para Calico y Flannel VXLAN
+
+| TCP
+| 179
+| Todos los nodos RKE2
+| Todos los nodos RKE2
+| Calico CNI con BGP
+|===
+
+Típicamente, se permitirá todo el tráfico saliente.

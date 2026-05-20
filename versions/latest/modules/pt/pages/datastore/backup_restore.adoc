@@ -1,0 +1,498 @@
+
+= Backup e restauração
+:page-languages: [en, zh]
+:revdate: 2026-02-27
+:page-revdate: {revdate}
+:page-aliases: backup_restore.adoc
+
+O RKE2 faz o backup das informações do cluster usando instantâneos do etcd. Esta página descreve como usar a ferramenta CLI rke2 etcd-snapshot para gerenciar instantâneos do etcd e como restaurar a partir de um instantâneo do etcd. Os instantâneos são apenas para etcd embutido, se você usar outro armazenamento de dados com a configuração `datastore-endpoint`, vá para xref:backup_restore.adoc#_external_db_backups_experimental[Experimental].
+
+Os instantâneos do etcd do RKE2 são armazenados no sistema de arquivos do nó e podem ser opcionalmente enviados para um armazenamento de objetos compatível com S3 para cenários de recuperação de desastres. Os instantâneos podem ser automatizados em um cronograma recorrente e também podem ser feitos manualmente sob demanda.  A ferramenta CLI `rke2 etcd-snapshot` oferece um conjunto de subcomandos que podem ser usados para criar, excluir e gerenciar instantâneos.
+
+|===
+| Subcomando | Descrição
+
+| apagar
+| Excluir instantâneo(s) fornecido(s)
+
+| ls, list, l
+| Listar instantâneos
+
+| prune
+| Remover instantâneos que excedem a contagem de retenção configurada
+
+| gravar
+| Acionar um instantâneo do etcd sob demanda
+|===
+
+Para informações adicionais sobre os subcomandos de instantâneo do etcd, execute `rke2 etcd-snapshot --help`.
+
+== Criando instantâneos
+
+[tabs,sync-group-id=snapshots]
+=====
+Programados::
++
+--
+
+Instantâneos programados estão habilitados por padrão, às 00:00 e 12:00 no horário do sistema, com 5 instantâneos retidos. Instantâneos programados têm um nome que começa com `etcd-snapshot`, seguido pelo nome do nó e pelo timestamp.
+
+As seguintes opções controlam a operação dos instantâneos programados:
+
+|===
+| Flag | Descrição
+
+| `--etcd-disable-snapshots`
+| Desativar snapshots programados
+
+| `--etcd-snapshot-name`
+| Define o nome base dos instantâneos programados do etcd. (Padrão: `etcd-snapshot`)
+
+| `--etcd-snapshot-compress`
+| Comprimir instantâneos do etcd
+
+| `--etcd-snapshot-dir`
+| Diretório para salvar instantâneos do banco de dados. (Local padrão: `${data-dir}/db/snapshots`)
+
+| `--etcd-snapshot-retention`
+| Número de instantâneos a serem mantidos (padrão: 5)
+
+| `--etcd-snapshot-schedule-cron`
+| Tempo de intervalo do instantâneo na especificação cron. Ex: a cada 5 horas `0 */5 * * *` (padrão: `0 */12 * * *`)
+|===
+
+O valor de data-dir é, por padrão, `/var/lib/rancher/rke2`, podendo ser alterado independentemente definindo a flag `--data-dir`.
+
+Instantâneos agendados são salvos no caminho definido pelo valor `--etcd-snapshot-dir` do servidor. Se você quiser que eles sejam replicados em armazenamentos de objetos compatíveis com S3, consulte <<_s3_compatible_object_store_support,opções de configuração do S3>>
+
+--
+
+Sob demanda::
++
+--
+
+Os instantâneos podem ser salvos manualmente executando o comando `rke2 etcd-snapshot save`. Não há retenção para esses instantâneos sob demanda e o usuário precisa removê-los manualmente usando os comandos `rke2 etcd-snapshot delete` ou `rke2 etcd-snapshot prune`. Instantâneos sob demanda têm um nome que começa com `on-demand`, seguido pelo nome do nó e timestamp.
+
+As seguintes opções controlam a operação de instantâneos sob demanda:
+
+|===
+| Flag | Descrição
+
+| `--name`
+| Define o nome base dos instantâneos sob demanda do etcd. (Padrão: `on-demand`)
+
+| `--etcd-snapshot-compress`
+| Comprimir instantâneos do etcd
+
+| `--etcd-snapshot-dir`
+| Diretório para salvar instantâneos do banco de dados. (Local padrão: `${data-dir}/db/snapshots`)
+|===
+
+O valor de data-dir é, por padrão, `/var/lib/rancher/rke2`, podendo ser alterado independentemente definindo a flag `--data-dir`.
+
+A flag `--name` só pode ser definida ao executar o comando `rke2 etcd-snapshot save`. Os outros dois também podem fazer parte do `rke2 server` xref:install/configuration.adoc#_configuration_file[arquivo de configuração].
+
+Instantâneos sob demanda são salvos no caminho definido pelo valor `--etcd-snapshot-dir` do servidor. Se você quiser que eles sejam replicados em armazenamentos de objetos compatíveis com S3, consulte <<_s3_compatible_object_store_support,opções de configuração do S3>>.
+
+--
+
+=====
+
+== Apagando instantâneos
+
+Instantâneos agendados são excluídos automaticamente quando o número de instantâneos excede a contagem de retenção configurada (5 por padrão). Os instantâneos mais antigos são removidos primeiro.
+
+Para excluir manualmente instantâneo(s) agendado(s) ou instantâneo(s) sob demanda, você pode usar o comando `rke2 etcd-snapshot delete`:
+
+[,bash]
+----
+rke2 etcd-snapshot delete <SNAPSHOT-NAME-1> <SNAPSHOT-NAME-2> ...
+----
+
+O subcomando `prune` remove instantâneos que correspondem ao prefixo do nome (`on-demand` por padrão) e excedem a contagem de retenção configurada. Inclui a flag `--snapshot-retention` para definir a contagem de retenção. Para instantâneos agendados, substitui a política de retenção padrão. Instantâneos sob demanda não têm política de retenção e, portanto, essa flag é necessária.
+
+Reduzir os instantâneos "sob demanda" para uma quantidade menor:
+
+[,bash]
+----
+rke2 etcd-snapshot prune --snapshot-retention  <NUM-OF-SNAPSHOTS-TO-RETAIN>
+----
+
+Reduzir os instantâneos "agendados" para uma quantidade menor:
+
+[,bash]
+----
+rke2 etcd-snapshot prune --name etcd-snapshot --etcd-snapshot-retention <NUM-OF-SNAPSHOTS-TO-RETAIN>
+----
+
+== Suporte a Armazenamento de Objetos Compatível com S3
+
+RKE2 suporta replicar instantâneos do etcd para e restaurar instantâneos do etcd de armazenamentos de objetos compatíveis com S3. O suporte a S3 está disponível tanto para instantâneos sob demanda quanto agendados.
+
+|===
+| Flag | Descrição
+
+| `--etcd-s3`
+| Habilitar Backup para S3
+
+| `--etcd-s3-endpoint`
+| URL do endpoint S3
+
+| `--etcd-s3-endpoint-ca`
+| Certificado CA personalizado do S3 para conectar ao endpoint S3
+
+| `--etcd-s3-skip-ssl-verify`
+| Desabilita a validação do certificado SSL do S3
+
+| `--etcd-s3-access-key`
+| Chave de acesso S3
+
+| `--etcd-s3-secret-key`
+| Chave secreta S3
+
+| `--etcd-s3-session-token` 
+| Token de sessão S3 
+
+| `--etcd-s3-bucket`
+| Nome do bucket S3
+
+| `--etcd-s3-bucket-lookup-type`
+| Tipo de pesquisa de bucket S3, um de 'auto', 'dns', 'path'; o padrão é 'auto' se não definido
+
+| `--etcd-s3-region`
+| Região / localização do bucket S3 (opcional). padrão é us-east-1
+
+| `--etcd-s3-folder`
+| Pasta S3
+
+| `--etcd-s3-retention`
+| Limite de retenção S3 (padrão: 5)
+
+| `--etcd-s3-proxy`
+| Servidor Proxy a ser usado ao conectar ao S3, substituindo quaisquer variáveis de ambiente relacionadas a proxy
+
+| `--etcd-s3-insecure`
+| Desabilita S3 sobre HTTPS
+
+| `--etcd-s3-timeout`
+| Tempo limite do S3 (padrão: `5m0s`)
+
+| `--etcd-s3-config-secret`
+| Nome do segredo no namespace kube-system usado para configurar o S3, se o etcd-s3 estiver habilitado e nenhuma outra opção do etcd-s3 estiver definida
+|===
+
+Por exemplo, é assim que a criação e exclusão de instantâneos etcd sob demanda no S3 funcionariam:
+
+[,shell-session]
+----
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret save
+INFO[0000] Snapshot on-demand-server-0-1754907117 saved.
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret ls
+Name                              Location                                                                          Size    Created
+on-demand-server-0-1754907117     s3://test-bucket/test-folder/on-demand-server-0-1754907117                        8937504 2025-07-22T10:02:03Z
+on-demand-server-0-1754907117     file:///var/lib/rancher/rke2/server/db/snapshots/on-demand-server-0-1754907117    8937504 2025-07-22T10:02:03Z
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret delete on-demand-server-0-1753178523
+INFO[0000] Snapshot on-demand-server-0-1754907117 deleted.
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret ls
+Name                              Location                                                                          Size    Created
+----
+
+=== Retenção do S3
+
+[IMPORTANT]
+.Versão Gate
+====
+A partir das versões v1.34.0+rke2r1, v1.33.4+rke2r1, v1.32.8+rke2r1, v1.31.12+rke2r1, o RKE2 inclui uma nova flag para retenção S3. Possui o mesmo valor padrão que a retenção de instantâneos local.
+====
+
+|===
+| Flag | Descrição
+
+| `--etcd-s3-retention`
+| Número de instantâneos no S3 a serem retidos (padrão: `5`)
+|===
+
+=== Suporte a Segredo de configuração do S3
+
+[IMPORTANT]
+.Versão Gate
+====
+O suporte a Segredo de configuração do S3 está disponível a partir das versões de agosto de 2024: v1.30.4+rke2r1, v1.29.8+rke2r1, v1.28.13+rke2r1
+====
+
+O RKE2 suporta a leitura da configuração de instantâneo do etcd S3 a partir de um Segredo do Kubernetes.
+Isso pode ser preferido em vez de codificar credenciais nas flags da CLI do RKE2 ou em arquivos de configuração por razões de segurança, ou se as credenciais precisarem ser rotacionadas sem reiniciar o RKE2.
+Para passar a configuração do instantâneo do S3 via um Segredo, inicie o RKE2 com `--etcd-s3` e `--etcd-s3-config-secret=<SECRET-NAME>`.
+O Segredo não precisa existir quando o RKE2 é iniciado, mas será verificado toda vez que uma operação de salvar/listar/excluir/prune instantâneo for realizada.
+
+O Segredo de configuração do S3 não pode ser usado ao restaurar um snapshot, pois o apiserver não está disponível para fornecer o segredo durante uma restauração.
+A configuração do S3 deve ser passada via CLI ao restaurar um snapshot armazenado no S3.
+
+[NOTE]
+====
+Passe apenas as flags `--etcd-s3` e `--etcd-s3-config-secret` para habilitar o Segredo. +
+Se qualquer outra flag de configuração do S3 estiver definida, o Segredo será ignorado.
+====
+
+As chaves no Segredo correspondem às flags da CLI `--etcd-s3-*` listadas acima.
+A chave `etcd-s3-endpoint-ca` aceita um pacote CA codificado em PEM, ou a chave `etcd-s3-endpoint-ca-name` pode ser usada para especificar o nome de um ConfigMap no namespace `kube-system` contendo um ou mais pacotes CA codificados em PEM.
+
+[,yaml]
+----
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rke2-etcd-snapshot-s3-config
+  namespace: kube-system
+type: etcd.k3s.cattle.io/s3-config-secret
+stringData:
+  etcd-s3-endpoint: ""
+  etcd-s3-endpoint-ca: ""
+  etcd-s3-endpoint-ca-name: ""
+  etcd-s3-skip-ssl-verify: "false"
+  etcd-s3-access-key: "AWS_ACCESS_KEY_ID"
+  etcd-s3-secret-key: "AWS_SECRET_ACCESS_KEY"
+  etcd-s3-bucket: "bucket"
+  etcd-s3-folder: "folder"
+  etcd-s3-region: "us-east-1"
+  etcd-s3-insecure: "false"
+  etcd-s3-timeout: "5m"
+  etcd-s3-proxy: ""
+----
+
+== Restaurando instantâneos
+
+O RKE2 passa por várias etapas ao restaurar um instantâneo:
+
+. Se o instantâneo estiver armazenado no S3, o arquivo é baixado para o diretório de instantâneos.
+. Se o instantâneo estiver compactado, ele é descompactado.
+. Se presente, os arquivos de banco de dados etcd atuais são movidos para `${data-dir}/server/db/etcd-old-$TIMESTAMP/`.
+. O conteúdo do instantâneo é extraído para o disco e o checksum é verificado.
+. O etcd é iniciado e todos os membros do cluster etcd, exceto o nó atual, são removidos do cluster.
+. Os certificados CA e outros dados confidenciais são extraídos do datastore e gravados no disco, para uso posterior.
+. A restauração está completa e o RKE2 pode ser reiniciado e usado normalmente no servidor onde a restauração foi realizada.
+. (opcional) Agentes e servidores de controle podem ser iniciados normalmente.
+. (opcional) Servidores etcd podem ser reiniciados para reingressar no cluster após a remoção de arquivos de banco de dados antigos.
+
+Ao restaurar um instantâneo, você não precisa usar a mesma versão do RKE2 que o criou; uma versão minor superior também é aceitável.
+
+=== Etapas de restauração de instantâneo
+
+Selecione a aba abaixo que corresponde à configuração do seu cluster.
+
+[tabs]
+=====
+Servidor Único::
++
+--
+
+. Pare o serviço RKE2:
++
+[,bash]
+----
+systemctl stop rke2-server
+----
+
+. Execute `rke2 server` com a flag `--cluster-reset`, e `--cluster-reset-restore-path` indicando o caminho para o instantâneo a ser restaurado.
+Se o instantâneo estiver armazenado no S3, forneça as flags de configuração do S3 (`--etcd-s3`, `--etcd-s3-bucket`, e assim por diante), e forneça apenas o nome do arquivo do instantâneo como o caminho de restauração.
++
+[NOTE]
+====
+Usar a flag `--cluster-reset` sem especificar um instantâneo para restaurar simplesmente redefine o cluster etcd para um único membro sem restaurar um instantâneo.
+====
++
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+   --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+*Resultado:* O RKE2 restaura o instantâneo e redefine a associação do cluster, então imprime uma mensagem indicando que está pronto para ser reiniciado: +
+ `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.`
+
+. Inicie o RKE2 novamente:
++
+[,bash]
+----
+systemctl start rke2-server
+----
++
+Se uma configuração de backup etcd-s3 estiver definida no arquivo de configuração do RKE2, a restauração do RKE2 tentará baixar o arquivo do instantâneo do bucket S3 configurado. Neste caso, apenas o nome do arquivo de instantâneo deve ser passado no argumento `--cluster-reset-restore-path`. Para restaurar de um arquivo de instantâneo local, onde uma configuração de backup etcd-s3 está presente, adicione o argumento `--etcd-s3=false` e passe o caminho completo para o arquivo de instantâneo local no argumento `--cluster-reset-restore-path`.
+
+Como um mecanismo de segurança, quando o RKE2 redefine o cluster, ele cria um arquivo vazio em `/var/lib/rancher/rke2/server/db/reset-flag` que impede os usuários de acidentalmente executar várias redefinições de cluster em sucessão. Este arquivo é excluído quando o RKE2 inicia normalmente.
+
+--
+
+Múltiplos Servidores::
++
+--
+
+Neste exemplo, há 3 servidores, `S1`, `S2` e `S3`. O instantâneo está localizado em `S1`.
+
+. Pare o RKE2 em todos os servidores:
++
+[,bash]
+----
+systemctl stop rke2-server
+----
+
+. No S1, execute `rke2 server` com a opção `--cluster-reset`, e `--cluster-reset-restore-path` indicando o caminho para o instantâneo a ser restaurado.
+Se o instantâneo estiver armazenado no S3, forneça as flags de configuração do S3 (`--etcd-s3`, `--etcd-s3-bucket`, e assim por diante), e forneça apenas o nome do arquivo do instantâneo como o caminho de restauração.
++
+[NOTE]
+====
+Usar a flag `--cluster-reset` sem especificar um instantâneo para restaurar simplesmente redefine o cluster etcd para um único membro sem restaurar um instantâneo.
+====
++
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+  --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+*Resultado:* O RKE2 restaura o instantâneo e redefine a associação do cluster, então imprime uma mensagem indicando que está pronto para ser reiniciado: +
+ `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
+ `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
+
+. No S1, inicie o RKE2 novamente:
++
+[,bash]
+----
+systemctl start rke2-server
+----
+
+. No S2 e S3, exclua o diretório de dados, `/var/lib/rancher/rke2/server/db/`:
++
+[,bash]
+----
+rm -rf /var/lib/rancher/rke2/server/db/
+----
+
+. No S2 e S3, inicie o RKE2 novamente para se juntar ao cluster restaurado:
++
+[,bash]
+----
+systemctl start rke2-server
+----
+
+Se uma configuração de backup etcd-s3 estiver definida no arquivo de configuração do RKE2, a restauração do RKE2 tentará baixar o arquivo do instantâneo do bucket S3 configurado. Neste caso, apenas o nome do arquivo de instantâneo deve ser passado no argumento `--cluster-reset-restore-path`. Para restaurar de um arquivo de instantâneo local, onde uma configuração de backup etcd-s3 está presente, adicione o argumento `--etcd-s3=false` e passe o caminho completo para o arquivo de instantâneo local no argumento `--cluster-reset-restore-path`.
+
+Como um mecanismo de segurança, quando o RKE2 redefine o cluster, ele cria um arquivo vazio em `/var/lib/rancher/rke2/server/db/reset-flag` que impede os usuários de acidentalmente executar várias redefinições de cluster em sucessão. Este arquivo é excluído quando o RKE2 inicia normalmente.
+
+--
+
+=====
+
+==== Restaurando Para Novos Hosts
+
+É possível restaurar um instantâneo etcd em um host diferente de onde foi tirado. Ao fazer isso, você deve passar o xref:security/token.adoc#_server[token do servidor] que foi usado originalmente ao tirar o instantâneo, pois ele é usado para descriptografar os dados de inicialização dentro do instantâneo. O processo é o mesmo que o descrito acima, mas alterando o passo 2 para:
+
+. No nó que tirou o instantâneo, salve o valor de: `/var/lib/rancher/rke2/server/token`. Isto é `<BACKED-UP-TOKEN-VALUE>` no passo 3.
+. Copie o instantâneo para o novo nó. O caminho no nó é `<PATH-TO-SNAPSHOT>` no passo 3.
+. Inicie a restauração do instantâneo no primeiro nó do servidor com os seguintes comandos:
+
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+  --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+  --token=<BACKED-UP-TOKEN-VALUE>
+----
+
+O valor do token também pode ser definido no arquivo de configuração do RKE2.
+
+[CAUTION]
+====
+. Os recursos do nó também estão incluídos no instantâneo do etcd. Se estiver restaurando para um novo conjunto de nós, você precisará excluir manualmente quaisquer nós antigos que não estão mais presentes no cluster.
+. Se houver um token definido no arquivo de configuração do RKE2, certifique-se de que seja o mesmo que o `<BACKED-UP-TOKEN-VALUE>`, caso contrário, o RKE2 não conseguirá iniciar.
+====
+
+== Recursos Personalizados do ETCDSnapshotFile
+
+Os instantâneos podem ser visualizados remotamente usando qualquer cliente Kubernetes, listando ou descrevendo recursos `ETCDSnapshotFile` com escopo de cluster.
+Diferente do comando `rke2 etcd-snapshot list`, que mostra apenas instantâneos visíveis para aquele nó, os recursos `ETCDSnapshotFile` rastreiam todos os instantâneos presentes nos membros do cluster.
+
+[,sh]
+----
+$ kubectl get etcdsnapshotfile
+Name                              Location                                                                           Size     Created
+etcd-snapshot-server-0-1754906881 s3://test-bucket/test-folder/etcd-snapshot-server-0-1754906881                     8937504  2025-08-11T10:08:01Z
+etcd-snapshot-server-0-1754906881 file:///var/lib/rancher/rke2/server/db/snapshots/etcd-snapshot-server-0-1754907185 8937504  2025-08-11T10:08:01Z
+etcd-snapshot-server-0-1754907185 s3://test-bucket/test-folder/etcd-snapshot-server-0-1754907185                     9633824  2025-08-11T10:13:05Z
+etcd-snapshot-server-0-1754907185 file:///var/lib/rancher/rke2/server/db/snapshots/etcd-snapshot-server-0-1754907185 9633824  2025-08-11T10:13:05Z
+----
+
+[,sh]
+----
+$ kubectl describe etcdsnapshotfile s3-etcd-snapshot-server-0-1754906881-e1e196
+Name:         s3-etcd-snapshot-server-0-1754906881-e1e196
+Namespace:
+Labels:       etcd.rke2.cattle.io/snapshot-storage-node=s3
+Annotations:  etcd.rke2.cattle.io/snapshot-token-hash: 2bb80d537b1d
+API Version:  k3s.cattle.io/v1
+Kind:         ETCDSnapshotFile
+Metadata:
+  Creation Timestamp:  2025-08-11T10:10:37Z
+  Finalizers:
+    wrangler.cattle.io/managed-etcd-snapshots-controller
+  Generation:        1
+  Resource Version:  2356
+  UID:               d4fa68e7-b692-4ad8-8740-77d2bb9c062f
+Spec:
+  Location:   s3://test-bucket/test-folder/etcd-snapshot-server-0-1754906881
+  Node Name:  server-0
+  s3:
+    Bucket:           test-bucket
+    Endpoint:         localhost:9090
+    Insecure:         true
+    Prefix:           test-folder
+    Region:           us-east-1
+    Skip SSL Verify:  true
+  Snapshot Name:      etcd-snapshot-server-0-1754906881
+Status:
+  Creation Time:  2025-08-11T10:08:01Z
+  Ready To Use:   true
+  Size:           8937504
+Events:
+  Type    Reason               Age    From             Message
+  ----    ------               ----   ----             -------
+  Normal  ETCDSnapshotCreated  6m24s  rke2-supervisor  Snapshot etcd-snapshot-server-0-1754906881 saved on server-0
+----
+
+[,sh]
+----
+$ kubectl describe etcdsnapshotfile s3-on-demand-k3s-server-1-1730308816-79b15c
+----
+
+== Backups de DB Externos (Experimental)
+
+[CAUTION]
+====
+Além de fazer o backup do próprio armazenamento de dados, você também deve fazer o backup do arquivo de token do servidor em `/var/lib/rancher/rke2/server/token`.
+Você deve restaurar este arquivo ou passar seu valor na opção `token` ao restaurar a partir do backup.
+Se você não usar o mesmo valor de token ao restaurar, o instantâneo será inutilizável, pois o token é usado para criptografar dados confidenciais dentro do próprio datastore.
+====
+
+=== Backup e Restauração com SQLite
+
+Nenhum comando especial é necessário para fazer backup ou restaurar o datastore SQLite.
+
+* Para fazer backup do armazenamento de dados SQLite, faça uma cópia de `/var/lib/rancher/rke2/server/db/`.
+* Para restaurar o armazenamento de dados SQLite, restaure o conteúdo de `/var/lib/rancher/rke2/server/db` (e o token, conforme discutido acima).
+
+=== Backup e Restauração com Datastore Externo
+
+Quando um armazenamento de dados externo é utilizado, as operações de backup e restauração são tratadas fora do RKE2. O administrador do banco de dados precisará fazer o backup do banco de dados externo ou restaurá-lo a partir de um instantâneo ou dump.
+
+Recomendamos configurar o banco de dados para tirar instantâneos recorrentes.
+
+Para detalhes sobre como tirar instantâneos do banco de dados e restaurar seu banco de dados a partir deles, consulte a documentação oficial do banco de dados:
+
+* https://dev.mysql.com/doc/refman/8.0/en/replication-snapshot-method.html[Documentação oficial do MySQL]
+* https://www.postgresql.org/docs/8.3/backup-dump.html[Documentação oficial do PostgreSQL]
+* https://etcd.io/docs/latest/op-guide/recovery/[Documentação oficial do etcd]

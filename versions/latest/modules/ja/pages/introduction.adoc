@@ -1,0 +1,36 @@
+= 概要
+:page-languages: [en, zh]
+:revdate: 2025-07-10
+:page-revdate: {revdate}
+
+image::logo-horizontal-rke2.svg[RKE2ロゴ, 346,111]
+
+{product-name}は、Rancherの企業向け次世代Kubernetesディストリビューションです。RKE Governmentとも呼ばれています。
+
+米国におけるセキュリティとコンプライアンスに焦点を当てた、 https://landscape.cncf.io/?group=projects-and-products&view-mode=card&item=platform--certified-kubernetes-distribution--rke-government#app-definition-and-development--application-definition-image-build[完全準拠のKubernetesディストリビューション]です。の紹介。
+
+これらの目標を達成するために、{product-name}は以下のことを行います：
+
+* クラスタがCIS Kubernetesベンチマークxref:security/cis_self_assessment19.adoc[v1.9]またはxref:security/cis_self_assessment110.adoc[v1.10]に最小限のオペレータの介入で合格できるようにするxref:security/hardening_guide.adoc[デフォルトと設定オプション]を提供します。
+* xref:security/fips3_support.adoc[FIPS 140-3準拠]を可能にします。
+* ビルドパイプラインで https://github.com/aquasecurity/trivy[trivy]を使用して、コンポーネントを定期的にCVEのスキャンを行います。
+
+== これはRKEや{k3s-product-name}とどのように異なりますか？
+
+{product-name}は、RKEの1.xバージョン（以下RKE1と呼ぶ）と{k3s-product-name}の両方の利点を組み合わせています。
+
+{k3s-product-name}からは、使いやすさ、運用の容易さ、デプロイメントモデルを継承しています。
+
+RKE1からは、アップストリームKubernetesとの密接な整合性を継承しています。{k3s-product-name}はエッジデプロイメントの最適化のためにアップストリームKubernetesから逸脱していますが、RKE1とRKE2はアップストリームと密接に整合することができます。
+
+重要なことに、{product-name}はRKE1のようにDockerに依存していません。RKE1は、制御プレーンコンポーネントのデプロイと管理、KubernetesのコンテナランタイムにDockerを利用していました。RKE2は、kubeletによって管理される静的ポッドとして制御プレーンコンポーネントを起動します。組み込みのコンテナランタイムはcontainerdです。
+
+== なぜ二つの名前があるのですか？
+
+これは、データセンターのユースケース向けのRancher Kubernetes Engineの次のイテレーションであるため、{product-name}として知られています。このディストリビューションは、単独で実行することも、Rancherに統合して実行することもできます。新しい{product-name}クラスターの自動プロビジョニングは、Rancher v2.6+で利用可能です。
+
+これは、セキュリティ要件が高い分野を対象に設計されたため、RKE Governmentとしても知られています。
+
+== セキュリティ
+
+Rancher Labsは責任ある情報開示を支持し、セキュリティ問題を合理的な時間内に解決するよう努めています。セキュリティの脆弱性を報告するには、link:mailto:security@rancher.com[security@rancher.com]にメールしてください。

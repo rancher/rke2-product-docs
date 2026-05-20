@@ -1,0 +1,159 @@
+= 手動アップグレード
+:page-languages: [en, zh]
+:revdate: 2026-01-08
+:page-revdate: {revdate}
+
+RKE2は、インストールスクリプトを使用するか、希望するバージョンのバイナリを手動でインストールするか、RPMインストールの場合はRPMアップグレードを使用してアップグレードすることができます。
+
+[NOTE]
+====
+最初にサーバーノードを一つずつアップグレードしてください。すべてのサーバーがアップグレードされたら、エージェントノードをアップグレードできます。
+====
+
+== リリースチャネル
+
+インストールスクリプトを使用したアップグレードや、xref:upgrade/automated_upgrade.adoc[自動アップグレード]機能を利用することで、異なるリリースチャネルに関連付けることができます。以下のチャネルが利用可能です：
+
+|===
+| チャネル | 説明
+
+| 安定版
+| （デフォルト）安定版は本番環境に推奨されます。これらのリリースはコミュニティのハードニング期間を経ており、最新のRancherリリースと互換性があります。
+
+| 最新
+| 最新の機能を試すには、「latest」チャネルが推奨されます。 これらのリリースはまだコミュニティのハードニング期間を経ておらず、Rancherと互換性がない可能性があります。
+
+| v1.26（例）
+| 各Kubernetesマイナーバージョンにはリリースチャネルが関連付けられており、サービス終了となったバージョンも含まれます。これらのチャネルは、必ずしも安定したリリースではなく、最新のパッチを選択します。
+|===
+
+チャネルの包括的で最新のリストについては、 https://update.rke2.io/v1-release/channels[RKE2チャネルサービスAPI]を訪問してください。チャネルの動作に関する詳細な技術情報については、 https://github.com/rancher/channelserver[channelserverプロジェクト]をご覧ください。
+
+[TIP]
+====
+RKE2の新しいバージョンにアップグレードする際には、 https://kubernetes.io/docs/setup/release/version-skew-policy/[Kubernetesバージョンスキューポリシー]が適用されます。アップグレード時に中間のマイナーバージョンをスキップしないように、プランを確認してください。アップグレードプロセスでは、Kubernetesバージョンへのサポートされていない変更から保護されることはありません。
+====
+
+== インストールスクリプトを使用してRKE2をアップグレードする
+
+古いバージョンからRKE2をアップグレードするには、同じフラグを使用してインストールスクリプトを再実行できます。例えば：
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | sh -
+----
+
+これにより、デフォルトで安定したチャネルの最新バージョンにアップグレードされます。
+
+エージェントノードをアップグレードする場合は、`INSTALL_RKE2_TYPE`環境変数を指定する必要があります：
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=agent sh -
+----
+
+特定のチャネル（例えば「latest」など）で最新のバージョンにアップグレードしたい場合は、チャネルを指定できます：
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_CHANNEL=latest sh -
+----
+
+特定のバージョンにアップグレードしたい場合は、次のコマンドを実行できます：
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Z+rke2rN sh -
+----
+
+インストール後にRKE2プロセスを再起動することを忘れないでください：
+
+[,sh]
+----
+# Server nodes:
+systemctl restart rke2-server
+
+# Agent nodes:
+systemctl restart rke2-agent
+----
+
+== バイナリを使用してRKE2を手動でアップグレードする
+
+または、手動でRKE2をアップグレードするには：
+
+. https://github.com/rancher/rke2/releases[リリース]から希望するRKE2バイナリのバージョンをダウンロードしてください
+. ダウンロードしたバイナリを、tarでインストールされたRKE2には`/usr/local/bin/rke2`に、RPMでインストールされたRKE2には`/usr/bin`にコピーしてください
+. 古いRKE2バイナリを停止する
+. 新しいRKE2バイナリを起動してください
+
+== RPMアップグレードを使用してRKE2をアップグレードする
+
+RPMインストールの場合、古いバージョンからRPMアップグレードを使用してRKE2をアップグレードすることが期待されます。例えば：
+
+[,sh]
+----
+# zypper upgrade
+zypper update rke2-server
+----
+
+[,sh]
+----
+yum update rke2-server
+----
+
+これにより、`rke2-server` RPMパッケージが、初期インストール時にyumまたはzypperリポジトリで設定されたチャネルの最新パッケージにアップグレードされます。
+
+エージェントノードをアップグレードする場合は、`rke2-agent`パッケージの名前を指定する必要があります
+
+[,sh]
+----
+# zypper upgrade
+zypper update rke2-agent
+----
+
+[,sh]
+----
+# yum upgrade
+yum update rke2-agent
+----
+
+インストール後にRKE2プロセスを再起動することを忘れないでください：
+
+[,sh]
+----
+# Server nodes:
+systemctl restart rke2-server
+
+# Agent nodes:
+systemctl restart rke2-agent
+----
+
+[NOTE] 
+====
+`rke2-selinux`を有効にした場合、rke2-selinuxを最新バージョンにアップグレードすることも可能です：
+
+[,sh]
+----
+yum update rke2-selinux
+----
+====
+
+== RKE2を再起動する
+
+RKE2の再起動は、systemd用のインストールスクリプトによってサポートされています。
+
+=== systemd
+
+サーバーを手動で再起動するには：
+
+[,sh]
+----
+sudo systemctl restart rke2-server
+----
+
+エージェントを手動で再起動するには：
+
+[,sh]
+----
+sudo systemctl restart rke2-agent
+----

@@ -1,15 +1,15 @@
-= Network Options
+= 网络选项
 :page-languages: [en, zh]
 :revdate: 2026-01-16
 :page-revdate: {revdate}
 
-Kubernetes requires installation of one or more CNI Plugins to provide Pod networking. RKE2 bundles four primary CNI Plugins: Canal, Cilium, Calico, and Flannel. Only Calico and Flannel support Microsoft Windows. RKE2 also includes Multus as a secondary CNI Plugin, which must be enabled alongside a primary CNI Plugin. For more information, see the xref:networking/multus_sriov.adoc[Multus and SR-IOV] documentation.
+Kubernetes 需要安装一个或多个 CNI 插件以提供 Pod 网络。RKE2 打包了四个主要的 CNI 插件：Canal、Cilium、Calico 和 Flannel。只有 Calico 和 Flannel 支持 Microsoft Windows。RKE2 还包括 Multus 作为辅助 CNI 插件，必须与主要 CNI 插件一起启用。有关更多信息，请参见 xref:networking/multus_sriov.adoc[Multus 和 SR-IOV] 文档。
 
-Canal is the default CNI Plugin, but all bundled plugins are supported.  Bundled CNI Plugins are installed via Helm chart, and can be customized by deploying a HelmChartConfig with additional chart values. For more information on using HelmChartConfig resources, see the xref:add-ons/helm.adoc[Helm Integration] documentation, and the CNI-specific examples provided below.
+Canal 是默认的 CNI 插件，但所有打包的插件都受到支持。 打包的 CNI 插件通过 Helm 图表安装，并可以通过部署带有附加图表值的 HelmChartConfig 进行自定义。有关使用 HelmChartConfig 资源的更多信息，请参见 xref:add-ons/helm.adoc[Helm 集成] 文档，以及下面提供的 CNI 特定示例。
 
-== Select a CNI Plugin
+== 选择一个 CNI 插件
 
-Use the `cni` xref:install/configuration.adoc[configuration file key] to select the CNI Plugin you wish to use. If you do not want to use any of the bundled CNI Plugins, you can set `cni` to `none`. Note that nodes will remain NotReady and be tainted unschedulable until a CNI Plugin is installed.
+使用 `cni` xref:install/configuration.adoc[配置文件键] 选择您希望使用的 CNI 插件。如果您不想使用任何打包的 CNI 插件，可以将 `cni` 设置为 `none`。请注意，节点将保持 NotReady 状态，并被标记为不可调度，直到安装 CNI 插件。
 
 [,yaml]
 ----
@@ -17,18 +17,18 @@ Use the `cni` xref:install/configuration.adoc[configuration file key] to select 
 cni: canal
 ----
 
-Bundled CNI Plugins are provided as AddOns that deploy a HelmChart resource, as described in the xref:add-ons/helm.adoc[Helm Integration] documentation. CNI Plugin charts are named `rke2-<CNI-PLUGIN-NAME>` and can be found in the `kube-system` namespace.
+打包的 CNI 插件作为 AddOns 提供，部署一个 HelmChart 资源，如 xref:add-ons/helm.adoc[Helm 集成] 文档中所述。CNI 插件图表命名为 `rke2-<CNI-PLUGIN-NAME>`，可以在 `kube-system` 命名空间中找到。
 
-To customize the Helm chart values for a bundled CNI Plugin chart, you must create a HelmChartConfig resource that matches the name and namespace of its corresponding HelmChart. See the tabs below for examples of customizing the chart values for each of the bundled CNI Plugins.
+要自定义打包 CNI 插件图表的 Helm 图表值，您必须创建一个与其对应的 HelmChart 名称和命名空间匹配的 HelmChartConfig 资源。请参见下面的选项卡，了解如何自定义每个打包 CNI 插件的图表值的示例。
 
-Default chart values can be found by browsing the https://github.com/rancher/rke2-charts/tree/main/charts[RKE2 charts repository], and referencing `values.yaml` for the version of the chart bundled with your RKE2 version.
+默认图表值可以通过浏览 https://github.com/rancher/rke2-charts/tree/main/charts[RKE2 charts 储存库] 找到，并参考 `values.yaml` 以获取与您的 RKE2 版本捆绑的图表版本。
 
 [tabs]
 =====
-CNIplugin::
+CNI插件::
 +
 --
-Canal uses Flannel for inter-node traffic and Calico for intra-node traffic and network policies. By default, it will use vxlan encapsulation to create an overlay network among nodes. For example, to override the flannel interface, you can apply the following chart values: 
+Canal 使用 Flannel 进行节点间流量传输，使用 Calico 进行节点内流量和网络策略。默认情况下，它将使用 vxlan 封装在节点之间创建覆盖网络。例如，要覆盖 flannel 接口，您可以应用以下图表值：
 
 [,yaml]
 ----
@@ -44,8 +44,7 @@ spec:
     flannel:
       iface: "eth1"
 ----
-
-Starting with RKE2 v1.23 it is possible to use flannel's https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md#wireguard[wireguard backend] for in-kernel WireGuard encapsulation and encryption (https://www.wireguard.com/install/[Users of kernels < 5.6 need to install a module]). This can be achieved using the following chart values: 
+要使用 flannel 的 https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md#wireguard[wireguard 后端]（ https://www.wireguard.com/install/[内核版本 < 5.6 的用户需要安装一个模块]），必须使用以下图表值：
 
 [,yaml]
 ----
@@ -62,22 +61,22 @@ spec:
       backend: "wireguard"
 ----
 
-After that, please restart the canal daemonset to use the newer config by executing: `kubectl rollout restart ds rke2-canal -n kube-system`. 
+之后，请通过执行 `kubectl rollout restart ds rke2-canal -n kube-system` 重启 canal 守护程序集以使用更新的配置。
 
-For more information about the full options of the Canal config please refer to the https://github.com/rancher/rke2-charts/blob/main-source/packages/rke2-canal/charts/values.yaml[rke2-charts].
+有关 Canal 配置的完整选项的更多信息，请参考 https://github.com/rancher/rke2-charts/blob/main-source/packages/rke2-canal/charts/values.yaml[rke2-charts]。
 
 .eBPF dataplane
 [%collapsible]
 ======
 [NOTE]
-.Version Gate
+.版本门控
 ====
-RKE2 supports the Calico eBPF dataplane as of January 2026 releases: v1.33.8+rke2r1, v1.34.4+rke2r1 and v1.35.1+rke2r1.
+自 2026 年 1 月的版本发布以来，RKE2 支持 Calico eBPF 数据平面：v1.33.8+rke2r1，v1.34.4+rke2r1 和 v1.35.1+rke2r1。
 ====
 
-Calico offers an efficient eBPF dataplane that can be enabled in place of the default iptables-based implementation. Calico's dataplane can also be used to replace the default Kubernetes kube-proxy implementation.
+Calico提供了一种高效的eBPF数据平面，可以替代默认的基于iptables的实现。Calico的数据平面也可以用来替代默认的Kubernetes kube-proxy实现。
 
-To enable Calico's eBPF dataplane, deploy RKE2 with `disable-kube-proxy: true` in the configuration file and use the following HelmChartConfig:
+要启用Calico的eBPF数据平面，请在配置文件中使用`disable-kube-proxy: true`部署RKE2，并使用以下HelmChartConfig：
 
 [,yaml]
 ----
@@ -97,26 +96,26 @@ spec:
       port: "6443"
 ----
 
-For more information on Calico's eBPF dataplane, refer to https://docs.tigera.io/calico/latest/operations/ebpf/[Calico's documentation].
+有关Calico的eBPF数据平面的更多信息，请参考 https://docs.tigera.io/calico/latest/operations/ebpf/[Calico的文档]。
 ======
 
 [NOTE]
 ====
-Canal requires the iptables or xtables-nft package to be installed on the node.
+Canal要求在节点上安装iptables或xtables-nft软件包。
 ====
 
 [WARNING]
 ====
-Canal is currently not supported on clusters with Windows nodes.
+Canal目前不支持具有Windows节点的集群。
 ====
 
-Please check xref:known_issues.adoc[Known issues and Limitations] if you experience IP allocation problems.
+如果您遇到IP分配问题，请检查xref:known_issues.adoc[已知问题和限制]。
 --
 
-Cilium CNI Plugin::
+Cilium CNI插件::
 +
 --
-When using Cilium, you must ensure that nodes have a supported kernel version (>= 4.9.17) and they meet the https://docs.cilium.io/en/stable/operations/system_requirements/[requirements]. To override the default options, please use a HelmChartConfig resource. The HelmChartConfig resource must match the name and namespace of its corresponding HelmChart. For example, to enable wireguard: 
+使用Cilium时，您必须确保节点具有受支持的内核版本（>= 4.9.17），并且满足 https://docs.cilium.io/en/stable/operations/system_requirements/[要求]。要覆盖默认选项，请使用HelmChartConfig资源。HelmChartConfig资源必须与其对应的HelmChart的名称和命名空间匹配。例如，要启用wireguard：
 
 [,yaml]
 ----
@@ -131,15 +130,16 @@ spec:
   valuesContent: |-
     encryption:
       enabled: true
+      type: wireguard
 ----
 
-For more information about values available in the Cilium chart, please refer to the https://github.com/rancher/rke2-charts/blob/main/charts/rke2-cilium/rke2-cilium/1.17.601/values.yaml[rke2-charts repository]. 
+有关 Cilium 图表中可用值的更多信息，请参阅 https://github.com/rancher/rke2-charts/blob/main/charts/rke2-cilium/rke2-cilium/1.19.101/values.yaml[rke2-charts 储存库]。
 
-.Kube-proxy replacement
+.Kube-proxy 替代品
 [%collapsible]
 ======
 
-Cilium includes advanced features to fully replace kube-proxy and implement the routing of services using eBPF instead of iptables. It is not recommended to replace kube-proxy by Cilium if your kernel is not v5.8 or newer, as important bug fixes and features will be missing. To activate this mode, deploy RKE2 with `disable-kube-proxy: true` in the configuration file, and the following chart values: 
+Cilium 包含先进的功能，可以完全替代 kube-proxy，并使用 eBPF 实现服务路由，而不是 iptables。如果您的内核版本低于 v5.8，不建议使用 Cilium 替代 kube-proxy，因为将缺少重要的错误修复和功能。要激活此模式，请在配置文件中部署 RKE2 `disable-kube-proxy: true`，并使用以下图表值：
 
 [,yaml]
 ----
@@ -157,7 +157,7 @@ spec:
     k8sServicePort: "6443"
 ----
 
-For more information, please check the https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/[upstream docs].
+有关更多信息，请查看 https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/[上游文档]。
 
 ======
 
@@ -165,7 +165,7 @@ For more information, please check the https://docs.cilium.io/en/stable/network/
 [%collapsible]
 ======
 
-Cilium includes also an observability platform called https://docs.cilium.io/en/stable/overview/intro/#what-is-hubble[Hubble]. To enable Hubble, use the following chart values:
+Cilium 还包括一个名为 https://docs.cilium.io/en/stable/overview/intro/#what-is-hubble[Hubble] 的可观测性平台。要启用 Hubble，请使用以下图表值：
 
 [,yaml]
 ----
@@ -190,14 +190,14 @@ spec:
 
 [WARNING]
 ====
-Cilium is currently not supported on Windows.
+Cilium 目前不支持 Windows。
 ====
 --
 
-[[install_a_cni_plugin]]Calico CNI Plugin::
+[[install_a_cni_plugin]]Calico CNI 插件::
 +
 --
-For example, to change the interface MTU, you can use the following chart values:
+例如，要更改接口 MTU，您可以使用以下图表值：
 
 [,yaml]
 ----
@@ -215,7 +215,7 @@ spec:
         mtu: 9000
 ----
 
-Because of a kernel bug in versions previous to 5.7, Calico disables hardware checksum offload. That config caps TCP performance to ~2.5Gbps. If you require higher throughput and have a kernel version greater than 5.7, you can enable the checksum offloading by using the following HelmChartConfig:
+由于 5.7 之前版本的内核存在错误，Calico 禁用了硬件校验和卸载。该配置将 TCP 性能限制为 ~2.5Gbps。如果您需要更高的吞吐量并且内核版本大于 5.7，可以使用以下 HelmChartConfig 启用校验和卸载：
 
 [,yaml]
 ----
@@ -232,28 +232,28 @@ spec:
       featureDetectOverride: "ChecksumOffloadBroken=false"
 ----
 
-For more information about values available for the Calico chart, please refer to the https://github.com/rancher/rke2-charts/blob/main/charts/rke2-calico/rke2-calico/v3.26.300/values.yaml[rke2-charts repository].  
+有关 Calico 图表中可用值的更多信息，请参阅 https://github.com/rancher/rke2-charts/blob/main/charts/rke2-calico/rke2-calico/v3.31.400/values.yaml[rke2-charts 储存库]。
 
 [NOTE]
 ====
-Calico requires the iptables or xtables-nft package to be installed on the node.
+Calico 需要在节点上安装 iptables 或 xtables-nft 软件包。
 ====
 
 [WARNING]
 ====
-If you install Calico with SELinux enabled, please read this xref:security/selinux.adoc#_calico_support[section].
+如果您在启用 SELinux 的情况下安装 Calico，请阅读此 xref:security/selinux.adoc#_calico_support[部分]。
 ====
 --
 
-Flannel CNI Plugin::
+Flannel CNI 插件::
 +
 --
 [NOTE]
 ====
-Flannel is available as of February 2024 releases: v1.29.2, v1.28.7, v1.27.11, v1.26.14. Only the `vxlan` backend is supported.
+Flannel 从 2024 年 2 月的版本开始可用：v1.29.2、v1.28.7、v1.27.11、v1.26.14。仅支持 `vxlan` 后端。
 ====
 
-For example, to change the interface MTU, you can use the following chart values:
+例如，要更改接口 MTU，您可以使用以下图表值：
 
 [,yaml]
 ----
@@ -272,14 +272,14 @@ spec:
 
 [WARNING]
 ====
-Flannel does not support network policies. Therefore, it is not recommended for hardened installations.
+Flannel 不支持网络策略。因此，不建议用于强化安装。
 ====
 --
 =====
 
-== Dual-stack configuration
+== 双栈配置
 
-IPv4/IPv6 dual-stack networking enables the allocation of both IPv4 and IPv6 addresses to Pods and Services. To configure RKE2 in dual-stack mode, in the control-plane nodes, you must set a valid IPv4/IPv6 dual-stack cidr for pods and services. To do so, use the `cluster-cidr` and `service-cidr` configuration file keys:
+IPv4/IPv6 双栈网络使得可以为 Pods 和 Services 分配 IPv4 和 IPv6 地址。要在双栈模式下配置 RKE2，在控制平面节点中，必须为 Pods 和 Services 设置有效的 IPv4/IPv6 双栈 CIDR。为此，请使用 `cluster-cidr` 和 `service-cidr` 配置文件键：
 
 [,yaml]
 ----
@@ -288,32 +288,32 @@ cluster-cidr: "10.42.0.0/16,2001:cafe:42::/56"
 service-cidr: "10.43.0.0/16,2001:cafe:43::/112"
 ----
 
-Dual-stack networking must be configured when the cluster is first created. It cannot be enabled on an existing cluster once it has been started as IPv4-only.
+双栈网络必须在集群首次创建时进行配置。一旦集群以仅 IPv4 方式启动，就无法在现有集群上启用双栈。
 
-Each CNI Plugin may require a different configuration for dual-stack:
+每个 CNI 插件可能需要不同的双栈配置：
 
 [tabs]
 ====
-Canal CNI Plugin::
+Canal CNI 插件::
 +
-Canal automatically detects the RKE2 configuration for dual-stack and does not need any extra configuration. Dual-stack is currently not supported in the windows installations of RKE2.
+Canal 自动检测 RKE2 的双栈配置，无需额外配置。在 RKE2 的 Windows 安装中，目前不支持双栈。
 
-Cilium CNI Plugin::
+Cilium CNI插件::
 +
-Cilium automatically detects the RKE2 configuration for dual-stack and does not need any extra configuration.
+Cilium 自动检测 RKE2 的双栈配置，无需额外配置。
 
-Calico CNI Plugin::
+Calico CNI 插件::
 +
-Calico automatically detects the RKE2 configuration for dual-stack and does not need any extra configuration. When deployed in dual-stack mode, it creates two different ippool resources. Note that when using dual-stack, calico leverages BGP instead of VXLAN encapsulation. Dual-stack and BGP are currently not supported in the windows installations of RKE2.
+Calico 自动检测 RKE2 的双栈配置，无需额外配置。在双栈模式下部署时，它会创建两个不同的 ippool 资源。请注意，在使用双栈时，Calico 利用 BGP 而不是 VXLAN 封装。在 RKE2 的 Windows 安装中，目前不支持双栈和 BGP。
 
-Flannel CNI Plugin::
-lannel automatically detects the RKE2 configuration for dual-stack and does not need any extra configuration.
+Flannel CNI 插件::
+Flannel 自动检测 RKE2 的双栈配置，无需额外配置。
 
 ====
 
-== IPv6 setup
+== IPv6 设置
 
-In case of IPv6 only configuration RKE2 needs to use `localhost` to access the liveness URL of the ETCD pod; check that your operating system configures `/etc/hosts` file correctly:
+在仅 IPv6 配置的情况下，RKE2 需要使用 `localhost` 访问 ETCD pod 的活跃性 URL；请检查您的操作系统是否正确配置了 `/etc/hosts` 文件：
 
 [,bash]
 ----
@@ -321,12 +321,12 @@ In case of IPv6 only configuration RKE2 needs to use `localhost` to access the l
 ----
 
 [CAUTION]
-.Known Issue
+.已知问题
 ====
-,If your IPv6 default route is set by a router advertisement (RA), you will need to set the sysctl `net.ipv6.conf.all.accept_ra=2`. Otherwise, the node will drop the default route once it expires. Be aware that accepting RAs could increase the risk of https://github.com/kubernetes/kubernetes/issues/91507[man-in-the-middle attacks].
+如果您的 IPv6 默认路由是通过路由器广告 (RA) 设置的，您需要设置 sysctl `net.ipv6.conf.all.accept_ra=2`。否则，一旦默认路由过期，节点将丢弃该路由。请注意，接受RA可能会增加https://github.com/kubernetes/kubernetes/issues/91507[中间人攻击]的风险。
 ====
 
-In IPv6-only mode, Cilium does not support encapsulation of IPv6 traffic between nodes. Communication between pods on different nodes relies on the host's network to properly route packets to pod IPs. Cilium can be configured to automatically manage static routes between nodes with the following configuration::
+在仅支持 IPv6 的模式下，Cilium 不支持在节点之间封装 IPv6 流量。不同节点上的 Pod 之间的通信依赖于主机的网络，以正确路由数据包到 Pod IP。Cilium 可以配置为自动管理节点之间的静态路由，配置如下：::
 
 [,yaml]
 ----
@@ -341,6 +341,6 @@ spec:
     autoDirectNodeRoutes: true
 ----
 
-== Nodes Without a Hostname
+== 没有主机名的节点
 
-Some cloud providers, such as Linode, will create machines with "localhost" as the hostname and others may not have a hostname set at all. This can cause problems with domain name resolution. You can run RKE2 with the `node-name` parameter and this will pass the node name to resolve this issue.
+一些云服务提供商，例如Linode，会创建主机名为"localhost"的机器，而其他一些则根本没有设置主机名。这可能会导致域名解析问题。您可以使用 `node-name` 参数运行 RKE2，这将传递节点名称以解决此问题。

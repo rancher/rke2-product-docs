@@ -1,6 +1,6 @@
-= 卸载
+= 卸装
 :page-languages: [en, zh]
-:revdate: 2024-09-11
+:revdate: 2025-08-06
 :page-revdate: {revdate}
 
 [CAUTION]
@@ -8,13 +8,18 @@
 卸载 RKE2 会删除集群数据和所有脚本。
 ====
 
+[NOTE]
+====
+要清理已部署的 {rancher-product-name} {product-name} 集群，请参见： https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-admin/manage-clusters/clean-cluster-nodes.html#_cleaning_up_nodes[清理集群节点]。
+====
+
 == Linux 卸载
 
-不同的 RKE2 安装方法对应的卸载流程不同。
+根据安装 RKE2 的方法，卸载过程有所不同。
 
 === RPM 方法
 
-要从系统中卸载通过 RPM 安装的 RKE2，只需以 root 用户或通过 `sudo` 运行你的 RKE2 版本对应的命令。这将关闭 RKE2 进程，删除 RKE2 RPM，并清理 RKE2 使用的文件。
+要从系统中卸载通过 RPM 方法安装的 RKE2，只需运行与您安装的 RKE2 版本相对应的命令，作为 root 用户或通过 `sudo`。这将关闭 RKE2 进程，移除 RKE2 RPM，并清理 RKE2 使用的文件。
 
 [,bash]
 ----
@@ -23,7 +28,7 @@
 
 === Tarball 方法
 
-要从系统中卸载通过 Tarball 方法安装的 RKE2，只需运行以下命令。这将终止进程，删除 RKE2 二进制文件，并清理 RKE2 使用的文件。
+要从系统中卸载通过 Tarball 方法安装的 RKE2，只需运行以下命令。这将终止 RKE2 进程，移除 RKE2 二进制文件，并清理 RKE2 使用的文件。
 
 [,bash]
 ----
@@ -32,7 +37,7 @@
 
 == Windows 卸载
 
-要从系统中卸载使用 tarball 安装的 RKE2 Windows Agent，你只需运行以下命令。这将关闭所有 RKE2 Windows 进程，删除 RKE2 Windows 二进制文件，并清理 RKE2 使用的文件。
+要从系统中卸载通过 tarball 方法安装的 RKE2 Windows Agent，只需运行以下命令。这将关闭所有 RKE2 Windows 进程，移除 RKE2 Windows 二进制文件，并清理 RKE2 使用的文件。
 
 [,powershell]
 ----

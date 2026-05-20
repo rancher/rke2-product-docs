@@ -1,0 +1,184 @@
+= Windows エアギャップ インストール
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+*Windows サポートは、RKE2 クラスターの CNI として Calico または Flannel を使用する必要があります。*
+
+RKE2 Windows エージェント（ワーカー）ノードは、エアギャップ環境で2つの異なる方法で使用できます。まず、RKE2 xref:install/airgap.adoc[エアギャップ セットアップ]を完了する必要があります。
+
+[IMPORTANT]
+====
+これらの手順で言及されている資産については、Prime Artifacts URL にリストされている任意の RKE2 Prime バージョンを使用できます。Prime Artifacts URLの詳細については、 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime専用ドキュメント]をご覧ください。認証が必要です。ログインするには、 https://scc.suse.com/home[SUSEカスタマーセンター（SCC）]の資格情報を使用してください。
+====
+
+お使いの RKE2 バージョン用のエアギャップイメージの tarball をダウンロードするか、プライベートレジストリを使用してください。現在、検証済みの xref:install/requirements.adoc#_windows[Windows バージョン] に従って、Windows 用に 3 つの tarball アーティファクトがリリースされています。
+
+* `rke2.windows-amd64.tar.gz`
+* `rke2-windows-1809-amd64-images.tar.gz`
+* `rke2-windows-ltsc2022-amd64-images.tar.gz`
+
+手順で言及されているすべてのファイルは、希望する RKE2 バージョンの https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] から取得できます。
+
+== Windows エージェントノードを準備する
+
+[NOTE]
+====
+RKE2 エージェントが正しく機能するためには、Windows Server コンテナ機能を有効にする必要があります。
+====
+
+. 管理者権限で新しい PowerShell ウィンドウを開きます。
++
+[,powershell]
+----
+powershell -Command "Start-Process PowerShell -Verb RunAs"
+----
+
+. 新しい PowerShell ウィンドウで、次のコマンドを実行します。
++
+[,powershell]
+----
+Enable-WindowsOptionalFeature -Online -FeatureName containers –All
+----
+
+. 機能が正しく機能するように、`Containers`ノードを再起動してください。
+
+== Windows tarball メソッド
+
+. 使用している RKE2 のバージョンに対して、 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] から Windows イメージの tarball とバイナリをダウンロードします。
++
+**tar.gz イメージの tarball を使用する**
+
+** *Windows Server*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2.windows-amd64.tar.gz -OutFile /var/lib/rancher/rke2/agent/images/rke2.windows-amd64.tar.gz
+----
++
+** *Windows Server 2019 LTSC (amd64) (OS ビルド 17763.2061)*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-1809-amd64-images.tar.gz -OutFile c:/var/lib/rancher/rke2/agent/images/rke2-windows-1809-amd64-images.tar.gz
+----
++
+** *Windows Server 2022 LTSC (amd64) (OS Build 20348.169)*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-ltsc2022-amd64-images.tar.gz -OutFile c:/var/lib/rancher/rke2/agent/images/rke2-windows-ltsc2022-amd64-images.tar.gz
+----
++
+**tar.zst イメージの tarball を使用する**
+
+Zstandard は、pigzと比較して、より優れた圧縮率と高速な解凍速度を提供します。
+
+** *Windows Server 2019 LTSC (amd64) (OS ビルド 17763.2061)*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-1809-amd64-images.tar.zst -OutFile /var/lib/rancher/rke2/agent/images/rke2-windows-1809-amd64-images.tar.zst
+----
++
+** *Windows Server 2022 LTSC (amd64) (OS Build 20348.169)*
++
+[,powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-ltsc2022-amd64-images.tar.zst -OutFile c:/var/lib/rancher/rke2/agent/images/rke2-windows-ltsc2022-amd64-images.tar.zst
+----
++
+** `rke2-windows-<VERSION>-amd64.tar.gz`または`rke2-windows-<VERSION>-amd64.tar.zst`を使用してください。Zstandard は、pigzと比較して、より優れた圧縮率と高速な解凍速度を提供します。
++
+. ノードに `/var/lib/rancher/rke2/agent/images/` ディレクトリが存在することを確認してください。
++
+[,powershell]
+----
+ New-Item -Type Directory c:\usr\local\bin -Force
+ New-Item -Type Directory c:\var\lib\rancher\rke2\bin -Force
+----
+. 圧縮アーカイブをノードの `/var/lib/rancher/rke2/agent/images/` にコピーし、ファイル拡張子が保持されることを確認してください。
+. <<Install Windows RKE2>>ボタンをクリックします。
+
+== プライベートレジストリ方式
+
+プライベートレジストリのサポートは、エンドポイントのオーバーライド、トランスポートプロトコル（HTTP/HTTPS）、認証、証明書の検証などを含む、xref:install/containerd_registry_configuration.adoc[containerd レジストリ設定]からのすべての設定を尊重します。
+
+. 必要なすべてのシステムイメージをプライベートレジストリに追加してください。イメージのリストは、上記で参照された各 tarball に対応する `.txt` ファイルから取得できます。または、エアギャップイメージの tarball を `docker load` し、ロードしたイメージにタグを付けてプッシュすることができます。
+. <<Install Windows RKE2>>を`system-default-registry`パラメータを使用して実行するか、xref:install/containerd_registry_configuration.adoc[containerdのレジストリ設定]を使用して、あなたのレジストリをdocker.ioのミラーとして使用してください。
+
+== Windows RKE2をインストールします。
+
+これらの手順は、<<Windows Tarball Method,Tarball Method>>または<<Private Registry Method>>のいずれかを完了した後にのみ実行してください。
+
+. Windows RKE2のバイナリファイル `rke2-windows-amd64.exe` を取得してください。バイナリの名前が `rke2.exe` であることを確認し、`c:/usr/local/bin` に配置してください。
++
+[,powershell]
+----
+Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-amd64.exe -OutFile c:/usr/local/bin/rke2.exe
+----
+
+. Windows用のrke2-agentを設定します。
++
+[,powershell]
+----
+New-Item -Type Directory c:/etc/rancher/rke2 -Force
+Set-Content -Path c:/etc/rancher/rke2/config.yaml -Value @"
+server: https://<server>:9345
+token: <token from server node>
+"@
+----
++
+config.yamlファイルについての詳細は、xref:install/configuration.adoc#_configuration_file[インストールオプションのドキュメント]を参照してください。
+
+. パスを設定してください。
++
+[,powershell]
+----
+$env:PATH+=";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin"
+
+"Path",
+[Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine) + ";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin",
+[EnvironmentVariableTarget]::Machine)
+----
+
+. 希望のパラメータでバイナリを実行して、RKE2 Windowsサービスを開始します。追加のパラメータについては、xref:reference/windows_agent_config.adoc[Windowsエージェント設定リファレンス]を参照してください。
++
+[,powershell]
+----
+c:\usr\local\bin\rke2.exe agent service --add
+Start-Service rke2
+----
++
+* Rancher Primeレジストリを使用している場合は、`config.yaml`に次の値を設定してください：
+.. `system-default-registry: registry.rancher.com`を設定してください。
+.. デフォルトのCNIを使用していない場合は、`cni: <CNI>`を設定してください。
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+cni: <CNI>
+----
+* プライベートレジストリメソッドを使用する場合は、`config.yaml`に次の値を設定してください：
++
+[,yaml]
+----
+system-default-registry: "registry.example.com:5000"
+----
++
+[NOTE] 
+====
+`system-default-registry` パラメータは、有効なRFC 3986 URI権限、すなわちホストとオプションのポートのみを指定する必要があります。
+====
++
+CLIパラメータのみを使用することを希望する場合は、希望するパラメータでバイナリを実行してください。
++
+[,powershell]
+----
+c:/usr/local/bin/rke2.exe agent --token <> --server <>
+----

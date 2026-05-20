@@ -3,25 +3,49 @@
 :revdate: 2025-11-06
 :page-revdate: {revdate}
 
-Helm 是 Kubernetes 的包管理工具。Helm Chart 为 Kubernetes YAML 清单文件提供了模板语法。通过 Helm，用户可以创建可配置的 deployment，而不仅仅只能使用静态文件。如果你需要创建自己的 Deployment 商店应用，请参见 https://helm.sh/docs/intro/quickstart/[Helm 文档]。
+Helm是Kubernetes的首选软件包管理工具。Helm图表为Kubernetes YAML清单文档提供模板语法。使用 Helm，我们可以创建可配置的部署，而不仅仅是使用静态文件。有关创建您自己的部署目录的更多信息，请查看 https://helm.sh/docs/intro/quickstart/. 中的文档。
 
-RKE2 不需要任何特殊配置即可配合 Helm 命令行工具一起使用。请确保你已按照xref:cluster_access.adoc[集群访问]部分正确设置了 kubeconfig。RKE2 包含一些其他功能，让你可以使用 <<使用 Helm CRD,rancher/helm-release CRD>> 更轻松地部署传统的 Kubernetes 资源清单和 Helm Chart。
+RKE2 不需要任何特殊配置即可与 Helm 命令行工具一起使用。请确保您已根据关于 xref:cluster_access.adoc[集群访问] 的部分正确设置 kubeconfig。RKE2 确实包含一些额外功能，使得使用 <<Using the Helm CRD, rancher/helm-release CRD>> 部署传统 Kubernetes 资源清单和 Helm Charts 更加容易。
 
-本节涵盖以下主题：
+== 自动部署清单和 Helm Charts
 
-* <<自动部署清单和 Helm Chart,自动部署清单和 Helm Chart>>
-* <<使用 Helm CRD,使用 Helm CRD>>
-* <<使用 HelmChartConfig 自定义打包组件,使用 HelmChartConfig 自定义打包组件>>
+在 `/var/lib/rancher/rke2/server/manifests` 中找到的任何 Kubernetes 清单将在启动时以及磁盘中文件更改时，以类似于 `kubectl apply` 的方式自动部署到 RKE2。从此目录中删除文件不会从集群中删除相应的资源。
 
-== 自动部署清单和 Helm Chart
+以这种方式部署的清单作为 AddOn 自定义资源进行管理，可以通过运行 `kubectl get addon -A` 来查看。默认情况下，您会发现 CoreDNS、Nginx-Ingress 和 Metrics Server 等打包组件的 AddOns。AddOns 由部署控制器自动创建，并根据清单目录中的文件名命名。
 
-在 `/var/lib/rancher/rke2/server/manifests` 中找到的 Kubernetes 清单都会以类似于 `kubectl apply` 的方式自动部署到 RKE2。以这种方式部署的清单作为 AddOn 自定义资源进行管理，你可以通过运行 `kubectl get addon -A` 查看它们。你能找到用于打包组件的 AddOn，例如 CoreDNS、Nginx-Ingress 等。AddOn 由部署控制器自动创建，并根据它们在清单目录中的文件名命名。
+也可以将 Helm charts 作为 AddOns 部署。RKE2 包含一个 https://github.com/k3s-io/helm-controller/[Helm Controller]，它使用 HelmChart 自定义资源定义 (CRD) 管理 Helm charts。
 
-你也可以将 Helm Chart 部署为 AddOn。RKE2 包含一个 https://github.com/k3s-io/helm-controller[Helm Controller]，它使用 HelmChart 自定义资源定义 (CRD) 管理 Helm Chart。
+=== 文件命名要求
 
-=== 使用 Helm CRD
+清单目录中每个文件的`AddOn`文件名是根据文件的基本名称生成的。
+确保清单目录中的所有文件（或任何子目录中的文件）具有唯一的名称，并遵循 Kubernetes https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[对象命名限制]。还应注意不要与默认 RKE2 打包组件使用的名称冲突，即使这些组件被禁用。
 
-https://github.com/k3s-io/helm-controller#helm-controller[HelmChart 资源定义]捕获了你通常传递给 `helm` 命令行工具的大部分选项。以下示例说明了如何从默认 Chart 仓库部署 Grafana，并覆盖某些默认的 Chart 值。请注意，HelmChart 资源本身位于 `kube-system` 命名空间中，但 Chart 的资源将部署到 `monitoring` 命名空间。
+以下是一个错误示例，如果文件名包含下划线，将会报告该错误：
+
+[,sh]
+----
+`Failed to process config: failed to process /var/lib/rancher/rke2/server/manifests/example_manifest.yaml:
+   Addon.k3s.cattle.io "example_manifest" is invalid: metadata.name: Invalid value: "example_manifest":
+   a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')`
+----
+
+== 禁用 AddOns
+
+上述列出的打包组件的 AddOns，以及放置在清单目录中的任何额外清单的 AddOns，可以使用 --disable 标志。被禁用的 AddOns 会从集群中主动卸载，并且源文件会从清单目录中删除。
+
+例如，要禁用在新集群上安装 CoreDNS，或要卸载它并从现有集群中去除清单，您可以在配置文件中使用 `disable: rke2-coredns` 启动 RKE2。可以在嵌套列表中禁用多个项目。
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable:
+  - rke2-coredns
+  - rke2-metrics-server
+----
+
+== 使用 Helm CRD
+
+https://github.com/k3s-io/helm-controller#helm-controller[HelmChart资源定义]捕获您通常会传递给`helm`命令行工具的大部分选项。以下是如何从默认图表储存库部署 Grafana 的示例，覆盖一些默认的图表值。请注意，HelmChart资源本身位于 `kube-system`名称空间，但图表的资源将被部署到 `monitoring`名称空间。
 
 [,yaml]
 ----
@@ -46,72 +70,167 @@ spec:
         enabled: true
 ----
 
-=== HelmChart 字段定义
+从带有身份验证的私有储存库部署 Helm图表的示例：
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  namespace: kube-system
+  name: example-app
+spec:
+  targetNamespace: example-space
+  createNamespace: true
+  version: v1.2.3
+  chart: example-app
+  repo: https://secure-repo.example.com
+  authSecret:
+    name: example-repo-auth
+  repoCAConfigMap:
+    name: example-repo-ca
+  valuesContent: |-
+    image:
+      tag: v1.2.2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: kube-system
+  name: example-repo-auth
+type: kubernetes.io/basic-auth
+stringData:
+  username: user
+  password: pass
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: kube-system
+  name: example-repo-ca
+data:
+  ca.crt: |-
+    -----BEGIN CERTIFICATE-----
+    <YOUR CERTIFICATE>
+    -----END CERTIFICATE-----
+----
+
+=== HelmChart字段定义
 
 |===
-| 字段 | 默认 | 描述 | Helm 参数/标志等效项
+| 字段 | 默认值 | 说明 | Helm参数/标志等效
 
-| name
+| metadata.name
 |
-| Helm Chart 名称
-| NAME
+| Helm图表名称
+| 名称
 
 | spec.chart
 |
-| 仓库中的 Helm Chart 名称，或 chart archive (.tgz) 的完整 HTTPS URL
-| CHART
+| 储存库中的Helm图表名称，或指向图表归档（.tgz）的完整HTTPS URL
+| 图表
 
 | spec.targetNamespace
 | default
-| Helm Chart 目标命名空间
+| Helm图表目标命名空间
 | `--namespace`
+
+| spec.createNamespace
+| false
+| 如果不存在，则创建目标命名空间
+| `--create-namespace`
 
 | spec.version
 |
-| Helm Chart 版本（通过仓库安装时）
+| Helm图表版本（从储存库安装时）
 | `--version`
 
 | spec.repo
 |
-| Helm Chart 仓库 URL
+| Helm图表储存库URL
 | `--repo`
+
+| spec.repoCA
+|
+| 使用此 CA 包验证启用 HTTPS 的服务器的证书。应为包含一个或多个 PEM 编码 CA 证书的字符串。
+| `--ca-file`
+
+| spec.repoCAConfigMap
+|
+| 指向包含 Helm 信任的 CA 证书的 ConfigMap。可以与 `repoCA` 一起使用或替代
+| `--ca-file`
 
 | spec.helmVersion
 | v3
-| 要使用的 Helm 版本（`v2` 或 `v3`）
+| 要使用的Helm版本（`v2`或`v3`）
 |
 
 | spec.bootstrap
 | False
-| 如果需要此 Chart 来引导集群（Cloud Controller Manager 等），请设置为 `True`
+| 如果此图表需要启动集群（云控制器管理器等），则设置为 True。
 |
 
 | spec.set
 |
-| 覆盖简单的默认 Chart 值。优先于通过 valuesContent 设置的选项。
+| 覆盖简单的默认 Chart 值。这些优先于通过 valuesContent 设置的选项。
 | `--set` / `--set-string`
+
+| spec.jobImage
+|
+| 指定安装Helm图表时使用的镜像。例如：rancher/klipper-helm:v0.3.0。
+|
+
+| spec.backOffLimit
+| 1000
+| 指定在将作业视为失败之前的重试次数。
+|
+
+| spec.timeout
+| 300秒
+| Helm 操作的超时，作为 https://pkg.go.dev/time#ParseDuration[持续时间字符串]（`300s`，`10m`，`1h` 等）
+| `--timeout`
+
+| spec.failurePolicy
+| 重新安装
+| 设置为 `abort`，此情况下 Helm 操作将被中止，等待操作员的手动干预。
+|
+
+| spec.authSecret
+|
+| 引用类型为 `kubernetes.io/basic-auth` 的 Secret，持有图表储存库的基本身份验证凭据。
+|
+
+| spec.authPassCredentials
+| false
+| 将基本身份验证凭据传递给所有域。
+| `--pass-credentials`
+
+| spec.dockerRegistrySecret
+|
+| 引用类型为 `kubernetes.io/dockerconfigjson` 的 Secret，持有作为 Chart 储存库的 OCI 基础注册表的 Docker 身份验证凭据。
+|
 
 | spec.valuesContent
 |
-| 通过 YAML 文件内容覆盖复杂的默认 Chart 值
+| 通过 YAML 文件内容覆盖复杂的默认 Chart 值。
 | `--values`
 
 | spec.chartContent
 |
-| Base64 编码的 chart archive .tgz，覆盖 spec.chart
-| CHART
+| Base64编码的图表归档.tgz - 覆盖spec.chart
+| 图表
 |===
 
 == 使用 HelmChartConfig 自定义打包组件
 
-为了允许覆盖部署为 HelmCharts（例如 Canal、CoreDNS、Nginx-Ingress 等）的打包组件的值，RKE2 支持通过 `HelmChartConfig` 资源进行自定义部署。`HelmChartConfig` 资源必须与对应的 HelmChart 名称和命名空间匹配，并且支持提供额外的 `valuesContent`，它作为附加值文件传递给 `helm` 命令。
+为了允许覆盖作为 HelmCharts 部署的打包组件的值（例如 Canal、CoreDNS、Nginx-Ingress 等），RKE2 支持通过 `HelmChartConfig` 资源自定义部署。`HelmChartConfig`资源必须与其对应的 HelmChart 的名称和名称空间匹配，并支持提供额外的 `valuesContent`，该值作为附加值文件传递给 `helm` 命令。
 
 [NOTE]
 ====
-HelmChart `spec.set` 值会覆盖 HelmChart 和 HelmChartConfig `spec.valuesContent` 设置。
+HelmChart `spec.set` 值覆盖 HelmChart 和 HelmChartConfig `spec.valuesContent` 设置。
 ====
 
-例如，要自定义打包的 CoreDNS 配置，你可以创建一个名为 `/var/lib/rancher/rke2/server/manifests/rke2-coredns-config.yaml` 的文件并使用以下内容填充它:
+例如，要自定义打包的CoreDNS配置，您可以创建一个名为`/var/lib/rancher/rke2/server/manifests/rke2-coredns-config.yaml`的文件，并用以下内容填充它：
 
 [,yaml]
 ----
@@ -126,4 +245,4 @@ spec:
     imageTag: v1.7.1
 ----
 
-你可以在 https://github.com/rancher/rke2-charts/tree/main/charts[RKE2 Chart 仓库]找到所有打包的 Helm Chart，包括其文档和默认值。
+您可以在 https://github.com/rancher/rke2-charts/tree/main/charts[RKE2图表储存库]中找到所有打包的Helm图表，包括它们的文档和默认值。

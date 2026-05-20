@@ -1,0 +1,63 @@
+= Windows y BGP
+:page-languages: [en, zh]
+:revdate: 2025-10-29
+:page-revdate: {revdate}
+
+== Habilitando BGP en Calico con Windows
+
+Para habilitar el modo BGP para enrutar tráfico con RKE2 utilizando nodos tanto de Linux como de Windows, se debe seleccionar el CNI de Calico en la configuración del servidor.
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+cni: calico
+----
+
+Calico debe ser configurado con BGP habilitado y la encapsulación establecida en `None`.
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-calico-config.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-calico
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    installation:
+      calicoNetwork:
+        bgp: Enabled
+      backend: "None"
+----
+
+== Iniciando nodo de Windows
+
+Configura RKE2 en el nodo de Windows como se describe xref:install/quickstart.adoc#_windows_agent_worker_node_installation[aquí].
+
+Antes de iniciar el servicio RKE2, `RemoteAccess` debe ser habilitado.
+
+[,powershell]
+----
+Install-WindowsFeature RemoteAccess
+Install-WindowsFeature RSAT-RemoteAccess-PowerShell
+Install-WindowsFeature Routing
+----
+
+Esto requiere un reinicio para funcionar correctamente.
+
+A continuación, configura el servicio `RemoteAccess`:
+
+[,powershell]
+----
+Install-RemoteAccess -VpnType RoutingOnly
+----
+
+Para comprobar si el servicio `RemoteAccess` se ha iniciado correctamente, utiliza el siguiente comando:
+
+[,powershell]
+----
+Start-Service RemoteAccess
+----
+
+Después de eso, inicia el servicio RKE2.

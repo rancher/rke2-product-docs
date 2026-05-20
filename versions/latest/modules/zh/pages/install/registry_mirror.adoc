@@ -1,41 +1,41 @@
-= Embedded Registry Mirror
-:page-languages: [en, zh]
+= 嵌入式注册表镜像
+:page-languages: 嵌入式注册表镜像作为实验性功能可在 2024 年 1 月的版本中使用：v1.26.13+rke2r1、v1.27.10+rke2r1、v1.28.6+rke2r1、v1.29.1+rke2r1，并在 2024 年 12 月的版本中正式发布：v1.29.12+rke2r1、v1.30.8+rke2r1、v1.31.4+rke2r1。
 :revdate: 2025-10-29
 :page-revdate: {revdate}
 
 [NOTE]
-.Version Gate
+.版本门控
 ====
-The Embedded Registry Mirror is available as an experimental feature as of January 2024 releases: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1 and GA as of December 2024 releases: v1.29.12+rke2r1,v1.30.8+rke2r1, v1.31.4+rke2r1.
+嵌入式注册表镜像作为实验性功能可在 2024 年 1 月的版本中使用：v1.26.13+rke2r1、v1.27.10+rke2r1、v1.28.6+rke2r1、v1.29.1+rke2r1，并在 2024 年 12 月的版本中正式发布：v1.29.12+rke2r1、v1.30.8+rke2r1、v1.31.4+rke2r1。
 ====
 
-RKE2 embeds https://github.com/spegel-org/spegel[Spegel], a stateless distributed OCI registry mirror that allows peer-to-peer sharing of container images between nodes in a Kubernetes cluster. The distributed registry mirror is disabled by default. For RKE2 to leverage it, you must enable both the <<Enabling The Distributed OCI Registry Mirror,Distributed OCI Registry Mirror>> and the <<Enabling Registry Mirroring,Registry mirroring>> as explained in the following subsections.
+RKE2 嵌入了 https://github.com/spegel-org/spegel[Spegel]，这是一个无状态的分布式 OCI 注册表镜像，允许 Kubernetes 集群中的节点之间进行点对点的容器镜像共享。分布式注册表镜像默认是禁用的。要让 RKE2 利用该功能，您必须按照以下小节中的说明，同时启用<<Enabling The Distributed OCI Registry Mirror,分布式 OCI 注册表镜像>>和<<Enabling Registry Mirroring,注册表镜像>>。
 
-== Enabling The Distributed OCI Registry Mirror
+== 启用分布式 OCI 注册表镜像
 
-In order to enable the embedded registry mirror, server nodes must be configured with `embedded-registry: true`. This option enables the embedded mirror for use on all nodes in the cluster.
+要启用嵌入式注册表镜像，服务器节点必须使用`embedded-registry: true`进行配置。此选项使嵌入式镜像可在集群中的所有节点上使用。
 
-When enabled at a cluster level, all nodes will host a local OCI registry on port 6443, and publish a list of available images via a peer to peer network on port 5001. Any image available in the containerd image store on any node, can be pulled by other cluster members without access to an external registry. Images imported via xref:install/airgap.adoc#_tarball_method[air-gap image tar files] or xref:add-ons/import_images.adoc#_pre_import_images[pre-imported] are pinned in containerd to ensure that they remain available and are not pruned by Kubelet garbage collection.
+当在集群级别启用时，所有节点将在 6443 端口上托管本地 OCI 注册表，并通过点对点网络在 5001 端口发布可用镜像的列表。在任何节点的 containerd 容器镜像存储中可用的任何镜像，都可以被其他集群成员拉取，而无需访问外部注册表。通过xref:install/airgap.adoc#_tarball_method[隔离 image tar 文件]或xref:add-ons/import_images.adoc#_pre_import_images[预导入]导入的镜像会在 containerd 中被固定，以确保它们保持可用且不会被 Kubelet 垃圾回收清除。
 
-=== Requirements
+=== 要求
 
-When the embedded registry mirror is enabled, all nodes must be able to reach each other via their internal IP addresses, on TCP ports 5001 and 9345. If nodes cannot reach each other, it may take longer for images to be pulled, as the distributed registry will be tried first by containerd, before it falls back to other endpoints.
+当启用嵌入式注册表镜像时，所有节点必须能够通过其内网 IP 地址在 TCP 端口 5001 和 9345 互相访问。如果节点无法相互访问，拉取镜像可能会花费更长时间，因为 containerd 会首先尝试分布式注册表，然后再回退到其他端点。
 
-=== Metrics
+=== 指标
 
-Spegel provides a few metrics that can be helpful to track its activity and can be queried in the supervisor. However, the supervisor metrics are disabled by default. To enable them, server nodes must be started with `supervisor-metrics: true` in the configuration file.
+Spegel 提供了一些有助于跟踪其活动的指标，并可以在监控器中查询。但是，监控器指标默认是禁用的。要启用它们，服务器节点必须在配置文件中使用`supervisor-metrics: true`启动。
 
-Once enabled, query:
+启用后，查询：
 
 ----
 kubectl get --server https://$SERVER_NAME:9345 --raw /metrics | grep spegel
 ----
 
-== Enabling Registry Mirroring
+== 启用注册表镜像
 
-Enabling mirroring for a registry allows a node to both pull images from that registry from other nodes, and share the registry's images with other nodes. If a registry is enabled for mirroring on some nodes, but not on others, only the nodes with the registry enabled will exchange images from that registry.
+为注册表启用镜像允许节点从其他节点拉取该注册表的镜像，并与其他节点共享该注册表的镜像。如果某些节点启用了镜像的注册表，但其他节点没有启用，只有启用了注册表的节点才会从该注册表交换镜像。
 
-In order to enable mirroring of images from an upstream container registry, nodes must have an entry in the `mirrors` section of `registries.yaml` for that registry. The registry does not need to have any endpoints listed, it just needs to be present. For example, to enable distributed mirroring of images from `docker.io` and `registry.k8s.io`, configure `registries.yaml` with the following content on all cluster nodes:
+为了启用从上游容器注册表的镜像，节点必须在 `mirrors` 的 `registries.yaml` 部分中为该注册表添加条目。注册表不需要列出任何端点，只需存在即可。例如，要启用从 `docker.io` 和 `registry.k8s.io` 的图像的分布式镜像，请在所有集群节点上将 `registries.yaml` 配置为以下内容：
 
 [,yaml]
 ----
@@ -44,7 +44,7 @@ mirrors:
   registry.k8s.io:
 ----
 
-Endpoints for registry mirrors may also be added as usual. In the following configuration, images pull attempts will first try the embedded mirror, then `mirror.example.com`, then finally `docker.io`:
+注册表镜像的端点也可以像往常一样添加。在以下配置中，图像拉取尝试将首先尝试嵌入的镜像，然后是 `mirror.example.com`，最后是 `docker.io`：
 
 [,yaml]
 ----
@@ -54,7 +54,7 @@ mirrors:
       - https://mirror.example.com
 ----
 
-If you are using a private registry directly, instead of as a mirror for an upstream registry, you may enable distributed mirroring in the same way public registries are enabled - by listing it in the mirrors section:
+如果您直接使用私有注册表，而不是作为上游注册表的镜像，您可以像启用公共注册表那样启用分布式镜像——只需在镜像部分中列出它：
 
 [,yaml]
 ----
@@ -63,12 +63,12 @@ mirrors:
 ----
 
 [NOTE]
-.Version Gate
+.版本门控
 ====
-Wildcard support is available as of the March 2024 releases: v1.26.15+rke2r1, v1.27.12+rke2r1, v1.28.8+rke2r1, v1.29.3+rke2r1
+通配符支持自 2024 年 3 月的版本开始可用：v1.26.15+rke2r1、v1.27.12+rke2r1、v1.28.8+rke2r1、v1.29.3+rke2r1。
 ====
 
-The `"*"` wildcard mirror entry can be used to enable distributed mirroring of all registries. Note that the asterisk MUST be quoted:
+`"*"` 通配符镜像条目可用于启用所有注册表的分布式镜像。请注意，星号必须被引号引起来：
 
 [,yaml]
 ----
@@ -76,15 +76,15 @@ mirrors:
   "*":
 ----
 
-If no registries are enabled for mirroring on a node, that node does not participate in the distributed registry in any capacity.
+如果在节点上没有启用任何注册表进行镜像，则该节点在分布式注册表中不以任何身份参与。
 
-For more information on the structure of the `registries.yaml` file, see xref:install/private_registry.adoc[Private Registry Configuration].
+有关`registries.yaml`文件结构的更多信息，请参阅xref:install/private_registry.adoc[私有注册表配置]。
 
-=== Default Endpoint Fallback
+=== 默认端点回退
 
-By default, containerd will fall back to the default endpoint when pulling from registries with mirror endpoints configured. If you want to disable this, and only pull images from the configured mirrors and/or the embedded mirror, see the xref:install/private_registry.adoc#_default_endpoint_fallback[Default Endpoint Fallback] section of the Private Registry Configuration documentation.
+默认情况下，containerd 在从配置了镜像端点的注册表拉取时将回退到默认端点。如果您想禁用此功能，仅从配置的镜像和/或嵌入式注册表中拉取镜像，请参阅私有注册表配置文档中的xref:install/private_registry.adoc#_default_endpoint_fallback[默认端点回退]部分。
 
-Note that if you are using the `disable-default-endpoint` option and want to allow pulling directly from a particular registry, while disallowing the rest, you can explicitly provide an endpoint in order to allow the image pull to fall back to the registry itself:
+请注意，如果您使用`disable-default-endpoint`选项，并希望允许直接从某个特定注册表拉取，同时禁止其他注册表，您可以明确提供一个端点，以使图像拉取可以回退到该注册表本身：
 
 [,yaml]
 ----
@@ -96,39 +96,39 @@ mirrors:
       - https://mirror.example.com
 ----
 
-=== Latest Tag
+=== 最新标签
 
-When no tag is specified for a container image, the implicit default tag is `latest`. This tag is frequently updated to point at the most recent version of the image. Because this tag will point at a different revisions of an image depending on when it is pulled, the distributed registry *will not* pull the `latest` tag from other nodes. This forces containerd go out to an upstream registry or registry mirror to ensure a consistent view of what the `latest` tag refers to.
+当未为容器图像指定标签时，隐式默认标签为 `latest`。此标签会经常更新，以指向该镜像的最新版本。由于此标签会根据拉取时间指向镜像的不同修订版本，分布式注册表*将不会*从其他节点拉取`latest`该标签。这迫使 containerd 访问上游注册表或注册表镜像，以确保对 `latest` 标签所指内容的一致视图。
 
-This aligns with the https://kubernetes.io/docs/concepts/containers/images/#imagepullpolicy-defaulting[special `imagePullPolicy` defaulting] observed by Kubernetes when using the `latest` tag for a container image.
+这与Kubernetes在使用`latest`标签为容器镜像时观察到的 https://kubernetes.io/docs/concepts/containers/images/#imagepullpolicy-defaulting[特殊`imagePullPolicy`默认]一致。
 
-== Security
+== 安全性
 
-=== Authentication
+=== 身份验证
 
-Access to the embedded mirror's registry API requires a valid client certificate, signed by the cluster's client certificate authority.
+访问嵌入式镜像的注册表API需要有效的客户端证书，该证书由集群的客户端证书颁发机构签署。
 
-Access to the distributed hash table's peer-to-peer network requires a preshared key that is controlled by server nodes. Nodes authenticate each other using both the preshared key, and a certificate signed by the cluster certificate authority.
+访问分布式哈希表的点对点网络需要一个由服务器节点控制的预共享密钥。节点使用预共享密钥和由集群证书颁发机构签署的证书相互认证。
 
-=== Potential Concerns
+=== 潜在问题
 
 [WARNING]
 ====
-The distributed registry is built on peer-to-peer principles, and assumes an equal level of privilege and trust between all cluster members. If this does not match your cluster's security posture, you should not enable the embedded distributed registry.
+分布式注册表建立在点对点原则之上，并假设所有集群成员之间具有相等的特权和信任级别。如果这与您集群的安全态势不符，则不应启用嵌入式分布式注册表。
 ====
 
-The embedded registry may make available images that a node may not otherwise have access to. For example, if some of your images are pulled from a registry, project, or repository that requires authentication via Kubernetes Image Pull Secrets, or credentials in `registries.yaml`, the distributed registry will allow other nodes to share those images without providing any credentials to the upstream registry.
+嵌入式注册表可能会提供节点本来无法访问的镜像。例如，如果您的某些镜像是从需要通过Kubernetes镜像拉取密钥或`registries.yaml`中的凭据进行身份验证的注册表、项目或储存库中拉取的，分布式注册表将允许其他节点共享这些镜像，而无需向上游注册表提供任何凭据。
 
-Users with access to push images into the containerd image store on one node may be able to use this to 'poison' the image for other cluster nodes, as other nodes will trust the tag advertised by the node, and use it without checking with the upstream registry. If image integrity is important, you should use image digests instead of tags, as the digest cannot be poisoned in this manner.
+具有将镜像推送到一个节点的containerd镜像存储的用户，可能会利用这一点来“毒害”其他集群节点的镜像，因为其他节点将信任该节点所宣传的标签，并在未与上游注册表核对的情况下使用它。如果镜像完整性很重要，您应该使用镜像摘要而不是标签，因为摘要无法以这种方式被毒害。
 
-== Sharing Air-gap or Manually Loaded Images
+== 共享隔离或手动加载的镜像
 
-Images sharing is controlled based on the source registry. Images loaded directly into containerd via xref:install/airgap.adoc#_tarball_method[air-gap tarballs], xref:add-ons/import_images.adoc#_pre_import_images[pre-imported] or loaded directly into containerd's image store using the `ctr` command line tool, will be shared between nodes if they are tagged as being from a registry that is enabled for mirroring.
+镜像共享是基于源注册表进行控制的。通过xref:install/airgap.adoc#_tarball_method[隔离tar包]、xref:add-ons/import_images.adoc#_pre_import_images[预导入]或使用`ctr`命令行工具直接加载到containerd的镜像存储中的镜像，如果被标记为来自启用镜像的注册表，则在节点之间共享。
 
-Note that the upstream registry that the images appear to come from does not actually have to exist or be reachable. For example, you could tag images as being from a fictitious upstream registry, and import those images into containerd's image store. You would then be able to pull those images from all cluster members, as long as that registry is listed in `registries.yaml`.
+请注意，镜像看似来自的上游注册表实际上不必存在或可达。例如，您可以将镜像标记为来自虚构的上游注册表，并将这些镜像导入到containerd的镜像存储中。只要该注册表在`registries.yaml`中列出，您就可以从所有集群成员中拉取这些镜像。
 
-== Pushing Images
+== 推送镜像
 
-The embedded registry is read-only, and cannot be pushed to directly using `docker push` or other common tools that interact with OCI registries.
+嵌入式注册表是只读的，无法直接使用 `docker push` 或其他与 OCI 注册表交互的常用工具进行推送。
 
-Images can be manually made available via the embedded registry by running `ctr -n k8s.io image pull` to pull an image, or by loading image archives created by `docker save` via the `ctr -n k8s.io image import` command or the xref:add-ons/import_images.adoc#_pre_import_images[pre-import feature]. Note that the `k8s.io` namespace must be specified when managing images via `ctr` in order for them to be visible to the kubelet.
+可以通过运行`ctr -n k8s.io image pull`拉取镜像，或通过`docker save`创建的镜像归档文件，使用`ctr -n k8s.io image import`命令或xref:add-ons/import_images.adoc#_pre_import_images[预导入功能]手动使镜像在嵌入式注册表中可用。请注意，在通过 `ctr` 管理镜像时，必须指定 `k8s.io` 名称空间，以便它们对 kubelet 可见。

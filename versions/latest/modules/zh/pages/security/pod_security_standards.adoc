@@ -3,26 +3,30 @@
 :revdate: 2025-07-17
 :page-revdate: {revdate}
 
-本文档描述了 RKE2 如何配置 `PodSecurityStandards` 和 `NetworkPolicies` 来确保默认安全，同时还为操作人员提供了最大的配置灵活性。
+本文档描述了 RKE2 如何配置 `PodSecurityStandards` 和 `NetworkPolicies` 以确保默认安全，同时为操作员提供最大的配置灵活性。
 
 [IMPORTANT]
-.版本
+.版本门控
 ====
-本文档适用于 RKE2 v1.25 及更新版本，请参阅 xref:security/pod_security_policies.adoc[Pod 安全策略文档]了解 RKE2 v1.24 及更低版本的默认策略。
+本文档适用于 RKE2 v1.25 及更高版本，请参阅 xref:security/pod_security_policies.adoc[Pod 安全策略文档] 以获取 RKE2 v1.24 及更早版本的默认策略信息。
 ====
-
 
 == Pod 安全标准
 
-从 Kubernetes v1.25.0 版本开始，Pod Security Policies (PSP) 从 Kubernetes 中完全移除，取而代之的是 https://kubernetes.io/docs/concepts/security/pod-security-admission/[Pod Security Admission (PSA)]。默认的 Pod Security Admission 配置文件将在启动时添加到集群中，如下所示：
+从 Kubernetes 版本 v1.25.0 开始，Pod 安全策略 (PSP) 已从 Kubernetes 中完全移除，并由 https://kubernetes.io/docs/concepts/security/pod-security-admission/[Pod 安全准入 (PSA)] 取代。默认的 Pod 安全准入配置文件将在集群启动时添加，内容如下：
 
-* 如果使用 `--profile=cis-1.23` 选项运行，RKE2 将通过配置文件应用受限的 Pod 安全标准，该配置文件将在整个集群中强制执行 `restricted` 模式，其中 `kube-system`、`cis-operator-system` 和 `tigera-operator` 命名空间除外，它们用于确保系统 Pod 能成功运行。
-* 如果在没有 `--profile=cis-1.23` 选项的情况下运行，RKE2 将通过配置文件应用不受限制的 pod 安全标准，该配置文件将在整个集群中强制执行 `privileged` 模式，该模式允许集群中所有 pod 使用完全不受限的模式。
+如果使用 `profile: cis` 或 `profile: cis-1.23` 配置：
 
-RKE2 会将这个配置文件放在 `/etc/rancher/rke2/rke2-pss.yaml`，配置文件的内容取决于你启动 RKE2 的 CIS 模式：
+* RKE2 将通过配置文件应用受限的 Pod 安全标准，该配置文件将在整个集群中强制执行 `restricted` 模式，`kube-system`、`cis-operator-system` 和 `tigera-operator` 名称空间除外，以确保系统 Pod 的成功运行。
 
-*CIS 模式*
+如果没有 `profile` 配置：
 
+* RKE2 将通过配置文件应用不受限的 Pod 安全标准，该配置文件将在整个集群中强制执行 `privileged` 模式，允许集群中所有 Pod 完全不受限制。
+
+RKE2 将把此配置文件放在 `/etc/rancher/rke2/rke2-pss.yaml`，配置文件的内容根据您启动 RKE2 时选择的 cis 模式而有所不同：
+
+* *CIS 模式*
++
 [,yaml]
 ----
 apiVersion: apiserver.config.k8s.io/v1
@@ -45,8 +49,8 @@ plugins:
       namespaces: [kube-system, cis-operator-system, tigera-operator]
 ----
 
-*非 CIS 模式*
-
+* *非 CIS 模式*
++
 [,yaml]
 ----
 apiVersion: apiserver.config.k8s.io/v1
@@ -65,15 +69,15 @@ plugins:
       namespaces: []
 ----
 
-放好该配置文件后，RKE2 将使用 `--admission-control-config-file` 标志启动 kube-apiserver，该标志将设置为 PSA 配置文件的路径。
+放置此配置文件后，RKE2 将使用以下标志 `--admission-control-config-file` 启动 kube-apiserver，该标志将设置为 PSA 配置文件的路径。
 
-如果要覆盖默认的 pod 安全标准配置文件，可以将 `pod-security-admission-config-file: <path-to-custom-psa-config-file>` 传递给 RKE2 配置文件。
+如果您想覆盖默认的 Pod 安全标准配置文件，可以将 `pod-security-admission-config-file: <path-to-custom-psa-config-file>` 传递给 RKE2 配置文件。
 
-== 网络策略
+=== 网络策略
 
-当 RKE2 使用 `profile: cis-1.23` 参数运行时，它会将两个网络策略应用到 `kube-system`、`kube-public` 和 `default` 命名空间并应用关联的注释。与 PSP 相同的逻辑将应用于这些策略和注释。开始时会检查每个命名空间的注解是否存在，如果存在，RKE2 不会执行任何操作。如果注释不存在，RKE2 将检查策略是否存在，如果存在，则重新创建它。
+当 RKE2 使用 `profile: cis-1.23` 参数运行时，它将对 `kube-system`、`kube-public` 和 `default` 名称空间应用 2 个网络策略，并应用相关注释。这些策略和注释的逻辑与 PSP 相同。启动时，将检查每个名称空间的注释是否存在，如果存在，RKE2 不会采取任何行动。如果注释不存在，RKE2 将检查策略是否存在，如果存在，则重新创建它。
 
-应用的第一个策略是将网络流量限制为仅命名空间本身。见下文。
+第一个应用的策略是限制网络流量仅限于名称空间本身。请参见下文。
 
 [,yaml]
 ----
@@ -98,7 +102,7 @@ spec:
   - Ingress
 ----
 
-第二个策略应用到 `kube-system` 命名空间并允许 DNS 流量。见下文。
+第二个应用的策略是针对 `kube-system` 名称空间，并允许 DNS 流量。请参见下文。
 
 [,yaml]
 ----
@@ -128,9 +132,9 @@ spec:
   - Ingress
 ----
 
-RKE2 将 `default-network-policy` 策略和 `np.rke2.io` 注释应用于所有内置命名空间。`kube-system` 命名空间还获得了 `default-network-dns-policy` 策略和应用于它的 `np.rke2.io/dns` 注解。
+RKE2 将 `default-network-policy` 策略和 `np.rke2.io` 注释应用于所有内置名称空间。`kube-system` 名称空间还额外应用 `default-network-dns-policy` 策略和 `np.rke2.io/dns` 注释。
 
-要查看系统上当前部署的网络策略，请运行以下命令：
+要查看当前在系统上部署的网络策略，请运行以下命令：
 
 [,bash]
 ----

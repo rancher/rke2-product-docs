@@ -1,19 +1,19 @@
-= GPU Operators
+= GPU 运算符
 :page-languages: [en, zh]
 :revdate: 2026-01-16
 :page-revdate: {revdate}
 
-== Deploy NVIDIA operator
+== 部署 NVIDIA 运算符
 
-The https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html[NVIDIA operator] allows administrators of Kubernetes clusters to manage GPUs just like CPUs. It includes everything needed for pods to operate GPUs.
+https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html[NVIDIA 运算符] 允许 Kubernetes 集群的管理员像管理处理器一样管理 GPU。它包含了让 Pod 操作 GPU 所需的一切。
 
-=== Host OS requirements
+=== 主机操作系统要求
 
-To expose the GPU to the pod correctly, the NVIDIA kernel drivers and the `libnvidia-ml` library must be correctly installed in the host OS. The NVIDIA Operator can automatically install drivers and libraries on some operating systems. Refer to the NVIDIA documentation for information on https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html#supported-operating-systems-and-kubernetes-platforms[supported operating system releases]. The installation of the NVIDIA components on your host OS is out of the scope of this documentation, refer to the NVIDIA documentation for instructions.
+为了正确地将 GPU 暴露给 Pod，NVIDIA 内核驱动程序和 `libnvidia-ml` 库必须在主机操作系统中正确安装。NVIDIA 运算符可以在某些操作系统上自动安装驱动程序和库。有关 https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html#supported-operating-systems-and-kubernetes-platforms[支持的操作系统版本] 的信息，请参考 NVIDIA 文档。在您的主机操作系统上安装 NVIDIA 组件超出了本文档的范围，请参考 NVIDIA 文档以获取说明。
 
-The following three commands should return a correct output if the kernel driver was correctly installed:
+如果内核驱动程序正确安装，以下三个命令应返回正确的输出：
 
-* `lsmod | grep nvidia` returns a list of nvidia kernel modules. For example:
+* `lsmod | grep nvidia` 返回 nvidia 内核模块的列表。例如：
 +
 [,sh]
 ----
@@ -25,7 +25,7 @@ nvidia               9965568  2 nvidia_uvm,nvidia_modeset
 ecc                    45056  1 nvidia
 ----
 
-* `cat /proc/driver/nvidia/version` returns the NVRM and GCC version of the driver. For example:
+* `cat /proc/driver/nvidia/version` 返回驱动程序的 NVRM 和 GCC 版本。例如：
 +
 [,sh]
 ----
@@ -33,18 +33,18 @@ NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  555.42.06  Release Buil
 GCC version:  gcc version 7.5.0 (SUSE Linux)
 ----
 
-* `find /usr/ -iname libnvidia-ml.so` returns a path to the `libnvidia-ml.so` library. For example:
+* `find /usr/ -iname libnvidia-ml.so` 返回 `libnvidia-ml.so` 库的路径。例如：
 +
 [,sh]
 ----
 /usr/lib64/libnvidia-ml.so
 ----
 +
-This library is used by Kubernetes components to interact with the kernel driver.
+此库由 Kubernetes 组件用于与内核驱动程序交互。
 
-=== Operator installation
+=== 运算符安装
 
-Once the OS is ready and RKE2 is running, install the GPU Operator with the following yaml manifest.
+一旦操作系统准备就绪并且 RKE2 正在运行，使用以下 yaml 清单安装 GPU 运算符。
 
 [tabs,sync-group-id=GPUoperator]
 =====
@@ -82,7 +82,7 @@ spec:
 
 [NOTE]
 ====
-The envvars `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`, `ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` and `DEVICE_LIST_STRATEGY` are required to properly isolate GPU resources as explained in this nvidia https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[doc]
+环境变量 `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`、`ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` 和 `DEVICE_LIST_STRATEGY` 是正确隔离 GPU 资源所必需的，如本 NVIDIA https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[文档] 中所述。
 ====
 
 --
@@ -113,60 +113,60 @@ spec:
 
 [NOTE]
 ====
-NVIDIA GPU Operator v25.10.x uses https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[Container Device Interface (CDI) specification] and that simplifies operations: we don't need to pass extra envvars to comply with the security requirements and the workloads don't need to pass the `runtimeClassName: nvidia` anymore
+NVIDIA GPU 运算符 v25.10.x 使用 https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[容器设备接口 (CDI) 规范]，这简化了操作：我们不需要传递额外的环境变量来遵守安全要求，工作负载也不再需要传递 `runtimeClassName: nvidia`。
 ====
 --
 =====
 
 [CAUTION]
 ====
-The NVIDIA operator restarts containerd with a hangup call which restarts RKE2
+NVIDIA 运算符通过挂起调用重启 containerd，从而重启 RKE2。
 ====
 
-After one minute approximately, you can perform the following checks to verify that everything is working as expected:
+大约一分钟后，您可以执行以下检查以验证一切是否按预期工作：
 
-. Assuming the drivers and `libnvidia-ml.so` library were previously installed, check if the operator detects them correctly:
+. 假设驱动程序和 `libnvidia-ml.so` 库之前已安装，请检查运算符是否正确检测到它们：
 +
 [,sh]
 ----
 kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | grep "nvidia.com/gpu.deploy.driver"
 ----
 +
-You should see the value `pre-installed`. If you see `true`, the drivers were not correctly installed. If the <<_host_os_requirements,pre-requirements>> were correct, it is possible that you forgot to reboot the node after installing all packages.
+您应该看到值 `pre-installed`。如果您看到 `true`，则驱动程序未正确安装。如果 <<_host_os_requirements,先决条件>> 正确，则可能是您在安装所有软件包后忘记重启节点。
 +
-You can also check other driver labels with:
+您还可以使用以下命令检查其他驱动程序标签：
 +
 [,sh]
 ----
 kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' |  grep "nvidia.com"
 ----
 +
-You should see labels specifying driver and GPU (e.g. `nvidia.com/gpu.machine` or `nvidia.com/cuda.driver.major`).
+您应该看到指定驱动程序和 GPU 的标签（例如 `nvidia.com/gpu.machine` 或 `nvidia.com/cuda.driver.major`）。
 
-. Check if the GPU was added by `nvidia-device-plugin-daemonset` as an allocatable resource in the node:
+. 检查 GPU 是否被 `nvidia-device-plugin-daemonset` 作为节点中的可分配资源添加：
 +
 [,sh]
 ----
 kubectl get node $NODENAME -o jsonpath='{.status.allocatable}'
 ----
 +
-You should see `"nvidia.com/gpu":` followed by the number of GPUs in the node.
+您应该看到 `"nvidia.com/gpu":` 后跟节点中的 GPU 数量。
 
-. Check that the container runtime binary exists (it gets installed by the `nvidia-container-toolkit-daemonset`):
+. 检查容器运行时二进制文件是否存在（它由 `nvidia-container-toolkit-daemonset` 安装）：
 +
 [,sh]
 ----
 ls /usr/local/nvidia/toolkit/nvidia-container-runtime
 ----
 
-. Verify if containerd config was updated to include the NVIDIA container runtime:
+. 验证 containerd 配置是否已更新以包含 NVIDIA 容器运行时：
 +
 [,sh]
 ----
 grep nvidia /var/lib/rancher/rke2/agent/etc/containerd/config.toml
 ----
 
-. Run a pod to verify that the GPU resource can successfully be scheduled on a pod and the pod can detect it
+. 运行一个 Pod 以验证 GPU 资源是否可以成功调度到 Pod 上，并且 Pod 可以检测到它。
 +
 [,yaml]
 ----
@@ -188,23 +188,23 @@ limits:
 ----
 
 [IMPORTANT]
-.Version Gate
+.版本门控
 ====
-Available as of October 2024 releases: v1.28.15+rke2r1, v1.29.10+rke2r1, v1.30.6+rke2r1, v1.31.2+rke2r1.
+自 2024 年 10 月发布以来可用：v1.28.15+rke2r1，v1.29.10+rke2r1，v1.30.6+rke2r1，v1.31.2+rke2r1。
 ====
 
-RKE2 will now use `PATH` to find alternative container runtimes, in addition to checking the default paths used by the container runtime packages. In order to use this feature, you must modify the RKE2 service's PATH environment variable to add the directories containing the container runtime binaries.
+RKE2 现在将使用 `PATH` 查找替代容器运行时，此外还会检查容器运行时软件包使用的默认路径。为了使用此功能，您必须修改 RKE2 服务的 PATH 环境变量，以添加包含容器运行时二进制文件的目录。
 
-It's recommended that you modify one of this two environment files:
+建议您修改这两个环境文件中的一个：
 
-* `/etc/default/rke2-server` # or rke2-agent
-* `/etc/sysconfig/rke2-server` # or rke2-agent
+* `/etc/default/rke2-server` # 或 rke2-agent
+* `/etc/sysconfig/rke2-server` # 或 rke2-agent
 
-This example will add the `PATH` in `/etc/default/rke2-server`:
+此示例将在 `PATH` 中添加 `/etc/default/rke2-server`：
 
 [CAUTION]
 ====
-`PATH` changes should be done with care to avoid placing untrusted binaries in the path of services that run as root.
+对 `PATH` 的更改应谨慎进行，以避免将不受信任的二进制文件放置在以 root 身份运行的服务的路径中。
 ====
 
 [,bash]

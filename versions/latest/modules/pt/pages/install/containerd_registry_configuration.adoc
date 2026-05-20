@@ -1,0 +1,163 @@
+= Configuração do Registro do containerd
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+O containerd pode ser configurado para se conectar a registros privados e usá-los para puxar imagens privadas em cada nó.
+
+Ao iniciar, o RKE2 verificará se um arquivo `registries.yaml` existe em `/etc/rancher/rke2/` e instruirá o containerd a usar quaisquer registros definidos no arquivo. Se você deseja usar um registro privado, precisará criar este arquivo como root em cada nó que usará o registro.
+
+Os nós do servidor são agendáveis por padrão. Se você não aplicou taint nos nós do servidor e estiver executando cargas de trabalho neles, certifique-se de criar também o arquivo `registries.yaml` em cada servidor.
+
+A configuração no containerd pode ser usada para se conectar a um registro privado com uma conexão TLS e com registros que também permitem autenticação. A seção a seguir explicará o arquivo `registries.yaml` e dará diferentes exemplos de uso da configuração de registro privado no RKE2.
+
+== Arquivo de Configuração de Registros
+
+O arquivo consiste em duas seções principais:
+
+* espelhos
+* configs
+
+=== Espelhos
+
+Mirrors é uma diretiva que define os nomes e endpoints dos registros privados. Registros privados podem ser usados como um espelho local para o registro padrão docker.io, ou para imagens onde o registro é explicitamente especificado no nome.
+
+Por exemplo, a seguinte configuração puxaria do registro privado em `\https://registry.example.com:5000` tanto para `library/busybox:latest` quanto para `registry.example.com/library/busybox:latest`:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+  registry.example.com:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+Cada espelho deve ter um nome e um conjunto de endpoints. Ao puxar uma imagem de um registro, o containerd tentará essas URLs de endpoint uma a uma e usará a primeira que funcionar.
+
+[NOTE]
+====
+Se nenhum endpoint estiver configurado, o containerd assume que o registro pode ser acessado anonimamente via HTTPS na porta 443 e está usando um certificado confiável pelo sistema operacional host. Para mais informações, você pode https://github.com/containerd/containerd/blob/master/docs/cri/registry.md#configure-registry-endpoint[consultar a documentação do containerd].
+====
+
+==== Reescritas
+
+Cada espelho pode ter um conjunto de reescritas. Reescritas podem alterar a tag de uma imagem com base em uma expressão regular. Isso é útil se a estrutura da organização/projeto no registro espelho for diferente da upstream.
+
+Por exemplo, a seguinte configuração puxaria a imagem `rancher/rke2-runtime:v1.23.5-rke2r1` de `registry.example.com:5000/mirrorproject/rancher-images/rke2-runtime:v1.23.5-rke2r1` de forma transparente:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+    rewrite:
+      "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+=== Configs
+
+A seção de configs define a configuração de TLS e credenciais para cada espelho. Para cada espelho, você pode definir `auth` e/ou `tls`. A parte de TLS consiste em:
+
+|===
+| Diretiva | Descrição
+
+| `cert_file`
+| O caminho do certificado do cliente que será usado para autenticar com o registro
+
+| `key_file`
+| O caminho da chave do cliente que será usado para autenticar com o registro
+
+| `ca_file`
+| Define o caminho do certificado CA a ser usado para verificar o arquivo de certificado do servidor do registro
+
+| `insecure_skip_verify`
+| Booleano que define se a verificação TLS deve ser ignorada para o registro
+|===
+
+As credenciais consistem em nome de usuário/senha ou token de autenticação:
+
+* nome de usuário: nome de usuário da autenticação básica do registro privado
+* senha: senha da autenticação básica do registro privado
+* auth: token de autenticação da autenticação básica do registro privado
+
+Abaixo estão exemplos básicos de uso de registros privados em diferentes modos:
+
+=== Com TLS
+
+Abaixo estão exemplos mostrando como você pode configurar `/etc/rancher/rke2/registries.yaml` em cada nó ao usar TLS.
+
+_Com Autenticação:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+_Sem Autenticação:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+=== Sem TLS
+
+Abaixo estão exemplos mostrando como você pode configurar `/etc/rancher/rke2/registries.yaml` em cada nó quando _não_ estiver usando TLS.
+
+_HTTP em texto simples com autenticação:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+----
+
+_HTTP em texto simples sem autenticação:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+----
+
+____
+Se estiver usando um registro com HTTP em texto simples sem TLS, você precisa especificar `http://` como o esquema de URI do endpoint, caso contrário, ele será definido como `https://`.
+____
+
+Para que as alterações no registro tenham efeito, você precisa configurar este arquivo antes de iniciar o RKE2 no nó, ou reiniciar o RKE2 em cada nó configurado.

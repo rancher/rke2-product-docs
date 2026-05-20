@@ -1,0 +1,286 @@
+= Configuración del Registro Privado
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Containerd se puede configurar para conectarse a registros privados y utilizarlos para obtener imágenes según lo requiera el kubelet.
+
+Al iniciar, RKE2 comprobará si `/etc/rancher/rke2/registries.yaml` existe. Si es así, la configuración del registro contenida en este archivo se utiliza al generar la configuración de containerd.
+
+* Si deseas utilizar un registro privado como espejo de un registro público como docker.io, necesitarás configurar `registries.yaml` en cada nodo que desees usar el espejo.
+* Si tu registro privado requiere autenticación, utiliza certificados TLS personalizados, o no utiliza TLS, necesitarás configurar `registries.yaml` en cada nodo que descargará imágenes de tu registro.
+
+Ten en cuenta que, por defecto, los nodos del servidor son programables. Si no has marcado los nodos del servidor y vas a ejecutar cargas de trabajo en ellos, por favor asegúrate de crear también el archivo `registries.yaml` en cada servidor.
+
+== Recuperación del endpoint predeterminado
+
+Containerd tiene un "endpoint predeterminado" implícito para todos los registros. El endpoint predeterminado siempre se intenta como último recurso, incluso si hay otros endpoints listados para ese registro en `registries.yaml`. Las reescrituras no se aplican a las descargas contra el endpoint predeterminado. Por ejemplo, al descargar `registry.example.com:5000/rancher/mirrored-pause:3.6`, containerd utilizará un punto final predeterminado de `\https://registry.example.com:5000/v2`.
+
+* El endpoint predeterminado para `docker.io` es `\https://index.docker.io/v2`.
+* El endpoint predeterminado para todos los demás registros es `\https://<REGISTRY>/v2`, donde `<REGISTRY>` es el nombre del host del registro y el puerto opcional.
+
+Para ser reconocido como un registro, el primer componente del nombre de la imagen debe contener al menos un punto o dos puntos (:) Por razones históricas, las imágenes sin un registro especificado en su nombre se identifican implícitamente como provenientes de `docker.io`.
+
+[NOTE]
+.Puerta de Versión
+====
+La opción `disable-default-registry-endpoint` está disponible como una característica experimental a partir de las versiones de febrero de 2024: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1
+====
+
+Los nodos pueden configurarse con la opción `disable-default-registry-endpoint: true`. Cuando esto está configurado, containerd no volverá al punto final del registro predeterminado y solo extraerá de los puntos finales de espejo configurados, junto con el registro distribuido si está habilitado.
+
+Esto puede ser deseado si tu clúster se encuentra en un entorno aislado donde el registro de origen no está disponible, o si deseas que solo algunos nodos extraigan del registro de origen.
+
+Deshabilitar el punto final del registro predeterminado se aplica solo a los registros configurados a través de `registries.yaml`. Si el registro no está configurado explícitamente mediante una entrada de espejo en `registries.yaml`, se seguirá utilizando el comportamiento de reserva predeterminado.
+
+== Archivo de Configuración de Registros
+
+El archivo consta de dos claves de nivel superior, con subclaves para cada registro:
+
+[,yaml]
+----
+mirrors:
+  <REGISTRY>:
+    endpoint:
+      - https://<REGISTRY>/v2
+configs:
+  <REGISTRY>:
+    auth:
+      username: <BASIC AUTH USERNAME>
+      password: <BASIC AUTH PASSWORD>
+      token: <BEARER TOKEN>
+    tls:
+      ca_file: <PATH TO SERVER CA>
+      cert_file: <PATH TO CLIENT CERT>
+      key_file: <PATH TO CLIENT KEY>
+      insecure_skip_verify: <SKIP TLS CERT VERIFICATION BOOLEAN>
+----
+
+=== Espejos
+
+La sección de espejos define los nombres y puntos finales de los registros, por ejemplo:
+
+[,yaml]
+----
+mirrors:
+  registry.example.com:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+Cada espejo debe tener un nombre y un conjunto de puntos finales. Al extraer una imagen de un registro, containerd intentará estas URL de puntos finales, además del punto final predeterminado, y utilizará el primero que funcione.
+
+[NOTE]
+====
+Si no se configura ningún punto final, containerd asume que el registro puede ser accedido anónimamente a través de HTTPS en el puerto 443, y está utilizando un certificado confiable por el sistema operativo anfitrión. Para más información, puedes https://github.com/containerd/containerd/blob/master/docs/cri/registry.md#configure-registry-endpoint[consultar la documentación de containerd].
+====
+
+==== Redirecciones
+
+Si el registro privado se utiliza como un espejo para otro registro, como cuando se configura un https://docs.docker.com/registry/recipes/mirror/[caché de extracción], las extracciones de imágenes se redirigen de manera transparente a los puntos finales listados. El nombre del registro original se pasa al punto final del espejo a través del parámetro de consulta `ns`.
+
+Por ejemplo, si tienes un espejo configurado para `docker.io`:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+Entonces, al extraer `docker.io/rancher/mirrored-pause:3.6`, se extraerá la imagen de manera transparente como `registry.example.com:5000/rancher/mirrored-pause:3.6`.
+
+==== Reescrituras
+
+Cada espejo puede tener un conjunto de reescrituras, que utilizan expresiones regulares para coincidir y transformar el nombre de una imagen cuando se extrae de ese espejo. Esto es útil si la estructura de organización/proyecto en el registro privado es diferente a la del registro que está reflejando. Las reescrituras coinciden y transforman solo el nombre de la imagen, NO la etiqueta.
+
+Por ejemplo, la siguiente configuración extraerá de forma transparente la imagen `rancher/rke2-runtime:v1.30.1-rke2r1` de `registry.example.com:5000/mirrorproject/rancher-images/rke2-runtime:v1.30.1-rke2r1`:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+    rewrite:
+      "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+[NOTE]
+.Puerta de Versión
+====
+Las reescrituras ya no se aplican al Endpoint Predeterminado a partir de las versiones de febrero de 2024: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1. Antes de estas versiones, las reescrituras también se aplicaban al endpoint predeterminado, lo que impediría que RKE2 extrajera del registro de origen si la imagen no podía ser extraída de un endpoint espejo, y la imagen no estaba disponible bajo el nombre modificado en el registro de origen.
+====
+
+Si deseas aplicar reescrituras al extraer directamente de un registro – cuando no se utiliza como espejo para un registro de origen diferente – debes proporcionar un endpoint espejo que no coincida con el endpoint predeterminado. Los endpoints espejo en `registries.yaml` que coinciden con el endpoint predeterminado se ignoran; el endpoint predeterminado siempre se intenta al final sin reescrituras, si la opción de reserva no ha sido desactivada.
+
+Por ejemplo, si tienes un registro en `\https://registry.example.com/`, y deseas aplicar reescrituras al extraer explícitamente `registry.example.com/rancher/rke2-runtime:v1.30.1-rke2r1`, puedes añadir un punto final espejo con el puerto listado. Debido a que el punto final espejo no coincide con el punto final predeterminado - *`"\https://registry.example.com:443/v2" != "\https://registry.example.com/v2"`* - el punto final es aceptado como espejo y se aplican las reescrituras, a pesar de que sea efectivamente lo mismo que el predeterminado.
+
+[,yaml]
+----
+mirrors:
+ registry.example.com
+   endpoint:
+     - "https://registry.example.com:443"
+   rewrite:
+     "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+Ten en cuenta que al usar espejos y reescrituras, las imágenes seguirán almacenándose bajo el nombre original. Por ejemplo, `crictl image ls` mostrará `docker.io/rancher/rke2-runtime:v1.30.1-rke2r1` como disponible en el nodo, incluso si la imagen fue extraída de un espejo con un nombre diferente.
+
+=== Configuraciones
+
+La sección de configuración define la configuración de TLS y credenciales para cada espejo. Para cada espejo puedes definir `auth` y/o `tls`.
+
+La parte `tls` consiste en:
+
+|===
+| Directiva | Descripción
+
+| `cert_file`
+| La vía del certificado del cliente que se utilizará para autenticar con el registro
+
+| `key_file`
+| La vía de la clave del cliente que se utilizará para autenticar con el registro
+
+| `ca_file`
+| Define la vía del certificado CA que se utilizará para verificar el archivo de certificado del servidor del registro
+
+| `insecure_skip_verify`
+| Booleano que define si se debe omitir la verificación TLS para el registro
+|===
+
+La parte `auth` consiste en un nombre de usuario/contraseña o testigo de autenticación:
+
+|===
+| Directiva | Descripción
+
+| `username`
+| nombre de usuario de la autenticación básica del registro privado
+
+| `password`
+| contraseña de usuario del registro privado de autenticación básica
+
+| `auth`
+| testigo de autenticación del registro privado de autenticación básica
+|===
+
+A continuación se presentan ejemplos básicos de uso de registros privados en diferentes modos:
+
+=== Soporte de comodines
+
+[NOTE]
+.Puerta de Versión
+====
+El soporte de comodines está disponible a partir de las versiones de marzo de 2024: v1.26.15+rke2r1, v1.27.12+rke2r1, v1.28.8+rke2r1, v1.29.3+rke2r1.
+====
+
+La entrada de comodín `"*"` se puede utilizar en las secciones `mirrors` y `configs` para proporcionar una configuración predeterminada para todos los registros. La configuración predeterminada solo se utilizará si no hay una entrada específica para ese registro. Tenga en cuenta que el asterisco DEBE estar entre comillas.
+
+En el siguiente ejemplo, se utilizará un espejo de registro local para todos los registros. La verificación TLS se desactivará para todos los registros, excepto `docker.io`.
+
+[,yaml]
+----
+mirrors:
+  "*":
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "docker.io":
+  "*":
+    tls:
+      insecure_skip_verify: true
+----
+
+=== Con TLS
+
+A continuación se presentan ejemplos que muestran cómo puede configurar `/etc/rancher/rke2/registries.yaml` en cada nodo al usar TLS.
+
+[tabs]
+======
+
+Con Autenticación::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+Sin Autenticación:: 
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+======
+
+=== Sin TLS
+
+A continuación se presentan ejemplos que muestran cómo puede configurar `/etc/rancher/rke2/registries.yaml` en cada nodo cuando _no_ se use TLS.
+
+[tabs]
+======
+
+Con Autenticación::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+----
+
+Sin Autenticación::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+----
+
+======
+
+____
+Si utiliza un registro que emplea HTTP en texto plano sin TLS, necesita especificar `http://` como el esquema de URI del punto final, de lo contrario, se predeterminará a `https://`.
+____
+
+Para que los cambios en el registro surtan efecto, necesita configurar este archivo antes de iniciar RKE2 en el nodo, o reiniciar RKE2 en cada nodo configurado.
+
+== Solución de problemas de extracción de imágenes
+
+Cuando Kubernetes experimenta problemas al extraer una imagen, el error mostrado por el kubelet puede reflejar únicamente el error terminal devuelto por el intento de extracción realizado contra el punto final predeterminado, haciendo que parezca que los puntos finales configurados no se están utilizando.
+
+Consulte el registro de containerd en el nodo en `/var/lib/rancher/rke2/agent/containerd/containerd.log` para obtener información detallada sobre la causa raíz del fallo.

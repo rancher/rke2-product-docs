@@ -1,0 +1,110 @@
+= Metrics
+:page-languages: [en, zh]
+:revdate: 2025-07-22
+:page-revdate: {revdate}
+
+RKE2は、クラスターの健康状態とパフォーマンスを監視するためのメトリクスを提供します。
+
+個々のコンポーネントがほとんどのメトリクスを提供します。詳細については、以下のコンポーネント固有のドキュメントを参照してください：
+
+* https://coredns.io/plugins/metrics/[CoreDNSメトリクス]
+* https://etcd.io/docs/v3.5/metrics/[etcdメトリクス]
+* https://kubernetes.io/docs/reference/instrumentation/node-metrics/[Kubernetesノードメトリクス]
+* https://kubernetes.io/docs/reference/instrumentation/metrics/[Kubernetesコンポーネントメトリクス]
+
+他のコンポーネントが追加のメトリクスを提供する場合があります。上記にリストされていないコンポーネントについては、アップストリームプロジェクトのドキュメントを参照してください。
+
+== スーパーバイザーメトリクス
+
+`supervisor-metrics: true`でRKE2を起動すると、RKE2スーパーバイザーがメトリクスを公開します。これらのメトリクスには、各ノードのポート`/metrics`にある`9345`エンドポイントを通じてアクセスできます：
+
+[,sh]
+----
+kubectl get --server https://NODENAME:9345 --raw /metrics
+----
+
+RKE2スーパーバイザープロセスは、以下のメトリクスを公開します：
+
+* <<RKE2 Cluster Management Metrics>>
+* https://github.com/rancher/lasso/blob/main/README.md#lasso-controller[Lassoコントローラーメトリクス]
+* https://github.com/kubernetes/client-go/blob/master/README.md[Kubernetesクライアントとワークキューのメトリクス]
+* https://pkg.go.dev/runtime/metrics#hdr-Supported_metrics[Goランタイムメトリクス]
+
+RKE2に組み込まれたレジストリが有効になっている場合、RKE2スーパーバイザープロセスは以下のメトリクスも公開します：
+
+* https://spegel.dev/docs/metrics/[Spegelメトリクス]
+* https://github.com/libp2p/go-libp2p/blob/master/README.md[libp2pメトリクス]
+
+== RKE2クラスター管理メトリクス
+
+=== rke2_certificate_expiration_seconds
+
+証明書の残りの有効期限（秒単位）、証明書のサブジェクトと使用法によってラベル付けされています。
+
+* タイプ:ゲージ
+* ラベル: `*subject*`, `*usage*`
+
+=== rke2_loadbalancer_server_connections
+
+ロードバランサーサーバーへの現在の接続数、ロードバランサー名とサーバーアドレスによってラベル付けされています。
+
+* タイプ:ゲージ
+* ラベル: `*name*`, `*server*`
+
+=== rke2_loadbalancer_server_health
+
+ロードバランサーのバックエンドサーバーの現在の健康状態、ロードバランサー名とサーバーアドレスによってラベル付けされています。
+
+状態は、0=INVALID、1=FAILED、2=STANDBY、3=UNCHECKED、4=RECOVERING、5=HEALTHY、6=PREFERRED、7=ACTIVEの列挙型です。
+
+* タイプ:ゲージ
+* ラベル: `*name*`, `*server*`
+
+=== rke2_loadbalancer_dial_duration_seconds
+
+バックエンドサーバーへの接続をダイヤルするのにかかる時間（秒単位）、ロードバランサー名と成功/エラーのステータスによってラベル付けされています。
+
+* タイプ:ヒストグラム
+* ラベル: `*name*`, `*status*`
+
+=== rke2_etcd_snapshot_save_duration_seconds
+
+etcdスナップショットプロセスを完了するのにかかる総時間（秒単位）、成功/エラーのステータスによってラベル付けされています。
+
+* タイプ:ヒストグラム
+* ラベル: `*status*`
+
+=== rke2_etcd_snapshot_save_local_duration_seconds
+
+ローカルスナップショットファイルを保存するのにかかる総時間（秒単位）、成功/エラーのステータスによってラベル付けされています。
+
+* タイプ:ヒストグラム
+* ラベル: `*status*`
+
+=== rke2_etcd_snapshot_save_s3_duration_seconds
+
+スナップショットファイルをS3にアップロードするのにかかる総時間（秒単位）、成功/エラーのステータスによってラベル付けされています。
+
+* タイプ:ヒストグラム
+* ラベル: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_duration_seconds
+
+etcdスナップショットのリストをsyncするのにかかる総時間（秒単位）、成功/エラーのステータスによってラベル付けされています。
+
+* タイプ:ヒストグラム
+* ラベル: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_local_duration_seconds
+
+ローカルスナップショットファイルのリストを取得するのにかかる総時間（秒単位）、成功/エラーのステータスによってラベル付けされています。
+
+* タイプ:ヒストグラム
+* ラベル: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_s3_duration_seconds
+
+S3スナップショットファイルのリストを取得するのにかかる総時間（秒単位）、成功/エラーのステータスによってラベル付けされています。
+
+* タイプ:ヒストグラム
+* ラベル: `*status*`

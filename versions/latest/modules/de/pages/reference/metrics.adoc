@@ -1,0 +1,110 @@
+= Metriken
+:page-languages: [en, zh]
+:revdate: 2025-07-22
+:page-revdate: {revdate}
+
+RKE2 bietet Metriken zur Überwachung der Gesundheit und Leistung des Clusters.
+
+Einzelne Komponenten bieten die meisten Metriken. Siehe die folgende komponentenspezifische Dokumentation für weitere Informationen:
+
+* https://coredns.io/plugins/metrics/[CoreDNS-Metriken]
+* https://etcd.io/docs/v3.5/metrics/[etcd Metriken]
+* https://kubernetes.io/docs/reference/instrumentation/node-metrics/[Kubernetes-Knotenmetriken]
+* https://kubernetes.io/docs/reference/instrumentation/metrics/[Kubernetes-Komponentenmetriken]
+
+Andere Komponenten können zusätzliche Metriken bereitstellen. Konsultieren Sie die Upstream-Projektdokumentation für alle oben nicht aufgeführten Komponenten.
+
+== Supervisor-Metriken
+
+Wenn Sie RKE2 mit `supervisor-metrics: true` starten, stellt der RKE2-Supervisor Metriken bereit. Sie können auf diese Metriken über den `/metrics`-Endpunkt auf jedem Knoten am Port `9345` zugreifen:
+
+[,sh]
+----
+kubectl get --server https://NODENAME:9345 --raw /metrics
+----
+
+Der RKE2-Supervisor-Prozess stellt die folgenden Metriken bereit:
+
+* <<RKE2 Cluster Management Metrics>>
+* https://github.com/rancher/lasso/blob/main/README.md#lasso-controller[Lasso-Controller-Metriken]
+* https://github.com/kubernetes/client-go/blob/master/README.md[Kubernetes-Client- und Workqueue-Metriken]
+* https://pkg.go.dev/runtime/metrics#hdr-Supported_metrics[Go-Laufzeitmetriken]
+
+Wenn das integrierte Registry von RKE2 aktiviert ist, stellt der RKE2-Supervisor-Prozess auch die folgenden Metriken bereit:
+
+* https://spegel.dev/docs/metrics/[Spegel-Metriken]
+* https://github.com/libp2p/go-libp2p/blob/master/README.md[libp2p-Metriken]
+
+== RKE2 Cluster Management Metrics
+
+=== rke2_certificate_expiration_seconds
+
+Verbleibende Lebensdauer in Sekunden des Zertifikats, gekennzeichnet nach Zertifikatssubjekt und Verwendungen.
+
+* Typ: Messwert
+* Etiketten: `*subject*`, `*usage*`
+
+=== rke2_loadbalancer_server_connections
+
+Anzahl der aktuellen Verbindungen zum Lastenausgleichsserver, gekennzeichnet nach Lastenausgleichsname und Serveradresse.
+
+* Typ: Messwert
+* Etiketten: `*name*`, `*server*`
+
+=== rke2_loadbalancer_server_health
+
+Aktueller Gesundheitszustand der Backend-Server des Lastenausgleichs, gekennzeichnet nach Lastenausgleichsname und Serveradresse.
+
+Der Status ist ein Enum von 0=UNGÜLTIG, 1=FEHLGESCHLAGEN, 2=STANDBY, 3=UNGEPRÜFT, 4=WIEDERHERSTELLUNG, 5=GESUND, 6=BEVORZUGT, 7=AKTIV.
+
+* Typ: Messwert
+* Etiketten: `*name*`, `*server*`
+
+=== rke2_loadbalancer_dial_duration_seconds
+
+Zeit in Sekunden, die benötigt wird, um eine Verbindung zu einem Backend-Server herzustellen, gekennzeichnet nach Lastenausgleichsname und Erfolgs-/Fehlerstatus.
+
+* Typ: Histogramm
+* Etiketten: `*name*`, `*status*`
+
+=== rke2_etcd_snapshot_save_duration_seconds
+
+Gesamte Zeit in Sekunden, die benötigt wird, um den etcd-Snapshot-Prozess abzuschließen, gekennzeichnet nach Erfolgs-/Fehlerstatus.
+
+* Typ: Histogramm
+* Etiketten: `*status*`
+
+=== rke2_etcd_snapshot_save_local_duration_seconds
+
+Gesamte Zeit in Sekunden, die benötigt wird, um eine lokale Snapshot-Datei zu speichern, gekennzeichnet nach Erfolgs-/Fehlerstatus.
+
+* Typ: Histogramm
+* Etiketten: `*status*`
+
+=== rke2_etcd_snapshot_save_s3_duration_seconds
+
+Gesamte Zeit in Sekunden, die benötigt wird, um eine Snapshot-Datei in S3 hochzuladen, gekennzeichnet nach Erfolgs-/Fehlerstatus.
+
+* Typ: Histogramm
+* Etiketten: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_duration_seconds
+
+Gesamte Zeit in Sekunden, die benötigt wird, um die Liste der etcd-Snapshots zu synchronisieren, gekennzeichnet nach Erfolgs-/Fehlerstatus.
+
+* Typ: Histogramm
+* Etiketten: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_local_duration_seconds
+
+Gesamte Zeit in Sekunden, die benötigt wird, um lokale Snapshot-Dateien aufzulisten, gekennzeichnet nach Erfolgs-/Fehler.
+
+* Typ: Histogramm
+* Etiketten: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_s3_duration_seconds
+
+Gesamte Zeit in Sekunden, die benötigt wird, um S3-Snapshot-Dateien aufzulisten, gekennzeichnet nach Erfolgs-/Fehlerstatus.
+
+* Typ: Histogramm
+* Etiketten: `*status*`

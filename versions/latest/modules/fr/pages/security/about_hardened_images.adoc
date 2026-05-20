@@ -1,0 +1,16 @@
+= À propos des images durcies
+:page-languages: [en, zh]
+:revdate: 2026-02-05
+:page-revdate: {revdate}
+
+{product-name} les images durcies sont analysées pour détecter des vulnérabilités au moment de la construction, et des protections de sécurité supplémentaires ont été ajoutées pour diminuer les faiblesses potentielles{nbsp}:
+
+* Les images ne sont pas simplement mises en miroir à partir des builds en amont. Les images sont construites à partir de la source sur une image de base minimale durcie, qui est actuellement https://www.suse.com/products/base-container-images/[SLE Base Container Image (BCI)].
+* Tous les binaires écrits en Go sont compilés en utilisant un processus de compilation conforme à la norme FIPS 140-3. Pour plus d'informations sur ce compilateur, référez-vous xref:security/fips3_support.adoc#_use_of_fips_compatible_go_compiler[ici].
+
+Vous saurez si une image a été durcie comme ci-dessus par le nom de l'image. RKE2 publie des listes d'images avec chaque version. Référez-vous https://github.com/rancher/rke2/releases/download/v1.23.14%2Brke2r1/rke2-images-all.linux-amd64.txt[ici] pour un exemple de liste d'images publiée.
+
+[NOTE]
+====
+Actuellement, les images durcies RKE2 sont multi-architecture. Seule l'architecture Linux AMD64 est conforme à la norme FIPS. Les architectures Windows et s390x ne sont pas conformes à la norme FIPS.
+====

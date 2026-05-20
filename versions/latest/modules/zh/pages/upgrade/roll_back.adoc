@@ -1,22 +1,22 @@
-= Rolling Back RKE2
+= 回滚 RKE2
 :page-languages: [en, zh]
 :revdate: 2025-12-04
 :page-revdate: {revdate}
 
-You can roll back the RKE2 Kubernetes version after an upgrade, using a combination of RKE2 binary downgrade and datastore restoration. Rollback can be performed on clusters of all types, including a single-node SQLite, an external datastore, or an embedded etcd. When rolling back to a previous Kubernetes minor version, you must have a datastore snapshot taken on the Kubernetes minor version you wish to roll back to.
+您可以在升级后，通过 RKE2 二进制降级和数据存储恢复的组合来回滚 RKE2 Kubernetes 版本。回滚可以在所有类型的集群上执行，包括单节点 SQLite、外部数据存储或嵌入式 etcd。在回滚到先前的 Kubernetes 次要版本时，您必须有在您希望回滚到的 Kubernetes 次要版本上拍摄的数据存储快照。
 
 [CAUTION]
 ====
-If you cannot restore the database, you cannot roll back to a previous minor version.
+如果您无法恢复数据库，则无法回滚到先前的次要版本。
 ====
 
-== Important Considerations
+== 重要考虑事项
 
-* *Backups:* Before upgrading, ensure you have a valid database or etcd snapshot from your cluster running the older version of RKE2. Without a backup, a rollback is impossible.
-* *Potential Data Loss:* The `rke2-killall.sh` script forcefully terminates RKE2 processes and may result in data loss if applications are not properly shut down.
-* *Version Specifics:* Always verify RKE2 and component versions before and after the rollback.
+* *备份:*在升级之前，请确保您拥有来自运行旧版本 RKE2 的集群的有效数据库或 etcd 快照。没有备份，回滚是不可能的。
+* *潜在数据丢失:*`rke2-killall.sh` 脚本会强制终止 RKE2 进程，如果应用程序未正确关闭，可能会导致数据丢失。
+* *版本细节:*始终在回滚前后验证 RKE2 及其组件版本。
 
-== Rolling Back an RKE2 Cluster
+== 回滚 RKE2 集群
 
 [tabs]
 =====
@@ -24,48 +24,48 @@ SQLite::
 +
 --
 
-To roll back an RKE2 cluster when using a SQLite database, replace the `.db` file with the copy of the `.db` file you made while backing up your database.
+在使用 SQLite 数据库时回滚 RKE2 集群，请将 `.db` 文件替换为您在备份数据库时制作的 `.db` 文件的副本。
 
 --
 
-Embedded etcd::
+嵌入式etcd::
 +
 --
 
-To roll back an RKE2 cluster when using an embedded etcd (default), follow these steps:
+在使用嵌入式 etcd（默认）时回滚 RKE2 集群，请按照以下步骤操作：
 
-. If the cluster is running and the Kubernetes API is available, gracefully stop workloads by draining all nodes:
+. 如果集群正在运行且 Kubernetes API 可用，请通过排空所有节点优雅地停止工作负载：
 +
 [,bash]
 ----
  kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
 ----
 
-. On each node, stop the RKE2 service and all running pod processes:
+. 在每个节点上，停止 RKE2 服务和所有正在运行的 pod 进程：
 +
 [,bash]
 ----
  rke2-killall.sh
 ----
 
-. On each node, roll back the RKE2 binary to the previous version.
- ** Clusters with Internet Access:
-  *** Server nodes:
+. 在每个节点上，将 RKE2 二进制文件回滚到先前版本。
+ ** 具有互联网访问权限的集群：
+  *** 服务器节点：
 +
 [,bash]
 ----
 curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
 ----
 
-  *** Agent nodes:
+  *** 代理节点：
 +
 [,bash]
 ----
 curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
 ----
- ** Air-gapped Clusters:
-  *** Download the artifacts and run the xref:install/airgap.adoc#_install_rke2[install script] locally.
-. On the first server node or the node without a `server:` entry in its xref:install/configuration.adoc[RKE2 config file], initiate the cluster restore. Refer to the xref:datastore/backup_restore.adoc#_snapshot_restore_steps[Snapshot Restore Steps] for more information:
+ ** 隔离集群：
+  *** 下载工件并在本地运行 xref:install/airgap.adoc#_install_rke2[install script]。
+. 在第一个服务器节点或其 xref:install/configuration.adoc[RKE2 配置文件] 中没有 `server:` 条目的节点上，启动集群恢复。有关更多信息，请参阅 xref:datastore/backup_restore.adoc#_snapshot_restore_steps[快照恢复步骤]：
 +
 [,bash]
 ----
@@ -74,48 +74,48 @@ curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_T
 +
 [WARNING]
 ==== 
-This overwrites all data in the etcd datastore. Verify the snapshot's integrity before restoring. Be aware that large snapshots can take a long time to restore.
+这将覆盖etcd数据存储中的所有数据。在恢复之前验证快照的完整性。请注意，大型快照可能需要很长时间才能恢复。
 ====
 
-. Start the RKE2 service on the first server node:
+. 在第一个服务器节点上启动 RKE2 服务：
 +
 [,bash]
 ----
  systemctl start rke2-server
 ----
 
-. On the other server nodes, remove the RKE2 database directory:
+. 在其他服务器节点上，去除 RKE2 数据库目录：
 +
 [,bash]
 ----
  rm -rf /var/lib/rancher/rke2/server/db
 ----
 
-. Start the RKE2 service on the other server nodes:
+. 在其他服务器节点上启动 RKE2 服务：
 +
 [,bash]
 ----
  systemctl start rke2-server
 ----
 
-. Start the RKE2 service on all agent nodes:
+. 在所有代理节点上启动 RKE2 服务：
 +
 [,bash]
 ----
  systemctl start rke2-agent
 ----
 
-. Verify the RKE2 service status with `systemctl status rke2-server` or `systemctl status rke2-agent`.
+. 使用 `systemctl status rke2-server` 或 `systemctl status rke2-agent` 验证 RKE2 服务状态。
 
 --
 
-External Database::
+外部数据库::
 +
 --
 
-To roll back an RKE2 cluster when using an external database (e.g., PostgreSQL, MySQL), follow these steps:
+在使用外部数据库（例如，PostgreSQL，MySQL）时回滚 RKE2 集群，请按照以下步骤操作：
 
-. If the cluster is running and the Kubernetes API is available, gracefully stop workloads by draining all nodes:
+. 如果集群正在运行且 Kubernetes API 可用，请通过排空所有节点优雅地停止工作负载：
 +
 [,bash]
 ----
@@ -124,58 +124,58 @@ To roll back an RKE2 cluster when using an external database (e.g., PostgreSQL, 
 +
 [NOTE]
 ==== 
-This process may disrupt running applications.
+此处理可能会中断正在运行的应用程序。
 ====
 
-. On each node, stop the RKE2 service and all running pod processes:
+. 在每个节点上，停止 RKE2 服务和所有正在运行的 pod 进程：
 +
 [,bash]
 ----
  rke2-killall.sh
 ----
 
-. Restore a database snapshot taken before upgrading RKE2 and verify the integrity of the database. For example, if you're using PostgreSQL, run the following command:
+. 恢复在升级 RKE2 之前拍摄的数据库快照，并验证数据库的完整性。例如，如果您使用的是 PostgreSQL，请运行以下命令：
 +
 [,bash]
 ----
  pg_restore -U <DB-USER> -d <DB-NAME> <BACKUP-FILE>
 ----
 
-. On each node, roll back the RKE2 binary to the previous version.
- ** Clusters with Internet Access:
-  *** Server nodes:
+. 在每个节点上，将 RKE2 二进制文件回滚到先前版本。
+ ** 具有互联网访问权限的集群：
+  *** 服务器节点：
 +
 [,bash]
 ----
 curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
 ----
 
-  *** Agent nodes:
+  *** 代理节点：
 +
 [,bash]
 ----
 curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
 ----
- ** Air-gapped Clusters:
-  *** Download the artifacts and run the xref:install/airgap.adoc#_install_rke2[install script] locally.
-. Start the RKE2 service on each node:
+ ** 隔离集群：
+  *** 下载工件并在本地运行 xref:install/airgap.adoc#_install_rke2[install script]。
+. 在每个节点上启动 RKE2 服务：
 +
 [,bash]
 ----
  systemctl start rke2-server #or rke2-agent
 ----
 
-. Verify the RKE2 service status with `systemctl status rke2-server` or `systemctl status rke2-agent`.
+. 使用 `systemctl status rke2-server` 或 `systemctl status rke2-agent` 验证 RKE2 服务状态。
 
 --
 
 =====
 
-== Verification
+== 校验
 
-After the rollback, verify the following:
+回滚后，验证以下内容：
 
-* RKE2 version: `rke2 --version`
-* Kubernetes cluster health: `kubectl get nodes`
-* Application functionality.
-* Check the RKE2 logs for errors.
+* RKE2 版本：`rke2 --version`
+* Kubernetes 集群健康状况：`kubectl get nodes`
+* 应用程序功能。
+* 检查 RKE2 日志以查找错误。

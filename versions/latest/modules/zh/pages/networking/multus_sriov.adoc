@@ -1,16 +1,15 @@
-= Multus and SR-IOV
+= Multus 和 SR-IOV
 :page-languages: [en, zh]
 :revdate: 2026-01-08
 :page-revdate: {revdate}
 
-== Using Multus
+== 使用Multus
 
-https://github.com/k8snetworkplumbingwg/multus-cni[Multus CNI] is a CNI plugin that enables attaching multiple network interfaces to pods. Multus does not replace CNI plugins, instead it acts as a CNI plugin multiplexer. Multus is useful in certain use cases, especially when pods are network intensive and require extra network interfaces that support dataplane acceleration techniques such as SR-IOV.
+https://github.com/k8snetworkplumbingwg/multus-cni[Multus CNI] 是一个 CNI 插件，能够将多个网络接口附加到 Pod 上。Multus 并不替代 CNI 插件，而是作为 CNI 插件的多路复用器。在某些使用场景中，Multus 非常有用，特别是当 Pod 网络密集并需要额外的网络接口以支持数据平面加速技术（如 SR-IOV）时。
 
-Multus can not be deployed standalone. It always requires at least one conventional CNI plugin that fulfills the Kubernetes cluster network requirements. That CNI plugin becomes the default for Multus, and will be used to provide the primary interface for all pods.
+Multus 不能单独部署。它始终需要至少一个满足 Kubernetes 集群网络要求的传统 CNI 插件。该 CNI 插件成为 Multus 的默认插件，并将用于为所有 Pod 提供主要接口。
 
-To enable Multus, add multus as the first list entry in the cni config key, followed by the name of the plugin you want to use alongside Multus (or `none` if you will provide your own default plugin). Note that multus must always be in the first position of the list. For example, to use Multus with canal as the default plugin you could specify:
-
+要启用 Multus，请在 `multus` 配置文件的键中将 `cni` 指定为第一个列表项，后面跟上您希望与 Multus 一起使用的插件名称（如果您将提供自己的默认插件，则为 `none`）。请注意，Multus 必须始终位于列表的第一位。例如，要将 Multus 与 Canal 一起用作主要 CNI 插件：
 [,yaml]
 ----
 # /etc/rancher/rke2/config.yaml
@@ -19,20 +18,18 @@ cni:
 - canal
 ----
 
-This can also be specified with command-line arguments, i.e. `--cni=multus,canal` or `--cni=multus --cni=canal`.
+有关 Multus 的更多信息，请参阅 https://github.com/k8snetworkplumbingwg/multus-cni/tree/master/docs[multus-cni] 文档。
 
-For more information about Multus, refer to the https://github.com/k8snetworkplumbingwg/multus-cni/tree/master/docs[multus-cni] documentation.
-
-== Using Multus with Cilium
+== 将 Multus 与 Cilium 一起使用
 
 [NOTE]
-.Version Gate
+.版本门控
 ====
-Disabling the `exclusive` flag is not required starting with November 2025 releases: v1.31.14+rke2r1, v1.32.10+rke2r1, v1.33.6+rke2r1 and v1.34.2+rke2r1.
+从 2025 年 11 月的版本开始，不需要禁用 `exclusive` 标志：v1.31.14+rke2r1、v1.32.10+rke2r1、v1.33.6+rke2r1 和 v1.34.2+rke2r1。
 ====
 
-To use Cilium with Multus the `exclusive` config needs to be disabled.
-You can do this by using the following HelmChartConfig:
+要将 Cilium 与 Multus 一起使用，需要禁用 `exclusive` 配置。
+您可以使用以下 HelmChartConfig 来实现：
 
 [,yaml]
 ----
@@ -49,24 +46,24 @@ spec:
       exclusive: false
 ----
 
-== Using Multus with the containernetworking plugins
+== 将 Multus 与 containernetworking 插件一起使用
 
-Any CNI plugin can be used as secondary CNI plugin for Multus to provide additional network interfaces attached to a pod. However, it is most common to use the CNI plugins maintained by the containernetworking team (bridge, host-device, macvlan, etc) as secondary CNI plugins for Multus. These containernetworking plugins are automatically deployed when installing Multus. For more information about these plugins, refer to the https://www.cni.dev/plugins/current[containernetworking plugins] documentation.
+任何 CNI 插件都可以作为 Multus 的次要 CNI 插件，用于提供附加的网络接口到 Pod。然而，最常用的次要 CNI 插件是由 Kubernetes ContainerNetworking 团队维护的 CNI 插件（如 bridge、host-device、macvlan 等）。Kubernetes ContainerNetworking 团队的插件在安装 Multus 时会自动部署。有关这些插件的更多信息，请参阅 https://www.cni.dev/plugins/current[ContainerNetworking Plugins] 文档。
 
-To use any of these plugins, a proper NetworkAttachmentDefinition object will need to be created to define the configuration of the secondary network. The definition is then referenced by pod annotations, which Multus will use to provide extra interfaces to that pod. An example using the macvlan cni plugin with Multus is available https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md#storing-a-configuration-as-a-custom-resource[in the multus-cni repo].
+要使用这些插件中的任何一个，需要创建一个适当的 NetworkAttachmentDefinition 对象，以定义次要网络的配置。然后通过 Pod 注释引用该定义，Multus 将使用它为该 Pod 提供额外的接口。使用`macvlan` CNI插件与Multus的示例可在 https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md#storing-a-configuration-as-a-custom-resource[multus-cni仓库]中找到。
 
-== Multus IPAM plugin options
+== Multus IPAM插件选项
 
 [tabs,sync-group-id=MultusIPAMplugins]
 =====
 host-local::
 +
-host-local IPAM plugin allocates ip addresses out of a set of address ranges. It stores the state locally on the host filesystem, therefore ensuring uniqueness of IP addresses on a single host. Therefore, we don't recommend it for multi-node clusters. This IPAM plugin does not require any extra deployment. For more information: https://www.cni.dev/plugins/current/ipam/host-local/. 
+host-local IPAM插件从一组地址范围中分配IP地址。它将状态存储在主机文件系统上，因此确保单个主机上的IP地址唯一性。因此，我们不建议在多节点集群中使用它。此IPAM插件不需要额外的部署。有关更多信息： https://www.cni.dev/plugins/current/ipam/host-local/.
 
-Multus DHCP daemon::
+Multus DHCP守护程序::
 +
 --
-Multus provides an optional daemonset to deploy the DHCP daemon required to run the https://www.cni.dev/plugins/current/ipam/dhcp/[DHCP IPAM plugin]. You can do this by using the following xref:add-ons/helm.adoc#_使用_helmchartconfig_自定义打包组件[HelmChartConfig]:
+Multus 提供了一个可选的守护程序集，用于部署运行 https://www.cni.dev/plugins/current/ipam/dhcp/[DHCP IPAM 插件] 所需的 DHCP 守护程序。您可以使用以下xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig]来实现：
 
 [,yaml]
 ----
@@ -83,20 +80,20 @@ spec:
       dhcpDaemonSet: true
 ----
 
-This will configure the chart for Multus to deploy the DHCP daemonset. This feature is available starting with the 2024-01 releases (v1.29.1+rke2r1, v1.28.6+rke2r1, v1.27.10+rke2r1, v1.26.13+rke2r1). 
+这将配置 Multus 的 chart 以部署 DHCP 守护程序集。此功能从2024-01版本开始可用（v1.29.1+rke2r1，v1.28.6+rke2r1，v1.27.10+rke2r1，v1.26.13+rke2r1）。
 
 [NOTE]
 ====
-You should write this file before starting RKE2. 
+您应该在启动RKE2之前编写此文件。
 ====
 --
 
 Whereabouts::
 +
 --
-https://github.com/k8snetworkplumbingwg/whereabouts[Whereabouts] is an IP Address Management (IPAM) CNI plugin that assigns IP addresses cluster-wide. RKE2 includes the option to use Whereabouts with Multus to manage the IP addresses of the additional interfaces created through Multus. In order to do this, you need to use xref:add-ons/helm.adoc#_使用_helmchartconfig_自定义打包组件[HelmChartConfig] to configure theMultus CNI to use Whereabouts. 
+https://github.com/k8snetworkplumbingwg/whereabouts[Whereabouts]是一个IP地址管理（IPAM）CNI插件，负责在整个集群中分配IP地址。RKE2包括使用Whereabouts与Multus管理通过Multus创建的附加接口的IP地址的选项。为此，您需要使用xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig]来配置Multus CNI以使用Whereabouts。
 
-You can do this by using the following HelmChartConfig:
+您可以使用以下 HelmChartConfig 来实现：
 
 [,yaml]
 ----
@@ -113,18 +110,18 @@ spec:
       enabled: true
 ----
 
-This will configure the chart for Multus to use `rke2-whereabouts` as a dependency. 
+这将配置Multus的图表以将`rke2-whereabouts`作为依赖项。
 
 [NOTE]
 ====
-You should write this file before starting RKE2.
+您应该在启动RKE2之前编写此文件。
 ====
 --
 =====
 
-=== Enabling Multus Dynamic Networks Controller
+=== 启用Multus动态网络控制器
 
-One use case for using Multus "thick plugin" is to deploy the https://github.com/k8snetworkplumbingwg/multus-dynamic-networks-controller[Dynamic Networks Controller]. This is done through the following HelmChartConfig:
+使用Multus "厚插件"的一个用例是部署 https://github.com/k8snetworkplumbingwg/multus-dynamic-networks-controller[动态网络控制器]。通过以下HelmChartConfig完成此操作：
 
 [,yaml]
 ----
@@ -144,33 +141,33 @@ spec:
 
 [NOTE]
 ====
-The Dynamic Networks Controller can be deployed only with Multus in "thick plugin" mode.
+动态网络控制器只能在"厚插件"模式下与Multus一起部署。
 ====
 
-== Using Multus with SR-IOV
+== 使用Multus与SR-IOV
 
-Using the SR-IOV CNI with Multus can help with data-plane acceleration use cases, providing an extra interface in the pod that can achieve very high throughput. SR-IOV will not work in all environments, and there are several requirements that must be fulfilled to consider the node as SR-IOV capable:
+使用SR-IOV CNI与Multus可以帮助数据平面加速用例，为Pod提供一个额外的接口，能够实现非常高的吞吐量。SR-IOV并不适用于所有环境，并且有几个要求必须满足，以将节点视为SR-IOV兼容：
 
-* Physical NIC must support SR-IOV (e.g. by checking /sys/class/net/$NIC/device/sriov_totalvfs)
-* The host operating system must activate IOMMU virtualization
-* The host operating system includes drivers capable of doing sriov (e.g. i40e, vfio-pci, etc)
+* 物理NIC必须支持SR-IOV（例如，通过检查 /sys/class/net/$NIC/device/sriov_totalvfs）
+* 主机操作系统必须激活IOMMU虚拟化
+* 主机操作系统包含能够执行 SR-IOV 的驱动程序（例如 i40e、vfio-pci 等）
 
-The SR-IOV CNI plugin cannot be used as the default CNI plugin for Multus; it must be deployed alongside both Multus and a traditional CNI plugin. The SR-IOV CNI helm chart can be found in the `rancher-charts` Helm repo. For more information see https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-admin/helm-charts-in-rancher/helm-charts-in-rancher.html[Rancher Helm Charts documentation].
+SR-IOV CNI 插件不能作为 Multus 的默认 CNI 插件使用；它必须与 Multus 和传统 CNI 插件一起部署。SR-IOV CNI helm 图表可以在 `rancher-charts` Helm 仓库中找到。有关更多信息，请参见 https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-admin/helm-charts-in-rancher/helm-charts-in-rancher.html[Rancher Helm Charts 文档]。
 
-After installing the SR-IOV CNI chart, the SR-IOV operator will be deployed. Then, the user must specify what nodes in the cluster are SR-IOV capable by labeling them with `feature.node.kubernetes.io/network-sriov.capable=true`:
+安装 SR-IOV CNI 图表后，将部署 SR-IOV 操作员。然后，用户必须通过使用 `feature.node.kubernetes.io/network-sriov.capable=true` 对集群中的节点进行标记，以指定哪些节点支持 SR-IOV：
 
 [,bash]
 ----
 kubectl label node $NODE-NAME feature.node.kubernetes.io/network-sriov.capable=true
 ----
 
-Once labeled, the sriov-network-config Daemonset will deploy a pod to the node to collect information about the network interfaces. That information is available through the `sriovnetworknodestates` Custom Resource Definition. A couple of minutes after the deployment, there will be one `sriovnetworknodestates` resource per node, with the name of the node as the resource name.
+一旦标记，sriov-network-config Daemonset 将在节点上部署一个 pod，以收集有关网络接口的信息。该信息可以通过 `sriovnetworknodestates` 自定义资源定义获得。在部署后几分钟内，每个节点将有一个 `sriovnetworknodestates` 资源，资源名称为节点的名称。
 
 [NOTE]
 ====
-The SR-IOV CNI chart from `rancher-charts` now includes the `node-feature-discovery` chart as an automatic dependency. This chart deploys a small daemonset that automatically labels each node based on the capabilities detected on that node. This works for both hardware and software features. In particular, `node-feature-discovery` can automatically add the label `feature.node.kubernetes.io/network-sriov.capable=true` when it detects a compatible node. For more information, see the https://kubernetes-sigs.github.io/node-feature-discovery/v0.11/get-started/introduction.html[NFD documentation].
+来自 `rancher-charts` 的 SR-IOV CNI 图表现在包括 `node-feature-discovery` 图表作为自动依赖项。该图表部署一个小的 Daemonset，自动根据检测到的节点能力标记每个节点。这适用于硬件和软件功能。特别是，当 `node-feature-discovery` 检测到兼容节点时，可以自动添加标签 `feature.node.kubernetes.io/network-sriov.capable=true`。有关更多信息，请参见 https://kubernetes-sigs.github.io/node-feature-discovery/v0.11/get-started/introduction.html[NFD 文档]。
 ====
 
-However, the latest versions of the sriov-network-operator also include a whitelist of supported hardware so sriov will actually be available only with the NICs on https://github.com/k8snetworkplumbingwg/sriov-network-operator/blob/master/doc/supported-hardware.md[that list]. If you want to use the SR-IOV CNI with a NIC that is not on the list, you will need to update the `supported-nic-ids` configMap yourself.
+然而，最新版本的 SR-IOV 操作员 还包括受支持硬件的白名单，因此 SR-IOV 实际上只会在 https://github.com/k8snetworkplumbingwg/sriov-network-operator/blob/master/doc/supported-hardware.md[该列表]上的 NIC 可用。如果您想使用不在列表上的 NIC 的 SR-IOV CNI，您需要自己更新 `supported-nic-ids` configMap。
 
-For more information about how to use the SR-IOV operator, please refer to https://github.com/k8snetworkplumbingwg/sriov-network-operator/blob/master/doc/quickstart.md#configuration[sriov-network-operator].
+有关如何使用 SR-IOV 操作员 的更多信息，请参阅 https://github.com/k8snetworkplumbingwg/sriov-network-operator/blob/master/doc/quickstart.md#configuration[SR-IOV 操作员]。

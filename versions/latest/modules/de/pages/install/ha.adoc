@@ -1,0 +1,135 @@
+= Hochverfügbarkeit
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Dieser Abschnitt beschreibt, wie man ein Cluster mit hoher Verfügbarkeit (HA) für RKE2 installiert. Ein HA RKE2-Cluster besteht aus:
+
+* Eine *feste Registrierungsadresse*, die vor den Serverknoten platziert ist, um anderen Knoten die Registrierung beim Cluster zu ermöglichen.
+* Eine ungerade Anzahl (drei empfohlen) von *Serverknoten*, die etcd, die Kubernetes-API und andere Steuerungsdienste ausführen werden.
+* Null oder mehr *Agentenknoten*, die zum Ausführen Ihrer Apps und Dienste vorgesehen sind.
+
+[%collapsible]
+.Warum eine ungerade Anzahl von Serverknoten?
+======
+Ein etcd-Cluster muss aus einer ungeraden Anzahl von Serverknoten bestehen, damit etcd das Quorum aufrechterhalten kann. Für einen Cluster mit n Servern beträgt das Quorum (n/2)+1. Für jeden Cluster mit ungerader Größe erhöht das Hinzufügen eines Knotens immer die Anzahl der Knoten, die für das Quorum erforderlich sind. Obwohl das Hinzufügen eines Knotens zu einem ungeraden Cluster besser erscheint, da es mehr Maschinen gibt, ist die Fehlertoleranz schlechter. Genau die gleiche Anzahl von Knoten kann ausfallen, ohne das Quorum zu verlieren, aber es gibt jetzt mehr Knoten, die ausfallen können.
+======
+
+image:rke2-production-setup.svg[]
+
+Agenten registrieren sich über die feste Registrierungsadresse. Wenn RKE2 jedoch den Kubelet startet und sich mit dem Kubernetes-API-Server verbinden muss, geschieht dies über den `rke2 agent` Prozess, der als clientseitiger Lastenausgleich fungiert.
+
+Die Einrichtung eines HA-Clusters erfordert die folgenden Schritte:
+
+. Konfigurieren Sie eine feste Registrierungsadresse
+. Starten Sie den ersten Serverknoten
+. Fügen Sie zusätzliche Serverknoten hinzu
+. Fügen Sie Agentenknoten hinzu
+
+== 1. Konfigurieren Sie die feste Registrierungsadresse
+
+Serverknoten über den ersten hinaus und alle Agentenknoten benötigen eine URL zur Registrierung. Dies kann die IP oder der Hostname eines der Serverknoten sein, aber in vielen Fällen können diese sich im Laufe der Zeit ändern, da Knoten erstellt und gelöscht werden. Daher sollten Sie einen stabilen Endpunkt vor den Serverknoten haben.
+
+Dieser Endpunkt kann mit verschiedenen Ansätzen eingerichtet werden, wie zum Beispiel:
+
+* Ein Schicht-4 (TCP) Load Balancer
+* Round-robin DNS
+* Virtuelle oder elastische IP-Adressen
+
+Dieser Endpunkt kann auch zum Zugriff auf die Kubernetes API verwendet werden. Sie können beispielsweise Ihre https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig] Datei so ändern, dass sie auf diesen Endpunkt anstelle eines bestimmten Knotens verweist.
+
+Beachten Sie, dass der `rke2 server`-Prozess auf Port `9345` auf neue Knoten wartet, um sich zu registrieren. Die Kubernetes-API wird wie gewohnt auf Port `6443` bereitgestellt. Konfigurieren Sie Ihren Load Balancer entsprechend.
+
+== 2. Starten Sie den ersten Serverknoten
+
+Der erste Serverknoten erstellt das geheime Token, mit dem sich andere Server- oder Agentenknoten beim Verbinden mit dem Cluster registrieren.
+
+Um Ihr eigenes vorab geteiltes Geheimnis als Token anzugeben, setzen Sie das Argument `token` beim Start.
+
+Wenn Sie kein vorab geteiltes Geheimnis angeben, generiert RKE2 eines und legt es unter `/var/lib/rancher/rke2/server/node-token` ab.
+
+Um Zertifikatfehler mit der festen Registrierungsadresse zu vermeiden, sollten Sie den Server mit dem gesetzten `tls-san`-Parameter starten. Diese Option fügt einen zusätzlichen Hostnamen oder eine IP als Subject Alternative Name im TLS-Zertifikat des Servers hinzu, und sie kann als Liste angegeben werden, wenn Sie sowohl über die IP als auch über den Hostnamen zugreifen möchten.
+
+Beispiel einer RKE2-Konfigurationsdatei für den ersten Server:
+
+[NOTE]
+====
+Die RKE2-Konfigurationsdatei muss manuell erstellt werden. Sie können dies tun, indem Sie `touch /etc/rancher/rke2/config.yaml` als privilegierter Benutzer ausführen.
+====
+
+[,yaml]
+----
+token: my-shared-secret
+tls-san:
+  - my-kubernetes-domain.com
+  - another-kubernetes-domain.com
+----
+
+=== 2a. Optional: Berücksichtigen Sie die Taints der Serverknoten.
+
+Standardmäßig sind Serverknoten planbar, sodass Ihre Arbeitslasten auf ihnen gestartet werden können. Wenn Sie eine dedizierte Kontrollplane wünschen, auf der keine Benutzerarbeitslasten ausgeführt werden, können Sie Taints verwenden. Der `node-taint`-Parameter ermöglicht es Ihnen, Knoten mit Taints zu konfigurieren. Hier ist ein Beispiel für das Hinzufügen eines Knoten-Taints zur Konfigurationsdatei:
+
+[,yaml]
+----
+node-taint:
+  - "CriticalAddonsOnly=true:NoExecute"
+----
+
+[NOTE]
+====
+Die NGINX Ingress- und Metrics Server-Addons werden *nicht* bereitgestellt, wenn alle Knoten mit `CriticalAddonsOnly` markiert sind. Wenn Ihre Serverknoten so markiert sind, bleiben diese Addons ausstehend, bis nicht markierte Agentenknoten zum Cluster hinzugefügt werden.
+====
+
+== 3. Zusätzliche Serverknoten starten
+
+Zusätzliche Serverknoten werden ähnlich wie der erste gestartet, mit dem Unterschied, dass Sie die Parameter `server` und `token` angeben müssen, damit sie erfolgreich mit dem ursprünglichen Serverknoten verbinden können.
+
+[IMPORTANT]
+.Übereinstimmende Konfiguration
+====
+Es ist wichtig, kritische Flags auf Ihren Serverknoten abzugleichen. Wenn Sie beispielsweise das Flag `cluster-cidr: 10.200.0.0/16` auf Ihrem ersten Serverknoten verwenden, es jedoch auf anderen Serverknoten nicht setzen, werden die Knoten nicht beitreten können. Sie werden Fehler ausgeben wie: `failed to validate server configuration: critical configuration value mismatch.` Siehe xref:reference/server_config.adoc#_critical_configuration_values[Serverkonfiguration] für weitere Informationen darüber, welche Flags identisch auf den Serverknoten gesetzt werden müssen.
+====
+
+Beispiel einer RKE2-Konfigurationsdatei für zusätzliche Serverknoten:
+
+[,yaml]
+----
+server: https://my-kubernetes-domain.com:9345
+token: my-shared-secret
+tls-san:
+  - my-kubernetes-domain.com
+  - another-kubernetes-domain.com
+----
+
+Wie bereits erwähnt, müssen Sie insgesamt eine ungerade Anzahl von Serverknoten haben.
+
+Wenn ein etcd-Datenspeicher auf der Festplatte gefunden wird, weil dieser Knoten entweder bereits initialisiert oder einem Cluster beigetreten ist, wird die Konfiguration `server: <XXX>` ignoriert.
+
+== 4. Bestätigen Sie, dass der Cluster funktionsfähig ist.
+
+Sobald Sie den `rke2 server`-Prozess auf allen Serverknoten gestartet haben, stellen Sie sicher, dass der Cluster ordnungsgemäß hochgefahren ist mit:
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl get nodes \
+  --kubeconfig /etc/rancher/rke2/rke2.yaml
+----
+
+Sie sollten Ihre Serverknoten im Zustand "Bereit" sehen.
+
+[NOTE]
+====
+Standardmäßig erfordert jeder `kubectl`-Befehl Root-Benutzerzugriff, es sei denn, es wird eine `RKE2_KUBECONFIG_MODE`-Überschreibung bereitgestellt. Lesen Sie mehr darüber auf der xref:cluster_access.adoc[Seite zum Clusterzugriff].
+====
+
+== 5. Optional: Agentenknoten beitreten
+
+Da RKE2-Serverknoten standardmäßig planbar sind, beträgt die Mindestanzahl von Knoten für einen HA-RKE2-Servercluster drei Serverknoten und null Agentenknoten. Um Knoten hinzuzufügen, die Ihre Apps und Dienste ausführen sollen, fügen Sie Agentenknoten zu Ihrem Cluster hinzu.
+
+Das Hinzufügen von Agentenknoten zu einem HA-Cluster ist dasselbe wie xref:install/quickstart.adoc#_linux_agent_worker_node_installation[das Hinzufügen von Agentenknoten zu einem Cluster mit einem einzelnen Server]. Sie müssen nur die URL angeben, bei der sich der Agent registrieren soll, und das Token, das er verwenden soll.
+
+[,yaml]
+----
+server: https://my-kubernetes-domain.com:9345
+token: my-shared-secret
+----

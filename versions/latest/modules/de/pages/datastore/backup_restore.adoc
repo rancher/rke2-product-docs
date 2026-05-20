@@ -1,0 +1,498 @@
+
+= Sichern und Wiederherstellen
+:page-languages: [en, zh]
+:revdate: 2026-02-27
+:page-revdate: {revdate}
+:page-aliases: backup_restore.adoc
+
+RKE2 sichert die Clusterinformationen mithilfe von etcd-Snapshots. Diese Seite beschreibt, wie man das rke2 etcd-snapshot CLI-Tool verwendet, um etcd-Snapshots zu verwalten und wie man von einem etcd-Snapshot wiederherstellt. Snapshots sind nur für eingebettetes etcd gedacht. Wenn Sie einen anderen Datenspeicher mit `datastore-endpoint` konfigurieren, gehen Sie zu xref:backup_restore.adoc#_external_db_backups_experimental[Experimental].
+
+RKE2 etcd-Snapshots werden im Dateisystem des Knotens gespeichert und können optional in einen S3-kompatiblen Objektspeicher für Katastrophenwiederherstellungsszenarien hochgeladen werden. Snapshots können sowohl automatisiert nach einem wiederkehrenden Zeitplan als auch manuell auf Abruf erstellt werden.  Das `rke2 etcd-snapshot` CLI-Tool bietet eine Reihe von Unterkommandos, die verwendet werden können, um Snapshots zu erstellen, zu löschen und zu verwalten.
+
+|===
+| Unterkommando | Beschreibung
+
+| delete
+| Gegebene Snapshot(s) entfernen
+
+| ls, list, l
+| Snapshots auflisten
+
+| prune
+| Snapshots entfernen, die die konfigurierte Aufbewahrungsanzahl überschreiten
+
+| Speichern
+| Einen etcd-Snapshot auf Anfrage auslösen
+|===
+
+Für weitere Informationen zu den etcd-Snapshot-Unterkommandos führen Sie `rke2 etcd-snapshot --help` aus.
+
+== Erstellen von Snapshots
+
+[tabs,sync-group-id=snapshots]
+=====
+Geplant::
++
+--
+
+Geplante Snapshots sind standardmäßig aktiviert, um 00:00 und 12:00 Uhr Systemzeit, mit 5 aufbewahrten Snapshots. Geplante Snapshots haben einen Namen, der mit `etcd-snapshot` beginnt, gefolgt vom Knotennamen und dem Zeitstempel.
+
+Die folgenden Optionen steuern den Betrieb der geplanten Snapshots:
+
+|===
+| Flaggen | Beschreibung
+
+| `--etcd-disable-snapshots`
+| Geplante Snapshots deaktivieren
+
+| `--etcd-snapshot-name`
+| Setzt den Basisnamen der geplanten etcd-Snapshots. (Standard: `etcd-snapshot`)
+
+| `--etcd-snapshot-compress`
+| Komprimieren Sie etcd-Snapshots
+
+| `--etcd-snapshot-dir`
+| Verzeichnis zum Speichern von Datenbank-Snapshots. (Standardstandort: `${data-dir}/db/snapshots`)
+
+| `--etcd-snapshot-retention`
+| Anzahl der zu behaltenden Snapshots (Standard: 5)
+
+| `--etcd-snapshot-schedule-cron`
+| Snapshot-Intervallzeit im Cron-Schema, z. B. alle 5 Stunden `0 */5 * * *` (Standard: `0 */12 * * *`)
+|===
+
+Der Wert für data-dir ist standardmäßig `/var/lib/rancher/rke2` und kann unabhängig durch Setzen des `--data-dir` Flags geändert werden.
+
+Geplante Snapshots werden im Pfad gespeichert, der durch den Wert `--etcd-snapshot-dir` des Servers festgelegt ist. Wenn Sie möchten, dass sie in S3-kompatiblen Objektspeichern repliziert werden, beziehen Sie sich auf <<_s3_compatible_object_store_support,S3-Konfigurationsoptionen>>
+
+--
+
+Auf Anfrage::
++
+--
+
+Snapshots können manuell gespeichert werden, indem der `rke2 etcd-snapshot save` Befehl ausgeführt wird. Für diese Snapshots auf Anfrage gibt es keine Aufbewahrung, und der Benutzer muss sie manuell mit den Befehlen `rke2 etcd-snapshot delete` oder `rke2 etcd-snapshot prune` entfernen. Snapshots auf Anfrage haben einen Namen, der mit `on-demand` beginnt, gefolgt vom Knotennamen und dem Zeitstempel.
+
+Die folgenden Optionen steuern den Betrieb von Snapshots auf Anfrage:
+
+|===
+| Flaggen | Beschreibung
+
+| `--name`
+| Setzt den Basisnamen der etcd-Snapshots auf Anfrage. (Standard: `on-demand`)
+
+| `--etcd-snapshot-compress`
+| Komprimieren Sie etcd-Snapshots
+
+| `--etcd-snapshot-dir`
+| Verzeichnis zum Speichern von Datenbank-Snapshots. (Standardstandort: `${data-dir}/db/snapshots`)
+|===
+
+Der Wert für data-dir ist standardmäßig `/var/lib/rancher/rke2` und kann unabhängig durch Setzen des `--data-dir` Flags geändert werden.
+
+Das `--name` Flag kann nur beim Ausführen des `rke2 etcd-snapshot save` Befehls gesetzt werden. Die anderen beiden können ebenfalls Teil der `rke2 server` xref:install/configuration.adoc#_configuration_file[Konfigurationsdatei] sein.
+
+Snapshots auf Anfrage werden im Pfad gespeichert, der durch den Wert `--etcd-snapshot-dir` des Servers festgelegt ist. Wenn Sie möchten, dass sie in S3-kompatiblen Objektspeichern repliziert werden, beziehen Sie sich auf <<_s3_compatible_object_store_support,S3-Konfigurationsoptionen>>.
+
+--
+
+=====
+
+== Löschen von Snapshots
+
+Geplante Snapshots werden automatisch gelöscht, wenn die Anzahl der Snapshots die konfigurierte Aufbewahrungsanzahl (standardmäßig 5) überschreitet. Die ältesten Snapshots werden zuerst entfernt.
+
+Um geplante Snapshots oder On-Demand-Snapshots manuell zu entfernen, können Sie den `rke2 etcd-snapshot delete` Befehl verwenden:
+
+[,bash]
+----
+rke2 etcd-snapshot delete <SNAPSHOT-NAME-1> <SNAPSHOT-NAME-2> ...
+----
+
+Der `prune` Unterbefehl entfernt Snapshots, die mit dem Namenspräfix (`on-demand` standardmäßig) übereinstimmen und die konfigurierte Aufbewahrungsanzahl überschreiten. Er enthält das Flag `--snapshot-retention`, um die Aufbewahrungsanzahl festzulegen. Für geplante Snapshots überschreibt es die standardmäßige Aufbewahrungsrichtlinie. Snapshots auf Anfrage haben keine Aufbewahrungsrichtlinie, daher ist dieses Flag erforderlich.
+
+Reduzieren Sie Snapshots auf Anfrage auf eine kleinere Anzahl:
+
+[,bash]
+----
+rke2 etcd-snapshot prune --snapshot-retention  <NUM-OF-SNAPSHOTS-TO-RETAIN>
+----
+
+Reduzieren Sie "geplante" Snapshots auf eine kleinere Anzahl:
+
+[,bash]
+----
+rke2 etcd-snapshot prune --name etcd-snapshot --etcd-snapshot-retention <NUM-OF-SNAPSHOTS-TO-RETAIN>
+----
+
+== S3-kompatible Objektspeicherunterstützung
+
+RKE2 unterstützt die Replikation von etcd-Snapshots zu und die Wiederherstellung von etcd-Snapshots aus S3-kompatiblen Objektspeichern. S3-Unterstützung ist sowohl für Snapshots auf Anfrage als auch für geplante Snapshots verfügbar.
+
+|===
+| Flaggen | Beschreibung
+
+| `--etcd-s3`
+| Sicherung zu S3 aktivieren
+
+| `--etcd-s3-endpoint`
+| S3-Endpunkt-URL
+
+| `--etcd-s3-endpoint-ca`
+| S3 benutzerdefiniertes CA-Zertifikat zur Verbindung mit dem S3-Endpunkt
+
+| `--etcd-s3-skip-ssl-verify`
+| Deaktiviert die SSL-Zertifikatsvalidierung für S3
+
+| `--etcd-s3-access-key`
+| S3 Zugriffsschlüssel
+
+| `--etcd-s3-secret-key`
+| S3 geheimer Schlüssel
+
+| `--etcd-s3-session-token` 
+| S3-Sitzungstoken 
+
+| `--etcd-s3-bucket`
+| S3 Bucket-Name
+
+| `--etcd-s3-bucket-lookup-type`
+| S3-Bucket-Suchtyp, einer von 'auto', 'dns', 'path'; Standard ist 'auto', wenn nicht festgelegt
+
+| `--etcd-s3-region`
+| S3-Region / Bucket-Standort (optional). Standardmäßig ist es us-east-1
+
+| `--etcd-s3-folder`
+| S3-Ordner
+
+| `--etcd-s3-retention`
+| S3-Aufbewahrungsgrenze (Standard: 5)
+
+| `--etcd-s3-proxy`
+| Proxy-Server, der bei der Verbindung zu S3 verwendet werden soll, wobei alle proxybezogenen Umgebungsvariablen überschrieben werden.
+
+| `--etcd-s3-insecure`
+| Deaktiviert S3 über HTTPS
+
+| `--etcd-s3-timeout`
+| S3-Timeout (Standard: `5m0s`)
+
+| `--etcd-s3-config-secret`
+| Name des Geheimnisses im kube-system-Namespace, das zur Konfiguration von S3 verwendet wird, wenn etcd-s3 aktiviert ist und keine anderen etcd-s3-Optionen festgelegt sind
+|===
+
+Zum Beispiel so würde die Erstellung und Löschung von etcd-Snapshots auf Anfrage in S3 funktionieren:
+
+[,shell-session]
+----
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret save
+INFO[0000] Snapshot on-demand-server-0-1754907117 saved.
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret ls
+Name                              Location                                                                          Size    Created
+on-demand-server-0-1754907117     s3://test-bucket/test-folder/on-demand-server-0-1754907117                        8937504 2025-07-22T10:02:03Z
+on-demand-server-0-1754907117     file:///var/lib/rancher/rke2/server/db/snapshots/on-demand-server-0-1754907117    8937504 2025-07-22T10:02:03Z
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret delete on-demand-server-0-1753178523
+INFO[0000] Snapshot on-demand-server-0-1754907117 deleted.
+
+$ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secret-key=secret ls
+Name                              Location                                                                          Size    Created
+----
+
+=== S3-Aufbewahrung
+
+[IMPORTANT]
+.Versionssperre
+====
+Ab den Versionen v1.34.0+rke2r1, v1.33.4+rke2r1, v1.32.8+rke2r1, v1.31.12+rke2r1 enthält RKE2 ein neues Flag für die S3-Aufbewahrung. Es hat den gleichen Standardwert wie die lokale Snapshot-Aufbewahrung.
+====
+
+|===
+| Flaggen | Beschreibung
+
+| `--etcd-s3-retention`
+| Anzahl der Snapshots in S3, die aufbewahrt werden sollen (Standard: `5`)
+|===
+
+=== Unterstützung für S3-Konfigurationsgeheimnisse
+
+[IMPORTANT]
+.Versionssperre
+====
+Die Unterstützung für S3-Konfigurations-Secrets ist ab den Veröffentlichungen im August 2024 verfügbar: v1.30.4+rke2r1, v1.29.8+rke2r1, v1.28.13+rke2r1
+====
+
+RKE2 unterstützt das Lesen der etcd S3 Snapshot-Konfiguration aus einem Kubernetes-Secret.
+Dies kann aus Sicherheitsgründen bevorzugt werden, um Anmeldeinformationen nicht in RKE2-CLI-Flags oder Konfigurationsdateien fest einzugeben, oder wenn Anmeldeinformationen ohne Neustart von RKE2 rotiert werden müssen.
+Um die S3-Snapshot-Konfiguration über ein Geheimnis zu übergeben, starten Sie RKE2 mit `--etcd-s3` und `--etcd-s3-config-secret=<SECRET-NAME>`.
+Das Geheimnis muss nicht existieren, wenn RKE2 gestartet wird, aber es wird bei jedem Snapshot-Speicher-/Liste-/Lösch-/Prune-Vorgang überprüft.
+
+Das S3-Konfigurationsgeheimnis kann beim Wiederherstellen eines Snapshots nicht verwendet werden, da der apiserver nicht verfügbar ist, um das Geheimnis während einer Wiederherstellung bereitzustellen.
+Die S3-Konfiguration muss über die CLI beim Wiederherstellen eines auf S3 gespeicherten Snapshots übergeben werden.
+
+[NOTE]
+====
+Übergeben Sie nur die `--etcd-s3` und `--etcd-s3-config-secret` Flags, um das Geheimnis zu aktivieren. +
+Wenn andere S3-Konfigurationsflags festgelegt sind, wird das Geheimnis ignoriert.
+====
+
+Die Schlüssel im Geheimnis entsprechen den oben aufgeführten `--etcd-s3-*` CLI-Flags.
+Der `etcd-s3-endpoint-ca` Schlüssel akzeptiert ein PEM-kodiertes CA-Bundle, oder der `etcd-s3-endpoint-ca-name` Schlüssel kann verwendet werden, um den Namen einer ConfigMap im `kube-system` Namespace anzugeben, der ein oder mehrere PEM-kodierte CA-Bundles enthält.
+
+[,yaml]
+----
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rke2-etcd-snapshot-s3-config
+  namespace: kube-system
+type: etcd.k3s.cattle.io/s3-config-secret
+stringData:
+  etcd-s3-endpoint: ""
+  etcd-s3-endpoint-ca: ""
+  etcd-s3-endpoint-ca-name: ""
+  etcd-s3-skip-ssl-verify: "false"
+  etcd-s3-access-key: "AWS_ACCESS_KEY_ID"
+  etcd-s3-secret-key: "AWS_SECRET_ACCESS_KEY"
+  etcd-s3-bucket: "bucket"
+  etcd-s3-folder: "folder"
+  etcd-s3-region: "us-east-1"
+  etcd-s3-insecure: "false"
+  etcd-s3-timeout: "5m"
+  etcd-s3-proxy: ""
+----
+
+== Snapshots wiederherstellen
+
+RKE2 durchläuft mehrere Schritte, wenn ein Snapshot wiederhergestellt wird:
+
+. Wenn der Snapshot auf S3 gespeichert ist, wird die Datei in das Snapshot-Verzeichnis heruntergeladen.
+. Wenn der Snapshot komprimiert ist, wird er dekomprimiert.
+. Falls vorhanden, werden die aktuellen etcd-Datenbankdateien nach `${data-dir}/server/db/etcd-old-$TIMESTAMP/` verschoben.
+. Der Inhalt des Snapshots wird auf die Festplatte extrahiert, und die Prüfsumme wird überprüft.
+. Etcd wird gestartet, und alle etcd-Cluster-Mitglieder außer dem aktuellen Knoten werden aus dem Cluster entfernt.
+. CA-Zertifikate und andere vertrauliche Daten werden aus dem Datenspeicher extrahiert und auf die Festplatte geschrieben, für eine spätere Verwendung.
+. Die Wiederherstellung ist abgeschlossen, und RKE2 kann neu gestartet und normal auf dem Server verwendet werden, auf dem die Wiederherstellung durchgeführt wurde.
+. (optional) Agenten und Steuerungsserver können normal gestartet werden.
+. (optional) Etcd-Server können neu gestartet werden, um dem Cluster wieder beizutreten, nachdem alte Datenbankdateien entfernt wurden.
+
+Bei der Wiederherstellung eines Snapshots müssen Sie nicht die gleiche RKE2-Version verwenden, die ihn erstellt hat; eine höhere Minor-Version ist ebenfalls akzeptabel.
+
+=== Schritte zur Snapshot-Wiederherstellung
+
+Wählen Sie die Registerkarte unten aus, die Ihrer Clusterkonfiguration entspricht.
+
+[tabs]
+=====
+Einzelner Server::
++
+--
+
+. Stoppen Sie den RKE2-Dienst:
++
+[,bash]
+----
+systemctl stop rke2-server
+----
+
+. Führen Sie `rke2 server` mit dem `--cluster-reset` Flag aus, und `--cluster-reset-restore-path` gibt den Pfad zum wiederherzustellenden Snapshot an.
+Wenn der Snapshot auf S3 gespeichert ist, geben Sie die S3-Konfigurationsflags (`--etcd-s3`, `--etcd-s3-bucket` usw.) an und geben Sie nur den Dateinamen des Snapshots als Wiederherstellungspfad an.
++
+[NOTE]
+====
+Die Verwendung des `--cluster-reset` Flags ohne Angabe eines wiederherzustellenden Snapshots setzt einfach das etcd-Cluster auf ein einzelnes Mitglied zurück, ohne einen Snapshot wiederherzustellen.
+====
++
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+   --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+*Ergebnis:* RKE2 stellt den Snapshot wieder her und setzt die Cluster-Mitgliedschaft zurück, dann wird eine Nachricht ausgegeben, die anzeigt, dass es bereit ist, neu gestartet zu werden: +
+ `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.`
+
+. Starten Sie RKE2 erneut:
++
+[,bash]
+----
+systemctl start rke2-server
+----
++
+Wenn eine etcd-s3 Sicherungs-Konfiguration in der RKE2-Konfigurationsdatei definiert ist, wird die RKE2-Wiederherstellung versuchen, die Snapshot-Datei aus dem konfigurierten S3-Bucket abzurufen. In diesem Fall sollte nur der Dateiname des Snapshots als Argument `--cluster-reset-restore-path` übergeben werden. Um von einer lokalen Snapshot-Datei wiederherzustellen, wo eine etcd-s3 Backup-Konfiguration vorhanden ist, fügen Sie das Argument `--etcd-s3=false` hinzu und übergeben Sie den vollständigen Pfad zur lokalen Snapshot-Datei im Argument `--cluster-reset-restore-path`.
+
+Als Sicherheitsmechanismus erstellt RKE2, wenn es das Cluster zurücksetzt, eine leere Datei unter `/var/lib/rancher/rke2/server/db/reset-flag`, die verhindert, dass Benutzer versehentlich mehrere Cluster-Rücksetzungen hintereinander ausführen. Diese Datei wird gelöscht, wenn RKE2 normal startet.
+
+--
+
+Mehrere Server::
++
+--
+
+In diesem Beispiel gibt es 3 Server, `S1`, `S2` und `S3`. Der Snapshot befindet sich auf `S1`.
+
+. Stoppen Sie RKE2 auf allen Servern:
++
+[,bash]
+----
+systemctl stop rke2-server
+----
+
+. Führen Sie auf S1 `rke2 server` mit der Option `--cluster-reset` aus, wobei `--cluster-reset-restore-path` den Pfad zum wiederherzustellenden Snapshot angibt.
+Wenn der Snapshot auf S3 gespeichert ist, geben Sie die S3-Konfigurationsflags (`--etcd-s3`, `--etcd-s3-bucket` usw.) an und geben Sie nur den Dateinamen des Snapshots als Wiederherstellungspfad an.
++
+[NOTE]
+====
+Die Verwendung des `--cluster-reset` Flags ohne Angabe eines wiederherzustellenden Snapshots setzt einfach das etcd-Cluster auf ein einzelnes Mitglied zurück, ohne einen Snapshot wiederherzustellen.
+====
++
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+  --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+*Ergebnis:* RKE2 stellt den Snapshot wieder her und setzt die Cluster-Mitgliedschaft zurück, dann wird eine Nachricht ausgegeben, die anzeigt, dass es bereit ist, neu gestartet zu werden: +
+ `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
+ `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
+
+. Starten Sie RKE2 auf S1 erneut:
++
+[,bash]
+----
+systemctl start rke2-server
+----
+
+. Löschen Sie auf S2 und S3 das Datenverzeichnis `/var/lib/rancher/rke2/server/db/`:
++
+[,bash]
+----
+rm -rf /var/lib/rancher/rke2/server/db/
+----
+
+. Starten Sie RKE2 auf S2 und S3 erneut, um dem wiederhergestellten Cluster beizutreten:
++
+[,bash]
+----
+systemctl start rke2-server
+----
+
+Wenn eine etcd-s3 Sicherungs-Konfiguration in der RKE2-Konfigurationsdatei definiert ist, wird die RKE2-Wiederherstellung versuchen, die Snapshot-Datei aus dem konfigurierten S3-Bucket abzurufen. In diesem Fall sollte nur der Dateiname des Snapshots als Argument `--cluster-reset-restore-path` übergeben werden. Um von einer lokalen Snapshot-Datei wiederherzustellen, wo eine etcd-s3 Backup-Konfiguration vorhanden ist, fügen Sie das Argument `--etcd-s3=false` hinzu und übergeben Sie den vollständigen Pfad zur lokalen Snapshot-Datei im Argument `--cluster-reset-restore-path`.
+
+Als Sicherheitsmechanismus erstellt RKE2, wenn es das Cluster zurücksetzt, eine leere Datei unter `/var/lib/rancher/rke2/server/db/reset-flag`, die verhindert, dass Benutzer versehentlich mehrere Cluster-Rücksetzungen hintereinander ausführen. Diese Datei wird gelöscht, wenn RKE2 normal startet.
+
+--
+
+=====
+
+==== Wiederherstellung auf neuen Hosts
+
+Es ist möglich, einen etcd-Snapshot auf einem anderen Host wiederherzustellen, als er erstellt wurde. Wenn Sie dies tun, müssen Sie das xref:security/token.adoc#_server[Server-Token] übergeben, das ursprünglich beim Erstellen des Snapshots verwendet wurde, da es zur Entschlüsselung der Bootstrap-Daten im Snapshot dient. Der Prozess ist derselbe wie oben, aber ändern Sie Schritt 2 in:
+
+. Im Knoten, der den Snapshot aufgenommen hat, speichern Sie den Wert von: `/var/lib/rancher/rke2/server/token`. Dies ist `<BACKED-UP-TOKEN-VALUE>` in Schritt 3.
+. Kopieren Sie den Snapshot in den neuen Knoten. Der Pfad im Knoten ist `<PATH-TO-SNAPSHOT>` in Schritt 3.
+. Initiieren Sie die Wiederherstellung vom Snapshot auf dem ersten Serverknoten mit den folgenden Befehlen:
+
+[,bash]
+----
+rke2 server \
+  --cluster-reset \
+  --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+  --token=<BACKED-UP-TOKEN-VALUE>
+----
+
+Der Tokenwert kann auch in der RKE2-Konfigurationsdatei festgelegt werden.
+
+[CAUTION]
+====
+. Knotenressourcen sind ebenfalls im etcd-Snapshot enthalten. Wenn Sie auf eine neue Gruppe von Knoten wiederherstellen, müssen Sie manuell alle alten Knoten löschen, die nicht mehr im Cluster vorhanden sind.
+. Wenn ein Token in der RKE2-Konfigurationsdatei festgelegt ist, stellen Sie sicher, dass es dasselbe wie das `<BACKED-UP-TOKEN-VALUE>` ist, andernfalls kann RKE2 nicht gestartet werden.
+====
+
+== ETCDSnapshotFile benutzerdefinierte Ressourcen
+
+Snapshots können remote mit jedem Kubernetes-Client angezeigt werden, indem clusterweite `ETCDSnapshotFile`-Ressourcen aufgelistet oder beschrieben werden.
+Im Gegensatz zum `rke2 etcd-snapshot list` Befehl, der nur Snapshots anzeigt, die für diesen Knoten sichtbar sind, verfolgen `ETCDSnapshotFile` Ressourcen alle Snapshots, die auf den Clustermitgliedern vorhanden sind.
+
+[,sh]
+----
+$ kubectl get etcdsnapshotfile
+Name                              Location                                                                           Size     Created
+etcd-snapshot-server-0-1754906881 s3://test-bucket/test-folder/etcd-snapshot-server-0-1754906881                     8937504  2025-08-11T10:08:01Z
+etcd-snapshot-server-0-1754906881 file:///var/lib/rancher/rke2/server/db/snapshots/etcd-snapshot-server-0-1754907185 8937504  2025-08-11T10:08:01Z
+etcd-snapshot-server-0-1754907185 s3://test-bucket/test-folder/etcd-snapshot-server-0-1754907185                     9633824  2025-08-11T10:13:05Z
+etcd-snapshot-server-0-1754907185 file:///var/lib/rancher/rke2/server/db/snapshots/etcd-snapshot-server-0-1754907185 9633824  2025-08-11T10:13:05Z
+----
+
+[,sh]
+----
+$ kubectl describe etcdsnapshotfile s3-etcd-snapshot-server-0-1754906881-e1e196
+Name:         s3-etcd-snapshot-server-0-1754906881-e1e196
+Namespace:
+Labels:       etcd.rke2.cattle.io/snapshot-storage-node=s3
+Annotations:  etcd.rke2.cattle.io/snapshot-token-hash: 2bb80d537b1d
+API Version:  k3s.cattle.io/v1
+Kind:         ETCDSnapshotFile
+Metadata:
+  Creation Timestamp:  2025-08-11T10:10:37Z
+  Finalizers:
+    wrangler.cattle.io/managed-etcd-snapshots-controller
+  Generation:        1
+  Resource Version:  2356
+  UID:               d4fa68e7-b692-4ad8-8740-77d2bb9c062f
+Spec:
+  Location:   s3://test-bucket/test-folder/etcd-snapshot-server-0-1754906881
+  Node Name:  server-0
+  s3:
+    Bucket:           test-bucket
+    Endpoint:         localhost:9090
+    Insecure:         true
+    Prefix:           test-folder
+    Region:           us-east-1
+    Skip SSL Verify:  true
+  Snapshot Name:      etcd-snapshot-server-0-1754906881
+Status:
+  Creation Time:  2025-08-11T10:08:01Z
+  Ready To Use:   true
+  Size:           8937504
+Events:
+  Type    Reason               Age    From             Message
+  ----    ------               ----   ----             -------
+  Normal  ETCDSnapshotCreated  6m24s  rke2-supervisor  Snapshot etcd-snapshot-server-0-1754906881 saved on server-0
+----
+
+[,sh]
+----
+$ kubectl describe etcdsnapshotfile s3-on-demand-k3s-server-1-1730308816-79b15c
+----
+
+== Externe DB-Sicherungen (Experimentell)
+
+[CAUTION]
+====
+Neben der Sicherung des Datenspeichers selbst müssen Sie auch die Server-Token-Datei unter `/var/lib/rancher/rke2/server/token` sichern.
+Sie müssen diese Datei wiederherstellen oder ihren Wert in die Option `token` übergeben, wenn Sie aus einer Sicherung wiederherstellen.
+Wenn Sie beim Wiederherstellen nicht denselben Tokenwert verwenden, wird der Snapshot unbrauchbar, da der Token verwendet wird, um vertrauliche Daten innerhalb des Datenspeichers selbst zu verschlüsseln.
+====
+
+=== Sicherung und Wiederherstellung mit SQLite
+
+Es sind keine speziellen Befehle erforderlich, um den SQLite-Datenspeicher zu sichern oder wiederherzustellen.
+
+* Um den SQLite-Datenspeicher zu sichern, erstellen Sie eine Kopie von `/var/lib/rancher/rke2/server/db/`.
+* Um den SQLite-Datenspeicher wiederherzustellen, stellen Sie den Inhalt von `/var/lib/rancher/rke2/server/db` (und den Token, wie oben besprochen) wieder her.
+
+=== Sicherung und Wiederherstellung mit externem Datenspeicher
+
+Wenn ein externer Datenspeicher verwendet wird, werden Sicherungs- und Wiederherstellungsoperationen außerhalb von RKE2 durchgeführt. Der Datenbankadministrator muss die externe Datenbank sichern oder sie aus einem Snapshot oder Dump wiederherstellen.
+
+Wir empfehlen, die Datenbank so zu konfigurieren, dass sie wiederkehrende Snapshots erstellt.
+
+Für Details zur Erstellung von Datenbank-Snapshots und zur Wiederherstellung Ihrer Datenbank daraus, siehe die offizielle Datenbankdokumentation:
+
+* https://dev.mysql.com/doc/refman/8.0/en/replication-snapshot-method.html[Offizielle MySQL-Dokumentation]
+* https://www.postgresql.org/docs/8.3/backup-dump.html[Offizielle PostgreSQL-Dokumentation]
+* https://etcd.io/docs/latest/op-guide/recovery/[Offizielle etcd-Dokumentation]

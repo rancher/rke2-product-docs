@@ -1,0 +1,213 @@
+= Políticas de Segurança de Pod Padrão
+:page-languages: [en, zh]
+:revdate: 2025-07-17
+:page-revdate: {revdate}
+
+Este documento descreve como o RKE2 configura `PodSecurityPolicies` e `NetworkPolicies` para ser seguro por padrão, ao mesmo tempo em que oferece aos operadores máxima flexibilidade de configuração.
+
+[IMPORTANT]
+.Versão Gate
+====
+Este documento se aplica ao RKE2 v1.24 e versões anteriores, consulte a xref:security/pod_security_standards.adoc[Documentação dos Padrões de Segurança de Pod] para informações sobre a política padrão para RKE2 v1.25 e versões superiores.
+====
+
+== Políticas de Segurança de Pod
+
+O RKE2 pode ser executado com ou sem o parâmetro de configuração `profile: cis-1.6`. Isso fará com que aplique diferentes `PodSecurityPolicies` (PSPs) na inicialização.
+
+* Se executando com o arquivo de controle `cis-1.6`, o RKE2 aplicará uma política restritiva chamada `global-restricted-psp` a todos os namespaces, exceto `kube-system`. O namespace `kube-system` precisa de uma política menos restritiva chamada `system-unrestricted-psp` para lançar componentes críticos.
+* Se executando sem o arquivo de controle `cis-1.6`, o RKE2 aplicará uma política completamente irrestrita chamada `global-unrestricted-psp`, que é o equivalente a executar sem o controlador de admissão PSP habilitado.
+
+O RKE2 colocará essas políticas em vigor na inicialização inicial, mas não as modificará depois disso, a menos que explicitamente acionado pelo operador do cluster, conforme descrito abaixo. Isso é para permitir que o operador controle totalmente os PSPs sem que os padrões do RKE2 interfiram.
+
+A criação e aplicação dos PSPs são controladas pela presença ou ausência de certas anotações no namespace `kube-system`. Essas mapeiam diretamente para os PSPs que podem ser criados e são:
+
+* `psp.rke2.io/global-restricted`
+* `psp.rke2.io/system-unrestricted`
+* `psp.rke2.io/global-unrestricted`
+
+A seguinte lógica é executada na inicialização para as políticas e suas anotações:
+
+* Se a anotação existir, o RKE2 continua sem mais ações.
+* Se a anotação não existir, o RKE2 verifica se a política associada existe e, se sim, a exclui e a recria, além de adicionar a anotação ao namespace.
+* No caso do `global-unrestricted-psp`, a política não é recriada. Isso é para levar em conta a transição entre modos CIS e não-CIS sem tornar o cluster menos seguro.
+* No momento da criação de uma política, funções de cluster e vinculações de funções de cluster também são criadas para garantir que as políticas apropriadas sejam aplicadas por padrão.
+
+Assim, após a inicialização, os operadores podem modificar ou excluir as políticas do RKE2 e o RKE2 respeitará essas alterações. Além disso, para redefinir uma política, um operador só precisa excluir a anotação associada do namespace `kube-system` e reiniciar o RKE2.
+
+As políticas estão descritas abaixo, começando com o PSP `global-restricted` mais restritivo.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: global-restricted-psp
+spec:
+  privileged: false                # CIS - 5.2.1
+  allowPrivilegeEscalation: false  # CIS - 5.2.5
+  requiredDropCapabilities:        # CIS - 5.2.7/8/9
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false               # CIS - 5.2.4
+  hostIPC: false                   # CIS - 5.2.3
+  hostPID: false                   # CIS - 5.2.2
+  runAsUser:
+    rule: 'MustRunAsNonRoot'       # CIS - 5.2.6
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+----
+
+Se o RKE2 for iniciado no modo não CIS, as anotações são verificadas como acima, no entanto, a aplicação resultante das políticas de segurança de pod é permissiva. Consulte abaixo.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: global-unrestricted-psp
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  volumes:
+  - '*'
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  hostIPC: true
+  hostPID: true
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+----
+
+Em ambos os casos, a "política sem restrições do sistema" é aplicada. Consulte abaixo.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: system-unrestricted-psp
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  volumes:
+  - '*'
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  hostIPC: true
+  hostPID: true
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+----
+
+Para visualizar as políticas de segurança de pod atualmente implantadas em seu sistema, execute o comando abaixo:
+
+[,bash]
+----
+kubectl get psp -A
+----
+
+== Políticas de Rede
+
+Quando o RKE2 é executado com o parâmetro `profile: cis-1.6`, ele aplicará 2 políticas de rede aos namespaces `kube-system`, `kube-public` e `default` e aplicará as anotações associadas. A mesma lógica se aplica a essas políticas e anotações como aos PSPs. Na inicialização, as anotações para cada namespace são verificadas quanto à existência e, se existirem, o RKE2 não toma nenhuma ação. Se a anotação não existir, o RKE2 verifica se a política existe e, se existir, a recria.
+
+A primeira política aplicada é restringir o tráfego de rede apenas ao namespace em si. Consulte abaixo.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  managedFields:
+  - apiVersion: networking.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:spec:
+        f:ingress: {}
+        f:policyTypes: {}
+  name: default-network-policy
+  namespace: default
+spec:
+  ingress:
+  - from:
+    - podSelector: {}
+  podSelector: {}
+  policyTypes:
+  - Ingress
+----
+
+A segunda política aplicada é ao namespace `kube-system` e permite o tráfego DNS. Consulte abaixo.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  managedFields:
+  - apiVersion: networking.k8s.io/v1
+    fieldsV1:
+      f:spec:
+        f:ingress: {}
+        f:podSelector:
+          f:matchLabels:
+        f:policyTypes: {}
+  name: default-network-dns-policy
+  namespace: kube-system
+spec:
+  ingress:
+  - ports:
+    - port: 53
+      protocol: TCP
+    - port: 53
+      protocol: UDP
+  podSelector:
+    matchLabels:
+  policyTypes:
+  - Ingress
+----
+
+O RKE2 aplica a política `default-network-policy` e a anotação `np.rke2.io` a todos os namespaces incorporados. O namespace `kube-system` também recebe a política `default-network-dns-policy` e a anotação `np.rke2.io/dns` aplicadas a ele.
+
+Para visualizar as políticas de rede atualmente implantadas em seu sistema, execute o comando abaixo:
+
+[,bash]
+----
+kubectl get networkpolicies -A
+----

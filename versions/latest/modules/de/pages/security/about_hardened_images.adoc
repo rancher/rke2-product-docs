@@ -1,0 +1,16 @@
+= Über gehärtete Images
+:page-languages: [en, zh]
+:revdate: 2026-02-05
+:page-revdate: {revdate}
+
+{product-name} Gehärtete Images werden zur Erkennung von Schwachstellen zur Build-Zeit gescannt, und zusätzliche Sicherheitsmaßnahmen wurden hinzugefügt, um potenzielle Schwächen zu verringern:
+
+* Die Images werden nicht einfach von Upstream-Builds gespiegelt. Die Images werden aus dem Quellcode auf einem gehärteten minimalen Basis-Image erstellt, das derzeit https://www.suse.com/products/base-container-images/[SLE Base Container Image (BCI)] ist.
+* Alle in Go geschriebenen Binärdateien werden mit einem FIPS 140-3-konformen Build-Prozess kompiliert. Für weitere Informationen zu diesem Compiler siehe xref:security/fips3_support.adoc#_use_of_fips_compatible_go_compiler[hier].
+
+Sie werden wissen, ob ein Image wie oben gehärtet wurde, anhand des Image-Namens. RKE2 veröffentlicht mit jeder Version Image-Listen. Siehe https://github.com/rancher/rke2/releases/download/v1.23.14%2Brke2r1/rke2-images-all.linux-amd64.txt[hier] für ein Beispiel einer veröffentlichten Image-Liste.
+
+[NOTE]
+====
+Derzeit sind RKE2 gehärtete Images multiarchitektonisch. Nur die Linux AMD64-Architektur ist FIPS-konform. Windows- und s390x-Architekturen sind nicht FIPS-konform.
+====

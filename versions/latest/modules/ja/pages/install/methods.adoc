@@ -1,0 +1,129 @@
+= インストール方法
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+[IMPORTANT] 
+====
+ノードにNetworkManagerがインストールされ、有効になっている場合は、xref:known_issues.adoc#_networkmanager[それがCNI管理インターフェースを無視するように構成されていることを確認してください]。
+====
+
+[IMPORTANT]
+====
+これらの手順で言及されている資産については、Prime Artifacts URLにリストされている任意のRKE2 Primeバージョンを使用できます。Prime Artifacts URLの詳細については、 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime専用ドキュメント]をご覧ください。認証が必要です。ログインするには、 https://scc.suse.com/home[SUSEカスタマーセンター（SCC）]の資格情報を使用してください。
+====
+
+RKE2は、いくつかの方法でシステムにインストールできますが、そのうちの2つが推奨およびサポートされている方法です。その方法はtarballとRPMです。クイックスタートで参照されているインストールスクリプトは、これら2つの方法のラッパーです。
+
+この文書では、これらのインストール方法について詳しく説明します。
+
+== tarball
+
+RKE2をインストールするには、まずインストールスクリプトを取得する必要があります。これはいくつかの方法で行うことができます。
+
+これにより、スクリプトが取得され、すぐにインストールプロセスが開始されます。
+
+[,sh]
+----
+# curl -sfL https://get.rke2.io | sudo sh -
+curl -sfL https://get.rke2.io | sh -
+----
+
+または、インストールスクリプトをダウンロードして実行可能にすることもできます。
+
+[,sh]
+----
+curl -sfL https://get.rke2.io --output install.sh
+chmod +x install.sh
+----
+
+=== インストール
+
+インストーラーを実行します。ここで、`INSTALL_RKE2_ARTIFACT_URL`はPrime Artifacts URLで、`INSTALL_RKE2_CHANNEL`は購読できるリリースチャネルで、デフォルトはstableです。この例では、`INSTALL_RKE2_CHANNEL="latest"`がRKE2の最新バージョンを提供します。
+
+[,bash]
+----
+sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" ./install.sh
+----
+
+バージョンを指定したい場合は、`INSTALL_RKE2_VERSION`環境変数を設定してください。
+
+[,bash]
+----
+sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" ./install.sh
+----
+
+これにより、`rke2-server`サービスと`rke2`バイナリがあなたのマシンにインストールされます。その性質上、ルートユーザとして実行するか、`sudo`を介して実行しない限り、失敗します。
+
+インストールスクリプトが実行されると、どのタイプのシステムであるかを判断します。RPMを使用するOS（CentOSやRHELなど）の場合は、RPMベースのインストールを実行し、それ以外の場合はスクリプトがデフォルトでtarballを使用します。RPMベースのインストールについては、以下で説明します。
+
+次に、インストールスクリプトがtarballをダウンロードし、SHA256ハッシュを比較して検証し、最後に内容を`/usr/local`に抽出します。オペレーターは、必要に応じてインストール後にファイルを移動することができます。この操作は単にtarballを抽出するものであり、他のシステムの変更は行われません。
+
+tarballの構造 / 内容：
+
+* bin - RKE2の実行可能ファイルと`rke2-killall.sh`および`rke2-uninstall.sh`スクリプトを含みます。
+* lib - サーバーおよびエージェントのsystemdユニットファイルを含みます。
+* share - RKE2のライセンスと、RKE2がCISモードで実行される際に使用されるsysctl設定ファイルを含みます。
+
+システムをさらに設定するには、xref:reference/server_config.adoc[server]またはxref:reference/linux_agent_config.adoc[agent]のドキュメントを参照する必要があります。
+
+== RPM
+
+RPMインストールプロセスを開始するには、上記で説明したインストールスクリプトを取得する必要があります。スクリプトは、`rpm`、`yum`、または`dnf`がシステムに存在するかを確認し、いずれかが存在する場合、システムがRedhatベースであると判断し、RPMインストールプロセスを開始します。
+
+ファイルは`/usr`のプレフィックスでインストールされ、`/usr/local`ではありません。
+
+=== リポジトリ
+
+署名されたRPMは、`rpm-testing.rancher.io`および`rpm.rancher.io`のRPMリポジトリ内でRKE2のために公開されています。RPMをサポートするノードで https://get.rke2.ioスクリプトを実行すると、デフォルトでこれらのRPMリポジトリを使用します。しかし、あなた自身でインストールすることもできます。
+
+RPMは`systemd`ユニットを提供して`rke2`を管理しますが、サービスを初めて開始する前に設定ファイルを介して構成する必要があります。
+
+=== Enterprise Linux 7/8/9
+
+CentOSまたはRHELシステムでRPMリポジトリを使用するには、次のbashスニペットを実行してください：
+
+[,bash]
+----
+export RKE2_MINOR=28
+export LINUX_MAJOR=7 # or 8 or 9 etc
+cat << EOF > /etc/yum.repos.d/rancher-rke2-1-${RKE2_MINOR}-latest.repo
+[rancher-rke2-common-latest]
+name=Rancher RKE2 Common Latest
+baseurl=https://rpm.rancher.io/rke2/latest/common/centos/${LINUX_MAJOR}/noarch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://rpm.rancher.io/public.key
+
+[rancher-rke2-1-${RKE2_MINOR}-latest]
+name=Rancher RKE2 1.${RKE2_MINOR} Latest
+baseurl=https://rpm.rancher.io/rke2/latest/1.${RKE2_MINOR}/centos/${LINUX_MAJOR}/x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://rpm.rancher.io/public.key
+EOF
+----
+
+=== インストール
+
+リポジトリが構成された後、次のいずれかのコマンドを実行できます：
+
+[,sh]
+----
+yum -y install rke2-server
+----
+
+または
+
+[,sh]
+----
+yum -y install rke2-agent
+----
+
+RPMは、次のように呼び出すことができる対応する`rke2-server.service`または`rke2-agent.service`のsystemdユニットをインストールします：`systemctl start rke2-server`。`rke2`を開始する前に、以下の`Configuration File`の指示に従って構成してください。
+
+== 手動
+
+RKE2バイナリは静的にコンパイルおよびリンクされているため、依存関係の問題を気にすることなく、Linux配布パッケージ間でRKE2バイナリを持ち運ぶことができます。最も簡単なインストール方法は、バイナリをダウンロードし、それが実行可能であることを確認した上で、`${PATH}`にコピーします（通常は`/usr/local/bin`にコピーします）。最初の実行後、RKE2は必要なすべてのディレクトリとファイルを作成します。システムをさらに設定するには、xref:install/configuration.adoc[設定ファイル]のドキュメントを参照する必要があります。

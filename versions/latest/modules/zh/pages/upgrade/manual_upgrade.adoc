@@ -3,85 +3,140 @@
 :revdate: 2026-01-08
 :page-revdate: {revdate}
 
-你可以使用安装脚本升级 RKE2，也可以手动安装所需版本的二进制文件。
+您可以通过使用安装脚本、手动安装所需版本的二进制文件或在 rpm 安装的情况下使用 rpm 升级来升级 RKE2。
 
-____
-*注意*：首先升级 Server 节点，一次可以升级一个。升级完所有 Server 后，你可以升级 Agent 节点。
-____
+[NOTE]
+====
+首先逐个升级服务器节点。所有服务器升级完成后，您可以升级代理节点。
+====
 
-== 版本 Channels
+== 发布渠道
 
-通过安装脚本或使用我们的xref:upgrade/automated_upgrade.adoc[自动升级]功能执行的升级可以绑定到不同的版本 channels。以下是可用的 channels：
+通过安装脚本或使用我们的 xref:upgrade/automated_upgrade.adoc[自动升级] 功能进行的升级可以与不同的发布渠道相关联。可用的渠道如下：
 
 |===
-| Channel | 描述
+| 通道 | 说明
 
-| stable
-| （默认）生产环境建议使用稳定版。这些版本已经过一段时间的社区强化，并且与最新版本的 Rancher 兼容。
+| 稳定
+| （默认）稳定版推荐用于生产环境。这些版本经过了社区安全强化，并与最新版本的 Rancher 兼容。
 
-| latest
-| 建议使用最新版本来试用最新功能。这些版本尚未经过社区强化，可能与 Rancher 不兼容。
+| 最新
+| 推荐使用最新版本以尝试最新功能。 这些版本尚未经过社区安全强化，可能与 Rancher 不兼容。
 
 | v1.26（示例）
-| 每个 Kubernetes 次要版本都有一个 release channel，包括 EOL 的版本。这些 channel 会选择可用的最新补丁，不一定是稳定版本。
+| 每个 Kubernetes 次要版本都有一个与之相关的发布渠道，包括已终止服务的版本。这些渠道将选择最新的可用补丁，而不一定是稳定版本。
 |===
 
-有关详细的最新 channel 列表，你可以访问 https://update.rke2.io/v1-release/channels[rke2 channel 服务 API]。有关 channel 如何工作的更多信息，请参阅 https://github.com/rancher/channelserver[channelserver 项目]。
+要获取完整且最新的渠道列表，您可以访问 https://update.rke2.io/v1-release/channels[RKE2 渠道服务 API]。有关渠道工作原理的更多技术细节，您可以参见 https://github.com/rancher/channelserver[channelserver 项目]。
+
+[TIP]
+====
+在尝试升级到新版本的 RKE2 时，适用 https://kubernetes.io/docs/setup/release/version-skew-policy/[Kubernetes 版本偏差策略]。确保您的计划在升级时不会跳过中间的次要版本。升级过程中的任何内容都无法防止对 Kubernetes 版本的非支持性更改。
+====
 
 == 使用安装脚本升级 RKE2
 
-要升级旧版本的 RKE2，你可以使用相同的标志重新运行安装脚本，例如：
+要从旧版本升级 RKE2，您可以使用相同的标志重新运行安装脚本，例如：
 
 [,sh]
 ----
 curl -sfL https://get.rke2.io | sh -
 ----
 
-[NOTE]
-====
-中国用户，可以使用以下方法加速升级：
+这将默认升级到稳定通道中的最新版本。
 
+如果升级代理节点，您应该指定 `INSTALL_RKE2_TYPE` 环境变量：
+
+[,sh]
 ----
-curl -sfL https://rancher-mirror.rancher.cn/rke2/install.sh | INSTALL_RKE2_MIRROR=cn sh -
+curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=agent sh -
 ----
-====
 
-
-默认情况下将升级到 stable channel 中的最新版本。
-
-如果想升级到特定 channel（如 latest）中的最新版本，你可以指定 channel：
+如果您想在特定通道（例如最新）中升级到最新版本，可以指定该通道：
 
 [,sh]
 ----
 curl -sfL https://get.rke2.io | INSTALL_RKE2_CHANNEL=latest sh -
 ----
 
-如果要升级到特定版本，可以运行以下命令：
+如果您想升级到特定版本，可以运行以下命令：
 
 [,sh]
 ----
 curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Z+rke2rN sh -
 ----
 
-安装后记得重启 rke2 进程：
+安装后请记得重启 RKE2 进程：
 
 [,sh]
 ----
-# Server 节点：
+# Server nodes:
 systemctl restart rke2-server
 
-# Agent 节点：
+# Agent nodes:
 systemctl restart rke2-agent
 ----
 
-== 使用二进制文件手动升级 RKE2
+== 手动升级 RKE2 使用二进制文件
 
 或者手动升级 RKE2：
 
-. 从 https://github.com/rancher/rke2/releases[releases] 页面下载所需版本的 RKE2 二进制文件
-. 将下载的二进制文件复制到 `/usr/local/bin/rke2`（使用 tarball 安装的 RKE2）或 `/usr/bin`（使用 RPM 安装的 RKE2）
-. 停止旧的 RKE2 二进制文件
-. 启动新的 RKE2 二进制文件
+. 从 https://github.com/rancher/rke2/releases[发布]下载所需版本的RKE2二进制文件
+. 将下载的二进制文件复制到`/usr/local/bin/rke2`以用于tarball安装的RKE2，以及`/usr/bin`以用于RPM安装的RKE2
+. 停止旧的RKE2二进制文件
+. 启动新的RKE2二进制文件
+
+== 使用RPM升级 RKE2
+
+如果是RPM安装，预计将使用RPM升级从旧版本升级RKE2，例如：
+
+[,sh]
+----
+# zypper upgrade
+zypper update rke2-server
+----
+
+[,sh]
+----
+yum update rke2-server
+----
+
+这将把`rke2-server` RPM 包升级到您在初始安装时通过安装脚本在 yum 或 zypper 仓库中配置的通道中的最新包。
+
+如果升级代理节点，您应该指定`rke2-agent` 软件包的名称
+
+[,sh]
+----
+# zypper upgrade
+zypper update rke2-agent
+----
+
+[,sh]
+----
+# yum upgrade
+yum update rke2-agent
+----
+
+安装后请记得重启 RKE2 进程：
+
+[,sh]
+----
+# Server nodes:
+systemctl restart rke2-server
+
+# Agent nodes:
+systemctl restart rke2-agent
+----
+
+[NOTE] 
+====
+如果您启用了`rke2-selinux`，您还应该能够使用以下命令将rke2-selinux升级到最新版本：
+
+[,sh]
+----
+yum update rke2-selinux
+----
+====
 
 == 重启 RKE2
 
@@ -89,14 +144,14 @@ systemd 的安装脚本支持重启 RKE2。
 
 === systemd
 
-手动重启 Server：
+要手动重启服务器：
 
 [,sh]
 ----
 sudo systemctl restart rke2-server
 ----
 
-手动重启 Agent：
+要手动重启代理：
 
 [,sh]
 ----

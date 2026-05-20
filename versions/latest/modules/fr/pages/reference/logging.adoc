@@ -1,0 +1,30 @@
+= Consignation
+:page-languages: [en, zh]
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+Lorsqu'il est exécuté avec systemd, les journaux sont envoyés à journald et peuvent être consultés en utilisant `journalctl -u rke2-server` ou `journalctl -u rke2-agent`. Certaines configurations de systemd peuvent également écrire des journaux combinés dans `/var/log/syslog`, auquel cas les journaux RKE2 seront également disponibles à cet emplacement.
+
+Les journaux de Containerd sont écrits dans `/var/lib/rancher/rke2/agent/containerd/containerd.log`.
+
+Les journaux de kubelet sont écrits dans `/var/lib/rancher/rke2/agent/logs/kubelet.log`.
+
+Etcd et les composants du plan de contrôle Kubernetes s'exécutent en tant que Pods statiques dans l'espace de noms `kube-system`.
+
+Les journaux de chaque Pod Kubernetes peuvent être consultés avec `kubectl`{nbsp}:
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml logs -n kube-system -l component=kube-apiserver
+----
+
+Les journaux de chaque conteneur sont écrits dans `/var/log/pods` ou peuvent être consultés avec `crictl`{nbsp}:
+
+[,bash]
+----
+export CONTAINER_RUNTIME_ENDPOINT=unix:///run/k3s/containerd/containerd.sock
+# list running containers
+/var/lib/rancher/rke2/bin/crictl ps
+# get logs from container by container id
+/var/lib/rancher/rke2/bin/crictl logs <container_id>
+----

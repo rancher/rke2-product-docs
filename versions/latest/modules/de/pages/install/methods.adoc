@@ -1,0 +1,129 @@
+= Installationsmethoden
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+[IMPORTANT] 
+====
+Wenn Ihr Knoten NetworkManager installiert und aktiviert hat, xref:known_issues.adoc#_networkmanager[stellen Sie sicher, dass er so konfiguriert ist, dass er CNI-verwaltete Schnittstellen ignoriert].
+====
+
+[IMPORTANT]
+====
+Sie können jede RKE2 Prime-Version verwenden, die auf der Prime Artifacts URL aufgeführt ist, für die in diesen Schritten genannten Assets. Um mehr über die Prime Artifacts-URL zu erfahren, siehe unsere https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime-only-Dokumentation]. Eine Authentifizierung ist erforderlich. Verwenden Sie Ihre https://scc.suse.com/home[SUSE Customer Center (SCC)]-Anmeldeinformationen, um sich anzumelden.
+====
+
+RKE2 kann auf verschiedene Arten auf einem System installiert werden, von denen zwei die bevorzugten und unterstützten Methoden sind. Diese Methoden sind Tarball und RPM. Das in der Kurzanleitung erwähnte Installationsskript ist ein Wrapper um diese beiden Methoden.
+
+Dieses Dokument erklärt diese Installationsmethoden ausführlicher.
+
+== Tarball-Datei
+
+Um RKE2 über das Installationsskript zu installieren, müssen Sie zunächst das Skript erhalten. Dies kann auf verschiedene Arten erfolgen.
+
+Dies holt das Skript und startet sofort den Installationsprozess.
+
+[,sh]
+----
+# curl -sfL https://get.rke2.io | sudo sh -
+curl -sfL https://get.rke2.io | sh -
+----
+
+Alternativ können Sie das Installationsskript herunterladen und ausführbar machen.
+
+[,sh]
+----
+curl -sfL https://get.rke2.io --output install.sh
+chmod +x install.sh
+----
+
+=== Installation
+
+Führen Sie den Installer aus, wobei `INSTALL_RKE2_ARTIFACT_URL` die Prime Artifacts URL und `INSTALL_RKE2_CHANNEL` ein Release-Kanal ist, den Sie abonnieren können und der standardmäßig auf stabil eingestellt ist. In diesem Beispiel gibt `INSTALL_RKE2_CHANNEL="latest"` Ihnen die neueste Version von RKE2.
+
+[,bash]
+----
+sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" ./install.sh
+----
+
+Wenn Sie eine Version angeben möchten, setzen Sie die `INSTALL_RKE2_VERSION` Umgebungsvariable.
+
+[,bash]
+----
+sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" ./install.sh
+----
+
+Dies installiert den `rke2-server` Dienst und die `rke2` Binärdatei auf Ihrem Rechner. Aufgrund seiner Natur wird es fehlschlagen, sofern es nicht als Root-Benutzer oder über `sudo` ausgeführt wird.
+
+Wenn das Installationsskript ausgeführt wird, ermittelt es, um welchen Typ von System es sich handelt. Handelt es sich um ein Betriebssystem, das RPMs verwendet (wie CentOS oder RHEL), wird eine RPM-basierte Installation durchgeführt, andernfalls fällt das Skript auf Tarball zurück. Die RPM-basierte Installation wird im Folgenden behandelt.
+
+Als Nächstes lädt das Installationsskript das Tarball herunter, überprüft es durch den Vergleich von SHA256-Hashes und extrahiert schließlich den Inhalt nach `/usr/local`. Ein Betreiber kann die Dateien nach der Installation nach Belieben verschieben. Dieser Vorgang extrahiert einfach das Tarball, und es werden keine weiteren Systemänderungen vorgenommen.
+
+Tarball-Struktur / Inhalte:
+
+* bin - enthält die RKE2 ausführbare Datei sowie die `rke2-killall.sh` und `rke2-uninstall.sh` Skripte.
+* lib - enthält die Systemd-Einheitendateien für Server und Agent.
+* share - enthält die RKE2-Lizenz sowie eine Sysctl-Konfigurationsdatei, die verwendet wird, wenn RKE2 im CIS-Modus ausgeführt wird.
+
+Um das System weiter zu konfigurieren, sollten Sie entweder die xref:reference/server_config.adoc[server] oder die xref:reference/linux_agent_config.adoc[agent] Dokumentation zu Rate ziehen.
+
+== RPM
+
+Um den RPM-Installationsprozess zu starten, müssen Sie das Installationsskript abrufen, das oben behandelt wurde. Das Skript überprüft Ihr System auf `rpm`, `yum` oder `dnf`, und wenn eines davon vorhanden ist, stellt es fest, dass das System auf Redhat basiert und startet den RPM-Installationsprozess.
+
+Dateien werden mit dem Präfix `/usr` anstelle von `/usr/local` installiert.
+
+=== Repositorys
+
+Signierte RPMs werden für RKE2 innerhalb der `rpm-testing.rancher.io` und `rpm.rancher.io` RPM-Repositories veröffentlicht. Wenn Sie das https://get.rke2.io Skript auf Knoten ausführen, die RPMs unterstützen, verwendet es standardmäßig diese RPM-Repositories. Aber Sie können sie auch selbst installieren.
+
+Die RPMs bieten `systemd` Einheiten zur Verwaltung von `rke2`, müssen jedoch über die Konfigurationsdatei konfiguriert werden, bevor die Dienste zum ersten Mal gestartet werden.
+
+=== Enterprise Linux 7/8/9
+
+Um das RPM-Repository auf einem CentOS- oder RHEL-System zu verwenden, führen Sie den folgenden Bash-Schnipsel aus:
+
+[,bash]
+----
+export RKE2_MINOR=28
+export LINUX_MAJOR=7 # or 8 or 9 etc
+cat << EOF > /etc/yum.repos.d/rancher-rke2-1-${RKE2_MINOR}-latest.repo
+[rancher-rke2-common-latest]
+name=Rancher RKE2 Common Latest
+baseurl=https://rpm.rancher.io/rke2/latest/common/centos/${LINUX_MAJOR}/noarch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://rpm.rancher.io/public.key
+
+[rancher-rke2-1-${RKE2_MINOR}-latest]
+name=Rancher RKE2 1.${RKE2_MINOR} Latest
+baseurl=https://rpm.rancher.io/rke2/latest/1.${RKE2_MINOR}/centos/${LINUX_MAJOR}/x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://rpm.rancher.io/public.key
+EOF
+----
+
+=== Installation
+
+Nachdem das Repository konfiguriert ist, können Sie einen der folgenden Befehle ausführen:
+
+[,sh]
+----
+yum -y install rke2-server
+----
+
+oder
+
+[,sh]
+----
+yum -y install rke2-agent
+----
+
+Das RPM installiert eine entsprechende `rke2-server.service` oder `rke2-agent.service` systemd-Unit, die wie folgt aufgerufen werden kann: `systemctl start rke2-server`. Stellen Sie sicher, dass Sie `rke2` konfigurieren, bevor Sie es starten, indem Sie die `Configuration File` Anweisungen unten befolgen.
+
+== Manuell
+
+Die RKE2-Binärdatei ist statisch kompiliert und verlinkt, was es ermöglicht, dass die RKE2-Binärdatei portabel über Linux-Distributionen hinweg ist, ohne sich um Abhängigkeitsprobleme kümmern zu müssen. Die einfachste Installation besteht darin, die Binärdatei herunterzuladen, sicherzustellen, dass sie ausführbar ist, und sie in das `${PATH}` zu kopieren, in der Regel `/usr/local/bin`. Nach der ersten Ausführung wird RKE2 alle notwendigen Verzeichnisse und Dateien erstellen. Um das System weiter zu konfigurieren, sollten Sie die Dokumentation zur xref:install/configuration.adoc[Konfigurationsdatei] konsultieren.

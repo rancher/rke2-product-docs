@@ -1,27 +1,27 @@
-= 离线安装
-:page-languages: [en, zh]
-:revdate: 2025-06-18
+= 隔离安装
+:page-languages: 要在隔离的环境中安装，您必须首先将镜像加载到隔离环境中，然后安装RKE2。
+:revdate: 2025-08-06
 :page-revdate: {revdate}
 
-To install {product-name} can be installed in an air-gapped environment, you must first load the images into the air-gapped environment and then install RKE2.
+要在隔离的环境中安装 {product-name}，您必须首先将镜像加载到隔离环境中，然后安装RKE2。
 
 [IMPORTANT]
 ====
-You can use any RKE2 Prime version listed on the Prime Artifacts URL for the assets mentioned in these steps. To learn more about the Prime Artifacts URL, see our https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime-only documentation]. Authentication is required. Use your https://scc.suse.com/home[SUSE Customer Center (SCC)] credentials to log in.
+您可以使用在Prime Artifacts URL上列出的任何RKE2 Prime版本来获取这些步骤中提到的资产。要了解有关 Prime Artifacts URL 的更多信息，请参阅我们的 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[仅限 Prime 的文档]。需要身份验证。使用您的 https://scc.suse.com/home[SUSE 客户中心 (SCC)] 凭据登录。
 ====
 
-== Prerequisites
+== 先决条件
 
-Ensure you meet the following prerequisites based on your environment before proceeding. All the steps listed on this page must be run as the root user or through `sudo`.
+在继续之前，请确保您根据环境满足以下先决条件。此页面上列出的所有步骤必须以 root 用户身份运行，或通过 `sudo` 来运行。
 
 [CAUTION]
 ====
-If your node has NetworkManager installed and enabled, xref:known_issues.adoc#_networkmanager[ensure you configure NetworkManager to ignore CNI-managed interfaces].
+如果您的节点安装并启用了 NetworkManager，xref:known_issues.adoc#_networkmanager[请确保您配置 NetworkManager 来忽略 CNI 管理的接口]。
 ====
 
-* If running on an air-gapped node with SELinux enabled, you must manually install the necessary SELinux policy RPM before performing these steps. See our xref:install/methods.adoc#_rpm[RPM Documentation] to determine what you need.
-* If running on an air-gapped node with SELinux enabled, the following are required dependencies for SLES, CentOS, or RHEL 8 when doing an xref:install/methods.adoc#_rpm[RPM install]: `container-selinux iptables libnetfilter_conntrack libnfnetlink libnftnl policycoreutils-python-utils rke2-common rke2-selinux`
-* If your nodes do not have an interface with a default route, a default route must be configured; even a black-hole route via a dummy interface will suffice.  RKE2 requires a default route to auto-detect the node's primary IP and for kube-proxy ClusterIP routing to function correctly. To add a dummy route, do the following:
+* 如果在启用了 SELinux 的隔离节点上运行，您必须在执行这些步骤之前手动安装必要的 SELinux 策略 RPM。请参阅我们的 xref:install/methods.adoc#_rpm[RPM 文档] 以确定您需要什么。
+* 如果在启用了 SELinux 的隔离节点上运行，当执行 xref:install/methods.adoc#_rpm[RPM 安装] 时，SLES、CentOS 或 RHEL 8 的必需依赖项如下：`container-selinux iptables libnetfilter_conntrack libnfnetlink libnftnl policycoreutils-python-utils rke2-common rke2-selinux`
+* 如果您的节点没有具有默认路由的接口，则必须配置默认路由；即使是通过虚拟接口的黑洞路由也可以。 RKE2 需要默认路由来自动检测节点的主 IP，并确保 kube-proxy 的 ClusterIP 路由正常工作。要添加虚拟路由，请执行以下操作：
 +
 [,bash]
 ----
@@ -31,53 +31,53 @@ ip addr add 203.0.113.254/31 dev dummy0
 ip route add default via 203.0.113.255 dev dummy0 metric 1000
 ----
 
-== 1. Load Images
+== 1.加载镜像
 
-There are two different methods to load the images. Each image loading method has different requirements and is suited for different air-gapped scenarios. Choose the method that best fits your infrastructure and security requirements.
-
-
-=== Tarball Method
-
-. Download the air-gap images tarballs from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] for the RKE2 version, CNI, and platform you are using.
- ** `rke2-images.linux-<ARCH>.tar.zst`, or `rke2-images-core.linux-<ARCH>.tar.gz`. This tarball contains the core container images required for RKE2 Prime to function. Zstandard offers better compression ratios and faster decompression speeds compared to gzip.
- ** `rke2-images-<CNI>.linux-<ARCH>.tar.gz`: This tarball specifically contains the container images for your Container Network Interface (CNI). The default CNI in RKE2 is Canal.
- *** If you are using the default CNI, Canal (`--cni=canal`), you can use either the `rke2-image` legacy archive as described above or the `rke2-images-core` and `rke2-images-canal` archives.
- *** If you are using the alternative CNI, Cilium (`--cni=cilium`), you must download the `rke2-images-core` and `rke2-images-cilium` archives.
- *** If using your own CNI (`--cni=none`), download only the `rke2-images-core` archive.
- ** If enabling the vSphere CPI/CSI charts (`--cloud-provider-name=rancher-vsphere`), you must also download the `rke2-images-vsphere` archive.
-. Create a directory named `/rke2-artifacts` on the node and save the previously downloaded files there.
-. <<2. Install RKE2, Istall RKE2>>.
+加载镜像有两种不同的方法。每种镜像加载方法有不同的要求，适用于不同的隔离场景。选择最适合您基础设施和安全要求的方法。
 
 
-=== Private Registry Method
+=== 压缩包方法
 
-Private registry support honors all settings from the xref:install/containerd_registry_configuration.adoc[containerd registry configuration], including endpoint override, transport protocol (HTTP/HTTPS), authentication, certificate verification, and more.
+. 从 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] 下载针对您所使用的 RKE2 版本、CNI 以及平台的隔离镜像压缩包。
+ ** `rke2-images.linux-<ARCH>.tar.zst`，或 `rke2-images-core.linux-<ARCH>.tar.gz`。此压缩包包含 RKE2 Prime 正常运行所需的核心容器镜像。与 gzip 相比，Zstandard 提供了更好的压缩比和更快的解压速度。
+ ** `rke2-images-<CNI>.linux-<ARCH>.tar.gz`：此压缩包专门包含用于您的容器网络接口（CNI）的容器镜像。RKE2 中的默认 CNI 是 Canal。
+ *** 如果您使用默认 CNI Canal（`--cni=canal`），您可以使用上述描述的 `rke2-image` 旧版归档，或者使用 `rke2-images-core` 和 `rke2-images-canal` 归档。
+ *** 如果您使用替代 CNI Cilium（`--cni=cilium`），您必须下载 `rke2-images-core` 和 `rke2-images-cilium` 归档。
+ *** 如果使用您自己的 CNI（`--cni=none`），请仅下载 `rke2-images-core` 归档。
+ ** 如果启用 vSphere CPI/CSI 图表（`--cloud-provider-name=rancher-vsphere`），您还必须下载 `rke2-images-vsphere` 归档。
+. 在节点上创建一个名为 `/rke2-artifacts` 的目录，并将之前下载的文件保存在那里。
+. <<2. Install RKE2, 安装 RKE2>>。
 
-. Add all the required system images to your private registry. A list of images can be obtained from the `.txt` file corresponding to each tarball referenced above. Alternatively, you can `docker load` the airgap image tarballs, then tag and push the loaded images.
-. <<2. Install RKE2, Install RKE2>> using the `system-default-registry` parameter, or use the xref:install/containerd_registry_configuration.adoc[containerd registry configuration] to use your registry as a mirror for docker.io.
+
+=== 私有注册表方法
+
+私有注册表支持遵循来自 xref:install/containerd_registry_configuration.adoc[containerd 注册表配置] 的所有设置，包括端点覆盖、传输协议（HTTP/HTTPS）、身份验证、证书验证等。
+
+. 将所有必需的系统镜像添加到您的私有注册表。可以从与上述每个 tarball 对应的 `.txt` 文件中获取镜像列表。或者，您可以 `docker load` 空隙镜像 tarball，然后标记并推送加载的镜像。
+. 使用 `system-default-registry` 参数 <<2. Install RKE2, 安装 RKE2>>，或使用 xref:install/containerd_registry_configuration.adoc[containerd 注册表配置] 将您的注册表用作 docker.io 的镜像。
 
 
-== 2. Install RKE2
+== 2.安装 RKE2
 
-The following options to install RKE2 should only be performed after completing either the <<Tarball Method>> or <<Private Registry Method>>.
+安装 RKE2 的以下选项应仅在完成 <<Tarball Method>> 或 <<Private Registry Method>> 之后执行。
 
-RKE2 can be installed either by running the <<RKE2 Binary Install,binary>> directly or by using the <<RKE2 Install.sh Script Install,install.sh script>>.
+RKE2 可以通过直接运行 <<RKE2 Binary Install,二进制文件>> 或使用 <<RKE2 Install.sh Script Install,install.sh 脚本>> 来安装。
 
-=== RKE2 Binary Install
+=== RKE2 二进制安装
 
-. Obtain the RKE2 binary file `rke2.linux-<ARCH>.tar.gz`.
-. Ensure the binary is named `rke2` and place it in `/usr/local/bin`. Ensure it is executable.
-. Run the binary with the desired parameters.
-* If you are using the Rancher Prime registry, set the following values in `config.yaml`:
-.. Set `system-default-registry: registry.rancher.com`.
-.. If you are not using the default CNI, Canal, set `cni: <CNI>`.
+. 获取 RKE2 二进制文件 `rke2.linux-<ARCH>.tar.gz`。
+. 确保二进制文件命名为 `rke2` 并放置在 `/usr/local/bin` 中。确保它是可执行的。
+. 使用所需的参数运行二进制文件。
+* 如果您使用的是 Rancher Prime 注册表，请在 `config.yaml` 中设置以下值：
+.. 设置 `system-default-registry: registry.rancher.com`。
+.. 如果您不使用默认 CNI Canal，请设置 `cni: <CNI>`。
 +
 [,yaml]
 ----
 system-default-registry: registry.rancher.com
 cni: <CNI>
 ----
-* If using the Private Registry Method, set the following values in `config.yaml`:
+* 如果使用私有注册表方法，请在 `config.yaml` 中设置以下值：
 +
 [,yaml]
 ----
@@ -86,14 +86,14 @@ system-default-registry: "registry.example.com:5000"
 +
 [NOTE]
 ====
-The `system-default-registry` parameter must specify only valid RFC 3986 URI authorities, i.e. a host and optional port.
+`system-default-registry` 参数必须仅指定有效的 RFC 3986 URI，即主机和可选端口。
 ====
 
 === RKE2 Install.sh Script Install
 
-`install.sh` may be used in an offline mode by setting the `INSTALL_RKE2_ARTIFACT_PATH` variable to a path containing pre-downloaded artifacts. This will run through a standard install, including creating systemd units.
+`install.sh` 通过将 `INSTALL_RKE2_ARTIFACT_PATH` 变量设置为包含预下载工件的路径，可以在离线模式下使用。这将通过标准安装，包括创建 systemd 单元。
 
-. Download the install script, RKE2 binaries, RKE2 images, and SHA256 checksums archives from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] into the `/rke2-artifacts` directory, as in the example below:
+. 从 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL]下载安装脚本、RKE2 二进制文件、RKE2 镜像和 SHA256 校验和归档到 `/rke2-artifacts` 目录，如下面的示例所示：
 +
 [,bash]
 ----
@@ -104,16 +104,16 @@ curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/sha256sum-<ARCH>.txt
 curl -sfL https://get.rke2.io --output install.sh
 ----
 
-. Run `install.sh` using the directory, as in the example below:
+. 如下面的示例所示，使用该目录运行 `install.sh`。
 +
 [,bash]
 ----
 INSTALL_RKE2_ARTIFACT_PATH=/rke2-artifacts sh install.sh
 ----
 
-. If you are using the Rancher Prime registry, set the following values in `config.yaml`:
-.. Set `system-default-registry: registry.rancher.com`.
-.. If you are not using the default CNI, Canal, set `cni: <CNI>`.
+. 如果您使用的是 Rancher Prime 注册表，请在 `config.yaml` 中设置以下值：
+.. 设置 `system-default-registry: registry.rancher.com`。
+.. 如果您不使用默认 CNI Canal，请设置 `cni: <CNI>`。
 +
 [,yaml]
 ----
@@ -121,4 +121,4 @@ system-default-registry: registry.rancher.com
 cni: <CNI>
 ----
 
-. Enable and run the service as outlined xref:install/quickstart.adoc[here].
+. 按照xref:install/quickstart.adoc[这里]所述启用并运行服务。

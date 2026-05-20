@@ -1,0 +1,247 @@
+= クイックスタート
+:page-languages: [en, zh]
+:revdate: 2025-10-23
+:page-revdate: {revdate}
+
+このガイドは、デフォルトオプションでクラスターを迅速に立ち上げるのに役立ちます。
+____
+Kubernetesを初めて使用しますか？公式のKubernetesドキュメントには、基本を説明する素晴らしいチュートリアルがいくつかあります https://kubernetes.io/docs/tutorials/kubernetes-basics/[こちら]。
+____
+
+[IMPORTANT]
+====
+これらの手順で言及されている資産については、Prime Artifacts URLにリストされている任意のRKE2 Primeバージョンを使用できます。Prime Artifacts URLの詳細については、 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime専用ドキュメント]をご覧ください。認証が必要です。ログインするには、 https://scc.suse.com/home[SUSEカスタマーセンター（SCC）]の資格情報を使用してください。
+====
+
+== 前提条件
+
+* 環境がxref:install/requirements.adoc[要件]を満たしていることを確認してください。NetworkManagerがホストにインストールされ、有効になっている場合は、xref:known_issues.adoc#_networkmanager[それがCNI管理インターフェースを無視するように構成されていることを確認してください]。
+* ホストカーネルが https://apparmor.net/[AppArmor]をサポートしている場合、AppArmorツール（通常は`apparmor-parser`パッケージを介して入手可能）もRKE2をインストールする前に存在する必要があります。
+* {product-name}のインストール処理は、ルートユーザとしてまたは`sudo`を介して実行する必要があります。
+
+== サーバーノードのインストール
+
+{product-name}は、systemdベースのシステムにサービスとしてインストールするための便利なインストールスクリプトを提供します。このスクリプトは https://get.rke2.io.で入手できます。この方法で{product-name}をインストールするには、次の手順を実行してください：
+
+. インストーラーを実行します。ここで、`INSTALL_RKE2_ARTIFACT_URL`はPrime https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL]で、`INSTALL_RKE2_CHANNEL`は購読できるリリースチャネルで、デフォルトは`stable`です。この例では、`INSTALL_RKE2_CHANNEL="latest"`がRKE2の最新バージョンを提供します。
++
+[,sh]
+----
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" sh -
+----
++
+バージョンを指定したい場合は、`INSTALL_RKE2_VERSION`環境変数を設定してください。
++
+[,bash]
+----
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" sh -
+----
++
+これにより、`rke2-server`サービスと`rke2`バイナリがあなたのマシンにインストールされます。その性質上、ルートユーザとしてまたは`sudo`を介して実行しない限り、失敗します。
+
+. rke2-serverサービスを有効にします。
++
+[,sh]
+----
+systemctl enable rke2-server.service
+----
+
+.  Rancher Primeレジストリからイメージをプルするには、`etc/rancher/rke2/config.yaml`に次の値を設定します：
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+----
++
+この構成は、RKE2に対して、クラスター内でデプロイするために必要なすべてのコンテナイメージのデフォルトの場所としてregistry.rancher.comを使用するように指示します。
+
+. サービスを起動します。
++
+[,sh]
+----
+systemctl start rke2-server.service
+----
+
+. 次のコマンドでログを追跡します：
++
+[,sh]
+----
+journalctl -u rke2-server -f
+----
+
+このインストールを実行した後：
+
+* `rke2-server`サービスがインストールされます。`rke2-server`サービスは、ノードの再起動後やプロセスがクラッシュまたは終了した場合に自動的に再起動するように構成されます。
+* 追加のユーティリティが`/var/lib/rancher/rke2/bin/`にインストールされます。それには、`kubectl`、`crictl`、および`ctr`が含まれます。これらはデフォルトではパスに含まれていないことに注意してください。
+* 2つのクリーンスクリプト、`rke2-killall.sh`と`rke2-uninstall.sh`が次のパスにインストールされます：
+ ** 通常のファイルシステム用の`/usr/local/bin`
+ ** 読み取り専用およびbtrfsファイルシステム用の`/opt/rke2/bin`
+ ** `INSTALL_RKE2_TAR_PREFIX/bin`が設定されている場合の`INSTALL_RKE2_TAR_PREFIX`
+* `/etc/rancher/rke2/rke2.yaml`に https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig]ファイルが書き込まれます。
+* 他のサーバーまたはエージェントノードを登録するために使用できるトークンが`/var/lib/rancher/rke2/server/node-token`に作成されます。
+
+[NOTE]
+====
+追加のサーバーノードを追加する場合、合計で奇数の数が必要です。クォーラムを維持するためには奇数が必要です。詳細については、xref:install/ha.adoc[高可用性のドキュメント]を参照してください。
+====
+
+== Linuxエージェント（ワーカー）ノードのインストール
+
+このセクションの手順には、ルートレベルのアクセスまたは`sudo`が必要です。
+
+. インストーラを実行します。
++
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" INSTALL_RKE2_TYPE="agent" sh -
+----
++
+バージョンを指定したい場合は、`INSTALL_RKE2_VERSION`環境変数を設定してください。
++
+[,bash]
+----
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" INSTALL_RKE2_TYPE="agent" sh -
+----
++
+これにより、`rke2-agent`サービスと`rke2`バイナリがあなたのマシンにインストールされます。その性質上、ルートユーザとしてまたは`sudo`を介して実行しない限り、失敗します。
+
+. rke2-agentサービスを有効にします。
++
+[,sh]
+----
+systemctl enable rke2-agent.service
+----
+
+. rke2-agentサービスを構成します。
++
+[,sh]
+----
+mkdir -p /etc/rancher/rke2/
+vim /etc/rancher/rke2/config.yaml
+----
++
+config.yaml の内容：
++
+[,yaml]
+----
+server: https://<server>:9345
+token: <token from server node>
+----
++
+[NOTE]
+====
+`rke2 server` プロセスは、ポート `9345` で新しいノードの登録をリスンします。Kubernetes API は、通常通りポート `6443` で提供されます。
+====
+
+. サービスを起動します。
++
+[,sh]
+----
+systemctl start rke2-agent.service
+----
++
+. 次のコマンドでログを追跡します：
++
+[,sh]
+----
+journalctl -u rke2-agent -f
+----
+
+[NOTE]
+====
+各マシンには一意のホスト名が必要です。マシンに一意のホスト名がない場合は、`node-name` ファイルの `config.yaml` パラメータを設定し、各ノードに対して有効で一意のホスト名の値を提供してください。config.yaml ファイルの詳細については、xref:install/configuration.adoc#_configuration_file[設定オプションのドキュメント] を参照してください。
+====
+
+== Windows エージェント (ワーカー) ノードのインストール
+
+Windows サポートは、RKE2 クラスターの CNI として Calico または Flannel と連携します。
+
+. Windows エージェントノードを準備します。
++
+[NOTE]
+====
+RKE2 エージェントが機能するためには、Windows Server コンテナ機能を有効にする必要があります。
+====
++
+.. 管理者権限で新しい PowerShell ウィンドウを開きます。
++
+[,powershell]
+----
+powershell -Command "Start-Process PowerShell -Verb RunAs"
+----
++
+.. 新しい PowerShell ウィンドウで、コンテナ機能をインストールするために次のコマンドを実行します。
++
+[,powershell]
+----
+Enable-WindowsOptionalFeature -Online -FeatureName containers –All
+----
++
+これにより、`Containers` 機能が正しく機能するために再起動が必要になります。
++
+. インストールスクリプトをダウンロードします。
++
+[,powershell]
+----
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
+----
++
+このスクリプトは、`rke2.exe` Windows バイナリをあなたのマシンにダウンロードします。
+
+. Windows 用の rke2-agent を構成します。
++
+[,powershell]
+----
+New-Item -Type Directory c:/etc/rancher/rke2 -Force
+Set-Content -Path c:/etc/rancher/rke2/config.yaml -Value @"
+server: https://<server>:9345
+token: <token from server node>
+"@
+----
++
+config.yaml ファイルの詳細については、xref:install/configuration.adoc#_configuration_file[設定オプションのドキュメント] を参照してください。
+
+. PATH を構成します。
++
+[,powershell]
+----
+$env:PATH+=";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin"
+
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine) + ";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin",
+    [EnvironmentVariableTarget]::Machine)
+----
+
+. インストーラを実行します。
++
+[,powershell]
+----
+./install.ps1
+----
+
+. Windows RKE2 サービスを開始します。
++
+[,powershell]
+----
+rke2.exe agent service --add
+----
+
+[NOTE] 
+====
+各マシンには一意のホスト名が必要です。
+====
+
+次のコマンドで RKE2 サービスを開始するのを忘れないでください：
+
+[,powershell]
+----
+Start-Service rke2
+----
+
+CLI パラメータのみを使用したい場合は、希望のパラメータでバイナリを実行してください。
+
+[,powershell]
+----
+rke2.exe agent --token <> --server <>
+----

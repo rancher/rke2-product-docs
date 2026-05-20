@@ -1,0 +1,286 @@
+= Private Registry-Konfiguration
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Containerd kann so konfiguriert werden, dass es sich mit privaten Registries verbindet und diese verwendet, um Bilder nach Bedarf vom Kubelet abzurufen.
+
+Beim Start überprüft RKE2, ob `/etc/rancher/rke2/registries.yaml` existiert. Falls ja, wird die in dieser Datei enthaltene Registry-Konfiguration verwendet, wenn die Containerd-Konfiguration generiert wird.
+
+* Wenn Sie eine private Registry als Spiegel für eine öffentliche Registry wie docker.io verwenden möchten, müssen Sie `registries.yaml` auf jedem Knoten konfigurieren, der den Spiegel verwenden soll.
+* Wenn Ihre private Registry eine Authentifizierung erfordert, benutzerdefinierte TLS-Zertifikate verwendet oder kein TLS verwendet, müssen Sie `registries.yaml` auf jedem Knoten konfigurieren, der Bilder von Ihrer Registry abrufen wird.
+
+Beachten Sie, dass Serverknoten standardmäßig planbar sind. Wenn Sie die Serverknoten nicht getaintet haben und Workloads auf ihnen ausführen werden, stellen Sie bitte sicher, dass Sie auch die `registries.yaml`-Datei auf jedem Server erstellen.
+
+== Standard-Endpunkt-Fallback
+
+Containerd hat einen impliziten "Standard-Endpunkt" für alle Registries. Der Standard-Endpunkt wird immer als letzte Möglichkeit versucht, selbst wenn andere Endpunkte für diese Registry in `registries.yaml` aufgeführt sind. Umschreibungen werden nicht auf Abrufe gegen den Standard-Endpunkt angewendet. Zum Beispiel, wenn `registry.example.com:5000/rancher/mirrored-pause:3.6` abgerufen wird, verwendet containerd einen Standard-Endpunkt von `\https://registry.example.com:5000/v2`.
+
+* Der Standard-Endpunkt für `docker.io` ist `\https://index.docker.io/v2`.
+* Der Standard-Endpunkt für alle anderen Registries ist `\https://<REGISTRY>/v2`, wobei `<REGISTRY>` der Hostname der Registry und der optionale Port ist.
+
+Um als Registry erkannt zu werden, muss die erste Komponente des Bildnamens mindestens einen Punkt oder Doppelpunkt enthalten. Aus historischen Gründen werden Bilder, bei denen keine Registry in ihrem Namen angegeben ist, implizit als von `docker.io` stammend identifiziert.
+
+[NOTE]
+.Versionssperre
+====
+Die `disable-default-registry-endpoint` Option ist ab den Februar-2024-Veröffentlichungen als experimentelles Feature verfügbar: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1.
+====
+
+Knoten können mit der `disable-default-registry-endpoint: true` Option konfiguriert werden. Wenn dies eingestellt ist, greift containerd nicht auf den Standard-Registry-Endpunkt zurück, sondern lädt Images ausschließlich von den konfigurierten Mirror-Endpunkten, zusammen mit der verteilten Registry, sofern diese aktiviert ist.
+
+Dies kann gewünscht sein, wenn Ihr Cluster in einer echten Air-Gapped-Umgebung betrieben wird, in der die Upstream-Registry nicht verfügbar ist, oder wenn Sie wünschen, dass nur einige Knoten von der Upstream-Registry Images abrufen.
+
+Das Deaktivieren des Standard-Registry-Endpunkts gilt nur für Registries, die über `registries.yaml` konfiguriert sind. Wenn die Registry nicht ausdrücklich über den Mirror-Eintrag in `registries.yaml` konfiguriert ist, wird das Standard-Fallback-Verhalten weiterhin verwendet.
+
+== Registries-Konfigurationsdatei
+
+Die Datei besteht aus zwei obersten Schlüsseln, mit Unterkeys für jede Registry:
+
+[,yaml]
+----
+mirrors:
+  <REGISTRY>:
+    endpoint:
+      - https://<REGISTRY>/v2
+configs:
+  <REGISTRY>:
+    auth:
+      username: <BASIC AUTH USERNAME>
+      password: <BASIC AUTH PASSWORD>
+      token: <BEARER TOKEN>
+    tls:
+      ca_file: <PATH TO SERVER CA>
+      cert_file: <PATH TO CLIENT CERT>
+      key_file: <PATH TO CLIENT KEY>
+      insecure_skip_verify: <SKIP TLS CERT VERIFICATION BOOLEAN>
+----
+
+=== Spiegel
+
+Der Abschnitt Spiegel definiert die Namen und Endpunkte von Registries, zum Beispiel:
+
+[,yaml]
+----
+mirrors:
+  registry.example.com:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+Jeder Mirror muss einen Namen und eine Reihe von Endpunkten haben. Beim Abrufen eines Images von einer Registry wird containerd versuchen, diese Endpunkt-URLs sowie den Standard-Endpunkt zu verwenden und den ersten funktionierenden zu nutzen.
+
+[NOTE]
+====
+Wenn kein Endpunkt konfiguriert ist, geht containerd davon aus, dass die Registry anonym über HTTPS auf Port 443 zugänglich ist und ein vom Betriebssystem des Hosts vertrauenswürdiges Zertifikat verwendet. Für weitere Informationen können Sie https://github.com/containerd/containerd/blob/master/docs/cri/registry.md#configure-registry-endpoint[die containerd-Dokumentation konsultieren].
+====
+
+==== Umleitungen
+
+Wenn die private Registry als Mirror für eine andere Registry verwendet wird, wie etwa bei der Konfiguration eines https://docs.docker.com/registry/recipes/mirror/[pull through cache], werden Image-Zugriffe transparent zu den aufgeführten Endpunkten umgeleitet. Der ursprüngliche Registrierungsname wird über den `ns` Abfrageparameter an den Mirror-Endpunkt übergeben.
+
+Zum Beispiel, wenn Sie einen Mirror für `docker.io` konfiguriert haben:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+Beim Abrufen von `docker.io/rancher/mirrored-pause:3.6` wird das Image transparent als `registry.example.com:5000/rancher/mirrored-pause:3.6` abgerufen.
+
+==== Umschreibungen
+
+Jeder Mirror kann eine Reihe von Umschreibungen enthalten, die reguläre Ausdrücke verwenden, um den Namen eines Images beim Abruf von diesem Mirror abzugleichen und zu transformieren. Dies ist nützlich, wenn die Organisations-/Projektstruktur in der privaten Registry anders ist als die Registry, die sie spiegelt. Umschreibungen passen und transformieren nur den Bildnamen, NICHT das Tag.
+
+Zum Beispiel würde die folgende Konfiguration das Image `rancher/rke2-runtime:v1.30.1-rke2r1` von `registry.example.com:5000/mirrorproject/rancher-images/rke2-runtime:v1.30.1-rke2r1` transparent abrufen:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+    rewrite:
+      "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+[NOTE]
+.Versionssperre
+====
+Ab den Veröffentlichungen im Februar 2024 werden Umschreibungen nicht mehr auf den Standard-Endpunkt angewendet: v1.26.13+rke2r1, v1.27.10+rke2r1, v1.28.6+rke2r1, v1.29.1+rke2r1. Vor diesen Veröffentlichungen wurden Umschreibungen auch auf den Standard-Endpunkt angewendet, was verhinderte, dass RKE2 von der Upstream-Registry Images abrufen konnte, wenn das Image nicht von einem Mirror-Endpunkt gezogen werden konnte und unter dem modifizierten Namen in der Upstream-Registry nicht verfügbar war.
+====
+
+Wenn Sie Umschreibungen anwenden möchten, wenn Sie direkt von einer Registry abrufen – wenn sie nicht als Mirror für eine andere Upstream-Registry verwendet wird – müssen Sie einen Mirror-Endpunkt angeben, der nicht mit dem Standard-Endpunkt übereinstimmt. Mirror-Endpunkte in `registries.yaml`, die mit dem Standard-Endpunkt übereinstimmen, werden ignoriert; der Standard-Endpunkt wird immer zuletzt ohne Umschreibungen versucht, wenn der Fallback nicht deaktiviert wurde.
+
+Zum Beispiel, wenn Sie eine Registry unter `\https://registry.example.com/` haben und Umschreibungen anwenden möchten, wenn Sie explizit `registry.example.com/rancher/rke2-runtime:v1.30.1-rke2r1` abrufen, können Sie einen Mirror-Endpunkt mit dem angegebenen Port hinzufügen. Da der Mirror-Endpunkt nicht mit dem Standard-Endpunkt übereinstimmt - *`"\https://registry.example.com:443/v2" != "\https://registry.example.com/v2"`* - wird der Endpunkt als Mirror akzeptiert und Umschreibungen werden angewendet, auch wenn er effektiv derselbe wie der Standard-Endpunkt ist.
+
+[,yaml]
+----
+mirrors:
+ registry.example.com
+   endpoint:
+     - "https://registry.example.com:443"
+   rewrite:
+     "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+Beachten Sie, dass Bilder beim Verwenden von Mirrors und Umschreibungen weiterhin unter dem ursprünglichen Namen gespeichert werden. Zum Beispiel zeigt `crictl image ls` auf dem Knoten `docker.io/rancher/rke2-runtime:v1.30.1-rke2r1` als verfügbar an, selbst wenn das Image von einem Mirror mit einem anderen Namen abgerufen wurde.
+
+=== Konfigurationen
+
+Der Abschnitt 'configs' definiert die TLS- und Anmeldeinformationskonfiguration für jeden Mirror. Für jeden Mirror können Sie `auth` und/oder `tls` definieren.
+
+Der `tls` Teil besteht aus:
+
+|===
+| Direktive | Beschreibung
+
+| `cert_file`
+| Der Pfad des Client-Zertifikats, der zur Authentifizierung bei der Registry verwendet wird.
+
+| `key_file`
+| Der Pfad des Client-Schlüssels, der zur Authentifizierung bei der Registry verwendet wird.
+
+| `ca_file`
+| Definiert den Pfad des CA-Zertifikats, das verwendet wird, um die Serverzertifikatdatei der Registry zu überprüfen.
+
+| `insecure_skip_verify`
+| Ein boolescher Datentyp, der definiert, ob die TLS-Überprüfung für die Registry übersprungen werden soll.
+|===
+
+Der `auth` Teil besteht entweder aus Benutzername/Passwort oder Authentifizierungs-Token:
+
+|===
+| Direktive | Beschreibung
+
+| `username`
+| Benutzername der privaten Registry-Basisauthentifizierung
+
+| `password`
+| Benutzerpasswort der privaten Registry-Basisauthentifizierung
+
+| `auth`
+| Authentifizierungs-Token der privaten Registry-Basisauthentifizierung
+|===
+
+Nachfolgend finden Sie einfache Beispiele für die Verwendung privater Registry in verschiedenen Modi:
+
+=== Wildcard-Unterstützung
+
+[NOTE]
+.Versionssperre
+====
+Wildcard-Unterstützung ist ab den März 2024 Veröffentlichungen verfügbar: v1.26.15+rke2r1, v1.27.12+rke2r1, v1.28.8+rke2r1, v1.29.3+rke2r1.
+====
+
+Der `"*"` Wildcard-Eintrag kann in den Abschnitten `mirrors` und `configs` verwendet werden, um eine Standardkonfiguration für alle Registries bereitzustellen. Die Standardkonfiguration wird nur verwendet, wenn es keinen spezifischen Eintrag für diese Registry gibt. Beachten Sie, dass das Sternchen in Anführungszeichen gesetzt werden muss.
+
+Im folgenden Beispiel wird ein lokaler Registry-Mirror für alle Registries verwendet. Die TLS-Überprüfung wird für alle Registries deaktiviert, außer für `docker.io`.
+
+[,yaml]
+----
+mirrors:
+  "*":
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "docker.io":
+  "*":
+    tls:
+      insecure_skip_verify: true
+----
+
+=== Mit TLS
+
+Im Folgenden finden Sie Beispiele, die zeigen, wie Sie `/etc/rancher/rke2/registries.yaml` auf jedem Knoten konfigurieren können, wenn Sie TLS verwenden.
+
+[tabs]
+======
+
+Mit Authentifizierung::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+Ohne Authentifizierung:: 
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+======
+
+=== Ohne TLS
+
+Im Folgenden finden Sie Beispiele, die zeigen, wie Sie `/etc/rancher/rke2/registries.yaml` auf jedem Knoten konfigurieren können, wenn Sie _kein TLS_ verwenden.
+
+[tabs]
+======
+
+Mit Authentifizierung::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+----
+
+Ohne Authentifizierung::
++
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+----
+
+======
+
+____
+Wenn Sie eine Registry verwenden, die unverschlüsseltes HTTP ohne TLS nutzt, müssen Sie `http://` als das URI-Schema des Endpunkts angeben, andernfalls wird es standardmäßig auf `https://` gesetzt.
+____
+
+Damit die Änderungen an der Registry wirksam werden, müssen Sie diese Datei entweder konfigurieren, bevor Sie RKE2 auf dem Knoten starten, oder RKE2 auf jedem konfigurierten Knoten neu starten.
+
+== Fehlerbehebung bei Image-Pulls
+
+Wenn Kubernetes Probleme hat, ein Image zu ziehen, spiegelt der Fehler, der vom Kubelet angezeigt wird, möglicherweise nur den terminalen Fehler wider, der durch den Pull-Versuch gegen den Standard-Endpunkt zurückgegeben wird, wodurch es so aussieht, als würden die konfigurierten Endpunkte nicht verwendet.
+
+Überprüfen Sie das containerd-Protokoll auf dem Knoten unter `/var/lib/rancher/rke2/agent/containerd/containerd.log` für detaillierte Informationen zur Ursache des Fehlers.

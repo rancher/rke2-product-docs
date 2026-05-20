@@ -1,0 +1,135 @@
+= Haute disponibilité
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Cette section décrit comment installer un cluster RKE2 à haute disponibilité (HA). Un cluster RKE2 à haute disponibilité se compose de :
+
+* Une *adresse d'enregistrement fixe* placée devant les nœuds serveurs pour permettre aux autres nœuds de s'enregistrer auprès du cluster.
+* Un nombre impair (trois recommandé) de *nœuds serveurs* qui exécuteront etcd, l'API Kubernetes et d'autres services de plan de contrôle.
+* Zéro ou plusieurs *nœuds agents* désignés pour exécuter vos applications et services.
+
+[%collapsible]
+.Pourquoi un nombre impair de nœuds serveurs{nbsp}?
+======
+Un cluster etcd doit être composé d'un nombre impair de nœuds serveurs pour que etcd maintienne le quorum. Pour un cluster avec n serveurs, le quorum est (n/2)+1. Pour tout cluster de taille impaire, l'ajout d'un nœud augmentera toujours le nombre de nœuds nécessaires pour le quorum. Bien que l'ajout d'un nœud à un cluster de taille impaire semble meilleur car il y a plus de machines, la tolérance aux pannes est moins bonne. Exactement le même nombre de nœuds peut échouer sans perdre le quorum, mais il y a maintenant plus de nœuds qui peuvent échouer.
+======
+
+image:rke2-production-setup.svg[]
+
+Les agents s'enregistrent via l'adresse d'enregistrement fixe. Cependant, lorsque RKE2 lance le kubelet et qu'il doit se connecter au serveur API Kubernetes, il le fait via le processus `rke2 agent`, qui agit comme un équilibreur de charge côté client.
+
+La configuration d'un cluster HA nécessite les étapes suivantes{nbsp}:
+
+. Configurer une adresse d'enregistrement fixe
+. Lancer le premier nœud serveur
+. Rejoindre des nœuds de serveur supplémentaires
+. Rejoindre les nœuds agents
+
+== 1. Configurer l'adresse d'enregistrement fixe
+
+Les nœuds serveurs au-delà du premier et tous les nœuds agents ont besoin d'une URL pour s'enregistrer. Cela peut être l'IP ou le nom d'hôte de l'un des nœuds serveurs, mais dans de nombreux cas, ceux-ci peuvent changer au fil du temps à mesure que des nœuds sont créés et détruits. Par conséquent, vous devriez avoir un point de terminaison stable devant les nœuds serveurs.
+
+Ce point de terminaison peut être configuré en utilisant un certain nombre d'approches, telles que  :
+
+* Un équilibreur de charge de couche 4 (TCP)
+* DNS en round-robin
+* Adresses IP virtuelles ou élastiques
+
+Ce point de terminaison peut également être utilisé pour accéder à l'API Kubernetes. Vous pouvez donc, par exemple, modifier votre fichier https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig] pour pointer vers celui-ci au lieu d'un nœud spécifique.
+
+Notez que le processus `rke2 server` écoute sur le port `9345` pour que de nouveaux nœuds s'enregistrent. L'API Kubernetes est servie sur le port `6443`, comme d'habitude. Configurez votre équilibreur de charge en conséquence.
+
+== 2. Lancer le premier nœud serveur
+
+Le premier nœud serveur établit le token secret avec lequel d'autres nœuds serveurs ou agents s'enregistreront lors de la connexion au cluster.
+
+Pour spécifier votre propre secret partagé préalablement comme token, définissez l'argument `token` au démarrage.
+
+Si vous ne spécifiez pas de secret partagé préalablement, RKE2 en générera un et le placera à `/var/lib/rancher/rke2/server/node-token`.
+
+Pour éviter les erreurs de certificat avec l'adresse d'enregistrement fixe, vous devez lancer le serveur avec le paramètre `tls-san` défini. Cette option ajoute un nom d'hôte ou une IP supplémentaire en tant que nom alternatif du sujet dans le certificat TLS du serveur, et il peut être spécifié sous forme de liste si vous souhaitez accéder à la fois via l'IP et le nom d'hôte.
+
+Exemple de fichier de configuration RKE2 pour le premier serveur{nbsp}:
+
+[NOTE]
+====
+Le fichier de configuration RKE2 doit être créé manuellement. Vous pouvez le faire en exécutant `touch /etc/rancher/rke2/config.yaml` en tant qu'utilisateur privilégié.
+====
+
+[,yaml]
+----
+token: my-shared-secret
+tls-san:
+  - my-kubernetes-domain.com
+  - another-kubernetes-domain.com
+----
+
+=== 2a. Facultatives : Considérez les taints des nœuds de serveur
+
+Par défaut, les nœuds de serveur seront programmables et donc vos charges de travail pourront être lancées sur eux. Si vous souhaitez avoir un plan de contrôle dédié où aucune charge de travail utilisateur ne s'exécutera, vous pouvez utiliser des taints. Le paramètre `node-taint` vous permettra de configurer des nœuds avec des taints. Voici un exemple d'ajout d'un taint de nœud au fichier de configuration{nbsp}:
+
+[,yaml]
+----
+node-taint:
+  - "CriticalAddonsOnly=true:NoExecute"
+----
+
+[NOTE]
+====
+Les addons NGINX Ingress et Metrics Server ne seront *pas* déployés lorsque tous les nœuds sont marqués avec `CriticalAddonsOnly`. Si vos nœuds de serveur sont ainsi marqués, ces addons resteront en attente jusqu'à ce que des nœuds agents non marqués soient ajoutés au cluster.
+====
+
+== 3. Lancez des nœuds de serveur supplémentaires
+
+Des nœuds de serveur supplémentaires sont lancés de la même manière que le premier, sauf que vous devez spécifier les paramètres `server` et `token` afin qu'ils puissent se connecter avec succès au premier nœud de serveur.
+
+[IMPORTANT]
+.Configuration correspondante
+====
+Il est important de faire correspondre les drapeaux critiques sur vos nœuds serveur. Par exemple, si vous utilisez le drapeau `cluster-cidr: 10.200.0.0/16` sur votre premier nœud de serveur, mais que vous ne le définissez pas sur d'autres nœuds de serveur, les nœuds échoueront à rejoindre. Ils afficheront des erreurs telles que{nbsp}: `failed to validate server configuration: critical configuration value mismatch.` Voir xref:reference/server_config.adoc#_critical_configuration_values[Configuration du serveur] pour plus d'informations sur les drapeaux qui doivent être définis de manière identique sur les nœuds de serveur.
+====
+
+Exemple de fichier de configuration RKE2 pour des nœuds de serveur supplémentaires{nbsp}:
+
+[,yaml]
+----
+server: https://my-kubernetes-domain.com:9345
+token: my-shared-secret
+tls-san:
+  - my-kubernetes-domain.com
+  - another-kubernetes-domain.com
+----
+
+Comme mentionné précédemment, vous devez avoir un nombre impair de nœuds de serveur au total.
+
+Si un magasin de données etcd est trouvé sur le disque, soit parce que ce nœud a déjà été initialisé, soit parce qu'il a rejoint un cluster, la configuration `server: <XXX>` est ignorée.
+
+== 4. Confirmer que le cluster est fonctionnel
+
+Une fois que vous avez lancé le processus `rke2 server` sur tous les nœuds de serveur, assurez-vous que le cluster a démarré correctement avec{nbsp}:
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl get nodes \
+  --kubeconfig /etc/rancher/rke2/rke2.yaml
+----
+
+Vous devriez voir vos nœuds de serveur dans l'état Prêt.
+
+[NOTE]
+====
+Par défaut, toute commande `kubectl` nécessitera un accès utilisateur root, sauf si une substitution `RKE2_KUBECONFIG_MODE` est fournie. Lisez-en plus à ce sujet dans xref:cluster_access.adoc[page d'accès au cluster].
+====
+
+== 5. Facultatives : Rejoindre les nœuds agents
+
+Parce que les nœuds de serveur RKE2 sont planifiables par défaut, le nombre minimum de nœuds pour un cluster de serveurs HA RKE2 est de trois nœuds de serveur et zéro nœud agent. Pour ajouter des nœuds désignés pour exécuter vos applications et services, rejoignez des nœuds agents à votre cluster.
+
+Rejoindre des nœuds agents dans un cluster HA est identique à xref:install/quickstart.adoc#_linux_agent_worker_node_installation[rejoindre des nœuds agents dans un cluster à serveur unique]. Vous devez simplement spécifier l'URL à laquelle l'agent doit s'enregistrer et le token qu'il doit utiliser.
+
+[,yaml]
+----
+server: https://my-kubernetes-domain.com:9345
+token: my-shared-secret
+----
