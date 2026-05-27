@@ -1,4 +1,7 @@
 = v1.36.X
+:page-languages: [en, zh]
+:revdate: 2026-05-27
+:page-revdate: {revdate}
 
 [CAUTION]
 .Upgrade Notice

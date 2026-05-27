@@ -1,6 +1,6 @@
 = v1.34.X
 :page-languages: [en, zh]
-:revdate: 2026-05-18
+:revdate: 2026-05-27
 :page-revdate: {revdate}
 
 [CAUTION]
