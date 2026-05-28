@@ -80,7 +80,7 @@ Or:
 +
 [,bash]
 ----
-hauler store add file https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2-images.linux-amd64.tar.zst
+hauler store add file https://<PRIME-ARTIFACTS-URL>/rke2<VERSION>>/rke2-images.linux-amd64.tar.zst
 ----
 
 . You may also add other artifacts that will be needed on the airgapped host to the https://docs.hauler.dev/docs/hauler-usage/store/add/file[Hauler store]. For example, you could add the rke2 binary tarball and checksum file, which you will need to verify artifacts when running the install script.
@@ -89,9 +89,10 @@ hauler store add file https://github.com/rancher/rke2/releases/download/v1.34.5%
 ----
 hauler store add file https://get.rke2.io
 
-hauler store add file https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2.linux-amd64.tar.gz
+hauler store add file https://<PRIME-ARTIFACTS-URL>/rke2/v1.36.1+rke2r1/rke2-images.linux-amd64.tar.zst
 
-hauler store add file https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/sha256sum-amd64.txt
+hauler store add file https://<PRIME-ARTIFACTS-URL>/rke2/v1.36.1+rke2r1/sha256sum-amd64.txt
+
 ----
 
 . Save the Hauler store to a file. The `--containerd` flag ensures the tarball is compatible if copied directly into containerd.
@@ -130,7 +131,7 @@ hauler store extract install.sh --output /root/rke2-artifacts
 
 hauler store extract sha256sum.txt --output /root/rke2-artifacts
 
-hauler store extract rke2-binary:v1.34.5-rke2r1 --output /usr/local/bin
+hauler store extract rke2-binary:v1.36.1+rke2r1 --output /usr/local/bin
 ----
 
 == 2. Install RKE2
