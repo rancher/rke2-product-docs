@@ -20,7 +20,7 @@ Before upgrading from earlier releases, be sure to read the Kubernetes https://g
 | https://github.com/opencontainers/runc/releases/tag/v1.4.1[v1.4.1]
 | https://github.com/kubernetes-sigs/metrics-server/releases/tag/v0.8.1[v0.8.1]
 | https://github.com/coredns/coredns/releases/tag/v1.14.2[v1.14.2]
-| https://github.com/rancher/ingress-nginx/releases/tag/v1.14.5-hardened2[v1.14.5-hardened2]
+| v1.14.5-prime7
 | https://github.com/k3s-io/helm-controller/releases/tag/v0.16.17[v0.16.17]
 | https://github.com/flannel-io/flannel/releases/tag/v0.28.2[Flannel v0.28.2] +
 https://docs.tigera.io/calico/latest/release-notes/#v3.31[Calico v3.31.4]
