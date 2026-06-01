@@ -188,7 +188,7 @@ spec:
 
 [NOTE]
 ====
-NVIDIA GPU Operator v26.3.x recommends using https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/cdi.html#about-the-node-resource-interface-nri-plugin[Node Resource Interface (NRI) specification] and that simplifies operations: we don't need to pass any extra envvar and it does not require changing containerd configuration. It requires containerd 2.1
+NVIDIA GPU Operator v26.3.x recommends using https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/cdi.html#about-the-node-resource-interface-nri-plugin[Node Resource Interface (NRI) specification] and that simplifies operations: we don't need to pass any extra envvar and it does not require changing containerd configuration. It requires containerd 2.1.
 ====
 
 [IMPORTANT]
