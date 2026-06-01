@@ -126,7 +126,7 @@ spec:
 
 [NOTE]
 ====
-NVIDIA GPU Operator v25.10.x uses https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[Container Device Interface (CDI) specification] and that simplifies operations: we don't need to pass extra envvars to comply with the security requirements and the workloads don't need to pass the `runtimeClassName: nvidia` anymore. It requires containerd 2.0
+NVIDIA GPU Operator v25.10.x uses https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[Container Device Interface (CDI) specification] and that simplifies operations: we don't need to pass extra envvars to comply with the security requirements and the workloads do not need to pass the `runtimeClassName: nvidia` anymore. It requires containerd 2.0.
 ====
 
 [CAUTION]
