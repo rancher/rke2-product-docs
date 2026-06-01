@@ -247,7 +247,7 @@ Cilium::
 |===
 | Port | Protocol | Source | Destination | Description
 
-| 8/0
+| 0, 8 *
 | ICMP
 | All RKE2 nodes
 | All RKE2 nodes
@@ -270,8 +270,9 @@ Cilium::
 | All RKE2 nodes
 | All RKE2 nodes
 | Cilium CNI with WireGaurd
-
 |===
+
+\\* 0, 8 is not a port but the https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-types[ICMP type]. It is required for the network utility ping
 
 Calico::
 +
