@@ -3390,6 +3390,7 @@ systemctl restart rke2-server.service
 *Remediation:*
 If enabled, the kubelet will use the RuntimeDefault seccomp profile by default, which is defined by the container runtime, instead of using the Unconfined (seccomp disabled) mode (default).
 If using a RKE2 config file /etc/rancher/rke2/config.yaml, edit the file to set `seccomp-default` to
+----
 kubelet-arg:
  - "seccomp-default=true"
 
