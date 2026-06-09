@@ -961,6 +961,8 @@ AlwaysPullImages.
 ----
 kube-apiserver-arg:
   "enable-admission-plugins=...,AlwaysPullImages,..."
+----
+======
 
 ==== 1.2.12 Ensure that the admission control plugin ServiceAccount is set (Automated)
 
