@@ -949,7 +949,9 @@ kube-apiserver-arg:
 
 *Result:* WARN
 
-*Remediation:*
+[%collapsible]
+.Remediation:
+======
 Permissive, per CIS guidelines,
 "This setting could impact offline or isolated clusters, which have images pre-loaded and
 do not have access to a registry to pull in-use images. This setting is not appropriate for
