@@ -3395,6 +3395,7 @@ If using a RKE2 config file /etc/rancher/rke2/config.yaml, edit the file to set 
 ----
 kubelet-arg:
  - "seccomp-default=true"
+----
 
 === 4.3 kube-proxy
 
