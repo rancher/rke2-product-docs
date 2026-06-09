@@ -958,6 +958,7 @@ do not have access to a registry to pull in-use images. This setting is not appr
 clusters which use this configuration."
 Edit the RKE2 config file /etc/rancher/rke2/config.yaml on the control plane node and set the --enable-admission-plugins parameter to include
 AlwaysPullImages.
+----
 kube-apiserver-arg:
   "enable-admission-plugins=...,AlwaysPullImages,..."
 
