@@ -1,6 +1,6 @@
 = v1.36.X
 :page-languages: [en, zh]
-:revdate: 2026-05-27
+:revdate: 2026-06-12
 :page-revdate: {revdate}
 
 [CAUTION]
@@ -11,6 +11,23 @@ Before upgrading from earlier releases, be sure to read the Kubernetes https://g
 
 |===
 | Version | Release date | Kubernetes | Etcd | Containerd | Runc | Metrics-server | CoreDNS | Ingress-Nginx | Helm-controller | Traefik | Canal (Default) | Calico | Cilium | Multus
+
+| <<Release https://github.com/rancher/rke2/releases/tag/v1.36.1+rke2r2[v1.36.1+rke2r2], v1.36.1+rke2r2>>
+| May 28 2026
+| https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.36.md#v1361[v1.36.1]
+| https://github.com/k3s-io/etcd/releases/tag/v3.6.7-k3s1[v3.6.7-k3s1]
+| https://github.com/k3s-io/containerd/releases/tag/v2.2.3-k3s1[v2.2.3-k3s1]
+| https://github.com/opencontainers/runc/releases/tag/v1.4.2[v1.4.2]
+| https://github.com/kubernetes-sigs/metrics-server/releases/tag/v0.8.1[v0.8.1]
+| https://github.com/coredns/coredns/releases/tag/v1.14.3[v1.14.3]
+| https://github.com/rancher/ingress-nginx/releases/tag/v1.15.1-prime1[v1.15.1-prime1]
+| https://github.com/k3s-io/helm-controller/releases/tag/v0.17.1[v0.17.1]
+| https://github.com/traefik/traefik/releases/tag/v3.6.16[v3.6.16]
+| https://github.com/flannel-io/flannel/releases/tag/v0.28.4[Flannel v0.28.4] +
+https://docs.tigera.io/calico/latest/release-notes/#v3.32[Calico v3.32.0]
+| https://docs.tigera.io/calico/latest/release-notes/#v3.32[v3.32.0]
+| https://github.com/cilium/cilium/releases/tag/v1.19.3[v1.19.3]
+| https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.2.4[v4.2.4]
 
 | <<Release https://github.com/rancher/rke2/releases/tag/v1.36.1+rke2r1[v1.36.1+rke2r1], v1.36.1+rke2r1>>
 | May 18 2026
@@ -46,6 +63,36 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.32[Calico v3.32.0]
 | https://github.com/cilium/cilium/releases/tag/v1.19.3[v1.19.3]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.2.4[v4.2.4]
 |===
+
+== Release https://github.com/rancher/rke2/releases/tag/v1.36.1+rke2r2[v1.36.1+rke2r2]
+
+// v1.36.1+rke2r2
+
+This release updates Kubernetes to v1.36.1.
+
+*Important Note*
+
+If your server (control-plane) nodes were not started with the `--token` CLI flag or config file key, a randomized token was generated during initial cluster startup. This key is used both for joining new nodes to the cluster, and for encrypting cluster bootstrap data within the datastore. Ensure that you retain a copy of this token, as is required when restoring from backup.
+
+You may retrieve the token value from any server already joined to the cluster:
+
+[,bash]
+----
+cat /var/lib/rancher/rke2/server/token
+----
+
+*Traefik Default Ingress Notice*
+
+Starting with v1.36, Traefik is the default ingress controller for new clusters. The ingress-nginx chart was retired upstream in March 2026 and will be removed entirely in v1.37. For airgapped setups, the core tarball now includes Traefik instead of ingress-nginx. Users continuing with ingress-nginx need the separate rke2-images-ingress-nginx tarball.
+
+=== Changes since v1.36.1+rke2r1:
+
+* Set klipper-helm registry correctly when prime https://github.com/rancher/rke2/pull/10437[(#10437)]
+* Bump to v1.36.1+rke2r2 https://github.com/rancher/rke2/pull/10446[(#10446)]
+* Bump rke2 CCM tag https://github.com/rancher/rke2/pull/10459[(#10459)]
+* Fix calico toleration values https://github.com/rancher/rke2/pull/10455[(#10455)]
+* Bump ingress-nginx to address CVE-2026-9256 https://github.com/rancher/rke2/pull/10462[(#10462)]
+* Update rke2-calico chart to fix network-unavailable toleration https://github.com/rancher/rke2/pull/10490[(#10490)]
 
 == Release https://github.com/rancher/rke2/releases/tag/v1.36.1+rke2r1[v1.36.1+rke2r1]
 
