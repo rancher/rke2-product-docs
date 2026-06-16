@@ -57,6 +57,9 @@
 
 * xref:advanced.adoc[]
 
+* Prime Tools
+** xref:prime-tools/rke2-patcher.adoc[]
+
 * References
 ** xref:reference/ai_conformance.adoc[]
 ** xref:reference/cli_tools.adoc[]

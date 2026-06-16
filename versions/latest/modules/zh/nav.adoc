@@ -52,6 +52,9 @@
 
 * xref:advanced.adoc[]
 
+* Prime Tools
+** xref:prime-tools/rke2-patcher.adoc[]
+
 * Add-ons
 ** xref:add-ons/helm.adoc[]
 ** xref:add-ons/import_images.adoc[]
