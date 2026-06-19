@@ -3,9 +3,9 @@
 :revdate: 2026-06-19
 :page-revdate: {revdate}
 
-本文提供了可用于配置 RKE2 Server 的所有参数的参考。请注意，这些内容引用了命令行参数，但配置 RKE2 的最佳方法是使用xref:install/configuration.adoc#configuration-file[配置文件]。
+本文提供了可用于配置 RKE2 Server 的所有参数的参考。请注意，这些内容引用了命令行参数，但配置 RKE2 的最佳方法是使用xref:install/configuration.adoc#_configuration_file[配置文件]。
 
-=== Critical Configuration Values
+==Critical Configuration Values
 
 The following options must be set to the same value on all servers in the cluster. Failure to do so will cause new servers to fail to join the cluster.
 
@@ -18,7 +18,7 @@ The following options must be set to the same value on all servers in the cluste
 * `egress-selector-mode`
 * `service-cidr`
 
-=== Common
+==Common
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -40,7 +40,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Listener
+==Listener
 
 |===
 | Flag | Description | Default
@@ -63,7 +63,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Networking
+==Networking
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -115,7 +115,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Client
+==Client
 
 |===
 | Flag | Description | Environment Variable
@@ -134,7 +134,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Helm
+==Helm
 
 |===
 | Flag | Description
@@ -144,7 +144,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Cluster
+==Cluster
 
 |===
 | Flag | Description | Environment Variable
@@ -175,7 +175,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Database
+==Database
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -247,7 +247,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== S3 etcd Snapshot Storage
+==S3 etcd Snapshot Storage
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -334,7 +334,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Flags
+==Flags
 
 |===
 | Flag | Description
@@ -356,7 +356,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Components
+==Components
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -468,7 +468,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Image
+==Image
 
 |===
 | Flag | Description | Environment Variable
@@ -507,7 +507,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Cloud Provider
+==Cloud Provider
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -529,7 +529,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Security
+==Security
 
 |===
 | Flag | Description | Environment Variable
@@ -548,7 +548,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Experimental
+==Experimental
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -575,7 +575,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Agent/Node
+==Agent/Node
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -627,7 +627,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Agent/Runtime
+==Agent/Runtime
 
 |===
 | Flag | Description | Default | Environment Variable
@@ -659,7 +659,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Agent/Containerd
+==Agent/Containerd
 
 |===
 | Flag | Description | Default
@@ -674,7 +674,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Agent/Networking
+==Agent/Networking
 
 |===
 | Flag | Description | Environment Variable
@@ -701,7 +701,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
-=== Agent/Flags
+==Agent/Flags
 
 |===
 | Flag | Description

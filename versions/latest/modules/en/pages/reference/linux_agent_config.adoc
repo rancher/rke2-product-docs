@@ -3,7 +3,7 @@
 :revdate: 2026-06-19
 :page-revdate: {revdate}
 
-This is a reference to all parameters that can be used to configure the rke2 agent. Note that while this is a reference to the command line arguments, the best way to configure RKE2 is using the xref:install/configuration.adoc#configuration-file[configuration file].
+This is a reference to all parameters that can be used to configure the rke2 agent. Note that while this is a reference to the command line arguments, the best way to configure RKE2 is using the xref:install/configuration.adoc#_configuration_file[configuration file].
 
 == Common
 
