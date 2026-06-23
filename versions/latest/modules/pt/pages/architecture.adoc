@@ -7,7 +7,7 @@
 
 Com o RKE2, aproveitamos as lições aprendidas no desenvolvimento e manutenção de nossa distribuição leve https://kubernetes.io[Kubernetes], https://k3s.io[K3s] e as aplicamos para construir uma distribuição pronta para empresas com a facilidade de uso do https://k3s.io[K3s]. O que isso significa é que o RKE2 é, em sua forma mais simples, um único binário a ser instalado e configurado em todos os nós que devem participar do cluster https://kubernetes.io[Kubernetes]. Uma vez iniciado, o RKE2 é capaz de inicializar e supervisionar agentes apropriados por função em cada nó, enquanto obtém o conteúdo necessário da rede.
 
-image::overview.png[Visão Geral da Arquitetura]
+image::rke2-overview.png[Visão Geral da Arquitetura]
 
 O RKE2 reúne uma série de tecnologias de código aberto para fazer tudo isso funcionar:
 

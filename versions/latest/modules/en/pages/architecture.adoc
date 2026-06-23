@@ -7,7 +7,7 @@
 
 With RKE2 we take lessons learned from developing and maintaining our lightweight https://kubernetes.io[Kubernetes] distribution, https://k3s.io[K3s], and apply them to build an enterprise-ready distribution with https://k3s.io[K3s] ease-of-use. What this means is that RKE2 is, at its simplest, a single binary to be installed and configured on all nodes expected to participate in the https://kubernetes.io[Kubernetes] cluster. Once started, RKE2 is then able to bootstrap and supervise role-appropriate agents per node while sourcing needed content from the network.
 
-image::overview.png[Architecture Overview]
+image::rke2-overview.png[Architecture Overview]
 
 RKE2 brings together a number of Open Source technologies to make this all work:
 

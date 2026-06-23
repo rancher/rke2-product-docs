@@ -7,7 +7,7 @@
 
 通过 RKE2，我们从开发和维护轻量级 https://kubernetes.io[Kubernetes] 发行版 https://k3s.io[K3s] 中吸取经验教训，并将其应用于构建一个企业级的发行版，具有 https://k3s.io[K3s] 的易用性。这意味着 RKE2 在最简单的情况下，是一个需要在所有预期参与 https://kubernetes.io[Kubernetes] 集群的节点上安装和配置的单一二进制文件。一旦启动，RKE2 就能够启动并监督各节点中角色匹配的代理，同时从网络中获取所需的内容。
 
-image::overview.png[体系结构概述]
+image::rke2-overview.png[体系结构概述]
 
 RKE2 汇集了多种开源技术，使这一切得以运作：
 
