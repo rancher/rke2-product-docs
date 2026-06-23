@@ -1,6 +1,6 @@
 = 服务器配置参考
 :page-languages: [en, zh]
-:revdate: 2026-02-27
+:revdate: 2026-04-01
 :page-revdate: {revdate}
 
 这是一个关于可以用于配置 rke2 服务器的所有参数的参考。请注意，虽然这是命令行参数的参考，但配置 RKE2 的最佳方式是使用 xref:install/configuration.adoc#_configuration_file[配置文件]。
@@ -219,7 +219,7 @@
 | etcd-s3-endpoint
 | S3 端点 URL
 | "s3.amazonaws.com"
-|
+| 
 
 | etcd-s3-endpoint-ca
 | 连接到 S3 端点的 S3 自定义 CA 证书
@@ -259,7 +259,7 @@
 | etcd-s3-region
 | S3 区域/存储桶位置（可选）
 | "us-east-1"
-|
+| 
 
 | etcd-s3-folder
 | S3 文件夹

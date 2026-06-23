@@ -24,6 +24,7 @@
 * Security
 ** xref:security/about_hardened_images.adoc[]
 ** xref:security/hardening_guide.adoc[]
+** xref:security/cis_self_assessment112.adoc[]
 ** xref:security/cis_self_assessment111.adoc[]
 ** xref:security/cis_self_assessment110.adoc[]
 ** xref:security/cis_self_assessment19.adoc[]
@@ -57,9 +58,13 @@
 
 * xref:advanced.adoc[]
 
+* Prime Tools
+** xref:prime-tools/rke2-patcher.adoc[]
+
 * References
 ** xref:reference/ai_conformance.adoc[]
 ** xref:reference/cli_tools.adoc[]
+** xref:reference/ingress_migration.adoc[]
 ** xref:reference/linux_agent_config.adoc[]
 ** xref:reference/logging.adoc[]
 ** xref:reference/metrics.adoc[]
@@ -68,11 +73,12 @@
 ** xref:reference/windows_agent_config.adoc[]
 
 * Release Notes
+** xref:release-notes/v1.36.X.adoc[]
 ** xref:release-notes/v1.35.X.adoc[]
 ** xref:release-notes/v1.34.X.adoc[]
 ** xref:release-notes/v1.33.X.adoc[]
-** xref:release-notes/v1.32.X.adoc[]
 ** Older...
+*** xref:release-notes-old/v1.32.X.adoc[]
 *** xref:release-notes-old/v1.31.X.adoc[]
 *** xref:release-notes-old/v1.30.X.adoc[]
 *** xref:release-notes-old/v1.29.X.adoc[]

@@ -1,6 +1,6 @@
 = Helm
 :page-languages: [en, zh]
-:revdate: 2025-11-06
+:revdate: 2026-05-11
 :page-revdate: {revdate}
 
 Helm是Kubernetes的首选软件包管理工具。Helm图表为Kubernetes YAML清单文档提供模板语法。使用 Helm，我们可以创建可配置的部署，而不仅仅是使用静态文件。有关创建您自己的部署目录的更多信息，请查看 https://helm.sh/docs/intro/quickstart/. 中的文档。
@@ -117,6 +117,11 @@ data:
 
 === HelmChart字段定义
 
+[NOTE]
+====
+`name` 字段应遵循 Helm Chart 命名约定，并同时满足 Kubernetes 的 https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[对象命名规则]。更多信息请参见 https://helm.sh/docs/chart_best_practices/conventions/#chart-names[Helm Best Practices 文档]。
+====
+
 |===
 | 字段 | 默认值 | 说明 | Helm参数/标志等效
 
@@ -150,15 +155,15 @@ data:
 | Helm图表储存库URL
 | `--repo`
 
-| spec.repoCA
-|
-| 使用此 CA 包验证启用 HTTPS 的服务器的证书。应为包含一个或多个 PEM 编码 CA 证书的字符串。
-| `--ca-file`
+| spec.plainHTTP
+| false
+| 使用不安全的 HTTP 连接下载 Chart。
+| `--plain-http`
 
-| spec.repoCAConfigMap
-|
-| 指向包含 Helm 信任的 CA 证书的 ConfigMap。可以与 `repoCA` 一起使用或替代
-| `--ca-file`
+| spec.insecureSkipTLSVerify
+| false
+| 跳过 Chart 下载时的 TLS 证书校验。
+| `--insecure-skip-tls-verify`
 
 | spec.helmVersion
 | v3
@@ -175,39 +180,14 @@ data:
 | 覆盖简单的默认 Chart 值。这些优先于通过 valuesContent 设置的选项。
 | `--set` / `--set-string`
 
-| spec.jobImage
+| spec.podSecurityContext
 |
-| 指定安装Helm图表时使用的镜像。例如：rancher/klipper-helm:v0.3.0。
-|
-
-| spec.backOffLimit
-| 1000
-| 指定在将作业视为失败之前的重试次数。
+| 为 Helm Job Pod 自定义 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#podsecuritycontext-v1-core[v1.PodSecurityContext]
 |
 
-| spec.timeout
-| 300秒
-| Helm 操作的超时，作为 https://pkg.go.dev/time#ParseDuration[持续时间字符串]（`300s`，`10m`，`1h` 等）
-| `--timeout`
-
-| spec.failurePolicy
-| 重新安装
-| 设置为 `abort`，此情况下 Helm 操作将被中止，等待操作员的手动干预。
+| spec.securityContext
 |
-
-| spec.authSecret
-|
-| 引用类型为 `kubernetes.io/basic-auth` 的 Secret，持有图表储存库的基本身份验证凭据。
-|
-
-| spec.authPassCredentials
-| false
-| 将基本身份验证凭据传递给所有域。
-| `--pass-credentials`
-
-| spec.dockerRegistrySecret
-|
-| 引用类型为 `kubernetes.io/dockerconfigjson` 的 Secret，持有作为 Chart 储存库的 OCI 基础注册表的 Docker 身份验证凭据。
+| 为 Helm Job Pod 的容器自定义 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#securitycontext-v1-core[v1.SecurityContext]
 |
 
 | spec.valuesContent
@@ -215,11 +195,23 @@ data:
 | 通过 YAML 文件内容覆盖复杂的默认 Chart 值。
 | `--values`
 
+| spec.valuesSecrets
+|
+| 通过引用外部 Secret 覆盖复杂 Chart 值
+| `--values`
+
 | spec.chartContent
 |
 | Base64编码的图表归档.tgz - 覆盖spec.chart
 | 图表
 |===
+
+完整 API 请参见 https://github.com/k3s-io/helm-controller/blob/master/doc/helmchart.md#HelmChart[自动生成的 API 文档]。
+
+[NOTE]
+====
+对于复杂 Helm Chart（例如 Rancher）或升级期间的 CNI 插件，建议设置 `failurePolicy: abort`。默认的 `reinstall` 策略适用于一般应用，但对关键基础设施组件可能会造成破坏性影响。当 Helm 升级被中断且发布卡在 pending 状态时，默认策略会自动卸载并重新安装 Chart，可能导致网络中断或关键 CRD 被删除。将策略设置为 `abort` 可在失败后保留现场，便于人工排障并降低进一步影响。
+====
 
 == 使用 HelmChartConfig 自定义打包组件
 
@@ -241,8 +233,8 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
-    image: coredns/coredns
-    imageTag: v1.7.1
+    image:
+      tag: v1.14.3-build20260506
 ----
 
 您可以在 https://github.com/rancher/rke2-charts/tree/main/charts[RKE2图表储存库]中找到所有打包的Helm图表，包括它们的文档和默认值。

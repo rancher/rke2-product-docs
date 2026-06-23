@@ -1,6 +1,6 @@
 = 网络服务
 :page-languages: [en, zh]
-:revdate: 2026-03-16
+:revdate: 2026-06-05
 :page-revdate: {revdate}
 
 本页面解释了 CoreDNS 和 Nginx-Ingress 控制器在 RKE2 中的工作原理。
@@ -197,6 +197,12 @@ spec:
 #       experimentalChannel: true (read warning below)
 ```
 Traefik 与 https://gateway-api.sigs.k8s.io/reference/1.4/spec/[网关 API v1.4] 兼容。
+
+.Gateway API resources
+[WARNING]
+====
+Prior to the April 2026 releases (v1.33.11+rke2r1, v1.34.7+rke2r1 and v1.35.4+rke2r1), Gateway API CRDs are removed if traefik is disabled after previously having been enabled. When using an affected release, avoid disabling traefik or uninstalling the traefik-crds AddOn if your cluster contains Gateway API resources that you do not want removed.
+====
 
 [WARNING]
 ====

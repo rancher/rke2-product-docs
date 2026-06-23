@@ -1,6 +1,6 @@
 = GPU 运算符
 :page-languages: [en, zh]
-:revdate: 2026-01-16
+:revdate: 2026-05-29
 :page-revdate: {revdate}
 
 == 部署 NVIDIA 运算符
@@ -85,6 +85,11 @@ spec:
 环境变量 `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`、`ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` 和 `DEVICE_LIST_STRATEGY` 是正确隔离 GPU 资源所必需的，如本 NVIDIA https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[文档] 中所述。
 ====
 
+[CAUTION]
+====
+The NVIDIA operator restarts containerd with a hangup call which restarts RKE2
+====
+
 --
 
 v25.10.x::
@@ -115,8 +120,6 @@ spec:
 ====
 NVIDIA GPU 运算符 v25.10.x 使用 https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[容器设备接口 (CDI) 规范]，这简化了操作：我们不需要传递额外的环境变量来遵守安全要求，工作负载也不再需要传递 `runtimeClassName: nvidia`。
 ====
---
-=====
 
 [CAUTION]
 ====
@@ -126,15 +129,6 @@ NVIDIA 运算符通过挂起调用重启 containerd，从而重启 RKE2。
 大约一分钟后，您可以执行以下检查以验证一切是否按预期工作：
 
 . 假设驱动程序和 `libnvidia-ml.so` 库之前已安装，请检查运算符是否正确检测到它们：
-+
-[,sh]
-----
-kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | grep "nvidia.com/gpu.deploy.driver"
-----
-+
-您应该看到值 `pre-installed`。如果您看到 `true`，则驱动程序未正确安装。如果 <<_host_os_requirements,先决条件>> 正确，则可能是您在安装所有软件包后忘记重启节点。
-+
-您还可以使用以下命令检查其他驱动程序标签：
 +
 [,sh]
 ----

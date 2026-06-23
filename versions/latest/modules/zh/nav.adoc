@@ -24,6 +24,7 @@
 * 安全性
 ** xref:security/about_hardened_images.adoc[]
 ** xref:security/hardening_guide.adoc[]
+** xref:security/cis_self_assessment112.adoc[]
 ** xref:security/cis_self_assessment111.adoc[]
 ** xref:security/cis_self_assessment110.adoc[]
 ** xref:security/cis_self_assessment19.adoc[]
@@ -60,6 +61,7 @@
 * 参考资料
 ** xref:reference/ai_conformance.adoc[]
 ** xref:reference/cli_tools.adoc[]
+** xref:reference/ingress_migration.adoc[]
 ** xref:reference/linux_agent_config.adoc[]
 ** xref:reference/logging.adoc[]
 ** xref:reference/metrics.adoc[]

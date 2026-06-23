@@ -1,6 +1,6 @@
 = 外部数据存储
 :page-languages: [en, zh]
-:revdate: 2025-08-08
+:revdate: 2026-05-29
 :page-revdate: {revdate}
 
 使用外部数据存储意味着利用位于Kubernetes集群外部的数据库。Kubernetes通过网络访问外部数据存储，而不是将其包含在集群内。这种方法对于拥有现有数据库基础设施的组织或那些更有经验操作企业级SQL数据库（如MySQL或PostgreSQL）的组织来说可能是常见的。项目 https://github.com/k3s-io/kine[kine]用于SQL数据库。外部数据存储的替代方案是xref:datastore/embedded.adoc[嵌入式数据存储]。

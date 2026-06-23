@@ -1,6 +1,6 @@
 = Networking Services
 :page-languages: [en, zh]
-:revdate: 2026-03-16
+:revdate: 2026-06-05
 :page-revdate: {revdate}
 
 This page explains how CoreDNS and the Nginx-Ingress controller work within RKE2.
@@ -37,6 +37,11 @@ spec:
 
 The helm controller will redeploy coredns with the new config. Please be aware that nodelocal modifies the iptables of the node to intercept DNS traffic. Therefore, activating and then deactivating this feature without redeploying, will cause the DNS service to stop working.
 
+[WARNING]
+====
+`kube-proxy` in IPVS mode is officially https://kubernetes.io/blog/2025/12/17/kubernetes-v1-35-release/#deprecation-of-ipvs-mode-in-kube-proxy[deprecated] starting in Kubernetes v1.35. While it remains functional in v1.35, it is scheduled for removal in a future release.
+====
+
 Note that NodeLocal DNSCache must be deployed in ipvs mode if kube-proxy is using that mode. To deploy it in this mode, apply the following HelmChartConfig:
 
 [,yaml]
@@ -52,6 +57,14 @@ spec:
     nodelocal:
       enabled: true
       ipvs: true
+----
+
+When using kube-proxy in IPVS mode, all nodes must be configured to use the node-local address for cluster DNS, instead of the in-cluster service endpoint. Note that this setting will only take effect after a restart of the RKE2 service and all running pods.
+
+[,yaml]
+----
+kubelet-arg:
+    - "cluster-dns=169.254.20.10"
 ----
 
 === NodeLocal DNS Cache with Cilium in kube-proxy replacement mode
@@ -152,7 +165,7 @@ https://doc.traefik.io/traefik/[Traefik] is a modern HTTP reverse proxy and load
 
 To use Traefik, start each server with the `ingress-controller: traefik` option in your configuration file.
 
-Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents changes the log level to "DEBUG"::
+Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents changes the log level to "DEBUG":
 
 [,yaml]
 ----
@@ -197,6 +210,12 @@ spec:
 #       experimentalChannel: true (read warning below)
 ```
 Traefik is compatible with https://gateway-api.sigs.k8s.io/reference/1.4/spec/[Gateway API v1.4].
+
+.Gateway API resources
+[WARNING]
+====
+Prior to the April 2026 releases (v1.33.11+rke2r1, v1.34.7+rke2r1 and v1.35.4+rke2r1), Gateway API CRDs are removed if traefik is disabled after previously having been enabled. When using an affected release, avoid disabling traefik or uninstalling the traefik-crds AddOn if your cluster contains Gateway API resources that you do not want removed.
+====
 
 [WARNING]
 ====

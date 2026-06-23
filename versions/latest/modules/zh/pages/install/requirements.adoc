@@ -1,6 +1,6 @@
 = 要求
 :page-languages: [en, zh]
-:revdate: 2026-02-06
+:revdate: 2026-05-29
 :page-revdate: {revdate}
 
 RKE2 非常轻量，但有一些最低要求，如下所述。
@@ -117,6 +117,30 @@ Enable-WindowsOptionalFeature -Online -FeatureName Containers -All
 
 RKE2 的性能依赖于数据库的性能，由于 RKE2 嵌入式运行 etcd 并将数据目录存储在磁盘上，我们建议尽可能使用 SSD 以确保最佳性能。
 
+== Kernel Parameters
+
+Some workloads particularly those that run many pods or watch large numbers of files, such as GPU operator validators can exhaust a node's default inotify limits. When this happens, pods fail to start with an error like:
+
+[,text]
+----
+failed to create fsnotify watcher: too many open files
+----
+
+If you encounter this, raise the inotify limits on the affected nodes:
+
+[,text]
+----
+fs.inotify.max_user_instances = 8192
+fs.inotify.max_user_watches = 524288
+----
+
+To persist the change across reboots, write it to `/etc/sysctl.d/99-inotify.conf` and apply it with:
+
+[,bash]
+----
+sudo sysctl --system
+----
+
 == 网络
 
 [IMPORTANT]
@@ -223,7 +247,7 @@ Cilium::
 |===
 | 端口 | 协议 | 源 | 目标 | 说明
 
-| 8/0
+| 0, 8 *
 | ICMP
 | 所有 RKE2 节点
 | 所有 RKE2 节点
@@ -248,6 +272,8 @@ Cilium::
 | 使用 WireGuard 的 Cilium CNI
 
 |===
+
+\\* 0, 8 is not a port but the https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-types[ICMP type]. It is required for the network utility ping
 
 Calico::
 +

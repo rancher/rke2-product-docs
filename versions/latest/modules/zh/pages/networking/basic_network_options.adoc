@@ -1,6 +1,6 @@
 = 网络选项
 :page-languages: [en, zh]
-:revdate: 2026-01-16
+:revdate: 2026-05-29
 :page-revdate: {revdate}
 
 Kubernetes 需要安装一个或多个 CNI 插件以提供 Pod 网络。RKE2 打包了四个主要的 CNI 插件：Canal、Cilium、Calico 和 Flannel。只有 Calico 和 Flannel 支持 Microsoft Windows。RKE2 还包括 Multus 作为辅助 CNI 插件，必须与主要 CNI 插件一起启用。有关更多信息，请参见 xref:networking/multus_sriov.adoc[Multus 和 SR-IOV] 文档。
@@ -194,7 +194,7 @@ Cilium 目前不支持 Windows。
 ====
 --
 
-[[install_a_cni_plugin]]Calico CNI 插件::
+Calico CNI 插件::
 +
 --
 例如，要更改接口 MTU，您可以使用以下图表值：
