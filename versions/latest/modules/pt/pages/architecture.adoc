@@ -35,7 +35,7 @@ Todos esses, exceto o Traefik, são compilados e vinculados estaticamente com ht
 === Inicializar Conteúdo
 
 O RKE2 busca binários e manifestos para executar tanto _servidor_ quanto _agente_ a partir da imagem do RKE2 Runtime.
-Isso significa que o RKE2 escaneia `/var/lib/rancher/rke2/agent/images/*.tar` em busca da imagem https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] (com uma tag correlacionando à saída de `rke2 --version`) por padrão e, se não puder ser encontrada, tenta puxá-la da rede (a.k.a. Docker Hub). O RKE2 então extrai `/bin/` da imagem, achatando-a em `/var/lib/rancher/rke2/data/${RKE2_DATA_KEY}/bin`, onde `${RKE2_DATA_KEY}` representa uma string única identificando a imagem.
+Isso significa que o RKE2 escaneia `/var/lib/rancher/rke2/agent/images/*.tar` em busca da imagem https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] (com uma tag correlacionando à saída de `rke2 --version`) por padrão e, se não puder ser encontrada, tenta puxá-la da rede (a.k.a. Docker Hub). O RKE2 então extrai `/bin/` da imagem, achatando-a em `/var/lib/rancher/rke2/data/$<rke2_data_key>/bin`, onde `$<rke2_data_key>` representa uma string única identificando a imagem.
 
 Para que o RKE2 funcione como esperado, a imagem de runtime deve fornecer, no mínimo:
 

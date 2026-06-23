@@ -52,7 +52,7 @@ The following options control the operation of scheduled snapshots:
 | Compress etcd snapshots
 
 | `--etcd-snapshot-dir`
-| Directory to save db snapshots. (Default location: `+${data-dir}/db/snapshots+`)
+| Directory to save db snapshots. (Default location: `+$<data-dir>/db/snapshots+`)
 
 | `--etcd-snapshot-retention`
 | Number of snapshots to retain (default: 5)
@@ -85,7 +85,7 @@ The following options control the operation of on-demand snapshots:
 | Compress etcd snapshots
 
 | `--etcd-snapshot-dir`
-| Directory to save db snapshots. (Default location: `+${data-dir}/db/snapshots+`)
+| Directory to save db snapshots. (Default location: `+$<data-dir>/db/snapshots+`)
 |===
 
 The data-dir value defaults to `/var/lib/rancher/rke2` and can be changed independently by setting the `--data-dir` flag.
@@ -269,7 +269,7 @@ RKE2 runs through several steps when restoring a snapshot:
 
 . If the snapshot is stored on S3, the file is downloaded into the snapshot directory.
 . If the snapshot is compressed, it is decompressed.
-. If present, the current etcd database files are moved to `+${data-dir}/server/db/etcd-old-$TIMESTAMP/+`.
+. If present, the current etcd database files are moved to `+$<data-dir>/server/db/etcd-old-$TIMESTAMP/+`.
 . The snapshot's contents are extracted out to disk, and the checksum is verified.
 . Etcd is started, and all etcd cluster members except the current node are removed from the cluster.
 . CA Certificates and other confidential data are extracted from the datastore and written to disk, for later use.
@@ -357,7 +357,7 @@ rke2 server \
 +
 *Result:* RKE2 restores the snapshot and resets cluster membership, then prints a message indicating that it is ready to be restarted: +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
- `+Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.+`
+ `+Backup and delete $<datadir>/server/db on each peer etcd server and rejoin the nodes.+`
 
 . On S1, start RKE2 again:
 +

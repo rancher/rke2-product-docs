@@ -52,7 +52,7 @@ Die folgenden Optionen steuern den Betrieb der geplanten Snapshots:
 | Komprimieren Sie etcd-Snapshots
 
 | `--etcd-snapshot-dir`
-| Verzeichnis zum Speichern von Datenbank-Snapshots. (Standardstandort: `${data-dir}/db/snapshots`)
+| Verzeichnis zum Speichern von Datenbank-Snapshots. (Standardstandort: `$<data-dir>/db/snapshots`)
 
 | `--etcd-snapshot-retention`
 | Anzahl der zu behaltenden Snapshots (Standard: 5)
@@ -85,7 +85,7 @@ Die folgenden Optionen steuern den Betrieb von Snapshots auf Anfrage:
 | Komprimieren Sie etcd-Snapshots
 
 | `--etcd-snapshot-dir`
-| Verzeichnis zum Speichern von Datenbank-Snapshots. (Standardstandort: `${data-dir}/db/snapshots`)
+| Verzeichnis zum Speichern von Datenbank-Snapshots. (Standardstandort: `$<data-dir>/db/snapshots`)
 |===
 
 Der Wert für data-dir ist standardmäßig `/var/lib/rancher/rke2` und kann unabhängig durch Setzen des `--data-dir` Flags geändert werden.
@@ -269,7 +269,7 @@ RKE2 durchläuft mehrere Schritte, wenn ein Snapshot wiederhergestellt wird:
 
 . Wenn der Snapshot auf S3 gespeichert ist, wird die Datei in das Snapshot-Verzeichnis heruntergeladen.
 . Wenn der Snapshot komprimiert ist, wird er dekomprimiert.
-. Falls vorhanden, werden die aktuellen etcd-Datenbankdateien nach `${data-dir}/server/db/etcd-old-$TIMESTAMP/` verschoben.
+. Falls vorhanden, werden die aktuellen etcd-Datenbankdateien nach `$<data-dir>/server/db/etcd-old-$TIMESTAMP/` verschoben.
 . Der Inhalt des Snapshots wird auf die Festplatte extrahiert, und die Prüfsumme wird überprüft.
 . Etcd wird gestartet, und alle etcd-Cluster-Mitglieder außer dem aktuellen Knoten werden aus dem Cluster entfernt.
 . CA-Zertifikate und andere vertrauliche Daten werden aus dem Datenspeicher extrahiert und auf die Festplatte geschrieben, für eine spätere Verwendung.
@@ -357,7 +357,7 @@ rke2 server \
 +
 *Ergebnis:* RKE2 stellt den Snapshot wieder her und setzt die Cluster-Mitgliedschaft zurück, dann wird eine Nachricht ausgegeben, die anzeigt, dass es bereit ist, neu gestartet zu werden: +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
- `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
+ `Backup and delete $<datadir>/server/db on each peer etcd server and rejoin the nodes.`
 
 . Starten Sie RKE2 auf S1 erneut:
 +

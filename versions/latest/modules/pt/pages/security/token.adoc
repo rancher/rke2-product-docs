@@ -153,7 +153,7 @@ Exclua um ou mais tokens de inicialização. O token completo pode ser fornecido
 
 Gerar um token de bootstrap gerado aleatoriamente.
 
-Você não precisa usar este comando para gerar um token. Você pode fazer isso, desde que esteja no formato `[a-z0-9]{6}.[a-z0-9]{16}`, onde a primeira parte é o ID do token e a segunda parte é o segredo.
+Você não precisa usar este comando para gerar um token. Você pode fazer isso, desde que esteja no formato [6 alphanumeric characters].[16 alphanumeric characters], onde a primeira parte é o ID do token e a segunda parte é o segredo.
 
 |===
 | Flag | Descrição

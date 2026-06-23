@@ -126,4 +126,4 @@ O RPM instalará uma unidade systemd `rke2-server.service` ou `rke2-agent.servic
 
 == Regressão
 
-O binário RKE2 é compilado e vinculado estaticamente, o que permite que o binário RKE2 seja portátil entre distribuições Linux sem a preocupação com problemas de dependência. A instalação mais simples é baixar o binário, garantir que ele seja executável e copiá-lo para o `${PATH}`, geralmente `/usr/local/bin`. Após a primeira execução, o RKE2 criará todos os diretórios e arquivos necessários. Para configurar o sistema ainda mais, você vai querer consultar a documentação do xref:install/configuration.adoc[arquivo de configuração].
+O binário RKE2 é compilado e vinculado estaticamente, o que permite que o binário RKE2 seja portátil entre distribuições Linux sem a preocupação com problemas de dependência. A instalação mais simples é baixar o binário, garantir que ele seja executável e copiá-lo para o `$<PATH>`, geralmente `/usr/local/bin`. Após a primeira execução, o RKE2 criará todos os diretórios e arquivos necessários. Para configurar o sistema ainda mais, você vai querer consultar a documentação do xref:install/configuration.adoc[arquivo de configuração].

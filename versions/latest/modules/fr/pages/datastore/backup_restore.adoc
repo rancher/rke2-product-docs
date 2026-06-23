@@ -52,7 +52,7 @@ Les options suivantes contrôlent le fonctionnement des instantanés programmés
 | Compresser les instantanés etcd
 
 | `--etcd-snapshot-dir`
-| Répertoire pour enregistrer les instantanés de la base de données. (Emplacement par défaut{nbsp}: `${data-dir}/db/snapshots`)
+| Répertoire pour enregistrer les instantanés de la base de données. (Emplacement par défaut{nbsp}: `$<data-dir>/db/snapshots`)
 
 | `--etcd-snapshot-retention`
 | Nombre d'instantanés à conserver (par défaut{nbsp}: 5)
@@ -85,7 +85,7 @@ Les options suivantes contrôlent le fonctionnement des instantanés à la deman
 | Compresser les instantanés etcd
 
 | `--etcd-snapshot-dir`
-| Répertoire pour enregistrer les instantanés de la base de données. (Emplacement par défaut{nbsp}: `${data-dir}/db/snapshots`)
+| Répertoire pour enregistrer les instantanés de la base de données. (Emplacement par défaut{nbsp}: `$<data-dir>/db/snapshots`)
 |===
 
 La valeur de data-dir par défaut est `/var/lib/rancher/rke2` et peut être modifiée indépendamment en définissant le drapeau `--data-dir`.
@@ -269,7 +269,7 @@ RKE2 passe par plusieurs étapes lors de la restauration d'un instantané:
 
 . Si l'instantané est stocké sur S3, le fichier est téléchargé dans le répertoire des instantanés.
 . Si l'instantané est compressé, il est décompressé.
-. Si présent, les fichiers de base de données etcd actuels sont déplacés vers `${data-dir}/server/db/etcd-old-$TIMESTAMP/`.
+. Si présent, les fichiers de base de données etcd actuels sont déplacés vers `$<data-dir>/server/db/etcd-old-$TIMESTAMP/`.
 . Le contenu de l'instantané est extrait sur le disque, et la somme de contrôle est vérifiée.
 . Etcd est démarré, et tous les membres du cluster etcd sauf le nœud actuel sont retirés du cluster.
 . Les certificats CA et autres données confidentielles sont extraits du magasin de données et écrits sur le disque, pour une utilisation ultérieure.
@@ -357,7 +357,7 @@ rke2 server \
 +
 *Résultat :* RKE2 restaure l'instantané et réinitialise l'appartenance au cluster, puis affiche un message indiquant qu'il est prêt à être redémarré{nbsp}: +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
- `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
+ `Backup and delete $<datadir>/server/db on each peer etcd server and rejoin the nodes.`
 
 . Sur S1, redémarrez RKE2:
 +

@@ -52,7 +52,7 @@ RKE2 etcd 快照存储在节点的文件系统上，并可选地上传至兼容 
 | 压缩 etcd 快照
 
 | `--etcd-snapshot-dir`
-| 保存数据库快照的目录。（默认位置：`${data-dir}/db/snapshots`）
+| 保存数据库快照的目录。（默认位置：`$<data-dir>/db/snapshots`）
 
 | `--etcd-snapshot-retention`
 | 要保留的快照数量（默认：5)
@@ -85,7 +85,7 @@ data-dir 的默认值为 `/var/lib/rancher/rke2`，可以通过设置 `--data-di
 | 压缩 etcd 快照
 
 | `--etcd-snapshot-dir`
-| 保存数据库快照的目录。（默认位置：`${data-dir}/db/snapshots`）
+| 保存数据库快照的目录。（默认位置：`$<data-dir>/db/snapshots`）
 |===
 
 data-dir 的默认值为 `/var/lib/rancher/rke2`，可以通过设置 `--data-dir` 标志来单独更改。
@@ -269,7 +269,7 @@ RKE2 在恢复快照时经过几个步骤：
 
 . 如果快照存储在 S3 上，文件将下载到快照目录中。
 . 如果快照被压缩，则会进行解压。
-. 如果存在，当前的 etcd 数据库文件将被移动到 `${data-dir}/server/db/etcd-old-$TIMESTAMP/`。
+. 如果存在，当前的 etcd 数据库文件将被移动到 `$<data-dir>/server/db/etcd-old-$TIMESTAMP/`。
 . 快照的内容被提取到磁盘，并验证校验和。
 . 启动 Etcd，除了当前节点外，所有 etcd 集群成员将从集群中移除。
 . CA 证书和其他机密数据从数据存储中提取并写入磁盘，以备后用。
@@ -357,7 +357,7 @@ rke2 server \
 +
 *结果：*RKE2 恢复快照并重置集群成员资格，然后打印一条消息，指示它已准备好重新启动： +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
- `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
+ `Backup and delete $<datadir>/server/db on each peer etcd server and rejoin the nodes.`
 
 . 在 S1 上，再次启动 RKE2：
 +

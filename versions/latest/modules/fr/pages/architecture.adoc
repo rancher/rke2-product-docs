@@ -35,7 +35,7 @@ Tous ces éléments, sauf Traefik, sont compilés et liés statiquement avec htt
 === Démarrage du contenu
 
 RKE2 source les binaires et les manifests pour exécuter à la fois _server_ et _agent_ à partir de l'image du composant d'exécution RKE2.
-Cela signifie que RKE2 scanne `/var/lib/rancher/rke2/agent/images/*.tar` pour l'image https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] (avec un tag correspondant à la sortie de `rke2 --version`) par défaut et s'il ne peut pas être trouvé, tente de la récupérer depuis le réseau (c'est-à-dire. Docker Hub). RKE2 extrait ensuite `/bin/` de l'image, l'aplanissant dans `/var/lib/rancher/rke2/data/${RKE2_DATA_KEY}/bin` où `${RKE2_DATA_KEY}` représente une chaîne unique identifiant l'image.
+Cela signifie que RKE2 scanne `/var/lib/rancher/rke2/agent/images/*.tar` pour l'image https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] (avec un tag correspondant à la sortie de `rke2 --version`) par défaut et s'il ne peut pas être trouvé, tente de la récupérer depuis le réseau (c'est-à-dire. Docker Hub). RKE2 extrait ensuite `/bin/` de l'image, l'aplanissant dans `/var/lib/rancher/rke2/data/$<rke2_data_key>/bin` où `$<rke2_data_key>` représente une chaîne unique identifiant l'image.
 
 Pour que RKE2 fonctionne comme prévu, l'image d'exécution doit fournir au minimum{nbsp}:
 

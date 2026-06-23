@@ -52,7 +52,7 @@ Las siguientes opciones controlan la operación de las instantáneas programadas
 | Comprimir instantáneas de etcd
 
 | `--etcd-snapshot-dir`
-| Directorio para guardar las instantáneas de la base de datos. (Ubicación por defecto: `${data-dir}/db/snapshots`)
+| Directorio para guardar las instantáneas de la base de datos. (Ubicación por defecto: `$<data-dir>/db/snapshots`)
 
 | `--etcd-snapshot-retention`
 | Número de instantáneas a retener (por defecto: 5)
@@ -85,7 +85,7 @@ Las siguientes opciones controlan la operación de las instantáneas a demanda:
 | Comprimir instantáneas de etcd
 
 | `--etcd-snapshot-dir`
-| Directorio para guardar las instantáneas de la base de datos. (Ubicación por defecto: `${data-dir}/db/snapshots`)
+| Directorio para guardar las instantáneas de la base de datos. (Ubicación por defecto: `$<data-dir>/db/snapshots`)
 |===
 
 El valor de data-dir por defecto es `/var/lib/rancher/rke2` y se puede cambiar de forma independiente configurando la bandera `--data-dir`.
@@ -269,7 +269,7 @@ RKE2 pasa por varios pasos al restaurar una instantánea:
 
 . Si la instantánea está almacenada en S3, el archivo se descarga en el directorio de instantáneas.
 . Si la instantánea está comprimida, se descomprime.
-. Si está presente, los archivos de base de datos etcd actuales se mueven a `${data-dir}/server/db/etcd-old-$TIMESTAMP/`.
+. Si está presente, los archivos de base de datos etcd actuales se mueven a `$<data-dir>/server/db/etcd-old-$TIMESTAMP/`.
 . El contenido de la instantánea se extrae al disco y se verifica la suma de comprobación.
 . Se inicia etcd, y todos los miembros del clúster etcd excepto el nodo actual son eliminados del clúster.
 . Los certificados CA y otros datos confidenciales se extraen de la tienda de datos y se escriben en disco, para su uso posterior.
@@ -357,7 +357,7 @@ rke2 server \
 +
 *Resultado:* RKE2 restaura la instantánea y restablece la membresía del clúster, luego imprime un mensaje indicando que está listo para ser reiniciado: +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
- `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
+ `Backup and delete $<datadir>/server/db on each peer etcd server and rejoin the nodes.`
 
 . En S1, iniciad RKE2 de nuevo:
 +

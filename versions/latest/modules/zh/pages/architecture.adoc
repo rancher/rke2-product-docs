@@ -35,7 +35,7 @@ RKE2 汇集了多种开源技术，使这一切得以运作：
 === 内容启动
 
 RKE2 从 RKE2 Runtime 镜像中提取二进制文件和清单，以运行 _server_ 和 _agent_ 节点。
-这意味着 RKE2 默认扫描 `/var/lib/rancher/rke2/agent/images/*.tar` 以查找 https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] 镜像（其标签与 `rke2 --version` 的输出相关），如果找不到，则尝试从网络中拉取（即：Docker Hub）。然后 RKE2 从镜像中提取 `/bin/`，将其扁平化为 `/var/lib/rancher/rke2/data/${RKE2_DATA_KEY}/bin`，其中 `${RKE2_DATA_KEY}` 代表一个唯一字符串，用于标识该镜像。
+这意味着 RKE2 默认扫描 `/var/lib/rancher/rke2/agent/images/*.tar` 以查找 https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] 镜像（其标签与 `rke2 --version` 的输出相关），如果找不到，则尝试从网络中拉取（即：Docker Hub）。然后 RKE2 从镜像中提取 `/bin/`，将其扁平化为 `/var/lib/rancher/rke2/data/$<rke2_data_key>/bin`，其中 `$<rke2_data_key>` 代表一个唯一字符串，用于标识该镜像。
 
 为了使 RKE2 按预期工作，运行时镜像至少必须提供：
 

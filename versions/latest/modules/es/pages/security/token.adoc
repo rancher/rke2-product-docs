@@ -153,7 +153,7 @@ Elimina uno o más tokens de inicio. Se puede proporcionar el token completo, o 
 
 Generar un token de arranque aleatorio.
 
-No es necesario utilizar este comando para generar un token. Puedes hacerlo tú mismo siempre que esté en el formato `[a-z0-9]{6}.[a-z0-9]{16}`, donde la primera parte es el ID del token y la segunda parte es el secreto.
+No es necesario utilizar este comando para generar un token. Puedes hacerlo tú mismo siempre que esté en el formato [6 alphanumeric characters].[16 alphanumeric characters], donde la primera parte es el ID del token y la segunda parte es el secreto.
 
 |===
 | Indicadores | Descripción

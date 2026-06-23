@@ -35,7 +35,7 @@ Alle diese, außer Traefik, sind kompiliert und statisch mit https://github.com/
 === Inhalts-Neustart
 
 RKE2 bezieht Binärdateien und Manifeste, um sowohl _Server_ als auch _Agent_ Knoten aus dem RKE2 Laufzeit-Image auszuführen.
-Das bedeutet, dass RKE2 standardmäßig `/var/lib/rancher/rke2/agent/images/*.tar` nach dem https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] Image (mit einem Tag, der mit der Ausgabe von `rke2 --version` korreliert) durchsucht und, wenn es nicht gefunden werden kann, versucht, es aus dem Netzwerk zu ziehen (a.k.a. Docker Hub). RKE2 extrahiert dann `/bin/` aus dem Image und flatten es in `/var/lib/rancher/rke2/data/${RKE2_DATA_KEY}/bin`, wobei `${RKE2_DATA_KEY}` eine eindeutige Zeichenfolge darstellt, die das Image identifiziert.
+Das bedeutet, dass RKE2 standardmäßig `/var/lib/rancher/rke2/agent/images/*.tar` nach dem https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] Image (mit einem Tag, der mit der Ausgabe von `rke2 --version` korreliert) durchsucht und, wenn es nicht gefunden werden kann, versucht, es aus dem Netzwerk zu ziehen (a.k.a. Docker Hub). RKE2 extrahiert dann `/bin/` aus dem Image und flatten es in `/var/lib/rancher/rke2/data/$<rke2_data_key>/bin`, wobei `$<rke2_data_key>` eine eindeutige Zeichenfolge darstellt, die das Image identifiziert.
 
 Damit RKE2 wie erwartet funktioniert, muss das Laufzeit-Image mindestens Folgendes bereitstellen:
 

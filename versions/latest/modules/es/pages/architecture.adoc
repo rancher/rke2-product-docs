@@ -35,7 +35,7 @@ Todos estos, excepto Traefik, están compilados y vinculados estáticamente con 
 === Inicio de contenido
 
 RKE2 obtiene binarios y manifiestos para ejecutar tanto _servidor_ como _agente_ desde la imagen de tiempo de ejecución de RKE2.
-Esto significa que RKE2 escanea `/var/lib/rancher/rke2/agent/images/*.tar` en busca de la imagen https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] (con una etiqueta que correlaciona con la salida de `rke2 --version`) por defecto y si no se puede encontrar, intenta obtenerla de la red (es decir, Docker Hub). RKE2 luego extrae `/bin/` de la imagen, aplanándola en `/var/lib/rancher/rke2/data/${RKE2_DATA_KEY}/bin` donde `${RKE2_DATA_KEY}` representa una cadena única que identifica la imagen.
+Esto significa que RKE2 escanea `/var/lib/rancher/rke2/agent/images/*.tar` en busca de la imagen https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] (con una etiqueta que correlaciona con la salida de `rke2 --version`) por defecto y si no se puede encontrar, intenta obtenerla de la red (es decir, Docker Hub). RKE2 luego extrae `/bin/` de la imagen, aplanándola en `/var/lib/rancher/rke2/data/$<rke2_data_key>/bin` donde `$<rke2_data_key>` representa una cadena única que identifica la imagen.
 
 Para que RKE2 funcione como se espera, la imagen de tiempo de ejecución debe proporcionar mínimamente:
 

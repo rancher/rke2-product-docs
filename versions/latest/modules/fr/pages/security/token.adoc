@@ -153,7 +153,7 @@ Supprimer un ou plusieurs tokens de démarrage. Le jeton complet peut être four
 
 Générer un token de démarrage généré aléatoirement.
 
-Vous n'avez pas besoin d'utiliser cette commande pour générer un token. Vous pouvez le faire vous-même tant qu'il est au format `[a-z0-9]{6}.[a-z0-9]{16}`, où la première partie est l'ID du token, et la deuxième partie est le secret.
+Vous n'avez pas besoin d'utiliser cette commande pour générer un token. Vous pouvez le faire vous-même tant qu'il est au format [6 alphanumeric characters].[16 alphanumeric characters], où la première partie est l'ID du token, et la deuxième partie est le secret.
 
 |===
 | Indicateur | Description

@@ -52,7 +52,7 @@ As seguintes opções controlam a operação dos instantâneos programados:
 | Comprimir instantâneos do etcd
 
 | `--etcd-snapshot-dir`
-| Diretório para salvar instantâneos do banco de dados. (Local padrão: `${data-dir}/db/snapshots`)
+| Diretório para salvar instantâneos do banco de dados. (Local padrão: `$<data-dir>/db/snapshots`)
 
 | `--etcd-snapshot-retention`
 | Número de instantâneos a serem mantidos (padrão: 5)
@@ -85,7 +85,7 @@ As seguintes opções controlam a operação de instantâneos sob demanda:
 | Comprimir instantâneos do etcd
 
 | `--etcd-snapshot-dir`
-| Diretório para salvar instantâneos do banco de dados. (Local padrão: `${data-dir}/db/snapshots`)
+| Diretório para salvar instantâneos do banco de dados. (Local padrão: `$<data-dir>/db/snapshots`)
 |===
 
 O valor de data-dir é, por padrão, `/var/lib/rancher/rke2`, podendo ser alterado independentemente definindo a flag `--data-dir`.
@@ -269,7 +269,7 @@ O RKE2 passa por várias etapas ao restaurar um instantâneo:
 
 . Se o instantâneo estiver armazenado no S3, o arquivo é baixado para o diretório de instantâneos.
 . Se o instantâneo estiver compactado, ele é descompactado.
-. Se presente, os arquivos de banco de dados etcd atuais são movidos para `${data-dir}/server/db/etcd-old-$TIMESTAMP/`.
+. Se presente, os arquivos de banco de dados etcd atuais são movidos para `$<data-dir>/server/db/etcd-old-$TIMESTAMP/`.
 . O conteúdo do instantâneo é extraído para o disco e o checksum é verificado.
 . O etcd é iniciado e todos os membros do cluster etcd, exceto o nó atual, são removidos do cluster.
 . Os certificados CA e outros dados confidenciais são extraídos do datastore e gravados no disco, para uso posterior.
@@ -357,7 +357,7 @@ rke2 server \
 +
 *Resultado:* O RKE2 restaura o instantâneo e redefine a associação do cluster, então imprime uma mensagem indicando que está pronto para ser reiniciado: +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
- `Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.`
+ `Backup and delete $<datadir>/server/db on each peer etcd server and rejoin the nodes.`
 
 . No S1, inicie o RKE2 novamente:
 +

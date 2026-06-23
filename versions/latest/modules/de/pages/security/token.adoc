@@ -153,7 +153,7 @@ Löschen Sie ein oder mehrere Bootstrap-Token. Das vollständige Token kann bere
 
 Generieren Sie ein zufällig generiertes Bootstrap-Token.
 
-Sie müssen diesen Befehl nicht verwenden, um ein Token zu generieren. Sie können dies selbst tun, solange es im Format `[a-z0-9]{6}.[a-z0-9]{16}` vorliegt, wobei der erste Teil die Token-ID und der zweite Teil das Geheimnis ist.
+Sie müssen diesen Befehl nicht verwenden, um ein Token zu generieren. Sie können dies selbst tun, solange es im Format [6 alphanumeric characters].[16 alphanumeric characters] vorliegt, wobei der erste Teil die Token-ID und der zweite Teil das Geheimnis ist.
 
 |===
 | Flaggen | Beschreibung
