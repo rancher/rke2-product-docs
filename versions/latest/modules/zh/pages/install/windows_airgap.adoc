@@ -1,6 +1,6 @@
 = Windows 离线安装
 :page-languages: [en, zh]
-:revdate: 2025-06-18
+:revdate: 2026-06-19
 :page-revdate: {revdate}
 
 *Windows Support requires using Calico or Flannel as the CNI for the RKE2 cluster.*
@@ -92,8 +92,6 @@ Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-1809-amd64-i
 $ProgressPreference = 'SilentlyContinue'
 Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-ltsc2022-amd64-images.tar.zst -OutFile c:/var/lib/rancher/rke2/agent/images/rke2-windows-ltsc2022-amd64-images.tar.zst
 ----
-+
-** Use `rke2-windows-<VERSION>-amd64.tar.gz` or `rke2-windows-<VERSION>-amd64.tar.zst`. Zstandard offers better compression ratios and faster decompression speeds compared to pigz.
 +
 . Ensure that the `/var/lib/rancher/rke2/agent/images/` directory exists on the node.
 +
