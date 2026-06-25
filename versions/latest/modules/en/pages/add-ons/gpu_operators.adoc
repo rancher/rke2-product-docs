@@ -1,6 +1,6 @@
 = GPU Operators
 :page-languages: [en, zh]
-:revdate: 2026-05-29
+:revdate: 2026-06-25
 :page-revdate: {revdate}
 
 == Deploy NVIDIA operator
@@ -247,12 +247,12 @@ spec:
   restartPolicy: OnFailure
   # runtimeClassName: nvidia <== Only needed for v25.3.x
   containers:
-** name: cuda-container
-image: nvcr.io/nvidia/k8s/cuda-sample:nbody
-args: ["nbody", "-gpu", "-benchmark"]
-resources:
-limits:
-  nvidia.com/gpu: 1
+  - name: cuda-container
+    image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+    args: ["nbody", "-gpu", "-benchmark"]
+    resources:
+      limits:
+        nvidia.com/gpu: 1
 ----
 
 RKE2 will now use `PATH` to find alternative container runtimes, in addition to checking the default paths used by the container runtime packages. In order to use this feature, you must modify the RKE2 service's PATH environment variable to add the directories containing the container runtime binaries.
