@@ -209,9 +209,8 @@ spec:
         enabled: true
 #       experimentalChannel: true (read warning below)
 ```
-Traefik v3.6.x is compatible with https://gateway-api.sigs.k8s.io/reference/1.4/spec/[Gateway API v1.4].
-
-Traefik v3.7.x is compatible with https://gateway-api.sigs.k8s.io/reference/1.5/spec/[Gateway API v1.5].
+* Traefik v3.7.x is compatible with https://gateway-api.sigs.k8s.io/reference/1.5/spec/[Gateway API v1.5].
+* Traefik v3.6.x is compatible with https://gateway-api.sigs.k8s.io/reference/1.4/spec/[Gateway API v1.4].
 
 .Gateway API resources
 [WARNING]
