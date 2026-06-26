@@ -1,6 +1,6 @@
 = Networking Services
 :page-languages: [en, zh]
-:revdate: 2026-06-05
+:revdate: 2026-06-26
 :page-revdate: {revdate}
 
 This page explains how CoreDNS and the Nginx-Ingress controller work within RKE2.
@@ -209,7 +209,9 @@ spec:
         enabled: true
 #       experimentalChannel: true (read warning below)
 ```
-Traefik is compatible with https://gateway-api.sigs.k8s.io/reference/1.4/spec/[Gateway API v1.4].
+Traefik v3.6.x is compatible with https://gateway-api.sigs.k8s.io/reference/1.4/spec/[Gateway API v1.4].
+
+Traefik v3.7.x is compatible with https://gateway-api.sigs.k8s.io/reference/1.5/spec/[Gateway API v1.5].
 
 .Gateway API resources
 [WARNING]
@@ -219,7 +221,7 @@ Prior to the April 2026 releases (v1.33.11+rke2r1, v1.34.7+rke2r1 and v1.35.4+rk
 
 [WARNING]
 ====
-If you need support for experimental Gateway API resources, e.g. TCPRoute, you must install the https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml[experimental-install.yaml] from the official https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0[gateway-api releases] and use the option `providers.kubernetesGateway.experimentalChannel=true` in the rke2-traefik chart values.
+If you need support for experimental Gateway API resources, you must install them separately. For example, for Gateway API v1.4, install the https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml[v1.4 experimental-install.yaml] from the official https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0[gateway-api releases] and use the option `providers.kubernetesGateway.experimentalChannel=true` in the rke2-traefik chart values.
 ====
 
 == Service Load Balancer
