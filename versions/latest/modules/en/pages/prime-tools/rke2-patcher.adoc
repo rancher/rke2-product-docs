@@ -1,6 +1,6 @@
 = rke2-patcher
 :page-languages: [en, zh]
-:revdate: 2026-06-15
+:revdate: 2026-06-26
 :page-revdate: {revdate}
 
 `rke2-patcher` is a CLI tool for SUSE Rancher Prime: RKE2 that helps operators inspect and patch packaged component images.
@@ -50,7 +50,7 @@ The tool can be used to inspect the images that are currently running in an RKE2
 
 You can use `rke2-patcher` either as a locally built CLI binary or as a pod running inside the cluster.
 
-If you are using RKE2 Prime, you can also download the `rke2-patcher` binary from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL].
+`rke2-patcher` can be found in the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL].
 
 == rke2-patcher CLI
 
@@ -151,3 +151,49 @@ image::rke2-patcher-image-reconcile.gif[rke2-patcher image-reconcile demo, width
 4. Run `image-reconcile` for previously patched components.
 
 For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rancher-rke2-patcher.
+
+== Airgap support
+
+`rke2-patcher` can be used in airgapped environments when required artifacts are mirrored and reachable inside your private network.
+
+To use `rke2-patcher` in airgap environments:
+
+* Mirror supported component images and eligible tags to an internal registry.
+* Set `RKE2_PATCHER_REGISTRY` to your internal registry endpoint.
+* Ensure the cluster can reach the internal registry endpoint.
+
+For CVE scanning in airgap environments, use one of these approaches:
+
+* Cluster scanning mode:
+** Mirror the scanner image used by the in-cluster scan job.
+** Ensure scan namespaces and required permissions are available.
+* Local scanning mode (`RKE2_PATCHER_SCANNER_MODE=local`):
+** Install a supported local scanner binary (`trivy` or `grype`) on the host OS.
+** Pre-stage the Rancher OpenVEX file at `$HOME/rke2-patcher-cache/vex/rancher.openvex.json`.
+** Example download source: https://github.com/rancher/vexhub/raw/refs/heads/main/reports/rancher.openvex.json
+
+Example command to pre-stage the OpenVEX file:
+
+[,bash]
+----
+mkdir -p "$HOME/rke2-patcher-cache/vex"
+curl -fsSL https://github.com/rancher/vexhub/raw/refs/heads/main/reports/rancher.openvex.json \
+	-o "$HOME/rke2-patcher-cache/vex/rancher.openvex.json"
+----
+
+Examples:
+
+[,bash]
+----
+RKE2_PATCHER_REGISTRY=registry.example.local:5000 \
+	rke2-patcher image-list rke2-traefik
+----
+
+[,bash]
+----
+RKE2_PATCHER_SCANNER_MODE=local \
+	RKE2_PATCHER_REGISTRY=registry.example.local:5000 \
+	rke2-patcher image-cve rke2-traefik
+----
+
+With these prerequisites in place, `image-list`, `image-patch`, and `image-reconcile` can run without direct internet access.
