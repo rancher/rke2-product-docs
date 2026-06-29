@@ -1,6 +1,6 @@
 = Network Options
 :page-languages: [en, zh]
-:revdate: 2026-05-29
+:revdate: 2026-06-26
 :page-revdate: {revdate}
 
 Kubernetes requires installation of one or more CNI Plugins to provide Pod networking. RKE2 bundles four primary CNI Plugins: Canal, Cilium, Calico, and Flannel. Only Calico and Flannel support Microsoft Windows. RKE2 also includes Multus as a secondary CNI Plugin, which must be enabled alongside a primary CNI Plugin. For more information, see the xref:networking/multus_sriov.adoc[Multus] documentation.
@@ -92,9 +92,14 @@ spec:
         kubeProxyManagement: Enabled
         linuxDataplane: BPF
     kubernetesServiceEndpoint:
-      host: "localhost"
+      host: "<control_node_ip>"
       port: "6443"
 ----
+
+[NOTE]
+====
+If you want to use Calico's eBPF dataplane with an HA control plane, refer to the xref:networking/cluster_loadbalancer.adoc[load balancer page].
+====
 
 For more information on Calico's eBPF dataplane, refer to https://docs.tigera.io/calico/latest/operations/ebpf/[Calico's documentation].
 ======
