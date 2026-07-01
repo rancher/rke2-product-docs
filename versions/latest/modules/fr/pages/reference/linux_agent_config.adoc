@@ -1,0 +1,299 @@
+= Référence de configuration de l'agent
+:page-languages: [en, zh]
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+Ceci est une référence à tous les paramètres pouvant être utilisés pour configurer l'agent RKE2. Notez que bien que ceci soit une référence aux arguments de ligne de commande, la meilleure façon de configurer RKE2 est d'utiliser le xref:../install/configuration.adoc#_configuration_file[fichier de configuration].
+
+== Communes
+
+|===
+| Indicateur | Description | Par défaut | Variable d'environnement
+
+| config
+| Chemin vers le fichier de configuration
+| /etc/rancher/rke2/config.yaml
+| RKE2_CONFIG_FILE
+
+| debug (débogage)
+| Activer les journaux de débogage
+|
+| RKE2_DEBUG
+
+| data-dir
+| Dossier pour conserver l'état
+| "/var/lib/rancher/rke2"
+|
+|===
+
+== Grappe
+
+|===
+| Indicateur | Description | Variable d'environnement
+
+| token
+| Token à utiliser pour l'authentification
+| RKE2_TOKEN
+
+| fichier-token
+| Fichier de token à utiliser pour l'authentification
+| RKE2_TOKEN_FILE
+
+| serveur
+| Serveur auquel se connecter
+| RKE2_URL
+|===
+
+== Noeud
+
+|===
+| Indicateur | Description | Par défaut | Variable d'environnement
+
+| nom-du-noeud
+| Nom du nœud
+|
+| RKE2_NODE_NAME
+
+| avec-id-noeud
+| Ajouter un identifiant au nom du nœud
+|
+|
+
+| étiquette-du-noeud
+| Enregistrement et démarrage de kubelet avec un ensemble d'étiquettes
+|
+|
+
+| taint-du-noeud
+| Enregistrement de kubelet avec un ensemble de taints
+|
+|
+
+| image-credential-provider-bin-dir
+| Le chemin vers le répertoire où se trouvent les binaires du plugin de fournisseur de crédentiels
+| "/var/lib/rancher/credentialprovider/bin"
+|
+
+| image-credential-provider-config
+| Le chemin vers le fichier de configuration du plugin de fournisseur de crédentiels
+| "/var/lib/rancher/credentialprovider/config.yaml"
+|
+
+| selinux
+| Activer SELinux dans containerd
+|
+| RKE2_SELINUX
+
+| port-serveur-lb
+| Port local pour le répartiteur de charge du client superviseur. Si le superviseur et l'apiserver ne sont pas co-localisés, un port supplémentaire, inférieur de 1 à ce port, sera également utilisé pour le répartiteur de charge du client apiserver.
+| 6444
+| RKE2_LB_SERVER_PORT
+
+| protéger-les-valeurs-par-défaut-du-noyau Linux
+| Comportement de réglage du noyau Linux. Si défini, renvoie une erreur si les variables programmables du noyau Linux diffèrent des valeurs par défaut de kubelet.
+|
+|
+|===
+
+== Composant d'exécution
+
+|===
+| Indicateur | Description | Par défaut
+
+| point-de-terminaison-runtime-conteneur
+| Désactiver containerd intégré et utiliser le socket CRI au chemin donné{nbsp}; lorsqu'il est utilisé avec --docker, cela définit le chemin du socket docker
+|
+
+| runtime-par-défaut
+| Définir le composant d'exécution par défaut dans containerd
+|
+
+| instantané
+| Remplacer le snapshotter par défaut de containerd
+| "overlayfs"
+
+| registre-privé
+| Fichier de configuration du registre privé
+| "/etc/rancher/rke2/registries.yaml"
+|===
+
+== Containerd
+
+|===
+| Indicateur | Description
+
+| désactiver-point-de-terminaison-registre-par-défaut
+| Désactive le point de terminaison de registre par défaut de containerd lorsque un miroir est configuré pour ce registre
+|===
+
+== Réseautique
+
+|===
+| Indicateur | Description | Variable d'environnement
+
+| ip-nœud
+| Adresses IPv4/IPv6 à annoncer pour le nœud{nbsp}:
+|
+
+| node-external-ip
+| Adresses IP externes IPv4/IPv6 à annoncer pour le nœud{nbsp}:
+|
+
+| resolv-conf
+| Fichier resolv.conf de kubelet
+| RKE2_RESOLV_CONF
+|===
+
+== Composants
+
+|===
+| Indicateur | Description | Variable d'environnement
+
+| argument-kubelet
+| Drapeau personnalisé pour le processus kubelet
+|
+
+| kube-proxy-arg
+| Drapeau personnalisé pour le processus kube-proxy
+|
+
+| demandes de ressources du plan de contrôle
+| Demandes de ressources du plan de contrôle
+| RKE2_CONTROL_PLANE_RESOURCE_REQUESTS
+
+| limites de ressources du plan de contrôle
+| Limites de ressources du plan de contrôle
+| RKE2_CONTROL_PLANE_RESOURCE_LIMITS
+
+| control-plane-probe-configuration
+| Configuration de la sonde du plan de contrôle
+| RKE2_CONTROL_PLANE_PROBE_CONFIGURATION
+
+| kube-apiserver-extra-mount
+| montages de volumes supplémentaires du kube-apiserver
+| RKE2_KUBE_APISERVER_EXTRA_MOUNT
+
+| kube-scheduler-extra-mount
+| montages de volumes supplémentaires du kube-scheduler
+| RKE2_KUBE_SCHEDULER_EXTRA_MOUNT
+
+| kube-controller-manager-extra-mount
+| montages de volumes supplémentaires du kube-controller-manager
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT
+
+| kube-proxy-extra-mount
+| montages de volumes supplémentaires du kube-proxy
+| RKE2_KUBE_PROXY_EXTRA_MOUNT
+
+| etcd-extra-mount
+| montages de volumes supplémentaires d'etcd
+| RKE2_ETCD_EXTRA_MOUNT
+
+| montages de volumes supplémentaires du gestionnaire de contrôleur de cloud
+| montages de volumes supplémentaires du gestionnaire de contrôleur de cloud
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT
+
+| kube-apiserver-extra-env
+| variables d'environnement supplémentaires du kube-apiserver
+| RKE2_KUBE_APISERVER_EXTRA_ENV
+
+| kube-scheduler-extra-env
+| variables d'environnement supplémentaires du kube-scheduler
+| RKE2_KUBE_SCHEDULER_EXTRA_ENV
+
+| kube-controller-manager-extra-env
+| variables d'environnement supplémentaires du kube-controller-manager
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV
+
+| kube-proxy-extra-env
+| variables d'environnement supplémentaires du kube-proxy
+| RKE2_KUBE_PROXY_EXTRA_ENV
+
+| etcd-extra-env
+| variables d'environnement supplémentaires d'etcd
+| RKE2_ETCD_EXTRA_ENV
+
+| cloud-controller-manager-extra-env
+| variables d'environnement supplémentaires du gestionnaire de contrôleur de cloud
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
+|===
+
+== Image
+
+|===
+| Indicateur | Description | Variable d'environnement
+
+| kube-apiserver-image
+| Remplacer l'image à utiliser pour kube-apiserver
+| RKE2_KUBE_APISERVER_IMAGE
+
+| kube-controller-manager-image
+| Remplacer l'image à utiliser pour kube-controller-manager
+| RKE2_KUBE_CONTROLLER_MANAGER_IMAGE
+
+| cloud-controller-manager-image
+| Remplacer l'image à utiliser pour le gestionnaire de contrôleur de cloud
+| RKE2_CLOUD_CONTROLLER_MANAGER_IMAGE
+
+| kube-proxy-image
+| Remplacer l'image à utiliser pour kube-proxy
+| RKE2_KUBE_PROXY_IMAGE
+
+| kube-scheduler-image
+| Remplacer l'image à utiliser pour kube-scheduler
+| RKE2_KUBE_SCHEDULER_IMAGE
+
+| pause-image
+| Image de remplacement à utiliser pour pause
+| RKE2_PAUSE_IMAGE
+
+| image-runtime
+| Image de remplacement à utiliser pour les binaires d'exécution (containerd, kubectl, crictl, etc.)
+| RKE2_RUNTIME_IMAGE
+
+| etcd-image
+| Image de remplacement à utiliser pour etcd
+| RKE2_ETCD_IMAGE
+|===
+
+== Fournisseur de cloud
+
+|===
+| Indicateur | Description | Variable d'environnement
+
+| nom-du-fournisseur-de-cloud
+| Nom du fournisseur de cloud
+| RKE2_CLOUD_PROVIDER_NAME
+
+| configuration-du-fournisseur-de-cloud
+| Chemin du fichier de configuration du fournisseur de cloud
+| RKE2_CLOUD_PROVIDER_CONFIG
+|===
+
+== Sécurité
+
+|===
+| Indicateur | Description | Variable d'environnement
+
+| profile
+| Valider la configuration du système par rapport à la référence sélectionnée (éléments valides{nbsp}: cis, cis-1.23 (déprécié))
+| RKE2_CIS_PROFILE
+
+| fichier-de-politique-d'audit
+| Chemin vers le fichier qui définit la configuration de la politique d'audit
+| RKE2_AUDIT_POLICY_FILE
+
+| fichier-de-configuration-d'admission-de-sécurité-des-pods
+| Chemin vers le fichier qui définit la configuration d'admission de sécurité des pods
+| RKE2_POD_SECURITY_ADMISSION_CONFIG_FILE
+|===
+
+== Expérimental
+
+|===
+| Indicateur | Description | Variable d'environnement
+
+| chemin-kubelet
+| Remplacer le chemin binaire du kubelet
+| RKE2_KUBELET_PATH
+|===

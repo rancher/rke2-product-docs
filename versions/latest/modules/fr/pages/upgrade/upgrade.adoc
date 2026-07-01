@@ -1,0 +1,10 @@
+= Mise à niveau {product-name} des clusters
+:page-languages: [en, zh]
+:revdate: 2026-01-08
+:page-revdate: {revdate}
+
+Cette section décrit comment mettre à niveau votre {product-name} cluster.
+
+xref:upgrade/manual_upgrade.adoc[Les mises à niveau manuelles] décrivent plusieurs techniques pour mettre à niveau votre cluster manuellement. Il peut également servir de base pour effectuer des mises à niveau via des outils tiers d'infrastructure en tant que code comme https://www.terraform.io/[Terraform].
+
+xref:upgrade/automated_upgrade.adoc[Les mises à niveau automatisées] décrivent comment effectuer des mises à niveau automatisées natives de Kubernetes en utilisant le https://github.com/rancher/system-upgrade-controller[system-upgrade-controller] de Rancher.

@@ -1,0 +1,36 @@
+= Introduction
+:page-languages: [en, zh]
+:revdate: 2025-07-10
+:page-revdate: {revdate}
+
+image::logo-horizontal-rke2.svg[Logo RKE2, 346,111]
+
+{product-name} est la distribution Kubernetes de nouvelle génération prête pour l'entreprise de Rancher. Elle a également été connue sous le nom de RKE Government.
+
+Il s'agit d'une https://landscape.cncf.io/?group=projects-and-products&view-mode=card&item=platform--certified-kubernetes-distribution--rke-government#app-definition-and-development--application-definition-image-build[distribution Kubernetes parfaitement conforme] axée sur la sécurité et la conformité au sein des États-Unis. secteur du gouvernement fédéral américain.
+
+Pour atteindre ces objectifs, {product-name} fait ce qui suit{nbsp}:
+
+* Fournit xref:security/hardening_guide.adoc[des valeurs par défaut et des options de configuration] qui permettent aux clusters de satisfaire le benchmark CIS Kubernetes xref:security/cis_self_assessment19.adoc[v1.9] ou xref:security/cis_self_assessment110.adoc[v1.10] avec une intervention minimale de l'opérateur.
+* Permet xref:security/fips3_support.adoc[la conformité FIPS 140-3].
+* Analyse régulièrement les composants pour les CVE en utilisant https://github.com/aquasecurity/trivy[trivy] dans notre pipeline de construction.
+
+== En quoi cela diffère-t-il de RKE ou {k3s-product-name}{nbsp}?
+
+{product-name} combine le meilleur des deux mondes de la version 1.x de RKE (ci-après dénommée RKE1) et {k3s-product-name}.
+
+De {k3s-product-name}, elle hérite de l'ergonomie, de la facilité d'exploitation et du modèle de déploiement.
+
+De RKE1, elle hérite d'un alignement étroit avec Kubernetes en amont. Dans certains cas, {k3s-product-name} a divergé de Kubernetes en amont afin d'optimiser les déploiements en périphérie, mais RKE1 et RKE2 peuvent rester étroitement alignés avec Kubernetes en amont.
+
+Il est important de noter que {product-name} ne dépend pas de Docker comme le fait RKE1. RKE1 utilisait Docker pour déployer et gérer les composants du plan de contrôle ainsi que l'environnement d'exécution de conteneur pour Kubernetes. RKE2 lance les composants du plan de contrôle en tant que pods statiques, gérés par le kubelet. L'environnement d'exécution de conteneur intégré est containerd.
+
+== Pourquoi deux noms{nbsp}?
+
+Il est connu sous le nom de {product-name} car il s'agit de la prochaine itération du Rancher Kubernetes Engine pour les cas d'utilisation en datacenter. La distribution fonctionne de manière autonome ou intégrée dans Rancher. Le provisionnement automatisé de nouveaux clusters {product-name} est disponible dans Rancher v2.6+.
+
+Il a également été connu sous le nom de RKE Government car il a été conçu pour cibler des secteurs avec des exigences de sécurité accrues.
+
+== Sécurité
+
+Rancher Labs soutient la divulgation responsable et s'efforce de résoudre les problèmes de sécurité dans un délai raisonnable. Pour signaler une vulnérabilité de sécurité, envoyez un e-mail à link:mailto:security@rancher.com[security@rancher.com].

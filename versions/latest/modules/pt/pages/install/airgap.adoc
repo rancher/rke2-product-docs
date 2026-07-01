@@ -1,0 +1,124 @@
+= Instalação Air-Gap
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Para instalar {product-name} em um ambiente air-gapped, você deve primeiro carregar as imagens no ambiente air-gapped e, em seguida, instalar o RKE2.
+
+[IMPORTANT]
+====
+Você pode usar qualquer versão do RKE2 Prime listada na URL de Artefatos Prime para os ativos mencionados nestes passos. Para saber mais sobre a URL de Artefatos Prime, consulte nossa https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[documentação exclusiva do Prime]. A autenticação é necessária. Use suas credenciais do https://scc.suse.com/home[Centro de Clientes SUSE (SCC)] para fazer login.
+====
+
+== Pré-requisitos
+
+Certifique-se de atender aos seguintes pré-requisitos com base no seu ambiente antes de prosseguir. Todos os passos listados nesta página devem ser executados como o usuário root ou através de `sudo`.
+
+[CAUTION]
+====
+Se o seu nó tiver o NetworkManager instalado e habilitado, xref:known_issues.adoc#_networkmanager[certifique-se de configurar o NetworkManager para ignorar interfaces gerenciadas pelo CNI].
+====
+
+* Se estiver executando em um nó air-gapped com SELinux habilitado, você deve instalar manualmente o RPM da política SELinux necessária antes de realizar estes passos. Consulte nossa xref:install/methods.adoc#_rpm[Documentação RPM] para determinar o que você precisa.
+* Se estiver executando em um nó air-gapped com SELinux habilitado, as seguintes dependências são necessárias para SLES, CentOS ou RHEL 8 ao fazer uma xref:install/methods.adoc#_rpm[instalação RPM]: `container-selinux iptables libnetfilter_conntrack libnfnetlink libnftnl policycoreutils-python-utils rke2-common rke2-selinux`
+* Se seus nós não tiverem uma interface com uma rota padrão, uma rota padrão deve ser configurada; até mesmo uma rota de buraco negro via uma interface fictícia será suficiente.  O RKE2 requer uma rota padrão para detectar automaticamente o IP primário do nó e para que o roteamento ClusterIP do kube-proxy funcione corretamente. Para adicionar uma rota fictícia, faça o seguinte:
++
+[,bash]
+----
+ip link add dummy0 type dummy
+ip link set dummy0 up
+ip addr add 203.0.113.254/31 dev dummy0
+ip route add default via 203.0.113.255 dev dummy0 metric 1000
+----
+
+== 1. Carregar Imagens
+
+Existem dois métodos diferentes para carregar as imagens. Cada método de carregamento de imagem possui requisitos diferentes e é adequado para diferentes cenários air-gapped. Escolha o método que melhor se adapta à sua infraestrutura e requisitos de segurança.
+
+
+=== Método Tarball
+
+. Baixe os tarballs das imagens air-gap do https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] para a versão do RKE2, CNI e plataforma que você está usando.
+ ** `rke2-images.linux-<ARCH>.tar.zst`, ou `rke2-images-core.linux-<ARCH>.tar.gz`. Este tarball contém as imagens de contêiner essenciais necessárias para o funcionamento do RKE2 Prime. Zstandard oferece melhores taxas de compressão e velocidades de descompressão mais rápidas em comparação com gzip.
+ ** `rke2-images-<CNI>.linux-<ARCH>.tar.gz`: Este tarball contém especificamente as imagens de contêiner para sua Interface de Rede de Contêiner (CNI). O CNI padrão no RKE2 é o Canal.
+ *** Se você estiver usando o CNI padrão, Canal (`--cni=canal`), pode usar o `rke2-image` arquivo legado conforme descrito acima ou os arquivos `rke2-images-core` e `rke2-images-canal`.
+ *** Se você estiver usando a CNI alternativa, Cilium (`--cni=cilium`), deve baixar os arquivos `rke2-images-core` e `rke2-images-cilium`.
+ *** Se estiver usando sua própria CNI (`--cni=none`), baixe apenas o arquivo `rke2-images-core`.
+ ** Se habilitar os gráficos vSphere CPI/CSI (`--cloud-provider-name=rancher-vsphere`), você também deve baixar o arquivo `rke2-images-vsphere`.
+. Crie um diretório chamado `/rke2-artifacts` no nó e salve os arquivos baixados anteriormente lá.
+. <<2. Install RKE2, Istall RKE2>>.
+
+
+=== Método de Registro Privado
+
+O suporte a registro privado respeita todas as configurações da xref:install/containerd_registry_configuration.adoc[configuração do registro do containerd], incluindo substituição de endpoint, protocolo de transporte (HTTP/HTTPS), autenticação, verificação de certificado e mais.
+
+. Adicione todas as imagens de sistema necessárias ao seu registro privado. Uma lista de imagens pode ser obtida do arquivo `.txt` correspondente a cada tarball mencionado acima. Alternativamente, você pode `docker load` os tarballs das imagens air-gap, em seguida, marcar e enviar as imagens carregadas.
+. <<2. Install RKE2, Instale RKE2>> usando o parâmetro `system-default-registry`, ou use a xref:install/containerd_registry_configuration.adoc[configuração do registro do containerd] para usar seu registro como um espelho para docker.io.
+
+
+== 2. Install RKE2
+
+As seguintes opções para instalar o RKE2 devem ser realizadas apenas após completar o <<Tarball Method>> ou <<Private Registry Method>>.
+
+O RKE2 pode ser instalado executando o <<RKE2 Binary Install,binário>> diretamente ou usando o <<RKE2 Install.sh Script Install,script install.sh>>.
+
+=== Instalação do Binário RKE2
+
+. Obtenha o arquivo binário RKE2 `rke2.linux-<ARCH>.tar.gz`.
+. Certifique-se de que o binário esteja nomeado como `rke2` e coloque-o em `/usr/local/bin`. Certifique-se de que ele seja executável.
+. Execute o binário com os parâmetros desejados.
+* Se você estiver usando o registro Rancher Prime, defina os seguintes valores em `config.yaml`:
+.. Defina `system-default-registry: registry.rancher.com`.
+.. Se você não estiver usando o CNI padrão, Canal, defina `cni: <CNI>`.
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+cni: <CNI>
+----
+* Se estiver usando o Método de Registro Privado, defina os seguintes valores em `config.yaml`:
++
+[,yaml]
+----
+system-default-registry: "registry.example.com:5000"
+----
++
+[NOTE]
+====
+O parâmetro `system-default-registry` deve especificar apenas autoridades URI válidas de acordo com o RFC 3986, ou seja, um host e uma porta opcional.
+====
+
+=== Script de Instalação RKE2 Install.sh
+
+`install.sh` pode ser usado em modo offline definindo a variável `INSTALL_RKE2_ARTIFACT_PATH` para um caminho contendo artefatos pré-baixados. Isso irá executar uma instalação padrão, incluindo a criação de unidades do systemd.
+
+. Baixe o script de instalação, os binários RKE2, as imagens RKE2 e os arquivos de checksums SHA256 do https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[URL de Artefatos Prime] para o diretório `/rke2-artifacts`, como no exemplo abaixo:
++
+[,bash]
+----
+mkdir /rke2-artifacts && cd /rke2-artifacts/
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2-images.linux-<ARCH>.tar.zst
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2.linux-<ARCH>.tar.gz
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/sha256sum-<ARCH>.txt
+curl -sfL https://get.rke2.io --output install.sh
+----
+
+. Execute `install.sh` usando o diretório, como no exemplo abaixo:
++
+[,bash]
+----
+INSTALL_RKE2_ARTIFACT_PATH=/rke2-artifacts sh install.sh
+----
+
+. Se você estiver usando o registro Rancher Prime, defina os seguintes valores em `config.yaml`:
+.. Defina `system-default-registry: registry.rancher.com`.
+.. Se você não estiver usando o CNI padrão, Canal, defina `cni: <CNI>`.
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+cni: <CNI>
+----
+
+. Ative e execute o serviço conforme descrito xref:install/quickstart.adoc[aqui].

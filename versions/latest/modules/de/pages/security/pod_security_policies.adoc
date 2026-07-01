@@ -1,0 +1,213 @@
+= Standard Pod-Sicherheitsrichtlinien
+:page-languages: [en, zh]
+:revdate: 2025-07-17
+:page-revdate: {revdate}
+
+Dieses Dokument beschreibt, wie RKE2 `PodSecurityPolicies` und `NetworkPolicies` konfiguriert, um standardmäßig sicher zu sein und gleichzeitig den Betreibern maximale Konfigurationsflexibilität zu bieten.
+
+[IMPORTANT]
+.Versionssperre
+====
+Dieses Dokument gilt für RKE2 v1.24 und ältere Versionen. Bitte entnehmen Sie die Informationen zur Standardrichtlinie für RKE2 v1.25 und höher der xref:security/pod_security_standards.adoc[Dokumentation der Pod-Sicherheitsstandards].
+====
+
+== Pod-Sicherheitsrichtlinien
+
+RKE2 kann mit oder ohne den `profile: cis-1.6` Konfigurationsparameter betrieben werden. Dies führt dazu, dass beim Start unterschiedliche `PodSecurityPolicies` (PSPs) angewendet werden.
+
+* Wenn mit dem `cis-1.6` Profil betrieben, wendet RKE2 eine restriktive Richtlinie namens `global-restricted-psp` auf alle Namespaces außer `kube-system` an. Der `kube-system` Namespace benötigt eine weniger restriktive Richtlinie namens `system-unrestricted-psp`, um kritische Komponenten zu starten.
+* Wenn ohne das `cis-1.6` Profil betrieben, wendet RKE2 eine völlig uneingeschränkte Richtlinie namens `global-unrestricted-psp` an, was dem Betrieb ohne den PSP-Zulassungscontroller entspricht.
+
+RKE2 wird diese Richtlinien beim ersten Start implementieren, aber danach nicht mehr ändern, es sei denn, dies wird ausdrücklich vom Clusterbetreiber wie unten beschrieben ausgelöst. Dies ermöglicht es dem Betreiber, die PSPs vollständig zu kontrollieren, ohne dass die Standardeinstellungen von RKE2 stören.
+
+Die Erstellung und Anwendung der PSPs werden durch das Vorhandensein oder Fehlen bestimmter Annotationen im `kube-system` Namespace gesteuert. Diese ordnen sich direkt den PSPs zu, die erstellt werden können:
+
+* `psp.rke2.io/global-restricted`
+* `psp.rke2.io/system-unrestricted`
+* `psp.rke2.io/global-unrestricted`
+
+Die folgende Logik wird beim Start für die Richtlinien und deren Annotationen ausgeführt:
+
+* Wenn die Annotation vorhanden ist, fährt RKE2 ohne weitere Maßnahmen fort.
+* Wenn die Annotation nicht vorhanden ist, überprüft RKE2, ob die zugehörige Richtlinie existiert, und falls ja, löscht sie und erstellt sie neu sowie fügt die Annotation dem Namespace hinzu.
+* Im Fall des `global-unrestricted-psp` wird die Richtlinie nicht neu erstellt. Dies dient dazu, den Wechsel zwischen CIS- und Nicht-CIS-Modi zu berücksichtigen, ohne den Cluster weniger sicher zu machen.
+* Bei der Erstellung einer Richtlinie werden auch Clusterrollen und Clusterrollenbindungen erstellt, um sicherzustellen, dass die entsprechenden Richtlinien standardmäßig in Kraft treten.
+
+Nach dem ersten Start können Betreiber die Richtlinien von RKE2 ändern oder löschen, und RKE2 wird diese Änderungen respektieren. Um eine Richtlinie "zurückzusetzen", muss ein Betreiber lediglich die zugehörige Annotation aus dem `kube-system` Namespace löschen und RKE2 neu starten.
+
+Die Richtlinien sind unten aufgeführt, beginnend mit der restriktivsten `global-restricted` PSP.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: global-restricted-psp
+spec:
+  privileged: false                # CIS - 5.2.1
+  allowPrivilegeEscalation: false  # CIS - 5.2.5
+  requiredDropCapabilities:        # CIS - 5.2.7/8/9
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false               # CIS - 5.2.4
+  hostIPC: false                   # CIS - 5.2.3
+  hostPID: false                   # CIS - 5.2.2
+  runAsUser:
+    rule: 'MustRunAsNonRoot'       # CIS - 5.2.6
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+----
+
+Wenn RKE2 im Nicht-CIS-Modus gestartet wird, werden die Annotationen wie oben überprüft, wobei in der Folge eine permissive Anwendung der Pod-Sicherheitsrichtlinien erfolgt. Siehe unten.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: global-unrestricted-psp
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  volumes:
+  - '*'
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  hostIPC: true
+  hostPID: true
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+----
+
+In beiden Fällen wird die "System unrestricted policy" angewendet. Siehe unten.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: system-unrestricted-psp
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  volumes:
+  - '*'
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  hostIPC: true
+  hostPID: true
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+----
+
+Um die derzeit auf Ihrem System bereitgestellten Pod-Sicherheitsrichtlinien anzuzeigen, führen Sie den folgenden Befehl aus:
+
+[,bash]
+----
+kubectl get psp -A
+----
+
+== Netzwerkrichtlinien
+
+Wenn RKE2 mit dem `profile: cis-1.6` Parameter ausgeführt wird, werden 2 Netzwerkrichtlinien auf die `kube-system`, `kube-public` und `default` Namespaces angewendet, wobei auch die zugehörigen Annotationen gesetzt werden. Die gleiche Logik gilt für diese Richtlinien und Annotationen wie für die PSPs. Beim Start werden die Annotationen für jeden Namespace auf ihre Existenz überprüft und wenn sie existieren, unternimmt RKE2 keine Maßnahmen. Wenn die Annotation nicht existiert, überprüft RKE2, ob die Richtlinie existiert, und wenn ja, erstellt RKE2 sie neu.
+
+Die erste angewendete Richtlinie beschränkt den Netzwerkverkehr nur auf den Namespace selbst. Siehe unten.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  managedFields:
+  - apiVersion: networking.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:spec:
+        f:ingress: {}
+        f:policyTypes: {}
+  name: default-network-policy
+  namespace: default
+spec:
+  ingress:
+  - from:
+    - podSelector: {}
+  podSelector: {}
+  policyTypes:
+  - Ingress
+----
+
+Die zweite angewendete Richtlinie gilt für den `kube-system` Namespace und erlaubt DNS-Verkehr. Siehe unten.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  managedFields:
+  - apiVersion: networking.k8s.io/v1
+    fieldsV1:
+      f:spec:
+        f:ingress: {}
+        f:podSelector:
+          f:matchLabels:
+        f:policyTypes: {}
+  name: default-network-dns-policy
+  namespace: kube-system
+spec:
+  ingress:
+  - ports:
+    - port: 53
+      protocol: TCP
+    - port: 53
+      protocol: UDP
+  podSelector:
+    matchLabels:
+  policyTypes:
+  - Ingress
+----
+
+RKE2 wendet die `default-network-policy` Richtlinie und die `np.rke2.io` Annotation auf alle integrierten Namespaces an. Der `kube-system` Namespace erhält zusätzlich die `default-network-dns-policy` Richtlinie und die `np.rke2.io/dns` Annotation.
+
+Um die derzeit auf Ihrem System bereitgestellten Netzwerkrichtlinien anzuzeigen, führen Sie den folgenden Befehl aus:
+
+[,bash]
+----
+kubectl get networkpolicies -A
+----

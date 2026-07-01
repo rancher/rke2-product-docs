@@ -1,110 +1,110 @@
-= Metrics
+= 指标
 :page-languages: [en, zh]
 :revdate: 2025-07-22
 :page-revdate: {revdate}
 
-RKE2 provides metrics for monitoring the health and performance of the cluster.
+RKE2 提供用于监控集群健康和性能的指标。
 
-Individual components provide most metrics. See the following component-specific documentation for more information:
+各个组件提供大多数指标。有关更多信息，请参阅以下特定组件的文档：
 
-* https://coredns.io/plugins/metrics/[CoreDNS metrics]
-* https://etcd.io/docs/v3.5/metrics/[etcd metrics]
-* https://kubernetes.io/docs/reference/instrumentation/node-metrics/[Kubernetes node metrics]
-* https://kubernetes.io/docs/reference/instrumentation/metrics/[Kubernetes component metrics]
+* https://coredns.io/plugins/metrics/[CoreDNS 指标]
+* https://etcd.io/docs/v3.5/metrics/[etcd 指标]
+* https://kubernetes.io/docs/reference/instrumentation/node-metrics/[Kubernetes 节点指标]
+* https://kubernetes.io/docs/reference/instrumentation/metrics/[Kubernetes 组件指标]
 
-Other components may provide additional metrics. Consult the upstream project documentation for any components not listed above.
+其他组件可能提供额外的指标。请查阅上游项目文档以获取未列出的任何组件的信息。
 
-== Supervisor Metrics
+== Supervisor 指标
 
-When you start RKE2 with `supervisor-metrics: true`, the RKE2 supervisor exposes metrics. You can access these metrics through the `/metrics` endpoint on each node at port `9345`:
+当您使用 `supervisor-metrics: true` 启动 RKE2 时，RKE2 Supervisor 会公开指标。您可以通过每个节点的 `/metrics` 端点在端口 `9345` 访问这些指标：
 
 [,sh]
 ----
 kubectl get --server https://NODENAME:9345 --raw /metrics
 ----
 
-The RKE2 supervisor process exposes the following metrics:
+RKE2 Supervisor 进程公开以下指标：
 
 * <<RKE2 Cluster Management Metrics>>
-* https://github.com/rancher/lasso/blob/main/README.md#lasso-controller[Lasso controller metrics]
-* https://github.com/kubernetes/client-go/blob/master/README.md[Kubernetes client and workqueue metrics]
-* https://pkg.go.dev/runtime/metrics#hdr-Supported_metrics[Go runtime metrics]
+* https://github.com/rancher/lasso/blob/main/README.md#lasso-controller[Lasso 控制器指标]
+* https://github.com/kubernetes/client-go/blob/master/README.md[Kubernetes 客户端和工作队列指标]
+* https://pkg.go.dev/runtime/metrics#hdr-Supported_metrics[Go 运行时指标]
 
-If the RKE2 embedded registry is enabled, the RKE2 supervisor process also exposes the following metrics:
+如果启用了 RKE2 嵌入式注册表，RKE2 Supervisor 进程还会公开以下指标：
 
-* https://spegel.dev/docs/metrics/[Spegel metrics]
-* https://github.com/libp2p/go-libp2p/blob/master/README.md[libp2p metrics]
+* https://spegel.dev/docs/metrics/[Spegel 指标]
+* https://github.com/libp2p/go-libp2p/blob/master/README.md[libp2p 指标]
 
-== RKE2 Cluster Management Metrics
+== RKE2 集群管理指标
 
 === rke2_certificate_expiration_seconds
 
-Remaining lifetime in seconds of the certificate, labeled by certificate subject and usages.
+证书的剩余有效期（以秒为单位），按证书主题和用途标记。
 
-* Type: Gauge
-* Labels: `*subject*`, `*usage*`
+* 类型:仪表
+* 标签：`*subject*`，`*usage*`
 
 === rke2_loadbalancer_server_connections
 
-Count of current connections to the load balancer server, labeled by the load balancer name and server address.
+当前连接到负载均衡服务器的数量，按负载均衡器名称和服务器地址标记。
 
-* Type: Gauge
-* Labels: `*name*`, `*server*`
+* 类型:仪表
+* 标签：`*name*`，`*server*`
 
 === rke2_loadbalancer_server_health
 
-Current health state of the load balancer backend servers, labeled by the load balancer name and server address.
+负载均衡后端服务器的当前健康状态，按负载均衡器名称和服务器地址标记。
 
-State is enum of 0=INVALID, 1=FAILED, 2=STANDBY, 3=UNCHECKED, 4=RECOVERING, 5=HEALTHY, 6=PREFERRED, 7=ACTIVE.
+状态为枚举值：0=无效，1=失败，2=待机，3=未检查，4=恢复中，5=健康，6=首选，7=活动。
 
-* Type: Gauge
-* Labels: `*name*`, `*server*`
+* 类型:仪表
+* 标签：`*name*`，`*server*`
 
 === rke2_loadbalancer_dial_duration_seconds
 
-Time in seconds taken to dial a connection to a backend server, labeled by the load balancer name and success/failure status.
+与后端服务器建立连接所需的时间（以秒为单位），按负载均衡器名称和成功/失败状态标记。
 
-* Type: Histogram
-* Labels: `*name*`, `*status*`
+* 类型:柱状图
+* 标签：`*name*`，`*status*`
 
 === rke2_etcd_snapshot_save_duration_seconds
 
-Total time in seconds taken to complete the etcd snapshot process, labeled by success/failure status.
+完成 etcd 快照处理所需的总时间（以秒为单位），按成功/失败状态标记。
 
-* Type: Histrogram
-* Labels: `*status*`
+* 类型:直方图
+* 标签：`*status*`
 
 === rke2_etcd_snapshot_save_local_duration_seconds
 
-Total time in seconds taken to save a local snapshot file, labeled by success/failure status.
+保存本地快照文件所需的总时间（以秒为单位），按成功/失败状态标记。
 
-* Type: Histrogram
-* Labels: `*status*`
+* 类型:直方图
+* 标签：`*status*`
 
 === rke2_etcd_snapshot_save_s3_duration_seconds
 
-Total time in seconds taken to upload a snapshot file to S3, labeled by success/failure status.
+将快照文件上传到 S3 所需的总时间（以秒为单位），按成功/失败状态标记。
 
-* Type: Histrogram
-* Labels: `*status*`
+* 类型:直方图
+* 标签：`*status*`
 
 === rke2_etcd_snapshot_reconcile_duration_seconds
 
-Total time in seconds taken to sync the list of etcd snapshots, labeled by success/failure status.
+同步 etcd 快照列表所需的总时间（以秒为单位），按成功/失败状态标记。
 
-* Type: Histrogram
-* Labels: `*status*`
+* 类型:直方图
+* 标签：`*status*`
 
 === rke2_etcd_snapshot_reconcile_local_duration_seconds
 
-Total time in seconds taken to list local snapshot files, labeled by success/failure status.
+列出本地快照文件所需的总时间（以秒为单位），按成功/失败状态标记。
 
-* Type: Histrogram
-* Labels: `*status*`
+* 类型:直方图
+* 标签：`*status*`
 
 === rke2_etcd_snapshot_reconcile_s3_duration_seconds
 
-Total time in seconds taken to list S3 snapshot files, labeled by success/failure status.
+列出 S3 快照文件所需的总时间（以秒为单位），按成功/失败状态标记。
 
-* Type: Histrogram
-* Labels: `*status*`
+* 类型:直方图
+* 标签：`*status*`

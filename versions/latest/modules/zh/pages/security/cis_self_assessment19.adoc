@@ -1,33 +1,33 @@
-= CIS 1.9 Self-Assessment Guide
+= CIS 1.9 自我评估指南
 :page-languages: [en, zh]
 :revdate: 2025-09-05
 :page-revdate: {revdate}
 
-== Overview
+== 概述
 
-This document is a companion to the RKE2 security hardening guide. The hardening guide provides prescriptive guidance for hardening a production installation of RKE2, and this benchmark guide is meant to help you evaluate the level of security of the hardened cluster against each control in the CIS Kubernetes benchmark. It is to be used by RKE2 operators, security teams, auditors, and decision makers.
+本文件是 RKE2 安全强化指南的补充。安全强化指南提供了对 RKE2 生产安装进行强化的建议性指导，而本基准指南旨在帮助您评估强化集群在 CIS Kubernetes 基准中的每项控制的安全级别。该指南供 RKE2 操作员、安全团队、审计员和决策者使用。
 
-This guide is specific to the *v1.27-1.32* release line of RKE2 and the *v1.9* release of the CIS Kubernetes Benchmark.
+本指南特定于 RKE2 的 *v1.27-1.32* 版本线和 CIS Kubernetes 基准的 *v1.9* 版本。
 
-For more information about each control, including detailed rationales and descriptions checks, you can refer to the corresponding section of the CIS Kubernetes Benchmark v1.8. You can download the benchmark, after creating a free account, in https://www.cisecurity.org/benchmark/kubernetes/[Center for Internet Security (CIS)].
+有关每项控制的更多信息，包括详细的理由和描述检查，您可以参考 CIS Kubernetes 基准 v1.8 的相应部分。您可以在 https://www.cisecurity.org/benchmark/kubernetes/[互联网安全中心 (CIS)] 创建免费账户后下载基准。
 
-=== Testing controls methodology
+=== 测试控制方法
 
-Each control in the CIS Kubernetes Benchmark was evaluated against a RKE2 cluster that was configured according to the accompanying hardening guide.
+CIS Kubernetes 基准中的每项控制都是针对根据附带的安全强化指南配置的 RKE2 集群进行评估的。
 
-These are the possible results for each control:
+每项控制的可能结果如下：
 
-* *PASS* - The control is automated (scored: true). The RKE2 cluster under test passed the audit outlined in the benchmark.
-* *Not Applicable* - The control is not applicable (type: skip) to RKE2 because of how it is designed to operate. The rationale section will explain why this is so.
-* *WARN* - The control is manual (scored: false) in the CIS benchmark and depends on the manual operator intervention. The remediation section will provide guidance on how to achieve a PASS result.
+* *通过* - 该控制是自动化的（得分：真）。被测试的 RKE2 集群通过了基准中概述的审计。
+* *不适用* - 由于 RKE2 的设计方式，该控制不适用（类型：跳过）。理由部分将解释原因。
+* *警告* - 该控制在 CIS 基准中是手动的（得分：假），并依赖于手动操作员干预。补救部分将提供如何获得通过结果的指导。
 
-== 1 Control Plane Security Configuration
+== 1 控制平面安全配置
 
-=== 1.1 Control Plane Node Configuration Files
+=== 1.1 控制平面节点配置文件
 
-==== 1.1.1 Ensure that the API server pod specification file permissions are set to 600 or more restrictive (Automated)
+==== 1.1.1 确保 API 服务器 pod 规范文件的权限设置为 600 或更严格（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -36,10 +36,10 @@ These are the possible results for each control:
 stat -c permissions=%a /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml
 ----
 
-*Expected Result:* permissions has permissions 600, expected 600 or more restrictive
+*预期结果：* 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -50,14 +50,14 @@ permissions=600
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chmod 600 /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml`
 ======
 
-==== 1.1.2 Ensure that the API server pod specification file ownership is set to root:root (Automated)
+==== 1.1.2 确保 API 服务器 pod 规范文件的所有权设置为 root:root（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -66,10 +66,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml; then stat -c %U:%G /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml; fi'
 ----
 
-*Expected Result:* 'root:root' is equal to 'root:root'
+*预期结果：* 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -80,14 +80,14 @@ root:root
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chown root:root /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml`
 ======
 
-==== 1.1.3 Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive (Automated)
+==== 1.1.3 确保控制器管理器 pod 规范文件的权限设置为 600 或更严格（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -96,10 +96,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml; then stat -c permissions=%a /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml; fi'
 ----
 
-*Expected Result:* permissions has permissions 600, expected 600 or more restrictive
+*预期结果：* 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -110,14 +110,14 @@ permissions=600
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chmod 600 /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml`
 ======
 
-==== 1.1.4 Ensure that the controller manager pod specification file ownership is set to root:root (Automated)
+==== 1.1.4 确保控制器管理器 pod 规范文件的所有权设置为 root:root（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -126,10 +126,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml; then stat -c %U:%G /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml; fi'
 ----
 
-*Expected Result:* 'root:root' is equal to 'root:root'
+*预期结果：* 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -140,14 +140,14 @@ root:root
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chown root:root /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml`
 ======
 
-==== 1.1.5 Ensure that the scheduler pod specification file permissions are set to 600 or more restrictive (Automated)
+==== 1.1.5 确保调度程序 pod 规范文件的权限设置为 600 或更严格（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -156,10 +156,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml; then stat -c permissions=%a /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml; fi'
 ----
 
-*Expected Result:* permissions has permissions 600, expected 600 or more restrictive
+*预期结果：* 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -170,14 +170,14 @@ permissions=600
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chmod 600 /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml`
 ======
 
-==== 1.1.6 Ensure that the scheduler pod specification file ownership is set to root:root (Automated)
+==== 1.1.6 确保调度程序 pod 规范文件的所有权设置为 root:root（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -186,10 +186,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml; then stat -c %U:%G /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml; fi'
 ----
 
-*Expected Result:* 'root:root' is present
+*预期结果：* 'root:root' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -200,14 +200,14 @@ root:root
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chown root:root /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml`
 ======
 
-==== 1.1.7 Ensure that the etcd pod specification file permissions are set to 600 or more restrictive (Manual)
+==== 1.1.7 确保 etcd pod 规范文件的权限设置为 600 或更严格（手动）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -216,10 +216,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml; then stat -c permissions=%a /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml; fi'
 ----
 
-*Expected Result:* permissions has permissions 600, expected 600 or more restrictive
+*预期结果：* 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -230,14 +230,14 @@ permissions=600
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-If running master only with no etcd role, this check is Not applicable. If controlplane and etcd roles are present on the same nodes but this check is warn then Run the below command (based on the file location on your system) on the control plane node. For example, `chmod 600 /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml`
+如果仅运行主节点而没有 etcd 角色，则此检查不适用。如果控制平面和 etcd 角色在同一节点上，但此检查为警告，则在控制平面节点上运行以下命令（基于您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml`
 ======
 
-==== 1.1.8 Ensure that the etcd pod specification file ownership is set to root:root (Manual)
+==== 1.1.8 确保 etcd pod 规范文件的所有权设置为 root:root（手动）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -246,10 +246,10 @@ If running master only with no etcd role, this check is Not applicable. If contr
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml; then stat -c %U:%G /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml; fi'
 ----
 
-*Expected Result:* 'root:root' is equal to 'root:root'
+*预期结果：* 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -260,23 +260,23 @@ root:root
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-If running master only with no etcd role, this check is Not applicable. If controlplane and etcd roles are present on the same nodes but this check is warn then Run the below command (based on the file location on your system) on the control plane node. For example, `chown root:root /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml`
+如果仅运行主节点而没有 etcd 角色，则此检查不适用。如果控制平面和 etcd 角色在同一节点上，但此检查为警告，则在控制平面节点上运行以下命令（基于您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml`
 ======
 
-==== 1.1.9 Ensure that the Container Network Interface file permissions are set to 600 or more restrictive (Manual)
+==== 1.1.9 确保容器网络接口文件的权限设置为 600 或更严格（手动）
 
-*Result:* WARN
+*结果：*警告
 
-*Remediation:*
-Note that for many CNIs, a lock file is created with permissions 750. This is expected and can be ignored.
-Run the below command (based on the file location on your system) on the control plane node.
-For example, `chmod 600 /var/lib/cni/networks/<filename> and chmod 600 /etc/cni/net.d/<filename>`
+*修正：*
+请注意，对于许多 CNI，会创建一个权限为 750 的锁定文件。这是预期的，可以忽略。
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。
+例如，`chmod 600 /var/lib/cni/networks/<filename> and chmod 600 /etc/cni/net.d/<filename>`
 
-==== 1.1.10 Ensure that the Container Network Interface file ownership is set to root:root (Manual)
+==== 1.1.10 确保容器网络接口文件的所有权设置为 root:root（手动）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -286,10 +286,10 @@ ps -fC ${kubeletbin:-kubelet} | grep -- --cni-conf-dir || echo "/etc/cni/net.d" 
 find /var/lib/cni/networks -type f 2> /dev/null | xargs --no-run-if-empty stat -c %U:%G
 ----
 
-*Expected Result:* 'root:root' is present
+*预期结果：* 'root:root' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -300,14 +300,14 @@ root:root root:root root:root root:root root:root root:root root:root root:root 
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chown root:root <path/to/cni/files>`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root <path/to/cni/files>`
 ======
 
-==== 1.1.11 Ensure that the etcd data directory permissions are set to 700 or more restrictive (Manual)
+==== 1.1.11 确保 etcd 目录的权限设置为 700 或更严格（手动）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -316,10 +316,10 @@ Run the below command (based on the file location on your system) on the control
 stat -c permissions=%a /var/lib/rancher/rke2/server/db/etcd
 ----
 
-*Expected Result:* permissions has permissions 700, expected 700 or more restrictive
+*预期结果：* 权限为 700，预期为 700 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -330,14 +330,14 @@ permissions=700
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-If running master only with no etcd role, this check is Not applicable. If controlplane and etcd roles are present on the same nodes but this check is warn then On the etcd server node, get the etcd data directory, passed as an argument --data-dir, from the command 'ps -ef | grep etcd'. Run the below command (based on the etcd data directory found above). For example, `chmod 700 /var/lib/rancher/rke2/server/db/etcd`
+如果仅运行主节点而没有 etcd 角色，则此检查不适用。如果控制平面和 etcd 角色在同一节点上，但此检查为警告，则在 etcd 服务器节点上，从命令 'ps -ef | grep etcd' 获取 etcd 数据目录，作为参数 --data-dir。运行以下命令（根据上面找到的 etcd 数据目录）。例如，`chmod 700 /var/lib/rancher/rke2/server/db/etcd`
 ======
 
-==== 1.1.12 Ensure that the etcd data directory ownership is set to etcd:etcd (Manual)
+==== 1.1.12 确保 etcd 数据目录的所有权设置为 etcd:etcd（手动）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -346,10 +346,10 @@ If running master only with no etcd role, this check is Not applicable. If contr
 stat -c %U:%G /var/lib/rancher/rke2/server/db/etcd
 ----
 
-*Expected Result:* 'etcd:etcd' is present
+*预期结果:* 'etcd:etcd' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -360,14 +360,14 @@ etcd:etcd
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-If running master only with no etcd role, this check is Not applicable. If controlplane and etcd roles are present on the same nodes but this check is warn then On the etcd server node, get the etcd data directory, passed as an argument --data-dir, from the command 'ps -ef | grep etcd'. Run the below command (based on the etcd data directory found above). For example, `chown etcd:etcd /var/lib/rancher/rke2/server/db/etcd`
+如果仅运行主节点而没有 etcd 角色，则此检查不适用。如果控制平面和 etcd 角色在同一节点上，但此检查为警告，则在 etcd 服务器节点上，从命令 'ps -ef | grep etcd' 获取 etcd 数据目录，作为参数 --data-dir。运行以下命令（根据上面找到的 etcd 数据目录）。例如，`chown etcd:etcd /var/lib/rancher/rke2/server/db/etcd`
 ======
 
-==== 1.1.13 Ensure that the admin.conf file permissions are set to 600 or more restrictive (Automated)
+==== 1.1.13 确保 admin.conf 文件的权限设置为 600 或更严格（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -376,10 +376,10 @@ If running master only with no etcd role, this check is Not applicable. If contr
 stat -c permissions=%a /var/lib/rancher/rke2/server/cred/admin.kubeconfig
 ----
 
-*Expected Result:* permissions has permissions 600, expected 600 or more restrictive
+*预期结果：* 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -390,14 +390,14 @@ permissions=600
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chmod 600 /var/lib/rancher/rke2/server/cred/admin.kubeconfig`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/server/cred/admin.kubeconfig`
 ======
 
-==== 1.1.14 Ensure that the admin.conf file ownership is set to root:root (Automated)
+==== 1.1.14 确保 admin.conf 文件的所有权设置为 root:root（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -406,10 +406,10 @@ Run the below command (based on the file location on your system) on the control
 stat -c %U:%G /var/lib/rancher/rke2/server/cred/admin.kubeconfig
 ----
 
-*Expected Result:* 'root:root' is equal to 'root:root'
+*预期结果：* 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -420,14 +420,14 @@ root:root
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chown root:root /var/lib/rancher/rke2/server/cred/admin.kubeconfig`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/server/cred/admin.kubeconfig`
 ======
 
-==== 1.1.15 Ensure that the scheduler.conf file permissions are set to 600 or more restrictive (Automated)
+==== 1.1.15 确保 scheduler.conf 文件的权限设置为 600 或更严格（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -436,10 +436,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig; then stat -c permissions=%a /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig; fi'
 ----
 
-*Expected Result:* permissions has permissions 600, expected 600 or more restrictive
+*预期结果：* 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -450,14 +450,14 @@ permissions=600
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chmod 600 /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig`
 ======
 
-==== 1.1.16 Ensure that the scheduler.conf file ownership is set to root:root (Automated)
+==== 1.1.16 确保 scheduler.conf 文件的所有权设置为 root:root（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -466,10 +466,10 @@ Run the below command (based on the file location on your system) on the control
 stat -c %U:%G /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig
 ----
 
-*Expected Result:* 'root:root' is equal to 'root:root'
+*预期结果：* 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -480,14 +480,14 @@ root:root
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chown root:root /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig`
 ======
 
-==== 1.1.17 Ensure that the controller-manager.conf file permissions are set to 600 or more restrictive (Automated)
+==== 1.1.17 确保 controller-manager.conf 文件的权限设置为 600 或更严格（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -496,10 +496,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/server/cred/controller.kubeconfig; then stat -c permissions=%a /var/lib/rancher/rke2/server/cred/controller.kubeconfig; fi'
 ----
 
-*Expected Result:* permissions has permissions 600, expected 600 or more restrictive
+*预期结果：* 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -510,14 +510,14 @@ permissions=600
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chmod 600 /var/lib/rancher/rke2/server/cred/controller.kubeconfig`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/server/cred/controller.kubeconfig`
 ======
 
-==== 1.1.18 Ensure that the controller-manager.conf file ownership is set to root:root (Automated)
+==== 1.1.18 确保 controller-manager.conf 文件的所有权设置为 root:root（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -526,10 +526,10 @@ Run the below command (based on the file location on your system) on the control
 stat -c %U:%G /var/lib/rancher/rke2/server/cred/controller.kubeconfig
 ----
 
-*Expected Result:* 'root:root' is equal to 'root:root'
+*预期结果：* 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -540,14 +540,14 @@ root:root
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chown root:root /var/lib/rancher/rke2/server/cred/controller.kubeconfig`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/server/cred/controller.kubeconfig`
 ======
 
-==== 1.1.19 Ensure that the Kubernetes PKI directory and file ownership is set to root:root (Automated)
+==== 1.1.19 确保 Kubernetes PKI 目录和文件的所有权设置为 root:root（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -556,10 +556,10 @@ Run the below command (based on the file location on your system) on the control
 stat -c %U:%G /var/lib/rancher/rke2/server/tls
 ----
 
-*Expected Result:* 'root:root' is equal to 'root:root'
+*预期结果：* 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -570,23 +570,22 @@ root:root
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chown -R root:root /var/lib/rancher/rke2/server/tls`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chown -R root:root /var/lib/rancher/rke2/server/tls`
 ======
 
-==== 1.1.20 Ensure that the Kubernetes PKI certificate file permissions are set to 600 or more restrictive (Manual)
+==== 1.1.20 确保 Kubernetes PKI 证书文件的权限设置为 600 或更严格（手动）
 
-*Result:* WARN
+*结果：*警告
 
-*Remediation:*
-Run the below command (based on the file location on your system) on the control plane node.
-For example,
-`chmod -R 600 /var/lib/rancher/rke2/server/tls/*.crt`
+*修正：*
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。
+例如，`chmod -R 600 /var/lib/rancher/rke2/server/tls/*.crt`
 
-==== 1.1.21 Ensure that the Kubernetes PKI key file permissions are set to 600 (Automated)
+==== 1.1.21 确保 Kubernetes PKI 密钥文件的权限设置为 600（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -595,10 +594,10 @@ For example,
 stat -c permissions=%a /var/lib/rancher/rke2/server/tls/*.key
 ----
 
-*Expected Result:* permissions has permissions 600, expected 600 or more restrictive
+*预期结果：* 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -609,16 +608,16 @@ permissions=600 permissions=600 permissions=600 permissions=600 permissions=600 
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the control plane node. For example, `chmod -R 600 /var/lib/rancher/rke2/server/tls/*.key`
+在控制平面节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod -R 600 /var/lib/rancher/rke2/server/tls/*.key`
 ======
 
-=== 1.2 API Server
+=== 1.2 API 服务器
 
-==== 1.2.1 Ensure that the --anonymous-auth argument is set to false (Automated)
+==== 1.2.1 确保 --anonymous-auth 参数设置为 false（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -627,10 +626,10 @@ Run the below command (based on the file location on your system) on the control
 /bin/ps -fC kube-apiserver
 ----
 
-*Expected Result:* '--anonymous-auth' is equal to 'false'
+*预期结果：* '--anonymous-auth' 等于 'false'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -641,18 +640,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --anonymous-auth argument to false. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove anything similar to below.
+默认情况下，RKE2 将 --anonymous-auth 参数设置为 false。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除类似以下内容。
 ----
 kube-apiserver-arg: - "anonymous-auth=true"
 ----
 
 ======
 
-==== 1.2.2 Ensure that the --token-auth-file parameter is not set (Automated)
+==== 1.2.2 确保 --token-auth-file 参数未设置（自动化）
 
-*Result:* PASS
+*结果：*PASS
 
 *Audit:*
 
@@ -661,10 +660,10 @@ kube-apiserver-arg: - "anonymous-auth=true"
 /bin/ps -fC kube-apiserver
 ----
 
-*Expected Result:* '--token-auth-file' is not present
+*预期结果：* '--token-auth-file' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -675,26 +674,26 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ======
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Follow the documentation and configure alternate mechanisms for authentication. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove anything similar to below.
+请遵循文档并配置替代的身份验证机制。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除类似以下内容。
 ----
 kube-apiserver-arg: - "token-auth-file=+++<path>+++"
 ----
 ======
 
-==== 1.2.3 Ensure that the --DenyServiceExternalIPs is set (Manual)
+==== 1.2.3 确保 --DenyServiceExternalIPs 已设置（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** By default, RKE2 does not set DenyServiceExternalIPs. To enable this flag, edit the RKE2 config file /etc/rancher/rke2/config.yaml like below.
+**修正：**默认情况下，RKE2 不会设置 DenyServiceExternalIPs。要启用此标志，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，如下所示。
 ----
 kube-apiserver-arg: - "enable-admission-plugins=DenyServiceExternalIPs"
 ----
 
-==== 1.2.4 Ensure that the --kubelet-client-certificate and --kubelet-client-key arguments are set as appropriate (Automated)
+==== 1.2.4 确保 --kubelet-client-certificate 和 --kubelet-client-key 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -703,10 +702,10 @@ kube-apiserver-arg: - "enable-admission-plugins=DenyServiceExternalIPs"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--kubelet-client-certificate' is present AND '--kubelet-client-key' is present
+**预期结果：** '--kubelet-client-certificate' 存在且 '--kubelet-client-key' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -717,18 +716,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically provides the kubelet client certificate and key. They are generated and located at /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt and /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key If for some reason you need to provide your own certificate and key, you can set the below parameters in the RKE2 config file /etc/rancher/rke2/config.yaml.
+默认情况下，RKE2 自动提供 kubelet 客户端证书和密钥。它们在 /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt 和 /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key 生成并存放。如果出于某种原因需要提供自己的证书和密钥，可以在 RKE2 配置文件 /etc/rancher/rke2/config.yaml 中设置以下参数。
 ----
 kube-apiserver-arg: - "kubelet-client-certificate=<path/to/client-cert-file>" - "kubelet-client-key=<path/to/client-key-file>"
 ----
 
 ======
 
-==== 1.2.5 Ensure that the --kubelet-certificate-authority argument is set as appropriate (Automated)
+==== 1.2.5 确保 --kubelet-certificate-authority 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -737,10 +736,10 @@ kube-apiserver-arg: - "kubelet-client-certificate=<path/to/client-cert-file>" - 
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--kubelet-certificate-authority' is present
+**预期结果：** '--kubelet-certificate-authority' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -751,18 +750,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically provides the kubelet CA cert file, at /var/lib/rancher/rke2/server/tls/server-ca.crt. If for some reason you need to provide your own ca certificate, look at using the rke2 certificate command line tool. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 自动提供 kubelet CA 证书文件，位于 /var/lib/rancher/rke2/server/tls/server-ca.crt。如果出于某种原因需要提供自己的 CA 证书，请考虑使用 rke2 证书命令行工具。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-apiserver-arg: - "kubelet-certificate-authority=<path/to/ca-cert-file>"
 ----
 
 ======
 
-==== 1.2.6 Ensure that the --authorization-mode argument is not set to AlwaysAllow (Automated)
+==== 1.2.6 确保 --authorization-mode 参数未设置为 AlwaysAllow（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -771,10 +770,10 @@ kube-apiserver-arg: - "kubelet-certificate-authority=<path/to/ca-cert-file>"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--authorization-mode' does not have 'AlwaysAllow'
+**预期结果:** '--authorization-mode' 不包含 'AlwaysAllow'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -785,18 +784,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --authorization-mode to AlwaysAllow. If this check fails, edit RKE2 config file /etc/rancher/rke2/config.yaml, remove any lines like below.
+默认情况下，RKE2 不会将 --authorization-mode 设置为 AlwaysAllow。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，去除以下类似的行。
 ----
 kube-apiserver-arg: - "authorization-mode=AlwaysAllow"
 ----
 
 ======
 
-==== 1.2.7 Ensure that the --authorization-mode argument includes Node (Automated)
+==== 1.2.7 确保 --authorization-mode 参数包含 Node（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -805,10 +804,10 @@ kube-apiserver-arg: - "authorization-mode=AlwaysAllow"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--authorization-mode' has 'Node'
+**预期结果：** '--authorization-mode' 包含 'Node'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -819,15 +818,15 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --authorization-mode to Node and RBAC. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml, ensure that you are not overriding authorization-mode.
+默认情况下，RKE2 将 --authorization-mode 设置为 Node 和 RBAC。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，确保没有覆盖 authorization-mode。
 
 ======
 
-==== 1.2.8 Ensure that the --authorization-mode argument includes RBAC (Automated)
+==== 1.2.8 确保 --authorization-mode 参数包含 RBAC（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -836,10 +835,10 @@ By default, RKE2 sets the --authorization-mode to Node and RBAC. If this check f
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--authorization-mode' has 'RBAC'
+**预期结果：** '--authorization-mode' 包含 'RBAC'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -850,24 +849,24 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --authorization-mode to Node and RBAC. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml, ensure that you are not overriding authorization-mode.
+默认情况下，RKE2 将 --authorization-mode 设置为 Node 和 RBAC。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，确保没有覆盖 authorization-mode。
 
 ======
 
-==== 1.2.9 Ensure that the admission control plugin EventRateLimit is set (Manual)
+==== 1.2.9 确保 admission control 插件 EventRateLimit 已设置（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Follow the Kubernetes documentation and set the desired limits in a configuration file. Then, edit the RKE2 config file /etc/rancher/rke2/config.yaml and set the below parameters.
+**修正:**请遵循 Kubernetes 文档，并在配置文件中设置所需的限制。然后，编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并设置以下参数。
 ----
 kube-apiserver-arg: - "enable-admission-plugins=\...,EventRateLimit,\..." - "admission-control-config-file=<path/to/configuration/file>"
 ----
 
-==== 1.2.10 Ensure that the admission control plugin AlwaysAdmit is not set (Automated)
+==== 1.2.10 确保 admission control 插件 AlwaysAdmit 未设置（自动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -876,10 +875,10 @@ kube-apiserver-arg: - "enable-admission-plugins=\...,EventRateLimit,\..." - "adm
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--enable-admission-plugins' does not have 'AlwaysAdmit' OR '--enable-admission-plugins' is not present
+**预期结果:** '--enable-admission-plugins' 不包含 'AlwaysAdmit' 或者 '--enable-admission-plugins' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -890,24 +889,24 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --enable-admission-plugins to AlwaysAdmit. If this check fails, edit RKE2 config file /etc/rancher/rke2/config.yaml, remove any lines like below.
+默认情况下，RKE2 不将 --enable-admission-plugins 设置为 AlwaysAdmit。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，去除以下类似的行。
 ----
 kube-apiserver-arg: - "enable-admission-plugins=AlwaysAdmit"
 ----
 
 ======
 
-==== 1.2.11 Ensure that the admission control plugin AlwaysPullImages is set (Manual)
+==== 1.2.11 确保 admission control 插件 AlwaysPullImages 已设置（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Permissive, per CIS guidelines, "This setting could impact offline or isolated clusters, which have images pre-loaded and do not have access to a registry to pull in-use images. This setting is not appropriate for clusters which use this configuration." Edit the RKE2 config file /etc/rancher/rke2/config.yaml on the control plane node and set the --enable-admission-plugins parameter to include AlwaysPullImages. --enable-admission-plugins=\...,AlwaysPullImages,\...
+**修正：**根据 CIS 指南，"此设置可能会影响离线或隔离的集群，这些集群已预加载镜像且无法访问注册表以拉取正在使用的镜像。"此设置不适合使用此配置的集群。"在控制平面节点上编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并将 --enable-admission-plugins 参数设置为包含 AlwaysPullImages。 --enable-admission-plugins=\...,AlwaysPullImages,\...
 
-==== 1.2.12 Ensure that the admission control plugin ServiceAccount is set (Automated)
+==== 1.2.12 确保设置 admission control 插件 ServiceAccount（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -916,10 +915,10 @@ kube-apiserver-arg: - "enable-admission-plugins=AlwaysAdmit"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--disable-admission-plugins' is present OR '--disable-admission-plugins' is not present
+**预期结果：** '--disable-admission-plugins' 存在或者 '--disable-admission-plugins' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -930,18 +929,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --disable-admission-plugins to anything. Follow the documentation and create ServiceAccount objects as per your environment. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 不将 --disable-admission-plugins 设置为任何值。请遵循文档并根据您的环境创建 ServiceAccount 对象。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-apiserver-arg: - "disable-admission-plugins=ServiceAccount"
 ----
 
 ======
 
-==== 1.2.13 Ensure that the admission control plugin NamespaceLifecycle is set (Automated)
+==== 1.2.13 确保设置 admission control 插件 NamespaceLifecycle（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -950,10 +949,10 @@ kube-apiserver-arg: - "disable-admission-plugins=ServiceAccount"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--disable-admission-plugins' is present OR '--disable-admission-plugins' is not present
+**预期结果：** '--disable-admission-plugins' 存在或者 '--disable-admission-plugins' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -964,18 +963,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --disable-admission-plugins to anything. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 不将 --disable-admission-plugins 设置为任何值。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-apiserver-arg: - "disable-admission-plugins=\...,NamespaceLifecycle,\..."
 ----
 
 ======
 
-==== 1.2.14 Ensure that the admission control plugin NodeRestriction is set (Automated)
+==== 1.2.14 确保设置 admission control 插件 NodeRestriction（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -984,10 +983,10 @@ kube-apiserver-arg: - "disable-admission-plugins=\...,NamespaceLifecycle,\..."
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--enable-admission-plugins' has 'NodeRestriction'
+**预期结果：** '--enable-admission-plugins' 包含 'NodeRestriction'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -998,18 +997,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --enable-admission-plugins to NodeRestriction. Check the RKE2 config file /etc/rancher/rke2/config.yaml, and ensure that you are not overriding the admission plugins. If you are, include NodeRestriction in the list.
+默认情况下，RKE2 将 --enable-admission-plugins 设置为 NodeRestriction。检查 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并确保您没有覆盖 admission 插件。如果是，请在列表中包含 NodeRestriction。
 ----
 kube-apiserver-arg: - "enable-admission-plugins=\...,NodeRestriction,\..."
 ----
 
 ======
 
-==== 1.2.15 Ensure that the --profiling argument is set to false (Automated)
+==== 1.2.15 确保 --profiling 参数设置为 false（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1018,10 +1017,10 @@ kube-apiserver-arg: - "enable-admission-plugins=\...,NodeRestriction,\..."
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--profiling' is equal to 'false'
+**预期结果:** '--profiling' 等于 'false'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1032,18 +1031,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --profiling argument to false. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 将 --profiling 参数设置为 false。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-apiserver-arg: - "profiling=true"
 ----
 
 ======
 
-==== 1.2.16 Ensure that the --audit-log-path argument is set (Automated)
+==== 1.2.16 确保 --audit-log-path 参数已设置（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1052,10 +1051,10 @@ kube-apiserver-arg: - "profiling=true"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--audit-log-path' is present
+**预期结果:** '--audit-log-path' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1066,18 +1065,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --audit-log-path argument to /var/lib/rancher/rke2/server/logs/audit.log If you want to change this, edit the RKE2 config file /etc/rancher/rke2/config.yaml on the control plane node and set the --audit-log-path parameter to a suitable path and file where you would like audit logs to be written, for example,
+默认情况下，RKE2 将 --audit-log-path 参数设置为 /var/lib/rancher/rke2/server/logs/audit.log。如果您想更改此设置，请在控制平面节点上编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并将 --audit-log-path 参数设置为您希望审计日志写入的合适路径和文件，例如，
 ----
 kube-apiserver-arg: - "audit-log-path=/var/log/rke2/audit.log"
 ----
 
 ======
 
-==== 1.2.17 Ensure that the --audit-log-maxage argument is set to 30 or as appropriate (Automated)
+==== 1.2.17 确保 --audit-log-maxage 参数设置为 30 或适当的值（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1086,10 +1085,10 @@ kube-apiserver-arg: - "audit-log-path=/var/log/rke2/audit.log"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--audit-log-maxage' is greater or equal to 30
+**预期结果:** '--audit-log-maxage' 大于或等于 30
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1100,18 +1099,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --audit-log-maxage argument to 30 days. If you want to change this, edit the RKE2 config file /etc/rancher/rke2/config.yaml on the control plane node and set the --audit-log-maxage parameter to an appropriate number of days, for example,
+默认情况下，RKE2 将 --audit-log-maxage 参数设置为 30 天。如果您想更改此设置，请在控制平面节点上编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并将 --audit-log-maxage 参数设置为适当的天数，例如，
 ----
 kube-apiserver-arg: - "audit-log-maxage=40"
 ----
 
 ======
 
-==== 1.2.18 Ensure that the --audit-log-maxbackup argument is set to 10 or as appropriate (Automated)
+==== 1.2.18 确保 --audit-log-maxbackup 参数设置为 10 或适当的值（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1120,10 +1119,10 @@ kube-apiserver-arg: - "audit-log-maxage=40"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--audit-log-maxbackup' is greater or equal to 10
+**预期结果:** '--audit-log-maxbackup' 大于或等于 10
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1134,18 +1133,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --audit-log-maxbackup argument to 10. If you want to change this, edit the RKE2 config file /etc/rancher/rke2/config.yaml on the control plane node and set the --audit-log-maxbackup parameter to an appropriate value. For example,
+默认情况下，RKE2 将 --audit-log-maxbackup 参数设置为 10。如果您想更改此设置，请在控制平面节点上编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并将 --audit-log-maxbackup 参数设置为适当的值。例如，
 ----
 kube-apiserver-arg: - "audit-log-maxbackup=15"
 ----
 
 ======
 
-==== 1.2.19 Ensure that the --audit-log-maxsize argument is set to 100 or as appropriate (Automated)
+==== 1.2.19 确保 --audit-log-maxsize 参数设置为 100 或适当的值（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1154,10 +1153,10 @@ kube-apiserver-arg: - "audit-log-maxbackup=15"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--audit-log-maxsize' is greater or equal to 100
+**预期结果:** '--audit-log-maxsize' 大于或等于 100
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1168,18 +1167,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --audit-log-maxsize argument to 100 MB. If you want to change this, edit the RKE2 config file /etc/rancher/rke2/config.yaml on the control plane node and set the --audit-log-maxsize parameter to an appropriate size in MB. For example,
+默认情况下，RKE2 将 --audit-log-maxsize 参数设置为 100 MB。如果您想更改此设置，请在控制平面节点上编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并将 --audit-log-maxsize 参数设置为适当的大小（以 MB 为单位）。例如，
 ----
 kube-apiserver-arg: - "audit-log-maxsize=150"
 ----
 
 ======
 
-==== 1.2.20 Ensure that the --request-timeout argument is set as appropriate (Automated)
+==== 1.2.20 确保 --request-timeout 参数设置得当（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1188,10 +1187,10 @@ kube-apiserver-arg: - "audit-log-maxsize=150"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--request-timeout' is not present OR '--request-timeout' is present
+**预期结果:** '--request-timeout' 不存在 或 '--request-timeout' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1202,18 +1201,18 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Permissive, per CIS guidelines, "it is recommended to set this limit as appropriate and change the default limit of 60 seconds only if needed". Edit the RKE2 config file /etc/rancher/rke2/config.yaml and set the below parameter if needed. For example,
+根据 CIS 指南，"建议根据需要设置此限制，并仅在必要时更改默认限制 60 秒"。编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并在需要时设置以下参数。例如，
 ----
 kube-apiserver-arg: - "request-timeout=300s"
 ----
 
 ======
 
-==== 1.2.21 Ensure that the --service-account-lookup argument is set to true (Automated)
+==== 1.2.21 确保 --service-account-lookup 参数设置为 true（自动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1222,10 +1221,10 @@ kube-apiserver-arg: - "request-timeout=300s"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--service-account-lookup' is not present OR '--service-account-lookup' is present
+**预期结果：** '--service-account-lookup' 不存在 或者 '--service-account-lookup' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1236,19 +1235,19 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --service-account-lookup argument. Edit the RKE2 config file /etc/rancher/rke2/config.yaml and set the service-account-lookup. For example,
+默认情况下，RKE2 不设置 --service-account-lookup 参数。编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并设置 service-account-lookup。例如，
 ----
 kube-apiserver-arg: - "service-account-lookup=true"
 ----
-Alternatively, you can delete the service-account-lookup parameter from this file so that the default takes effect.
+或者，您可以从此文件中删除 service-account-lookup 参数，以使默认值生效。
 
 ======
 
-==== 1.2.22 Ensure that the --service-account-key-file argument is set as appropriate (Automated)
+==== 1.2.22 确保 --service-account-key-file 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1257,10 +1256,10 @@ Alternatively, you can delete the service-account-lookup parameter from this fil
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--service-account-key-file' is present
+**预期结果：** '--service-account-key-file' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1271,17 +1270,17 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-RKE2 automatically generates and sets the service account key file. It is located at /var/lib/rancher/rke2/server/tls/service.key. If this check fails, edit RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+RKE2 会自动生成并设置服务账户密钥文件。它位于 /var/lib/rancher/rke2/server/tls/service.key。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并去除以下类似的行。
 ----
 kube-apiserver-arg: - "service-account-key-file=+++<path>+++"
 ----
 ======
 
-==== 1.2.23 Ensure that the --etcd-certfile and --etcd-keyfile arguments are set as appropriate (Automated)
+==== 1.2.23 确保 --etcd-certfile 和 --etcd-keyfile 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1290,10 +1289,10 @@ kube-apiserver-arg: - "service-account-key-file=+++<path>+++"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--etcd-certfile' is present AND '--etcd-keyfile' is present
+**预期结果：** '--etcd-certfile' 存在 且 '--etcd-keyfile' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1304,17 +1303,17 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-RKE2 automatically generates and sets the etcd certificate and key files. They are located at /var/lib/rancher/rke2/server/tls/etcd/client.crt and /var/lib/rancher/rke2/server/tls/etcd/client.key. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+RKE2 会自动生成并设置 etcd 证书和密钥文件。它们位于 /var/lib/rancher/rke2/server/tls/etcd/client.crt 和 /var/lib/rancher/rke2/server/tls/etcd/client.key。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-apiserver-arg: - "etcd-certfile=+++<path>+++" - "etcd-keyfile=+++<path>+++"
 ----
 ======
 
-==== 1.2.24 Ensure that the --tls-cert-file and --tls-private-key-file arguments are set as appropriate (Automated)
+==== 1.2.24 确保 --tls-cert-file 和 --tls-private-key-file 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1323,10 +1322,10 @@ kube-apiserver-arg: - "etcd-certfile=+++<path>+++" - "etcd-keyfile=+++<path>+++"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--tls-cert-file' is present AND '--tls-private-key-file' is present
+**预期结果:** '--tls-cert-file' 存在并且 '--tls-private-key-file' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1337,17 +1336,17 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically generates and provides the TLS certificate and private key for the apiserver. They are generated and located at /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt and /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.key If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 会自动生成并提供 apiserver 的 TLS 证书和私钥。它们生成并位于 /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt 和 /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.key。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并去除以下类似的行。
 ----
 kube-apiserver-arg: - "tls-cert-file=+++<path>+++" - "tls-private-key-file=+++<path>+++"
 ----
 ======
 
-==== 1.2.25 Ensure that the --client-ca-file argument is set as appropriate (Automated)
+==== 1.2.25 确保 --client-ca-file 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1356,10 +1355,10 @@ kube-apiserver-arg: - "tls-cert-file=+++<path>+++" - "tls-private-key-file=+++<p
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--client-ca-file' is present
+**预期结果:** '--client-ca-file' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1370,17 +1369,17 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically provides the client certificate authority file. It is generated and located at /var/lib/rancher/rke2/server/tls/client-ca.crt. If for some reason you need to provide your own ca certificate, look at using the rke2 certificate command line tool. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 会自动提供客户端证书颁发机构文件。它生成并位于 /var/lib/rancher/rke2/server/tls/client-ca.crt。如果出于某种原因需要提供自己的 CA 证书，请考虑使用 rke2 证书命令行工具。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-apiserver-arg: - "client-ca-file=+++<path>+++"
 ----
 ======
 
-==== 1.2.26 Ensure that the --etcd-cafile argument is set as appropriate (Automated)
+==== 1.2.26 确保 --etcd-cafile 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1389,10 +1388,10 @@ kube-apiserver-arg: - "client-ca-file=+++<path>+++"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--etcd-cafile' is present
+**预期结果:** '--etcd-cafile' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1403,17 +1402,17 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically provides the etcd certificate authority file. It is generated and located at /var/lib/rancher/rke2/server/tls/client-ca.crt. If for some reason you need to provide your own ca certificate, look at using the rke2 certificate command line tool. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 会自动提供 etcd 证书颁发机构文件。它生成并位于 /var/lib/rancher/rke2/server/tls/client-ca.crt。如果出于某种原因需要提供自己的 CA 证书，请考虑使用 rke2 证书命令行工具。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-apiserver-arg: - "etcd-cafile=+++<path>+++"
 ----
 ======
 
-==== 1.2.27 Ensure that the --encryption-provider-config argument is set as appropriate (Automated)
+==== 1.2.27 确保 --encryption-provider-config 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1422,10 +1421,10 @@ kube-apiserver-arg: - "etcd-cafile=+++<path>+++"
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--encryption-provider-config' is present
+**预期结果:** '--encryption-provider-config' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1436,15 +1435,15 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-RKE2 always is configured to encrypt secrets. Secrets encryption is managed with the rke2 secrets-encrypt command line tool. If needed, you can find the generated encryption config at /var/lib/rancher/rke2/server/cred/encryption-config.json
+RKE2 始终配置为加密机密。机密加密由 rke2 secrets-encrypt 命令行工具管理。如有需要，您可以在 /var/lib/rancher/rke2/server/cred/encryption-config.json 找到生成的加密配置。
 
 ======
 
-==== 1.2.28 Ensure that encryption providers are appropriately configured (Automated)
+==== 1.2.28 确保加密提供程序配置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1453,10 +1452,10 @@ RKE2 always is configured to encrypt secrets. Secrets encryption is managed with
 ENCRYPTION_PROVIDER_CONFIG=$(ps -ef | grep kube-apiserver | grep -- --encryption-provider-config | sed 's%.*encryption-provider-config[= ]\([{caret} ]*\).*%\1%') if test -e $ENCRYPTION_PROVIDER_CONFIG; then grep -o 'providers\"\:\[.*\]' $ENCRYPTION_PROVIDER_CONFIG | grep -o "[A-Za-z]*" | head -2 | tail -1 | sed 's/{caret}/provider=/'; fi
 ----
 
-**Expected Result:** 'provider' contains valid elements from 'aescbc,kms,secretbox'
+**预期结果:** 'provider' 包含来自 'aescbc,kms,secretbox' 的有效元素
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1467,15 +1466,15 @@ provider=aescbc
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-RKE2 always is configured to use the aescbc encryption provider to encrypt secrets. Secrets encryption is managed with the rke2 secrets-encrypt command line tool. If needed, you can find the generated encryption config at /var/lib/rancher/rke2/server/cred/encryption-config.json
+RKE2 始终配置为使用 aescbc 加密提供程序来加密机密。机密加密由 rke2 secrets-encrypt 命令行工具管理。如有需要，您可以在 /var/lib/rancher/rke2/server/cred/encryption-config.json 找到生成的加密配置。
 
 ======
 
-==== 1.2.29 Ensure that the API Server only makes use of Strong Cryptographic Ciphers (Automated)
+==== 1.2.29 确保 API 服务器仅使用强加密密码（自动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1484,10 +1483,10 @@ RKE2 always is configured to use the aescbc encryption provider to encrypt secre
 /bin/ps -fC kube-apiserver
 ----
 
-**Expected Result:** '--tls-cipher-suites' contains valid elements from 'TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA,TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_256_CBC_SHA,TLS_RSA_WITH_AES_256_GCM_SHA384'
+**预期结果:** '--tls-cipher-suites' 包含来自 'TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA,TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_256_CBC_SHA,TLS_RSA_WITH_AES_256_GCM_SHA384' 的有效元素
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1498,16 +1497,16 @@ UID PID PPID C STIME TTY TIME CMD root 2840 2791 5 18:32 ? 00:01:35 kube-apiserv
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, the RKE2 kube-apiserver complies with this test. Changes to these values may cause regression, therefore ensure that all apiserver clients support the new TLS configuration before applying it in production deployments. If a custom TLS configuration is required, consider also creating a custom version of this rule that aligns with your requirements. If this check fails, remove any custom configuration around `tls-cipher-suites` or update the /etc/rancher/rke2/config.yaml file to match the default by adding the following: kube-apiserver-arg: - "tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+默认情况下，RKE2 kube-apiserver 符合此测试。更改这些值可能会导致回归，因此在生产部署中应用之前，请确保所有 apiserver 客户端支持新的 TLS 配置。如果需要自定义 TLS 配置，请考虑创建与您的要求相符的此规则的自定义版本。如果此检查失败，请去除围绕 `tls-cipher-suites` 的任何自定义配置，或更新 /etc/rancher/rke2/config.yaml 文件以匹配默认值，添加以下内容：kube-apiserver-arg: - "tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
 ======
 
-=== 1.3 Controller Manager
+=== 1.3 控制器管理器
 
-==== 1.3.1 Ensure that the --terminated-pod-gc-threshold argument is set as appropriate (Manual)
+==== 1.3.1 确保 --terminated-pod-gc-threshold 参数设置适当（手动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1516,10 +1515,10 @@ By default, the RKE2 kube-apiserver complies with this test. Changes to these va
 /bin/ps -fC kube-controller-manager
 ----
 
-**Expected Result:** '--terminated-pod-gc-threshold' is present
+**预期结果:** '--terminated-pod-gc-threshold' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1530,18 +1529,18 @@ UID PID PPID C STIME TTY TIME CMD root 2987 2893 1 18:32 ? 00:00:25 kube-control
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets a terminated-pod-gc-threshold of 1000. If you need to change this value, edit the RKE2 config file /etc/rancher/rke2/config.yaml on the control plane node and set the --terminated-pod-gc-threshold to an appropriate threshold,
+默认情况下，RKE2 设置 terminated-pod-gc-threshold 为 1000。如果您需要更改此值，请在控制平面节点上编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并将 --terminated-pod-gc-threshold 设置为适当的阈值，
 ----
 kube-controller-manager-arg: - "terminated-pod-gc-threshold=10"
 ----
 
 ======
 
-==== 1.3.2 Ensure that the --profiling argument is set to false (Automated)
+==== 1.3.2 确保 --profiling 参数设置为 false（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1550,10 +1549,10 @@ kube-controller-manager-arg: - "terminated-pod-gc-threshold=10"
 /bin/ps -fC kube-controller-manager
 ----
 
-**Expected Result:** '--profiling' is equal to 'false'
+**预期结果:** '--profiling' 等于 'false'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1564,18 +1563,18 @@ UID PID PPID C STIME TTY TIME CMD root 2987 2893 1 18:32 ? 00:00:25 kube-control
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --profiling argument to false. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 将 --profiling 参数设置为 false。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-controller-manager-arg: - "profiling=true"
 ----
 
 ======
 
-==== 1.3.3 Ensure that the --use-service-account-credentials argument is set to true (Automated)
+==== 1.3.3 确保 --use-service-account-credentials 参数设置为 true（自动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1584,10 +1583,10 @@ kube-controller-manager-arg: - "profiling=true"
 /bin/ps -fC kube-controller-manager
 ----
 
-**Expected Result:** '--use-service-account-credentials' is not equal to 'false'
+**预期结果:** '--use-service-account-credentials' 不等于 'false'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1598,18 +1597,18 @@ UID PID PPID C STIME TTY TIME CMD root 2987 2893 1 18:32 ? 00:00:25 kube-control
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --use-service-account-credentials argument to true. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 将 --use-service-account-credentials 参数设置为 true。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-controller-manager-arg: - "use-service-account-credentials=false"
 ----
 
 ======
 
-==== 1.3.4 Ensure that the --service-account-private-key-file argument is set as appropriate (Automated)
+==== 1.3.4 确保 --service-account-private-key-file 参数设置适当（自动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1618,10 +1617,10 @@ kube-controller-manager-arg: - "use-service-account-credentials=false"
 /bin/ps -fC kube-controller-manager
 ----
 
-**Expected Result:** '--service-account-private-key-file' is present
+**预期结果:** '--service-account-private-key-file' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1632,17 +1631,17 @@ UID PID PPID C STIME TTY TIME CMD root 2987 2893 1 18:32 ? 00:00:25 kube-control
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically provides the service account private key file. It is generated and located at /var/lib/rancher/rke2/server/tls/service.current.key. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 自动提供服务账户私钥文件。它是在 /var/lib/rancher/rke2/server/tls/service.current.key 生成并存放的。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-controller-manager-arg: - "service-account-private-key-file=+++<path>+++"
 ----
 ======
 
-==== 1.3.5 Ensure that the --root-ca-file argument is set as appropriate (Automated)
+==== 1.3.5 确保 --root-ca-file 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1651,10 +1650,10 @@ kube-controller-manager-arg: - "service-account-private-key-file=+++<path>+++"
 /bin/ps -fC kube-controller-manager
 ----
 
-**Expected Result:** '--root-ca-file' is present
+**预期结果:** '--root-ca-file' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1665,17 +1664,17 @@ UID PID PPID C STIME TTY TIME CMD root 2987 2893 1 18:32 ? 00:00:25 kube-control
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically provides the root CA file. It is generated and located at /var/lib/rancher/rke2/server/tls/server-ca.crt. If for some reason you need to provide your own ca certificate, look at using the rke2 certificate command line tool. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 会自动提供根 CA 文件。它在 /var/lib/rancher/rke2/server/tls/server-ca.crt 生成并存放。如果出于某种原因您需要提供自己的 CA 证书，请考虑使用 rke2 证书命令行工具。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-controller-manager-arg: - "root-ca-file=+++<path>+++"
 ----
 ======
 
-==== 1.3.6 Ensure that the RotateKubeletServerCertificate argument is set to true (Automated)
+==== 1.3.6 确保 RotateKubeletServerCertificate 参数设置为 true（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1684,10 +1683,10 @@ kube-controller-manager-arg: - "root-ca-file=+++<path>+++"
 /bin/ps -fC kube-controller-manager
 ----
 
-**Expected Result:** '--feature-gates' is present OR '--feature-gates' is not present
+**预期结果:** '--feature-gates' 存在 或 '--feature-gates' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1698,18 +1697,18 @@ UID PID PPID C STIME TTY TIME CMD root 2987 2893 1 18:32 ? 00:00:25 kube-control
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the RotateKubeletServerCertificate feature gate. If you have enabled this feature gate, you should remove it. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml, remove any lines like below.
+默认情况下，RKE2 不会设置 RotateKubeletServerCertificate 功能开关。如果您启用了此功能开关，您应该将其去除。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并去除以下类似的行。
 ----
 kube-controller-manager-arg: - "feature-gate=RotateKubeletServerCertificate"
 ----
 
 ======
 
-==== 1.3.7 Ensure that the --bind-address argument is set to 127.0.0.1 (Automated)
+==== 1.3.7 确保 --bind-address 参数设置为 127.0.0.1（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1718,10 +1717,10 @@ kube-controller-manager-arg: - "feature-gate=RotateKubeletServerCertificate"
 /bin/ps -fC kube-controller-manager
 ----
 
-**Expected Result:** '--bind-address' is equal to '127.0.0.1' OR '--bind-address' is not present
+**预期结果:** '--bind-address' 等于 '127.0.0.1' 或 '--bind-address' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1732,19 +1731,19 @@ UID PID PPID C STIME TTY TIME CMD root 2987 2893 1 18:32 ? 00:00:25 kube-control
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --bind-address argument to 127.0.0.1 If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 将 --bind-address 参数设置为 127.0.0.1。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并去除以下类似的行。
 ----
 kube-controller-manager-arg: - "bind-address=+++<IP>+++"
 ----
 ======
 
-=== 1.4 Scheduler
+=== 1.4 调度程序
 
-==== 1.4.1 Ensure that the --profiling argument is set to false (Automated)
+==== 1.4.1 确保 --profiling 参数设置为 false（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1753,10 +1752,10 @@ kube-controller-manager-arg: - "bind-address=+++<IP>+++"
 /bin/ps -fC kube-scheduler
 ----
 
-**Expected Result:** '--profiling' is equal to 'false'
+**预期结果:** '--profiling' 等于 'false'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1767,18 +1766,18 @@ UID PID PPID C STIME TTY TIME CMD root 2992 2874 0 18:32 ? 00:00:05 kube-schedul
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --profiling argument to false. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 将 --profiling 参数设置为 false。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml 并去除以下类似的行。
 ----
 kube-scheduler-arg: - "profiling=true"
 ----
 
 ======
 
-==== 1.4.2 Ensure that the --bind-address argument is set to 127.0.0.1 (Automated)
+==== 1.4.2 确保 --bind-address 参数设置为 127.0.0.1（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1787,10 +1786,10 @@ kube-scheduler-arg: - "profiling=true"
 /bin/ps -fC kube-scheduler
 ----
 
-**Expected Result:** '--bind-address' is equal to '127.0.0.1' OR '--bind-address' is not present
+**预期结果:** '--bind-address' 等于 '127.0.0.1' 或 '--bind-address' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1801,21 +1800,21 @@ UID PID PPID C STIME TTY TIME CMD root 2992 2874 0 18:32 ? 00:00:05 kube-schedul
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --bind-address argument to 127.0.0.1 If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines like below.
+默认情况下，RKE2 将 --bind-address 参数设置为 127.0.0.1。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，并去除以下类似的行。
 ----
 kube-scheduler-arg: - "bind-address=+++<IP>+++"
 ----
 ======
 
-== 2 Etcd Node Configuration
+== 2 Etcd 节点配置
 
-=== 2 Etcd Node Configuration
+=== 2 Etcd 节点配置
 
-==== 2.1 Ensure that the --cert-file and --key-file arguments are set as appropriate (Automated)
+==== 2.1 确保 --cert-file 和 --key-file 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1824,10 +1823,10 @@ kube-scheduler-arg: - "bind-address=+++<IP>+++"
 cat /var/lib/rancher/rke2/server/db/etcd/config
 ----
 
-**Expected Result:** '.client-transport-security.cert-file' is equal to '/var/lib/rancher/rke2/server/tls/etcd/server-client.crt' AND '.client-transport-security.key-file' is equal to '/var/lib/rancher/rke2/server/tls/etcd/server-client.key'
+**预期结果:** '.client-transport-security.cert-file' 等于 '/var/lib/rancher/rke2/server/tls/etcd/server-client.crt' 且 '.client-transport-security.key-file' 等于 '/var/lib/rancher/rke2/server/tls/etcd/server-client.key'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1838,15 +1837,15 @@ advertise-client-urls: https://10.10.10.100:2379 client-transport-security: cert
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 generates cert and key files for etcd. These are located in /var/lib/rancher/rke2/server/tls/etcd/. If this check fails, ensure that the configuration file /var/lib/rancher/rke2/server/db/etcd/config has not been modified to use custom cert and key files.
+默认情况下，RKE2 为 etcd 生成证书和密钥文件。这些文件位于 /var/lib/rancher/rke2/server/tls/etcd/。如果此检查失败，请确保配置文件 /var/lib/rancher/rke2/server/db/etcd/config 未被修改为使用自定义证书和密钥文件。
 
 ======
 
-==== 2.2 Ensure that the --client-cert-auth argument is set to true (Automated)
+==== 2.2 确保 --client-cert-auth 参数设置为 true（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1855,10 +1854,10 @@ By default, RKE2 generates cert and key files for etcd. These are located in /va
 cat /var/lib/rancher/rke2/server/db/etcd/config
 ----
 
-**Expected Result:** 'ETCD_CLIENT_CERT_AUTH' is present OR '.client-transport-security.client-cert-auth' is equal to 'true'
+**预期结果：**'ETCD_CLIENT_CERT_AUTH' 存在 或 '.client-transport-security.client-cert-auth' 等于 'true'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1869,15 +1868,15 @@ advertise-client-urls: https://10.10.10.100:2379 client-transport-security: cert
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --client-cert-auth parameter to true. If this check fails, ensure that the configuration file /var/lib/rancher/rke2/server/db/etcd/config has not been modified to disable client certificate authentication.
+默认情况下，RKE2 将 --client-cert-auth 参数设置为 true。如果此检查失败，请确保配置文件 /var/lib/rancher/rke2/server/db/etcd/config 未被修改为禁用客户端证书认证。
 
 ======
 
-==== 2.3 Ensure that the --auto-tls argument is not set to true (Automated)
+==== 2.3 确保 --auto-tls 参数未设置为 true（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1886,10 +1885,10 @@ By default, RKE2 sets the --client-cert-auth parameter to true. If this check fa
 cat /var/lib/rancher/rke2/server/db/etcd/config
 ----
 
-**Expected Result:** 'ETCD_AUTO_TLS' is not present OR 'ETCD_AUTO_TLS' is present OR '.client-transport-security.auto-tls' is present
+**预期结果：**'ETCD_AUTO_TLS' 不存在 或 'ETCD_AUTO_TLS' 存在 或 '.client-transport-security.auto-tls' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1900,15 +1899,15 @@ advertise-client-urls: https://10.10.10.100:2379 client-transport-security: cert
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --auto-tls parameter. If this check fails, edit the etcd pod specification file /var/lib/rancher/rke2/server/db/etcd/config on the master node and either remove the --auto-tls parameter or set it to false. client-transport-security: auto-tls: false
+默认情况下，RKE2 不会设置 --auto-tls 参数。如果此检查失败，请在主节点上编辑 etcd pod 规格文件 /var/lib/rancher/rke2/server/db/etcd/config，删除 --auto-tls 参数或将其设置为 false。client-transport-security: auto-tls: false
 
 ======
 
-==== 2.4 Ensure that the --peer-cert-file and --peer-key-file arguments are set as appropriate (Automated)
+==== 2.4 确保 --peer-cert-file 和 --peer-key-file 参数设置正确（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1917,10 +1916,10 @@ By default, RKE2 does not set the --auto-tls parameter. If this check fails, edi
 cat /var/lib/rancher/rke2/server/db/etcd/config
 ----
 
-**Expected Result:** '.peer-transport-security.cert-file' is equal to '/var/lib/rancher/rke2/server/tls/etcd/peer-server-client.crt' AND '.peer-transport-security.key-file' is equal to '/var/lib/rancher/rke2/server/tls/etcd/peer-server-client.key'
+**预期结果：** '.peer-transport-security.cert-file' 等于 '/var/lib/rancher/rke2/server/tls/etcd/peer-server-client.crt' 且 '.peer-transport-security.key-file' 等于 '/var/lib/rancher/rke2/server/tls/etcd/peer-server-client.key'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1931,15 +1930,15 @@ advertise-client-urls: https://10.10.10.100:2379 client-transport-security: cert
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 generates peer cert and key files for etcd. These are located in /var/lib/rancher/rke2/server/tls/etcd/. If this check fails, ensure that the configuration file /var/lib/rancher/rke2/server/db/etcd/config has not been modified to use custom peer cert and key files.
+默认情况下，RKE2 为 etcd 生成对等证书和密钥文件。这些文件位于 /var/lib/rancher/rke2/server/tls/etcd/。如果此检查失败，请确保配置文件 /var/lib/rancher/rke2/server/db/etcd/config 未被修改为使用自定义对等证书和密钥文件。
 
 ======
 
-==== 2.5 Ensure that the --peer-client-cert-auth argument is set to true (Automated)
+==== 2.5 确保 --peer-client-cert-auth 参数设置为 true（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1948,10 +1947,10 @@ By default, RKE2 generates peer cert and key files for etcd. These are located i
 cat /var/lib/rancher/rke2/server/db/etcd/config
 ----
 
-**Expected Result:** 'ETCD_PEER_CLIENT_CERT_AUTH' is present OR '.peer-transport-security.client-cert-auth' is equal to 'true'
+**预期结果：**'ETCD_PEER_CLIENT_CERT_AUTH' 存在 或 '.peer-transport-security.client-cert-auth' 等于 'true'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1962,15 +1961,15 @@ advertise-client-urls: https://10.10.10.100:2379 client-transport-security: cert
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --peer-cert-auth parameter to true. If this check fails, ensure that the configuration file /var/lib/rancher/rke2/server/db/etcd/config has not been modified to disable peer client certificate authentication.
+默认情况下，RKE2 将 --peer-cert-auth 参数设置为 true。如果此检查失败，请确保配置文件 /var/lib/rancher/rke2/server/db/etcd/config 未被修改为禁用对等客户端证书认证。
 
 ======
 
-==== 2.6 Ensure that the --peer-auto-tls argument is not set to true (Automated)
+==== 2.6 确保 --peer-auto-tls 参数未设置为 true（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -1979,10 +1978,10 @@ By default, RKE2 sets the --peer-cert-auth parameter to true. If this check fail
 cat /var/lib/rancher/rke2/server/db/etcd/config
 ----
 
-**Expected Result:** 'ETCD_PEER_AUTO_TLS' is not present OR 'ETCD_PEER_AUTO_TLS' is present OR '.peer-transport-security.auto-tls' is present
+**预期结果：**'ETCD_PEER_AUTO_TLS' 不存在 或 'ETCD_PEER_AUTO_TLS' 存在 或 '.peer-transport-security.auto-tls' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -1993,15 +1992,15 @@ advertise-client-urls: https://10.10.10.100:2379 client-transport-security: cert
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --peer-auto-tls parameter. If this check fails, edit the etcd pod specification file /var/lib/rancher/rke2/server/db/etcd/config on the master node and either remove the --peer-auto-tls parameter or set it to false. peer-transport-security: auto-tls: false
+默认情况下，RKE2 不会设置 --peer-auto-tls 参数。如果此检查失败，请在主节点上编辑 etcd pod 规格文件 /var/lib/rancher/rke2/server/db/etcd/config，删除 --peer-auto-tls 参数或将其设置为 false。peer-transport-security: auto-tls: false
 
 ======
 
-==== 2.7 Ensure that a unique Certificate Authority is used for etcd (Automated)
+==== 2.7 确保为 etcd 使用唯一的证书颁发机构（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2010,10 +2009,10 @@ By default, RKE2 does not set the --peer-auto-tls parameter. If this check fails
 cat /var/lib/rancher/rke2/server/db/etcd/config
 ----
 
-**Expected Result:** 'ETCD_TRUSTED_CA_FILE' is present OR '.peer-transport-security.trusted-ca-file' is equal to '/var/lib/rancher/rke2/server/tls/etcd/peer-ca.crt'
+**预期结果：**'ETCD_TRUSTED_CA_FILE' 存在 或 '.peer-transport-security.trusted-ca-file' 等于 '/var/lib/rancher/rke2/server/tls/etcd/peer-ca.crt'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2024,39 +2023,39 @@ advertise-client-urls: https://10.10.10.100:2379 client-transport-security: cert
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 generates a unique certificate authority for etcd. This is located at /var/lib/rancher/rke2/server/tls/etcd/peer-ca.crt. If this check fails, ensure that the configuration file /var/lib/rancher/rke2/server/db/etcd/config has not been modified to use a shared certificate authority.
+默认情况下，RKE2 为 etcd 生成一个唯一的证书颁发机构。该证书位于 /var/lib/rancher/rke2/server/tls/etcd/peer-ca.crt。如果此检查失败，请确保配置文件 /var/lib/rancher/rke2/server/db/etcd/config 未被修改为使用共享证书颁发机构。
 
 ======
 
-== 3 Control Plane Configuration
+== 3 控制平面配置
 
-=== 3.1 Authentication and Authorization
+=== 3.1 身份验证和授权
 
-==== 3.1.1 Client certificate authentication should not be used for users (Manual)
+==== 3.1.1 不应为用户使用客户端证书认证（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Alternative mechanisms provided by Kubernetes such as the use of OIDC should be implemented in place of client certificates.
+**修正：**应实施 Kubernetes 提供的替代机制，例如使用 OIDC，来替代客户端证书。
 
-==== 3.1.2 Service account token authentication should not be used for users (Manual)
+==== 3.1.2 不应为用户使用服务账户令牌认证（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Alternative mechanisms provided by Kubernetes such as the use of OIDC should be implemented in place of service account tokens.
+**修正：**应实施 Kubernetes 提供的替代机制，例如使用 OIDC，来替代服务账户令牌。
 
-==== 3.1.3 Bootstrap token authentication should not be used for users (Manual)
+==== 3.1.3 不应将启动词元身份验证用于用户（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Alternative mechanisms provided by Kubernetes such as the use of OIDC should be implemented in place of bootstrap tokens.
+**修正：**应实施 Kubernetes 提供的替代机制，例如使用 OIDC，来替代启动词元。
 
-=== 3.2 Logging
+=== 3.2 日志记录
 
-==== 3.2.1 Ensure that a minimal audit policy is created (Automated)
+==== 3.2.1 确保创建最小审计策略（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2065,10 +2064,10 @@ By default, RKE2 generates a unique certificate authority for etcd. This is loca
 /bin/ps -ef | grep kube-apiserver | grep -v grep
 ----
 
-**Expected Result:** '--audit-policy-file' is present
+**预期结果:** '--审计策略文件' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2079,37 +2078,37 @@ root 2840 2791 5 18:32 ? 00:01:35 kube-apiserver --admission-control-config-file
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Create an audit policy file for your cluster.
+为您的集群创建一个审计策略文件。
 
 ======
 
-==== 3.2.2 Ensure that the audit policy covers key security concerns (Manual)
+==== 3.2.2 确保审计策略涵盖关键安全问题（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Review the audit policy provided for the cluster and ensure that it covers at least the following areas, - Access to Secrets managed by the cluster. Care should be taken to only log Metadata for requests to Secrets, ConfigMaps, and TokenReviews, in order to avoid risk of logging sensitive data. - Modification of Pod and Deployment objects. - Use of `pods/exec`, `pods/portforward`, `pods/proxy` and `services/proxy`. For most requests, minimally logging at the Metadata level is recommended (the most basic level of logging).
+**修正：**审查为集群提供的审计策略，并确保至少涵盖以下领域：- 访问集群管理的机密。应注意仅记录对机密、配置映射和词元审查的请求的元数据，以避免记录敏感数据的风险。- 修改 Pod 和部署对象。- 使用 `pods/exec`、`pods/portforward`、`pods/proxy` 和 `services/proxy`。对于大多数请求，建议至少在元数据级别进行日志记录（最基本的日志记录级别）。
 
-== 4 Worker Node Security Configuration
+== 4 工作节点安全配置
 
-=== 4.1 Worker Node Configuration Files
+=== 4.1 工作节点配置文件
 
-==== 4.1.1 Ensure that the kubelet service file permissions are set to 600 or more restrictive (Automated)
+==== 4.1.1 确保 kubelet 服务文件权限设置为 600 或更严格（自动化）
 
-**Result:** Not Applicable
+**结果：**不适用
 
-**Rationale:** The kubelet is managed by the RKE2 process. There is no kubelet service file, all configuration is passed in as arguments at runtime.
+**说明：**kubelet 由 RKE2 进程管理。没有 kubelet 服务文件，所有配置在运行时作为参数传递。
 
-==== 4.1.2 Ensure that the kubelet service file ownership is set to root:root (Automated)
+==== 4.1.2 确保 kubelet 服务文件的所有权设置为 root:root（自动化）
 
-**Result:** Not Applicable
+**结果：**不适用
 
-**Rationale:** The kubelet is managed by the RKE2 process. There is no kubelet service file, all configuration is passed in as arguments at runtime.
+**说明：**kubelet 由 RKE2 进程管理。没有 kubelet 服务文件，所有配置在运行时作为参数传递。
 
-==== 4.1.3 If proxy kubeconfig file exists ensure permissions are set to 600 or more restrictive (Automated)
+==== 4.1.3 如果代理 kubeconfig 文件存在，请确保权限设置为 600 或更严格（自动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2118,10 +2117,10 @@ Create an audit policy file for your cluster.
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/kubeproxy.kubeconfig; then stat -c permissions=%a /var/lib/rancher/rke2/agent/kubeproxy.kubeconfig; fi'
 ----
 
-**Expected Result:** permissions has permissions 600, expected 600 or more restrictive
+**预期结果:** 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2132,14 +2131,14 @@ permissions=600
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the each worker node. For example, `chmod 600 /var/lib/rancher/rke2/agent/kubeproxy.kubeconfig`
+在每个工作节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/agent/kubeproxy.kubeconfig`
 ======
 
-==== 4.1.4 If proxy kubeconfig file exists ensure ownership is set to root:root (Automated)
+==== 4.1.4 如果代理 kubeconfig 文件存在，确保所有权设置为 root:root（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2148,10 +2147,10 @@ Run the below command (based on the file location on your system) on the each wo
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/kubeproxy.kubeconfig; then stat -c %U:%G /var/lib/rancher/rke2/agent/kubeproxy.kubeconfig; fi'
 ----
 
-**Expected Result:** 'root:root' is present
+**预期结果:** 'root:root' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2162,14 +2161,14 @@ root:root
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the each worker node. For example, `chown root:root /var/lib/rancher/rke2/agent/kubeproxy.kubeconfig`
+在每个工作节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/agent/kubeproxy.kubeconfig`
 ======
 
-==== 4.1.5 Ensure that the --kubeconfig kubelet.conf file permissions are set to 600 or more restrictive (Automated)
+==== 4.1.5 确保 --kubeconfig kubelet.conf 文件权限设置为 600 或更严格（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2178,10 +2177,10 @@ Run the below command (based on the file location on your system) on the each wo
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/kubelet.kubeconfig; then stat -c permissions=%a /var/lib/rancher/rke2/agent/kubelet.kubeconfig; fi'
 ----
 
-**Expected Result:** permissions has permissions 600, expected 600 or more restrictive
+**预期结果:** 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2192,14 +2191,14 @@ permissions=600
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the each worker node. For example, `chmod 600 /var/lib/rancher/rke2/agent/kubelet.kubeconfig`
+在每个工作节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/agent/kubelet.kubeconfig`
 ======
 
-==== 4.1.6 Ensure that the --kubeconfig kubelet.conf file ownership is set to root:root (Automated)
+==== 4.1.6 确保 --kubeconfig kubelet.conf 文件的所有权设置为 root:root（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2208,10 +2207,10 @@ Run the below command (based on the file location on your system) on the each wo
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/kubelet.kubeconfig; then stat -c %U:%G /var/lib/rancher/rke2/agent/kubelet.kubeconfig; fi'
 ----
 
-**Expected Result:** 'root:root' is equal to 'root:root'
+**预期结果:** 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2222,14 +2221,14 @@ root:root
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the each worker node. For example, `chown root:root /var/lib/rancher/rke2/agent/kubelet.kubeconfig`
+在每个工作节点上运行以下命令（根据您系统上的文件位置）。例如，`chown root:root /var/lib/rancher/rke2/agent/kubelet.kubeconfig`
 ======
 
-==== 4.1.7 Ensure that the certificate authorities file permissions are set to 600 or more restrictive (Automated)
+==== 4.1.7 确保证书颁发机构文件权限设置为 600 或更严格（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2238,10 +2237,10 @@ Run the below command (based on the file location on your system) on the each wo
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/client-ca.crt; then stat -c permissions=%a /var/lib/rancher/rke2/agent/client-ca.crt; fi'
 ----
 
-**Expected Result:** permissions has permissions 600, expected 600 or more restrictive
+**预期结果:** 权限为 600，预期为 600 或更严格
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2252,14 +2251,14 @@ permissions=600
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the below command (based on the file location on your system) on the each worker node. For example, `chmod 600 /var/lib/rancher/rke2/agent/client-ca.crt`
+在每个工作节点上运行以下命令（根据您系统上的文件位置）。例如，`chmod 600 /var/lib/rancher/rke2/agent/client-ca.crt`
 ======
 
-==== 4.1.8 Ensure that the client certificate authorities file ownership is set to root:root (Automated)
+==== 4.1.8 确保客户端证书颁发机构文件的所有权设置为 root:root（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2268,10 +2267,10 @@ Run the below command (based on the file location on your system) on the each wo
 /bin/sh -c 'if test -e /var/lib/rancher/rke2/agent/client-ca.crt; then stat -c %U:%G /var/lib/rancher/rke2/agent/client-ca.crt; fi'
 ----
 
-**Expected Result:** 'root:root' is equal to 'root:root'
+**预期结果:** 'root:root' 等于 'root:root'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2282,28 +2281,28 @@ root:root
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Run the following command to modify the ownership of the --client-ca-file. `chown root:root /var/lib/rancher/rke2/agent/client-ca.crt`
+运行以下命令以修改 --client-ca-file 的所有权。`chown root:root /var/lib/rancher/rke2/agent/client-ca.crt`
 ======
 
-==== 4.1.9 If the kubelet config.yaml configuration file is being used validate permissions set to 600 or more restrictive (Automated)
+==== 4.1.9 如果正在使用 kubelet config.yaml 配置文件，请验证权限设置为 600 或更严格（自动化）
 
-**Result:** Not Applicable
+**结果：**不适用
 
-**Rationale:** The kubelet is managed by the RKE2 process. There is no kubelet config file, all configuration is passed in as arguments at runtime.
+**说明：**kubelet 由 RKE2 进程管理。没有 kubelet 配置文件，所有配置在运行时作为参数传递。
 
-==== 4.1.10 If the kubelet config.yaml configuration file is being used validate file ownership is set to root:root (Automated)
+==== 4.1.10 如果正在使用 kubelet config.yaml 配置文件，请验证文件所有权设置为 root:root（自动化）
 
-**Result:** Not Applicable
+**结果：**不适用
 
-**Rationale:** The kubelet is managed by the RKE2 process. There is no kubelet config file, all configuration is passed in as arguments at runtime.
+**说明：**kubelet 由 RKE2 进程管理。没有 kubelet 配置文件，所有配置在运行时作为参数传递。
 
 === 4.2 Kubelet
 
-==== 4.2.1 Ensure that the --anonymous-auth argument is set to false (Automated)
+==== 4.2.1 确保 --anonymous-auth 参数设置为 false（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2312,10 +2311,10 @@ Run the following command to modify the ownership of the --client-ca-file. `chow
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--anonymous-auth' is equal to 'false'
+**预期结果:** '--anonymous-auth' 等于 'false'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2326,19 +2325,19 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --anonymous-auth to false. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml, remove any lines similar to below.
+默认情况下，RKE2 将 --anonymous-auth 参数设置为 false。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，删除任何类似于以下的行。
 ----
 kubelet-arg: - "anonymous-auth=true"
 ----
-Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
 ======
 
-==== 4.2.2 Ensure that the --authorization-mode argument is not set to AlwaysAllow (Automated)
+==== 4.2.2 确保 --authorization-mode 参数未设置为 AlwaysAllow（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2347,10 +2346,10 @@ Based on your system, restart the RKE2 service. For example, systemctl restart r
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--authorization-mode' does not have 'AlwaysAllow'
+**预期结果:** '--authorization-mode' 不包含 'AlwaysAllow'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2361,19 +2360,19 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --authorization-mode to AlwaysAllow. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml, remove any lines similar to below.
+默认情况下，RKE2 不会将 --authorization-mode 设置为 AlwaysAllow。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，删除任何类似于以下的行。
 ----
 kubelet-arg: - "authorization-mode=AlwaysAllow"
 ----
-Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
 ======
 
-==== 4.2.3 Ensure that the --client-ca-file argument is set as appropriate (Automated)
+==== 4.2.3 确保 --client-ca-file 参数设置为适当值（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2382,10 +2381,10 @@ Based on your system, restart the RKE2 service. For example, systemctl restart r
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--client-ca-file' is present
+**预期结果:** '--client-ca-file' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2396,15 +2395,15 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically provides the client ca certificate for the Kubelet. It is generated and located at /var/lib/rancher/rke2/agent/client-ca.crt
+默认情况下，RKE2 会自动为 Kubelet 提供客户端 CA 证书。它是在 /var/lib/rancher/rke2/agent/client-ca.crt 生成并存放的。
 
 ======
 
-==== 4.2.4 Verify that the --read-only-port argument is set to 0 (Automated)
+==== 4.2.4 验证 --read-only-port 参数是否设置为 0（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2413,10 +2412,10 @@ By default, RKE2 automatically provides the client ca certificate for the Kubele
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--read-only-port' is equal to '0' OR '--read-only-port' is not present
+**预期结果:** '--read-only-port' 等于 '0' 或 '--read-only-port' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2427,19 +2426,19 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 sets the --read-only-port to 0. If you have set this to a different value, you should set it back to 0. Edit the RKE2 config file /etc/rancher/rke2/config.yaml, remove any lines similar to below.
+默认情况下，RKE2 将 --read-only-port 设置为 0。如果您将其设置为其他值，则应将其设置回 0。编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，去除任何类似于以下内容的行。
 ----
 kubelet-arg: - "read-only-port=XXXX"
 ----
-Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
 ======
 
-==== 4.2.5 Ensure that the --streaming-connection-idle-timeout argument is not set to 0 (Manual)
+==== 4.2.5 确保 --streaming-connection-idle-timeout 参数未设置为 0（手动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2448,10 +2447,10 @@ Based on your system, restart the RKE2 service. For example, systemctl restart r
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--streaming-connection-idle-timeout' is present OR '--streaming-connection-idle-timeout' is not present
+**预期结果：** '--streaming-connection-idle-timeout' 存在 或者 '--streaming-connection-idle-timeout' 不存在。
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2462,19 +2461,19 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Edit the RKE2 config file /etc/rancher/rke2/config.yaml, set the following parameter to an appropriate value.
+编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，将以下参数设置为适当的值。
 ----
 kubelet-arg: - "streaming-connection-idle-timeout=5m"
 ----
-Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
 ======
 
-==== 4.2.6 Ensure that the --make-iptables-util-chains argument is set to true (Automated)
+==== 4.2.6 确保 --make-iptables-util-chains 参数设置为 true（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2483,10 +2482,10 @@ Based on your system, restart the RKE2 service. For example, systemctl restart r
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--make-iptables-util-chains' is present OR '--make-iptables-util-chains' is not present
+**预期结果：** '--make-iptables-util-chains' 存在 或者 '--make-iptables-util-chains' 不存在。
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2497,25 +2496,25 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Edit the RKE2 config file /etc/rancher/rke2/config.yaml, set the following parameter.
+编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，设置以下参数。
 ----
 kubelet-arg: - "make-iptables-util-chains=true"
 ----
-Or, remove the --make-iptables-util-chains argument to let RKE2 use the default value. Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+或者，去除 --make-iptables-util-chains 参数以让 RKE2 使用默认值。根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
 ======
 
-==== 4.2.7 Ensure that the --hostname-override argument is not set (Automated)
+==== 4.2.7 确保未设置 --hostname-override 参数（自动化）
 
-**Result:** Not Applicable
+**结果：**不适用
 
-**Rationale:** By default, RKE2 does set the --hostname-override argument. Per CIS guidelines, this is to comply with cloud providers that require this flag to ensure that hostname matches node names.
+**说明：**默认情况下，RKE2 会设置 --hostname-override 参数。根据 CIS 指南，这是为了遵守要求此标志的云服务提供商，以确保主机名与节点名称匹配。
 
-==== 4.2.8 Ensure that the eventRecordQPS argument is set to a level which ensures appropriate event capture (Manual)
+==== 4.2.8 确保 eventRecordQPS 参数设置为确保适当事件捕获的级别（手动）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2524,10 +2523,10 @@ Or, remove the --make-iptables-util-chains argument to let RKE2 use the default 
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--event-qps' is present OR '--event-qps' is not present
+**预期结果：** '--event-qps' 存在 或者 '--event-qps' 不存在。
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2538,18 +2537,18 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Edit the RKE2 config file /etc/rancher/rke2/config.yaml, set the following parameter to an appropriate value.
+编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，将以下参数设置为适当的值。
 ----
 kubelet-arg: - "event-qps=+++<value>+++"
 ----
-Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 ======
 
-==== 4.2.9 Ensure that the --tls-cert-file and --tls-private-key-file arguments are set as appropriate (Automated)
+==== 4.2.9 确保 --tls-cert-file 和 --tls-private-key-file 参数设置为适当值（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2558,10 +2557,10 @@ Based on your system, restart the RKE2 service. For example, systemctl restart r
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--tls-cert-file' is present AND '--tls-private-key-file' is present
+**预期结果:** '--tls-cert-file' 存在并且 '--tls-private-key-file' 存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2572,18 +2571,18 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 automatically provides the TLS certificate and private key for the Kubelet. They are generated and located at /var/lib/rancher/rke2/agent/serving-kubelet.crt and /var/lib/rancher/rke2/agent/serving-kubelet.key If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml and remove any lines similar to below.
+默认情况下，RKE2 会自动提供 Kubelet 的 TLS 证书和私钥。它们生成后存放在 /var/lib/rancher/rke2/agent/serving-kubelet.crt 和 /var/lib/rancher/rke2/agent/serving-kubelet.key。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，去除任何类似于以下内容的行。
 ----
 kubelet-arg: - "tls-cert-file=<path/to/tls-cert-file>" - "tls-private-key-file=<path/to/tls-private-key-file>"
 ----
 
 ======
 
-==== 4.2.10 Ensure that the --rotate-certificates argument is not set to false (Automated)
+==== 4.2.10 确保 --rotate-certificates 参数未设置为 false（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2592,10 +2591,10 @@ kubelet-arg: - "tls-cert-file=<path/to/tls-cert-file>" - "tls-private-key-file=<
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** '--rotate-certificates' is present OR '--rotate-certificates' is not present
+**预期结果:** '--rotate-certificates' 存在 或 '--rotate-certificates' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2606,15 +2605,15 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the --rotate-certificates argument. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml, remove any rotate-certificates parameter. Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+默认情况下，RKE2 不会设置 --rotate-certificates 参数。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，去除任何 rotate-certificates 参数。根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
 ======
 
-==== 4.2.11 Verify that the RotateKubeletServerCertificate argument is set to true (Automated)
+==== 4.2.11 验证 RotateKubeletServerCertificate 参数是否设置为 true（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2623,10 +2622,10 @@ By default, RKE2 does not set the --rotate-certificates argument. If this check 
 /bin/ps -fC kubelet
 ----
 
-**Expected Result:** 'RotateKubeletServerCertificate' is present OR 'RotateKubeletServerCertificate' is not present
+**预期结果:**'RotateKubeletServerCertificate' 存在 或者 'RotateKubeletServerCertificate' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2637,37 +2636,37 @@ UID PID PPID C STIME TTY TIME CMD root 2592 2508 2 18:32 ? 00:00:41 kubelet --vo
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-By default, RKE2 does not set the RotateKubeletServerCertificate feature gate. If this check fails, edit the RKE2 config file /etc/rancher/rke2/config.yaml, remove any RotateKubeletServerCertificate parameter. Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+默认情况下，RKE2 不会设置 RotateKubeletServerCertificate 功能开关。如果此检查失败，请编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，去除任何 RotateKubeletServerCertificate 参数。根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
 ======
 
-==== 4.2.12 Ensure that the Kubelet only makes use of Strong Cryptographic Ciphers (Manual)
+==== 4.2.12 确保 Kubelet 仅使用强加密套件（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Edit the RKE2 config file /etc/rancher/rke2/config.yaml,
+**修正：**编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，
 ----
 kubelet-arg: - "tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
 ----
-or to a subset of these values. Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+或这些值的子集。根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
-==== 4.2.13 Ensure that a limit is set on pod PIDs (Manual)
+==== 4.2.13 确保对 pod PIDs 设置了限制（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Edit the RKE2 config file /etc/rancher/rke2/config.yaml, set the following parameter to an appropriate value.
+**修正：**编辑 RKE2 配置文件 /etc/rancher/rke2/config.yaml，将以下参数设置为适当值。
 ----
 kubelet-arg: - "pod-max-pids=+++<value>+++"
 ----
-Based on your system, restart the RKE2 service. For example, systemctl restart rke2-server.service
+根据您的系统，重启 RKE2 服务。例如，systemctl restart rke2-server.service
 
 === 4.3 kube-proxy
 
-==== 4.3.1 Ensure that the kube-proxy metrics service is bound to localhost (Automated)
+==== 4.3.1 确保 kube-proxy 指标服务绑定到 localhost（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2676,10 +2675,10 @@ Based on your system, restart the RKE2 service. For example, systemctl restart r
 /bin/ps -fC kube-proxy
 ----
 
-**Expected Result:** '--metrics-bind-address' is present OR '--metrics-bind-address' is not present
+**预期结果：** '--metrics-bind-address' 存在 或者 '--metrics-bind-address' 不存在
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2690,19 +2689,19 @@ UID PID PPID C STIME TTY TIME CMD root 2730 2644 0 18:32 ? 00:00:01 kube-proxy -
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Modify or remove any values which bind the metrics service to a non-localhost address. The default value is 127.0.0.1:10249.
+修改或删除任何将指标服务绑定到非 localhost 地址的值。默认值为 127.0.0.1:10249。
 
 ======
 
-== 5 Kubernetes Policies
+== 5 Kubernetes 策略
 
-=== 5.1 RBAC and Service Accounts
+=== 5.1 RBAC 和服务账户
 
-==== 5.1.1 Ensure that the cluster-admin role is only used where required (Automated)
+==== 5.1.1 确保仅在需要时使用 cluster-admin 角色（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2711,10 +2710,10 @@ Modify or remove any values which bind the metrics service to a non-localhost ad
 kubectl get clusterrolebindings -o=custom-columns=ROLE:.roleRef.name,NAME:.metadata.name,SUBJECT:.subjects[*].name --no-headers | grep cluster-admin
 ----
 
-**Expected Result:** 'cluster-admin' matched by regex expression 'cluster-admin|helm-kube-system-rke2-.*'
+**预期结果：** 'cluster-admin' 与正则表达式 'cluster-admin|helm-kube-system-rke2-.*' 匹配。
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2725,24 +2724,24 @@ cluster-admin cluster-admin system:masters cluster-admin helm-kube-system-rke2-c
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Identify all clusterrolebindings to the cluster-admin role. Check if they are used and if they need this role or if they could use a role with fewer privileges. RKE2 gives exceptions to the helm-kube-system-rke2-* clusterrolebindings which handles the installation of all rke2 managed components. Where possible, first bind users to a lower privileged role and then remove the clusterrolebinding to the cluster-admin role:
+识别所有与 cluster-admin 角色相关的 clusterrolebindings。检查它们是否被使用，以及是否需要此角色，或者是否可以使用权限更少的角色。RKE2 对 helm-kube-system-rke2-* clusterrolebindings 给予例外，这些绑定处理所有 RKE2 管理组件的安装。在可能的情况下，首先将用户绑定到权限较低的角色，然后去除对 cluster-admin 角色的 clusterrolebinding：
 ----
 kubectl delete clusterrolebinding [name]
 ----
 
 ======
 
-==== 5.1.2 Minimize access to secrets (Automated)
+==== 5.1.2 最小化对机密的访问（自动化）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Where possible, remove get, list and watch access to Secret objects in the cluster.
+**修正：**在可能的情况下，去除对集群中 Secret 对象的获取、列出和监视访问。
 
-==== 5.1.3 Minimize wildcard use in Roles and ClusterRoles (Automated)
+==== 5.1.3 最小化角色和集群角色中的通配符使用（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2751,10 +2750,10 @@ kubectl delete clusterrolebinding [name]
 # Check Roles kubectl get roles --all-namespaces -o custom-columns=ROLE_NAMESPACE:.metadata.namespace,ROLE_NAME:.metadata.name --no-headers | while read -r role_namespace role_name do role_rules=$(kubectl get role -n "$\{role_namespace}" "$\{role_name}" -o=json | jq -c '.rules') if echo "$\{role_rules}" | grep -q "\[\"\*\"\]"; then printf "**role_name: %-50s role_namespace: %-25s role_rules: %s is_compliant: false\n" "$\{role_name}" "$\{role_namespace}" "$\{role_rules}" else printf "**role_name: %-50s role_namespace: %-25s is_compliant: true\n" "$\{role_name}" "$\{role_namespace}" fi; done cr_whitelist="cluster-admin rke2-cloud-controller-manager local-path-provisioner-role" cr_whitelist="$cr_whitelist system:kube-controller-manager system:kubelet-api-admin system:controller:namespace-controller" cr_whitelist="$cr_whitelist system:controller:disruption-controller system:controller:generic-garbage-collector" cr_whitelist="$cr_whitelist system:controller:horizontal-pod-autoscaler system:controller:resourcequota-controller" # Check ClusterRoles kubectl get clusterroles -o custom-columns=CLUSTERROLE_NAME:.metadata.name --no-headers | while read -r clusterrole_name do clusterrole_rules=$(kubectl get clusterrole "$\{clusterrole_name}" -o=json | jq -c '.rules') if echo "$\{cr_whitelist}" | grep -q "$\{clusterrole_name}"; then printf "**clusterrole_name: %-50s is_whitelist: true is_compliant: true\n" "$\{clusterrole_name}" elif echo "$\{clusterrole_rules}" | grep -q "\[\"\*\"\]"; then echo "**clusterrole_name: $\{clusterrole_name} clusterrole_rules: $\{clusterrole_rules} is_compliant: false" else printf "**clusterrole_name: %-50s is_whitelist: false is_compliant: true\n" "$\{clusterrole_name}" fi; done
 ----
 
-**Expected Result:** 'is_compliant' is equal to 'true'
+**预期结果：** 'is_compliant' 等于 'true'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2765,20 +2764,20 @@ kubectl delete clusterrolebinding [name]
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Where possible replace any use of wildcards in clusterroles and roles with specific objects or actions. RKE2 gives exceptions for following cluster roles, which are required for regular operations: - rke2-cloud-controller-manager, local-path-provisioner-role, cluster-admin - system:kube-controller-manager, system:kubelet-api-admin, system:controller:namespace-controller, - system:controller:disruption-controller, system:controller:generic-garbage-collector, - system:controller:horizontal-pod-autoscaler, system:controller:resourcequota-controller
+在可能的情况下，将集群角色和角色中的任何通配符使用替换为特定对象或操作。RKE2 对以下集群角色给予例外，这些角色是常规操作所必需的： - rke2-cloud-controller-manager, local-path-provisioner-role, cluster-admin - system:kube-controller-manager, system:kubelet-api-admin, system:controller:namespace-controller, - system:controller:disruption-controller, system:controller:generic-garbage-collector, - system:controller:horizontal-pod-autoscaler, system:controller:resourcequota-controller
 ======
 
-==== 5.1.4 Minimize access to create pods (Automated)
+==== 5.1.4 最小化对创建 Pod 的访问（自动化）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Where possible, remove create access to pod objects in the cluster.
+**修正：**在可能的情况下，去除对集群中 Pod 对象的创建访问。
 
-==== 5.1.5 Ensure that default service accounts are not actively used. (Automated)
+==== 5.1.5 确保默认服务账户未被积极使用。（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2787,10 +2786,10 @@ Where possible replace any use of wildcards in clusterroles and roles with speci
 kubectl get serviceaccounts --all-namespaces --field-selector metadata.name=default \ -o custom-columns=N:.metadata.namespace,SA:.metadata.name,ASA:.automountServiceAccountToken --no-headers \ | while read -r namespace serviceaccount automountserviceaccounttoken do if [ "$\{automountserviceaccounttoken}" = "+++<none>+++" ]; then automountserviceaccounttoken="notset" fi if [ "$\{namespace}" != "kube-system" ] && [ "$\{automountserviceaccounttoken}" != "false" ]; then printf "**namespace: %-20s service_account: %-10s automountServiceAccountToken: %-6s is_compliant: false\n" "$\{namespace}" "$\{serviceaccount}" "$\{automountserviceaccounttoken}" else printf "**namespace: %-20s service_account: %-10s automountServiceAccountToken: %-6s is_compliant: true\n" "$\{namespace}" "$\{serviceaccount}" "$\{automountserviceaccounttoken}" fi done
 ----
 
-**Expected Result:** 'is_compliant' is equal to 'true'
+**预期结果：** 'is_compliant' 等于 'true'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2801,18 +2800,18 @@ kubectl get serviceaccounts --all-namespaces --field-selector metadata.name=defa
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Create explicit service accounts wherever a Kubernetes workload requires specific access to the Kubernetes API server. Modify the configuration of each default service account to include this value automountServiceAccountToken: false Or using kubectl:
+在 Kubernetes 工作负载需要特定访问 Kubernetes API 服务器的地方创建显式服务帐户。修改每个默认服务账户的配置，以包含此值 automountServiceAccountToken: false 或使用 kubectl：
 ----
 kubectl patch serviceaccount --namespace <NAMESPACE> default --patch '{"automountServiceAccountToken": false}'
 ----
 
 ======
 
-==== 5.1.6 Ensure that Service Account Tokens are only mounted where necessary (Automated)
+==== 5.1.6 确保服务账户令牌仅在必要时挂载（自动化）
 
-**Result:** PASS
+**结果：**PASS
 
 **Audit:**
 
@@ -2821,10 +2820,10 @@ kubectl patch serviceaccount --namespace <NAMESPACE> default --patch '{"automoun
 kubectl get pods --all-namespaces -o custom-columns=POD_NAMESPACE:.metadata.namespace,POD_NAME:.metadata.name,POD_SERVICE_ACCOUNT:.spec.serviceAccount,POD_IS_AUTOMOUNTSERVICEACCOUNTTOKEN:.spec.automountServiceAccountToken --no-headers | while read -r pod_namespace pod_name pod_service_account pod_is_automountserviceaccounttoken do # Skip pods with no service account if [ "$\{pod_service_account}" = "+++<none>+++" ]; then continue fi # Retrieve automountServiceAccountToken's value for ServiceAccount and Pod, set to notset if null or +++<none>+++. svacc_is_automountserviceaccounttoken=$(kubectl get serviceaccount -n "$\{pod_namespace}" "$\{pod_service_account}" -o json | jq -r '.automountServiceAccountToken' | sed -e 's/+++<none>+++/notset/g' -e 's/null/notset/g') pod_is_automountserviceaccounttoken=$(echo "$\{pod_is_automountserviceaccounttoken}" | sed -e 's/+++<none>+++/notset/g' -e 's/null/notset/g') if [ "$\{svacc_is_automountserviceaccounttoken}" = "false" ] && ( [ "$\{pod_is_automountserviceaccounttoken}" = "false" ] || [ "$\{pod_is_automountserviceaccounttoken}" = "notset" ] ); then is_compliant="true" elif [ "$\{svacc_is_automountserviceaccounttoken}" = "true" ] && [ "$\{pod_is_automountserviceaccounttoken}" = "false" ]; then is_compliant="true" else is_compliant="false" fi # Whitelist kube-system namespace as these pods are expected to contact the apiserver if [ "$\{pod_namespace}" = "kube-system" ]; then is_compliant="true" fi echo "**namespace: $\{pod_namespace} pod_name: $\{pod_name} service_account: $\{pod_service_account} pod_is_automountserviceaccounttoken: $\{pod_is_automountserviceaccounttoken} svacc_is_automountServiceAccountToken: $\{svacc_is_automountserviceaccounttoken} is_compliant: $\{is_compliant}" done
 ----
 
-**Expected Result:** 'is_compliant' is equal to 'true'
+**预期结果：** 'is_compliant' 等于 'true'
 
 [%collapsible]
-.Returned Value:
+.返回值：
 ======
 
 [,console]
@@ -2835,192 +2834,192 @@ kubectl get pods --all-namespaces -o custom-columns=POD_NAMESPACE:.metadata.name
 ====== 
 
 [%collapsible]
-.Remediation:
+.修正：
 ======
-Modify the definition of ServiceAccounts and Pods which do not need to mount service account tokens to disable it, with `automountServiceAccountToken: false`. RKE2 gives exceptions to the ServiceAccounts in kube-system namespace, as these are expected contact the apiserver. When in cis mode, RKE2 disables the automountServiceAccountToken for namespaces: - kube-public, default, kube-node-lease If both the ServiceAccount and the Pod's .spec specify a value for automountServiceAccountToken, the Pod spec takes precedence. Condition: Pod is_compliant to true when - ServiceAccount is automountServiceAccountToken: false and Pod is automountServiceAccountToken: false or notset - ServiceAccount is automountServiceAccountToken: true/notset and Pod is automountServiceAccountToken: false
+修改不需要挂载服务账户令牌的 ServiceAccounts 和 Pods 的定义，以禁用该功能，使用 `automountServiceAccountToken: false`.RKE2 对 kube-system 名称空间中的 ServiceAccounts 给予例外，因为这些账户通常会与 apiserver 通信。在 cis 模式下，RKE2 禁用以下名称空间的 automountServiceAccountToken： - kube-public, default, kube-node-lease。如果 ServiceAccount 和 Pod 的 .spec 都指定了 automountServiceAccountToken 的值，则以 Pod 的 spec 为准。条件：当满足以下条件时，Pod 被视为合规： - ServiceAccount 的 automountServiceAccountToken 为 false，且 Pod 的 automountServiceAccountToken 为 false 或未设置 - ServiceAccount 的 automountServiceAccountToken 为 true/未设置，且 Pod 的 automountServiceAccountToken 为 false
 
 ======
 
-==== 5.1.7 Avoid use of system:masters group (Manual)
+==== 5.1.7 避免使用 system:masters 组（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Remove the system:masters group from all users in the cluster.
+**修正:**从集群中的所有用户中去除 system:masters 组。
 
-==== 5.1.8 Limit use of the Bind, Impersonate and Escalate permissions in the Kubernetes cluster (Manual)
+==== 5.1.8 限制在 Kubernetes 集群中使用 Bind、Impersonate 和 Escalate 权限（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Where possible, remove the impersonate, bind and escalate rights from subjects.
+**修正:**在可能的情况下，从主体中去除 impersonate、bind 和 escalate 权利。
 
-==== 5.1.9 Minimize access to create persistent volumes (Manual)
+==== 5.1.9 最小化对创建持久卷的访问（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Where possible, remove create access to PersistentVolume objects in the cluster.
+**修正:**在可能的情况下，去除对集群中 PersistentVolume 对象的创建访问。
 
-==== 5.1.10 Minimize access to the proxy sub-resource of nodes (Manual)
+==== 5.1.10 最小化对节点的代理子资源的访问（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Where possible, remove access to the proxy sub-resource of node objects.
+**修正:**在可能的情况下，去除对节点对象的代理子资源的访问权限。
 
-==== 5.1.11 Minimize access to the approval sub-resource of certificatesigningrequests objects (Manual)
+==== 5.1.11 最小化对证书签名请求对象的审批子资源的访问权限（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Where possible, remove access to the approval sub-resource of certificatesigningrequest objects.
+**修正:**在可能的情况下，去除对证书签名请求对象的审批子资源的访问权限。
 
-==== 5.1.12 Minimize access to webhook configuration objects (Manual)
+==== 5.1.12 最小化对网络钩子配置对象的访问权限（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Where possible, remove access to the validatingwebhookconfigurations or mutatingwebhookconfigurations objects
+**修正:**在可能的情况下，去除对验证网络钩子配置或变更网络钩子配置对象的访问权限。
 
-==== 5.1.13 Minimize access to the service account token creation (Manual)
+==== 5.1.13 最小化对服务账户令牌创建的访问权限（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Where possible, remove access to the token sub-resource of serviceaccount objects.
+**修正:**在可能的情况下，去除对服务账户对象的令牌子资源的访问权限。
 
-=== 5.2 Pod Security Standards
+=== 5.2 Pod 安全标准
 
-==== 5.2.1 Ensure that the cluster has at least one active policy control mechanism in place (Manual)
+==== 5.2.1 确保集群中至少有一个活动的策略控制机制（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Ensure that either Pod Security Admission or an external policy control system is in place for every namespace which contains user workloads.
+**修正:**确保每个包含用户工作负载的名称空间中都有 Pod 安全准入或外部策略控制系统。
 
-==== 5.2.2 Minimize the admission of privileged containers (Manual)
+==== 5.2.2 最小化特权容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of privileged containers.
+**修正:**为集群中每个包含用户工作负载的名称空间添加策略，以限制特权容器的准入。
 
-==== 5.2.3 Minimize the admission of containers wishing to share the host process ID namespace (Manual)
+==== 5.2.3 最小化希望共享主机进程ID命名空间的容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of `hostPID` containers.
+**修正:**为集群中每个包含用户工作负载的名称空间添加策略，以限制`hostPID`容器的准入。
 
-==== 5.2.4 Minimize the admission of containers wishing to share the host IPC namespace (Manual)
+==== 5.2.4 最小化希望共享主机IPC命名空间的容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of `hostIPC` containers.
+**修正:**为集群中每个包含用户工作负载的名称空间添加策略，以限制`hostIPC`容器的准入。
 
-==== 5.2.5 Minimize the admission of containers wishing to share the host network namespace (Manual)
+==== 5.2.5 最小化希望共享主机网络命名空间的容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of `hostNetwork` containers.
+**修正:**为集群中每个包含用户工作负载的名称空间添加策略，以限制`hostNetwork`容器的准入。
 
-==== 5.2.6 Minimize the admission of containers with allowPrivilegeEscalation (Manual)
+==== 5.2.6 最小化允许特权提升的容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of containers with `.spec.allowPrivilegeEscalation` set to `true`.
+**修正:**为集群中每个包含用户工作负载的名称空间添加策略，以限制`.spec.allowPrivilegeEscalation`设置为`true`的容器的准入。
 
-==== 5.2.7 Minimize the admission of root containers (Manual)
+==== 5.2.7 最小化根容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Create a policy for each namespace in the cluster, ensuring that either `MustRunAsNonRoot` or `MustRunAs` with the range of UIDs not including 0, is set.
+**修正:**为集群中的每个名称空间创建一个策略，确保`MustRunAsNonRoot`或`MustRunAs`的 UID 范围不包括 0。
 
-==== 5.2.8 Minimize the admission of containers with the NET_RAW capability (Manual)
+==== 5.2.8 最小化具有NET_RAW能力的容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of containers with the `NET_RAW` capability.
+**修正:**为集群中每个包含用户工作负载的名称空间添加策略，以限制具有`NET_RAW`能力的容器的准入。
 
-==== 5.2.9 Minimize the admission of containers with added capabilities (Manual)
+==== 5.2.9 最小化具有附加能力的容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Ensure that `allowedCapabilities` is not present in policies for the cluster unless it is set to an empty array.
+**修正:**确保在集群的策略中不包含`allowedCapabilities`，除非将其设置为空数组。
 
-==== 5.2.10 Minimize the admission of containers with capabilities assigned (Manual)
+==== 5.2.10 最小化分配能力的容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Review the use of capabilities in applications running on your cluster. Where a namespace contains applications which do not require any Linux capabities to operate consider adding a PSP which forbids the admission of containers which do not drop all capabilities.
+**修正：**审查在您的集群上运行的应用程序中能力的使用。如果名称空间包含不需要任何 Linux 能力来运行的应用程序，请考虑添加一个 PSP，以禁止不丢弃所有能力的容器的准入。
 
-==== 5.2.11 Minimize the admission of Windows HostProcess containers (Manual)
+==== 5.2.11 最小化 Windows HostProcess 容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of containers that have `.securityContext.windowsOptions.hostProcess` set to `true`.
+**修正:**为集群中每个包含用户工作负载的名称空间添加策略，以限制`.securityContext.windowsOptions.hostProcess`设置为`true`的容器的准入。
 
-==== 5.2.12 Minimize the admission of HostPath volumes (Manual)
+==== 5.2.12 最小化 HostPath 卷的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of containers with `hostPath` volumes.
+**修正:**为集群中每个包含用户工作负载的名称空间添加策略，以限制具有`hostPath`卷的容器的准入。
 
-==== 5.2.13 Minimize the admission of containers which use HostPorts (Manual)
+==== 5.2.13 最小化使用 HostPorts 的容器的准入（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Add policies to each namespace in the cluster which has user workloads to restrict the admission of containers which use `hostPort` sections.
+**修正：**为集群中具有用户工作负载的每个名称空间添加策略，以限制使用 `hostPort` 部分的容器的准入。
 
-=== 5.3 Network Policies and CNI
+=== 5.3 网络策略和 CNI
 
-==== 5.3.1 Ensure that the CNI in use supports NetworkPolicies (Manual)
+==== 5.3.1 确保所使用的 CNI 支持网络策略（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** If the CNI plugin in use does not support network policies, consideration should be given to making use of a different plugin, or finding an alternate mechanism for restricting traffic in the Kubernetes cluster.
+**修正:**如果所使用的 CNI 插件不支持网络策略，则应考虑使用其他插件，或寻找替代机制来限制 Kubernetes 集群中的流量。
 
-==== 5.3.2 Ensure that all Namespaces have NetworkPolicies defined (Manual)
+==== 5.3.2 确保所有名称空间都定义了网络策略（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Follow the documentation and create NetworkPolicy objects as you need them.
+**修正：**按照文档创建所需的 NetworkPolicy 对象。
 
-=== 5.4 Secrets Management
+=== 5.4 秘密管理
 
-==== 5.4.1 Prefer using Secrets as files over Secrets as environment variables (Manual)
+==== 5.4.1 优先使用文件形式的 Secrets 而不是环境变量形式的 Secrets（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** If possible, rewrite application code to read Secrets from mounted secret files, rather than from environment variables.
+**修正:**如果可能，重写应用程序代码以从挂载的秘密文件中读取 Secrets，而不是从环境变量中读取。
 
-==== 5.4.2 Consider external secret storage (Manual)
+==== 5.4.2 考虑使用外部 Secrets 存储（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Refer to the Secrets management options offered by your cloud provider or a third-party secrets management solution.
+**修正：**请参考您的云服务提供商或第三方密钥管理解决方案所提供的密钥管理选项。
 
-=== 5.5 Extensible Admission Control
+=== 5.5 可扩展的准入控制
 
-==== 5.5.1 Configure Image Provenance using ImagePolicyWebhook admission controller (Manual)
+==== 5.5.1 使用 ImagePolicyWebhook 准入控制器配置图像溯源（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Follow the Kubernetes documentation and setup image provenance.
+**修正：**遵循Kubernetes文档并设置镜像溯源。
 
-=== 5.7 General Policies
+=== 5.7 一般策略
 
-==== 5.7.1 Create administrative boundaries between resources using namespaces (Manual)
+==== 5.7.1 使用名称空间在资源之间创建管理边界（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Follow the documentation and create namespaces for objects in your deployment as you need them.
+**修正:**遵循文档并根据需要为您的部署中的对象创建名称空间。
 
-==== 5.7.2 Ensure that the seccomp profile is set to docker/default in your Pod definitions (Manual)
+==== 5.7.2 确保在您的 Pod 定义中将 seccomp 配置文件设置为 docker/default（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Use `securityContext` to enable the docker/default seccomp profile in your pod definitions. An example is as below: securityContext: seccompProfile: type: RuntimeDefault
+**修正：**使用 `securityContext` 在您的 Pod 定义中启用 docker/default seccomp 配置文件。示例如下： securityContext: seccompProfile: type:RuntimeDefault
 
-==== 5.7.3 Apply SecurityContext to your Pods and Containers (Manual)
+==== 5.7.3 将SecurityContext应用于您的Pod和容器（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Follow the Kubernetes documentation and apply SecurityContexts to your Pods. For a suggested list of SecurityContexts, you may refer to the CIS Security Benchmark for Docker Containers.
+**修正：**遵循 Kubernetes 文档并将 SecurityContexts 应用到您的 Pods。有关建议的 SecurityContexts 列表，您可以参考 CIS Docker 容器安全基准。
 
-==== 5.7.4 The default namespace should not be used (Manual)
+==== 5.7.4 不应使用默认名称空间（手动）
 
-**Result:** WARN
+**结果：**警告
 
-**Remediation:** Ensure that namespaces are created to allow for appropriate segregation of Kubernetes resources and that all new resources are created in a specific namespace.+++</none>++++++</none>++++++</none>++++++</none>++++++</none>+++
+**修正：**确保创建名称空间，以实现对Kubernetes资源的适当隔离，并确保所有新资源都在特定的名称空间中创建。+++</none>++++++</none>++++++</none>++++++</none>++++++</none>+++

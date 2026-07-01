@@ -1,0 +1,16 @@
+= Acerca de las imágenes endurecidas
+:page-languages: [en, zh]
+:revdate: 2026-02-05
+:page-revdate: {revdate}
+
+{product-name}Las imágenes endurecidas se escanean en busca de vulnerabilidades en el momento de la construcción, y se han añadido protecciones de seguridad adicionales para disminuir las debilidades potenciales:
+
+* Las imágenes no son simplemente réplicas de compilaciones de sentido ascendente. Las imágenes se construyen a partir del código fuente sobre una imagen base mínima endurecida, que actualmente es https://www.suse.com/products/base-container-images/[SLE Base Container Image (BCI)].
+* Cualquier binario que esté escrito en Go se compila utilizando un proceso de construcción conforme a FIPS 140-3. Para más información sobre este compilador, consulta xref:security/fips3_support.adoc#_use_of_fips_compatible_go_compiler[aquí].
+
+Sabrás si una imagen ha sido endurecida como se indica arriba por el nombre de la imagen. RKE2 publica listas de imágenes con cada lanzamiento. Consulta https://github.com/rancher/rke2/releases/download/v1.23.14%2Brke2r1/rke2-images-all.linux-amd64.txt[aquí] para un ejemplo de una lista de imágenes publicada.
+
+[NOTE]
+====
+Actualmente, las imágenes endurecidas de RKE2 son multi-arquitectura. Solo la arquitectura Linux AMD64 es conforme a FIPS. Las arquitecturas Windows y s390x no son conformes a FIPS.
+====

@@ -1,47 +1,47 @@
-= Managing Packaged Components
+= 管理打包组件
 :page-languages: [en, zh]
 :revdate: 2025-08-06
 :page-revdate: {revdate}
 
-== Auto-Deploying Manifests (AddOns)
+== 自动部署清单（AddOns）
 
-On server nodes, any file found in `/var/lib/rancher/rke2/server/manifests` will automatically be deployed to Kubernetes in a manner similar to `kubectl apply`, both on startup and when the file is changed on disk. Deleting files out of this directory will not delete the corresponding resources from the cluster.
+在服务器节点上，`/var/lib/rancher/rke2/server/manifests` 中找到的任何文件将在启动时以及文件在磁盘上更改时，以类似于 `kubectl apply` 的方式自动部署到 Kubernetes。从此目录中删除文件不会从集群中删除相应的资源。
 
-Manifests are tracked as `AddOn` custom resources in the `kube-system` namespace. Any errors or warnings encountered when applying the manifest file may be seen by using `kubectl describe` on the corresponding `AddOn`, or by using `kubectl get event -n kube-system` to view all events for that namespace, including those from the deploy controller.
+清单被跟踪为 `AddOn` 自定义资源，位于 `kube-system` 名称空间中。在应用清单文件时遇到的任何错误或警告，可以通过在相应的 `AddOn` 上使用 `kubectl describe` 查看，或者通过使用 `kubectl get event -n kube-system` 查看该名称空间的所有事件，包括来自部署控制器的事件。
 
-=== Packaged Components
+=== 打包组件
 
-RKE2 comes with a number of packaged components that are deployed as AddOns via the manifests directory, for example `rke2-coredns`, `rke2-metrics-server`, `rke2-ingress-nginx` and so on.
+RKE2 附带了一些软件包组件，这些组件通过清单目录以附加组件的形式进行部署，例如 `rke2-coredns`、`rke2-metrics-server`、`rke2-ingress-nginx` 等。
 
-Manifests for packaged components are managed by RKE2, and should not be altered. The files are re-written to disk whenever RKE2 is started, in order to ensure their integrity.
+软件包组件的清单由 RKE2 管理，不应被更改。每当 RKE2 启动时，文件会被重新写入磁盘，以确保其完整性。
 
-=== User AddOns
+=== 用户附加组件
 
-You may place additional files in the manifests directory for deployment as an `AddOn`. Each file may contain multiple Kubernetes resources, delimited by the `---` YAML document separator. For more information on organizing resources in manifests, see the https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/[Managing Resources] section of the Kubernetes documentation.
+您可以在清单目录中放置额外的文件，以作为 `AddOn` 进行部署。每个文件可以包含多个 Kubernetes 资源，以 `---` YAML 文档分隔符分隔。有关在清单中组织资源的更多信息，请参见 Kubernetes 文档的 https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/[管理资源] 部分。
 
-==== File Naming Requirements
+==== 文件命名要求
 
-The `AddOn` name for each file in the manifest directory is derived from the file basename. Ensure that all files within the manifests directory (or within any subdirectories) have names that are unique, and adhere to Kubernetes https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[object naming restrictions]. Care should also be taken not to conflict with names in use by the default RKE2 packaged components, even if those components are disabled.
+清单目录中每个文件的`AddOn`文件名是根据文件的基本名称生成的。确保清单目录中的所有文件（或任何子目录中的文件）具有唯一的名称，并遵循 Kubernetes https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[对象命名限制]。还应注意不要与默认 RKE2 软件包组件使用的名称冲突，即使这些组件被禁用。
 
 [CAUTION]
 ====
-If you have multiple server nodes, and place additional AddOn manifests on more than one server, it is your responsibility to ensure that files stay in sync across those nodes. RKE2 does not sync AddOn content between nodes, and cannot guarantee correct behavior if different servers attempt to deploy conflicting manifests.
+如果您有多个服务器节点，并且在多个服务器上放置额外的 AddOn 清单，您有责任确保这些文件在各个节点之间保持同步。RKE2 不会在节点之间同步 AddOn 内容，如果不同的服务器尝试部署冲突的清单，则无法保证正确的行为。
 ====
 
-== Disabling Manifests
+== 禁用清单
 
-There are two ways to disable deployment of specific content from the manifests directory.
+有两种方法可以禁用从清单目录中部署特定内容。
 
-=== Using the `--disable` flag
+=== 使用 `--disable` 标志
 
-The AddOns for packaged components listed above, in addition to AddOns for any additional manifests placed in the `manifests` directory, can be disabled with the `--disable` flag. Disabled AddOns are actively uninstalled from the cluster, and the source files deleted from the `manifests` directory.
+上述列出的打包组件的 AddOns，以及放置在 `manifests` 目录中的任何额外清单的 AddOns，可以使用 `--disable` 标志禁用。被禁用的 AddOns 会从集群中主动卸载，并且源文件会从 `manifests` 目录中去除。
 
-For example, to disable the metrics-server from being installed on a new cluster, or to uninstall it and remove the manifest from an existing cluster, you can start RKE2 with `--disable=rke2-metrics-server`. Multiple items can be disabled by separating their names with commas, or by repeating the flag.
+例如，要禁用在新集群上安装 metrics-server，或要卸载它并从现有集群中去除清单，您可以使用 `--disable=rke2-metrics-server` 启动 RKE2。可以通过用逗号分隔名称或重复标志来禁用多个项目。
 
-=== Using .skip files
+=== 使用 .skip 文件
 
-For any file under `/var/lib/rancher/rke2/server/manifests`, you can create a `.skip` file which will cause RKE2 to ignore the corresponding manifest. The contents of the `.skip` file do not matter, only its existence is checked. Note that creating a `.skip` file after an AddOn has already been created will not remove or otherwise modify it or the resources it created; the file is simply treated as if it did not exist.
+对于 `/var/lib/rancher/rke2/server/manifests` 下的任何文件，您可以创建一个 `.skip` 文件，这将导致 RKE2 忽略相应的清单。`.skip` 文件的内容无关紧要，只检查其存在。请注意，在 AddOn 已经创建后创建 `.skip` 文件不会删除或以其他方式修改它或它创建的资源；该文件将被简单地视为不存在。
 
 == Helm AddOns
 
-For information about managing Helm charts via auto-deploying manifests, refer to the section about xref:add-ons/helm.adoc[Helm].
+有关通过自动部署清单管理 Helm 图表的信息，请参阅关于 xref:add-ons/helm.adoc[Helm] 的部分。

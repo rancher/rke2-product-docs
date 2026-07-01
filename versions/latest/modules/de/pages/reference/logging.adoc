@@ -1,0 +1,30 @@
+= Protokollierung
+:page-languages: [en, zh]
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+Wenn es mit systemd ausgeführt wird, werden die Protokolle an journald gesendet und können mit `journalctl -u rke2-server` oder `journalctl -u rke2-agent` angezeigt werden. Einige systemd-Konfigurationen können auch kombinierte Protokolle an `/var/log/syslog` schreiben, in diesem Fall sind die RKE2-Protokolle dort ebenfalls verfügbar.
+
+Die Containerd-Protokolle werden an `/var/lib/rancher/rke2/agent/containerd/containerd.log` geschrieben.
+
+Die kubelet-Protokolle werden an `/var/lib/rancher/rke2/agent/logs/kubelet.log` geschrieben.
+
+Etcd und die Komponenten des Kubernetes-Control-Plane laufen als statische Pods im Namespace `kube-system`.
+
+Protokolle von jedem Kubernetes-Pod können mit `kubectl` abgerufen werden:
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml logs -n kube-system -l component=kube-apiserver
+----
+
+Protokolle von jedem Container werden an `/var/log/pods` geschrieben oder können mit `crictl` abgerufen werden:
+
+[,bash]
+----
+export CONTAINER_RUNTIME_ENDPOINT=unix:///run/k3s/containerd/containerd.sock
+# list running containers
+/var/lib/rancher/rke2/bin/crictl ps
+# get logs from container by container id
+/var/lib/rancher/rke2/bin/crictl logs <container_id>
+----

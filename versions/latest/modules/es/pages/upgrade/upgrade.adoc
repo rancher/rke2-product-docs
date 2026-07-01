@@ -1,0 +1,10 @@
+= Actualizando la versión de {product-name} clústeres
+:page-languages: [en, zh]
+:revdate: 2026-01-08
+:page-revdate: {revdate}
+
+Esta sección describe cómo actualizar la versión de tu {product-name} clúster.
+
+xref:upgrade/manual_upgrade.adoc[Actualizaciones Manuales] describen varias técnicas para actualizar la versión de tu clúster manualmente. También se puede utilizar como base para actualizar a través de herramientas de infraestructura como código de terceros como https://www.terraform.io/[Terraform].
+
+xref:upgrade/automated_upgrade.adoc[Actualizaciones Automatizadas] describen cómo realizar actualizaciones automatizadas nativas de Kubernetes utilizando https://github.com/rancher/system-upgrade-controller[system-upgrade-controller] de Rancher.

@@ -7,7 +7,7 @@
 
 With RKE2 we take lessons learned from developing and maintaining our lightweight https://kubernetes.io[Kubernetes] distribution, https://k3s.io[K3s], and apply them to build an enterprise-ready distribution with https://k3s.io[K3s] ease-of-use. What this means is that RKE2 is, at its simplest, a single binary to be installed and configured on all nodes expected to participate in the https://kubernetes.io[Kubernetes] cluster. Once started, RKE2 is then able to bootstrap and supervise role-appropriate agents per node while sourcing needed content from the network.
 
-image::overview.png[Architecture Overview]
+image::rke2-overview.png[Architecture Overview]
 
 RKE2 brings together a number of Open Source technologies to make this all work:
 
@@ -35,7 +35,7 @@ All of these, except Traefik, are compiled and statically linked with https://gi
 === Content Bootstrap
 
 RKE2 sources binaries and manifests to run both _server_ and _agent_ nodes from the RKE2 Runtime image.
-This means RKE2 scans `/var/lib/rancher/rke2/agent/images/*.tar` for the https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] image (with a tag correlating to the output of `rke2 --version`) by default and if it cannot be found, attempts to pull it from the network (a.k.a. Docker Hub). RKE2 then extracts `/bin/` from the image, flattening it into `+/var/lib/rancher/rke2/data/${RKE2_DATA_KEY}/bin+` where `+${RKE2_DATA_KEY}+` represents a unique string identifying the image.
+This means RKE2 scans `/var/lib/rancher/rke2/agent/images/*.tar` for the https://hub.docker.com/r/rancher/rke2-runtime/tags[`rancher/rke2-runtime`] image (with a tag correlating to the output of `rke2 --version`) by default and if it cannot be found, attempts to pull it from the network (a.k.a. Docker Hub). RKE2 then extracts `/bin/` from the image, flattening it into `+/var/lib/rancher/rke2/data/$<rke2_data_key>/bin+` where `+$<rke2_data_key>+` represents a unique string identifying the image.
 
 For RKE2 to work as expected the runtime image must minimally provide:
 

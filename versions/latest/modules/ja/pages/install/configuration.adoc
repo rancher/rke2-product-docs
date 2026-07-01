@@ -1,0 +1,252 @@
+= 設定オプション
+:page-languages: [en, zh]
+:revdate: 2026-01-16
+:page-revdate: {revdate}
+
+== 設定ファイル
+
+RKE2を構成する主な方法は、その設定ファイルを通じてです。コマンドライン引数と環境変数も利用可能ですが、RKE2はsystemdサービスとしてインストールされるため、これらを活用するのはそれほど簡単ではありません。
+
+デフォルトでは、RKE2は`/etc/rancher/rke2/config.yaml`にあるYAMLファイルに存在する値で起動します。
+
+[NOTE]
+====
+RKE2の設定ファイルは手動で作成する必要があります。特権ユーザーとして`touch /etc/rancher/rke2/config.yaml`を実行することでそれを行うことができます。RKE2を起動した後に設定が変更された場合、新しい設定を適用するためにサービスを再起動する必要があります。
+====
+
+基本的な`server`設定ファイルの例は以下の通りです：
+
+[,yaml]
+----
+write-kubeconfig-mode: "0644"
+tls-san:
+  - "foo.local"
+node-label:
+  - "foo=bar"
+  - "something=amazing"
+debug: true
+----
+
+設定ファイルのパラメータはCLI引数に直接マッピングされ、繰り返し可能なCLI引数はYAMLリストとして表現されます。ブール値フラグはYAMLファイル内で`true`または`false`として表されます。
+
+CLI引数のみを使用した同一の設定は、これを示すために以下に示されています：
+
+[,bash]
+----
+rke2 server \
+  --write-kubeconfig-mode "0644"    \
+  --tls-san "foo.local"             \
+  --node-label "foo=bar"            \
+  --node-label "something=amazing"  \
+  --debug
+----
+
+設定ファイルとCLI引数の両方を使用することも可能です。 このような状況では、両方のソースから値が読み込まれますが、CLI引数が優先されます。`--node-label`のような繰り返し可能な引数の場合、CLI引数はリスト内のすべての値を上書きします。
+
+最後に、設定ファイルの場所は、CLI引数`--config FILE, -c FILE`または環境変数`$RKE2_CONFIG_FILE`を通じて変更できます。
+
+=== 複数の設定ファイル
+
+複数の設定ファイルがサポートされています。デフォルトでは、設定ファイルは`/etc/rancher/rke2/config.yaml`と`/etc/rancher/rke2/config.yaml.d/*.yaml`からアルファベット順に読み込まれます。
+
+デフォルトでは、特定のキーに対して見つかった最後の値が使用されます。キーに`+`を追加することで、値を既存の文字列やスライスに追加することができ、置き換えるのではありません。その後のファイル内のこのキーのすべての出現も、蓄積された値を上書きしないようにするために`+`が必要です。
+
+複数の設定ファイルの例は以下の通りです：
+
+[,yaml]
+----
+# config.yaml
+token: boop
+node-label:
+  - foo=bar
+  - bar=baz
+
+
+# config.yaml.d/test1.yaml
+write-kubeconfig-mode: 600
+node-taint:
+  - alice=bob:NoExecute
+
+# config.yaml.d/test2.yaml
+write-kubeconfig-mode: 777
+node-label:
+  - other=what
+  - foo=three
+node-taint+:
+  - charlie=delta:NoSchedule
+----
+
+これにより、最終的な設定は次のようになります：
+
+[,yaml]
+----
+write-kubeconfig-mode: 777
+token: boop
+node-label:
+  - other=what
+  - foo=three
+node-taint:
+  - alice=bob:NoExecute
+  - charlie=delta:NoSchedule
+----
+
+== Kubeletの設定
+
+[NOTE]
+.バージョンゲート
+====
+以下のオプション1および2に示す、kubelet設定ファイル用のドロップインディレクトリまたは設定ファイルは、v1.32以降でのみ利用可能です。マイナーバージョンが低い場合は、kubelet引数を直接使用する必要があります（以下のオプション番号3）。
+====
+
+アップストリームの動作に従い、kubeletの設定は、特定の https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-configuration-merging-order[優先順位]に従って、さまざまな方法で変更できます。
+
+RKE2は、`/var/lib/rancher/rke2/agent/etc/kubelet.conf.d/00-rke2-defaults.conf`の下に保存されているデフォルトのkubelet設定を使用します。デフォルトの設定パラメータを変更したい場合は、次の3つの方法があります：
+
+. （推奨）`/var/lib/rancher/rke2/agent/etc/kubelet.conf.d/`にドロップイン設定ファイルを配置します。
+. フラグ`--kubelet-arg=config=$PATHTOFILE`を使用すること、ここで`$PATHTOFILE`はkubelet設定パラメータを含むファイルへのパス（例：`/etc/rancher/rke2/kubelet.conf`）です。または、フラグ`--kubelet-arg=config-dir=$PATHTODIR`を使用すること、ここで`$PATHTODIR`はkubelet設定パラメータを含むファイルを格納できるディレクトリへのパス（例：`/etc/rancher/rke2/kubelet.conf.d`）です。
+. フラグ`--kubelet-arg=$FLAG`を使用すること、ここで`$FLAG`はkubelet設定パラメータ（例：`image-gc-high-threshold=100`）です。
+
+=== レガシーkubeletロギングフラグ
+
+RKE2は、以前kubelet自体によってサポートされていたkubeletロギングを構成するための追加のフラグをサポートしています。これらのフラグはRKE2によって捕捉され、kubeletによってstdoutおよびstderrに書き込まれたログのラッピング方法を制御します：
+
+|===
+| フラグ | タイプ | 説明
+
+| `logtostderr`
+| bool
+| ログメッセージがstderrのみに書き込まれるかどうかを制御します（デフォルト`false`）
+
+| `alsologtostderr`
+| bool
+| 指定されたログファイルに加えて、ログメッセージがstderrにも書き込まれるかどうかを制御します（デフォルト`false`）
+
+| `stderrthreshold`
+| 文字列
+| このフラグはRKE2によって捕捉されますが、使用されません（デフォルト`FATAL`）
+
+| `log-file`
+| 文字列
+| コンポーネントのログメッセージが書き込まれるべき絶対パスとファイル名を指定します（デフォルト`/var/lib/rancher/rke2/agent/logs/kubelet.log`）
+
+| `log-file-max-size`
+| int
+| ログファイルが回転する前に達することができる最大サイズ（メガバイト単位）を指定します（デフォルト`50`）
+|===
+
+== Linuxインストールスクリプトの設定
+
+xref:install/quickstart.adoc[クイックスタートガイド]に記載されているように、 https://get.rke2.ioで利用可能なインストールスクリプトを使用して、RKE2をサービスとしてインストールできます。
+
+このコマンドの最も簡単な形式は、ルートユーザまたは`sudo`を使用して実行することです。
+
+[,sh]
+----
+# curl -sfL https://get.rke2.io | sudo sh -
+curl -sfL https://get.rke2.io | sh -
+----
+
+この方法でRKE2をインストールする場合、インストールを構成するために次の環境変数を使用できます：
+
+|===
+| 環境変数 | 説明
+
+| `INSTALL_RKE2_VERSION`
+| GitHubからダウンロードするRKE2のバージョン。指定されていない場合、`stable`チャネルから最新のリリースをダウンロードしようとします。RPMベースのシステムにインストールする場合、`INSTALL_RKE2_CHANNEL`も設定する必要があり、希望するバージョンが`stable`チャネルに存在しない場合です。
+
+| `INSTALL_RKE2_TYPE`
+| 作成するsystemdサービスのタイプは「server」または「agent」のいずれかで、デフォルトは「server」です。
+
+| `INSTALL_RKE2_CHANNEL_URL`
+| RKE2のダウンロードURLを取得するためのチャネルURL。デフォルトは`https://update.rke2.io/v1-release/channels`です。
+
+| `INSTALL_RKE2_CHANNEL`
+| RKE2のダウンロードURLを取得するために使用するチャネル。デフォルトは`stable`です。指定できる値は、`stable`、`latest`、`testing`です。
+
+| `INSTALL_RKE2_METHOD`
+| 使用するインストール方法。デフォルトはRPMベースのシステム`rpm`であり、それ以外は`tar`です。
+|===
+
+このインストールスクリプトは簡単で、以下のことを行います：
+
+. 上記のパラメータに基づいて、インストールするバージョンを取得します。パラメータが指定されていない場合、最新の公式リリースが使用されます。
+. インストール方法を決定し、実行します。方法は2つあります：rpmとtarです。`INSTALL_RKE2_METHOD` 変数が設定されている場合はそれが尊重され、設定されていない場合は、このパッケージ管理システムを使用するオペレーティングシステムでは`rpm`が使用されます。他のすべてのシステムでは、tarが使用されます。tarメソッドの場合、スクリプトは単に希望するリリースに関連付けられたtarアーカイブを解凍します。rpmの場合、yumリポジトリが設定され、yumを使用してrpmがインストールされます。
+
+== Windowsインストールスクリプトの設定
+
+[NOTE]
+====
+Windowsサポートには、RKE2クラスターのCNIとしてCalicoまたはFlannelを選択する必要があります。
+====
+
+xref:install/quickstart.adoc[クイックスタートガイド]に記載されているように、 https://github.com/rancher/rke2/blob/master/install.ps1で入手可能なインストールスクリプトを使用して、WindowsエージェントノードにRKE2をインストールできます。
+
+このコマンドの最も簡単な形式は次のとおりです：
+
+[,powershell]
+----
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
+----
+
+この方法でWindows RKE2エージェントをインストールする際には、インストールスクリプトを設定するために以下のパラメータを渡すことができます：
+
+[,console]
+----
+SYNTAX
+
+install.ps1 [[-Channel] <String>] [[-Method] <String>] [[-Type] <String>] [[-Version] <String>] [[-TarPrefix] <String>] [-Commit] [[-AgentImagesDir] <String>] [[-ArtifactPath] <String>] [[-ChannelUrl] <String>] [<CommonParameters>]
+
+OPTIONS
+
+-Channel           Channel to use for fetching RKE2 download URL (Default: "stable")
+-Method            The installation method to use. Currently tar or choco installation supported. (Default: "tar")
+-Type              Type of RKE2 service. Only the "agent" type is supported on Windows. (Default: "agent")
+-Version           Version of RKE2 to download from Github
+-TarPrefix         Installation prefix when using the tar installation method. (Default: `C:/usr/local` unless `C:/usr/local` is read-only or has a dedicated mount point, in which case `C:/opt/rke2` is used instead)
+-Commit            (experimental/agent) Commit of RKE2 to download from temporary cloud storage. If set, this forces `--Method=tar`. Intended for development purposes only.
+-AgentImagesDir    Installation path for airgap images when installing from CI commit. (Default: `C:/var/lib/rancher/rke2/agent/images`)
+-ArtifactPath      If set, the install script will use the local path for sourcing the `rke2.windows-$SUFFIX` and `sha256sum-$ARCH.txt` files rather than the downloading the files from GitHub. Disabled by default.
+----
+
+=== 他のWindowsインストールスクリプトの使用例
+
+==== 安定版の代わりに最新バージョンをインストール
+
+[,powershell]
+----
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
+./install.ps1 -Channel Latest
+----
+
+==== tarインストールメソッドを使用して最新バージョンをインストール
+
+[,powershell]
+----
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
+./install.ps1 -Channel Latest -Method Tar
+----
+
+== バイナリを直接実行する
+
+述べたように、インストールスクリプトは主にRKE2をサービスとして実行するための設定に関心があります。スクリプトを使用しないことを選択した場合は、 https://github.com/rancher/rke2/releases/latest[リリースページ]からバイナリをダウンロードし、パスに配置して実行するだけでRKE2を実行できます。重要なコマンドは次のとおりです：
+
+|===
+| コマンド | 説明
+
+| `rke2 server`
+| RKE2管理サーバーを実行し、APIサーバー、コントローラーマネージャー、スケジューラーなどのKubernetesコントロールプレーンコンポーネントも起動します。Linux上のみサポートされています。
+
+| `rke2 agent`
+| RKE2ノードエージェントを実行します。これにより、RKE2はワーカーノードとして実行され、Kubernetesノードサービス`kubelet`と`kube-proxy`を起動します。LinuxとWindowsでサポートされています。
+
+| `rke2 --help`
+| コマンドのリストまたは特定のコマンドのヘルプを表示します。
+|===
+
+== 詳細
+
+RKE2サーバーの設定に関する詳細は、xref:reference/server_config.adoc[サーバー設定リファレンス]を参照してください。
+
+RKE2エージェントの設定に関する詳細は、xref:reference/linux_agent_config.adoc[エージェント設定リファレンス]を参照してください。
+
+RKE2 Windowsエージェントの設定に関する詳細は、xref:reference/windows_agent_config.adoc[Windowsエージェント設定リファレンス]を参照してください。

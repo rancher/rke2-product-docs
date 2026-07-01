@@ -1,0 +1,3174 @@
+= CIS 1.23 Leitfaden zur Selbstbewertung
+:page-languages: [en, zh]
+:revdate: 2025-09-05
+:page-revdate: {revdate}
+
+== CIS Kubernetes Benchmark v1.23 - RKE2
+
+=== Übersicht
+
+Dieses Dokument ist ein Begleitdokument zum RKE2-Härtungsleitfaden. Der Härtungsleitfaden bietet verbindliche Anleitungen zur Härtung einer Produktionsinstallation von RKE2, und dieser Benchmark-Leitfaden soll Ihnen helfen, das Sicherheitsniveau des gehärteten Clusters anhand jeder Kontrolle im CIS Kubernetes Benchmark zu bewerten. Es ist für RKE2-Betreiber, Sicherheitsteams, Prüfer und Entscheidungsträger gedacht.
+
+Dieser Leitfaden ist spezifisch für den *v1.25* Release-Zweig von RKE2 und die *v1.23* Version des CIS Kubernetes Benchmarks.
+
+Für weitere Details zu jeder Kontrolle, einschließlich detaillierter Beschreibungen und Maßnahmen für fehlgeschlagene Tests, können Sie den entsprechenden Abschnitt des CIS Kubernetes Benchmark v1.23 einsehen; Sie können den Benchmark nach dem Einloggen bei https://www.cisecurity.org/benchmark/kubernetes/[CISecurity.org] herunterladen.
+
+=== Testmethodik für Kontrollen
+
+Jede Kontrolle im CIS Kubernetes Benchmark wurde gegen ein RKE2-Cluster bewertet, das gemäß dem begleitenden Härtungsleitfaden konfiguriert wurde.
+
+Wo die Kontrollprüfungen vom ursprünglichen CIS-Benchmark abweichen, werden die spezifischen Prüfbefehle für RKE2 zum Testen bereitgestellt.
+
+Dies sind die möglichen Ergebnisse für jede Kontrolle:
+
+* *Bestanden* - Das getestete RKE2-Cluster hat die im Benchmark skizzierte Prüfung bestanden.
+* *Nicht anwendbar* – Die Kontrolle ist für RKE2 nicht anwendbar, weil es so konzipiert ist. Der Abschnitt zur Behebung wird erklären, warum dies so ist.
+* *Manuell - Betreiberabhängig* - Die Kontrolle ist manuell im CIS-Benchmark und hängt vom Anwendungsfall des Clusters oder einem anderen Faktor ab, der vom Clusterbetreiber bestimmt werden muss. Diese Kontrollen wurden bewertet, um sicherzustellen, dass RKE2 deren Implementierung nicht verhindert, aber es wurde keine weitere Konfiguration oder Prüfung des getesteten Clusters durchgeführt.
+
+== Steuerelemente
+
+== 1 Sicherheitskonfiguration des Master-Knotens
+
+=== 1.1 Konfigurationsdateien für den Master-Knoten
+
+==== 1.1.1
+
+Stellen Sie sicher, dass die Berechtigungen der API-Server-Pod-Spezifikationsdatei auf 644 oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Spezifikationsdatei des API-Server-Pods steuert verschiedene Parameter, die das Verhalten des API-Servers festlegen. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu wahren. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml
+644
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Dateien mit `644` Berechtigungen. Keine manuelle Behebung erforderlich.
+
+==== 1.1.2
+
+Stellen Sie sicher, dass der Eigentümer der API-Server-Pod-Spezifikationsdatei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Spezifikationsdatei des API-Server-Pods steuert verschiedene Parameter, die das Verhalten des API-Servers festlegen. Sie sollten den Eigentümer der Datei festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Besitz von `root:root` sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/agent/pod-manifests/kube-apiserver.yaml
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Dateien mit `root:root` Eigentum. Keine manuelle Behebung erforderlich.
+
+==== 1.1.3
+
+Stellen Sie sicher, dass die Berechtigungen der Controller-Manager-Pod-Spezifikationsdatei auf `644` oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Controller-Manager-Pod-Spezifikationsdatei steuert verschiedene Parameter, die das Verhalten des Controller Managers auf dem Master-Knoten festlegen. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu wahren. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml
+644
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Dateien mit `644` Berechtigungen. Keine manuelle Behebung erforderlich.
+
+==== 1.1.4
+
+Stellen Sie sicher, dass der Eigentümer der Controller-Manager-Pod-Spezifikationsdatei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Controller-Manager-Pod-Spezifikationsdatei steuert verschiedene Parameter, die das Verhalten verschiedener Komponenten des Master-Knotens festlegen. Sie sollten den Eigentümer der Datei festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Besitz von root:root sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/agent/pod-manifests/kube-controller-manager.yaml
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Dateien mit `root:root` Eigentum. Keine manuelle Behebung erforderlich.
+
+==== 1.1.5
+
+Stellen Sie sicher, dass die Berechtigungen der Scheduler-Pod-Spezifikationsdatei auf `644` oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Scheduler-Pod-Spezifikationsdatei steuert verschiedene Parameter, die das Verhalten des Scheduler-Dienstes im Master-Knoten festlegen. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu wahren. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml
+644
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Dateien mit `644` Berechtigungen. Keine manuelle Behebung erforderlich.
+
+==== 1.1.6
+
+Stellen Sie sicher, dass der Eigentümer der Scheduler-Pod-Spezifikationsdatei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Scheduler-Pod-Spezifikationsdatei steuert verschiedene Parameter, die das Verhalten des kube-scheduler-Dienstes im Master-Knoten festlegen. Sie sollten den Eigentümer der Datei festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Besitz von root:root sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/agent/pod-manifests/kube-scheduler.yaml
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Dateien mit `root:root` Eigentum. Keine manuelle Behebung erforderlich.
+
+==== 1.1.7
+
+Stellen Sie sicher, dass die Berechtigungen der etcd-Pod-Spezifikationsdatei auf `644` oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die etcd-Pod-Spezifikationsdatei /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml steuert verschiedene Parameter, die das Verhalten des etcd-Dienstes im Master-Knoten festlegen. etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, den Kubernetes für die persistente Speicherung aller seiner REST-API-Objekte verwendet. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu wahren. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml
+644
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Dateien mit `644` Berechtigungen. Keine manuelle Behebung erforderlich.
+
+==== 1.1.8
+
+Stellen Sie sicher, dass der Eigentümer der etcd-Pod-Spezifikationsdatei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die etcd-Pod-Spezifikationsdatei /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml steuert verschiedene Parameter, die das Verhalten des etcd-Dienstes im Master-Knoten festlegen. etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, den Kubernetes für die persistente Speicherung aller seiner REST-API-Objekte verwendet. Sie sollten den Eigentümer der Datei festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Eigentum von root:root sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/agent/pod-manifests/etcd.yaml
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Dateien mit `root:root` Eigentum. Keine manuelle Behebung erforderlich.
+
+==== 1.1.9
+
+Stellen Sie sicher, dass die Berechtigungen der Container-Netzwerkschnittstellendatei auf 644 oder restriktiver gesetzt sind (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die Container-Netzwerkschnittstelle bietet verschiedene Netzwerkoptionen für Overlay-Netzwerke. Sie sollten deren Dokumentation konsultieren und die entsprechenden Dateiberechtigungen einschränken, um die Integrität dieser Dateien zu gewährleisten. Diese Dateien sollten nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/server/manifests/rke2-canal.yaml
+644
+----
+
+*Behebung:*
+RKE2 stellt die Standard-CNI, Canal, mithilfe eines Helm-Charts bereit. Das Chart wird als benutzerdefinierte Ressource in einer Datei mit `644` Berechtigungen definiert. Keine manuelle Behebung erforderlich.
+
+==== 1.1.10
+
+Stellen Sie sicher, dass der Eigentümer der Container-Netzwerkschnittstellendatei auf `root:root` gesetzt ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die Container-Netzwerkschnittstelle bietet verschiedene Netzwerkoptionen für Overlay-Netzwerke. Sie sollten deren Dokumentation konsultieren und die entsprechenden Dateiberechtigungen einschränken, um die Integrität dieser Dateien zu gewährleisten. Diese Dateien sollten im Besitz von root:root sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/server/manifests/rke2-canal.yaml
+root:root
+----
+
+*Behebung:*
+RKE2 stellt die Standard-CNI, Canal, mithilfe eines Helm-Charts bereit. Das Chart wird als benutzerdefinierte Ressource in einer Datei mit `root:root` Eigentum definiert. Keine manuelle Behebung erforderlich.
+
+==== 1.1.11
+
+Stellen Sie sicher, dass die Berechtigungen des etcd-Datenverzeichnisses auf 700 oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Dieses Datenverzeichnis sollte vor unbefugtem Lesen oder Schreiben geschützt sein. Es sollte von keinem Gruppenmitglied oder der Öffentlichkeit lesbar oder beschreibbar sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/server/db/etcd
+700
+----
+
+*Behebung:*
+RKE2 verwaltet das etcd-Datenverzeichnis und setzt dessen Berechtigungen auf 700. Keine manuelle Behebung erforderlich.
+
+==== 1.1.12
+
+Stellen Sie sicher, dass der Eigentümer des etcd-Datenverzeichnisses auf `etcd:etcd` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Dieses Datenverzeichnis sollte vor unbefugtem Lesen oder Schreiben geschützt sein. Es sollte im Besitz von etcd:etcd sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/server/db/etcd
+etcd:etcd
+----
+
+*Behebung:*
+Wenn RKE2 mit dem `profile` Flag auf `cis-1.23` gesetzt ausgeführt wird, wird RKE2 die Ausführung verweigern, wenn der `etcd` Benutzer und die Gruppe nicht auf dem Host existieren. Wenn es existiert, wird RKE2 automatisch das Eigentum des etcd-Datenverzeichnisses auf `etcd:etcd` setzen und sicherstellen, dass das etcd-statische Pod mit diesem Benutzer und dieser Gruppe gestartet wird.
+
+==== 1.1.13
+
+Stellen Sie sicher, dass die Berechtigungen der `admin.conf` Datei auf `644` oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die admin.conf ist die kubeconfig-Datei des Administrators, die verschiedene Einstellungen für die Verwaltung des Clusters definiert. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu wahren. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+
+In RKE2 befindet sich diese Datei unter `/var/lib/rancher/rke2/server/cred/admin.kubeconfig`.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/server/cred/admin.kubeconfig
+644
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Datei unter `/var/lib/rancher/rke2/server/cred/admin.kubeconfig` und setzt automatisch die Berechtigungen auf `644`. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.1.14
+
+Stellen Sie sicher, dass der Besitz der admin.conf-Datei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die admin.conf-Datei enthält die Anmeldeinformationen des Administrators für den Cluster. Sie sollten den Dateieigentümer festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Besitz von root:root sein.
+
+In RKE2 befindet sich diese Datei unter `/var/lib/rancher/rke2/server/cred/admin.kubeconfig`.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/server/cred/admin.kubeconfig
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Datei unter `stat -c %U:%G /var/lib/rancher/rke2/server/cred/admin.kubeconfig` und setzt automatisch den Besitz auf `root:root`.
+
+[discrete]
+==== 1.1.15
+
+Stellen Sie sicher, dass die Berechtigungen der `scheduler.conf`-Datei auf `644` oder restriktiver gesetzt sind (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die scheduler.conf-Datei ist die kubeconfig-Datei für den Scheduler. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu wahren. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+
+In RKE2 befindet sich diese Datei unter `/var/lib/rancher/rke2/server/cred/scheduler.kubeconfig`.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig
+644
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Datei unter `/var/lib/rancher/rke2/server/cred/scheduler.kubeconfig` und setzt automatisch die Berechtigungen auf `644`. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.1.16
+
+Stellen Sie sicher, dass der Besitz der `scheduler.conf`-Datei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die scheduler.conf-Datei ist die kubeconfig-Datei für den Scheduler. Sie sollten den Dateieigentümer festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Besitz von root:root sein.
+
+In RKE2 befindet sich diese Datei unter `/var/lib/rancher/rke2/server/cred/scheduler.kubeconfig`.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/server/cred/scheduler.kubeconfig
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Datei unter `/var/lib/rancher/rke2/server/cred/scheduler.kubeconfig` und setzt automatisch den Besitz auf `root:root`.
+
+[discrete]
+==== 1.1.17
+
+Stellen Sie sicher, dass die Berechtigungen der `controller.kubeconfig`-Datei auf `644` oder restriktiver gesetzt sind (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die controller.kubeconfig-Datei ist die kubeconfig-Datei für den Scheduler. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu wahren. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+
+In RKE2 befindet sich diese Datei unter `/var/lib/rancher/rke2/server/cred/controller.kubeconfig`.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/server/cred/controller.kubeconfig
+644
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Datei unter `/var/lib/rancher/rke2/server/cred/controller.kubeconfig` und setzt automatisch die Berechtigungen auf `644`. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.1.18
+
+Stellen Sie sicher, dass der Besitz der `controller.kubeconfig`-Datei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die controller.kubeconfig-Datei ist die kubeconfig-Datei für den Scheduler. Sie sollten den Dateieigentümer festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Besitz von root:root sein.
+
+In RKE2 befindet sich diese Datei unter `/var/lib/rancher/rke2/server/cred/controller.kubeconfig`.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/server/cred/controller.kubeconfig
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 diese Datei unter `/var/lib/rancher/rke2/server/cred/controller.kubeconfig` und setzt automatisch den Besitz auf `root:root`.
+
+[discrete]
+==== 1.1.19
+
+Stellen Sie sicher, dass das Kubernetes PKI-Verzeichnis und das Dateieigentum auf `root:root` gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes verwendet eine Reihe von Zertifikaten als Teil seines Betriebs. Sie sollten den Besitz des Verzeichnisses, das die PKI-Informationen enthält, und aller Dateien in diesem Verzeichnis festlegen, um deren Integrität zu gewährleisten. Das Verzeichnis und die Dateien sollten im Besitz von root:root sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/server/tls
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 das Verzeichnis und die Dateien mit dem erwarteten Besitz von `root:root`. Es sollten keine manuellen Maßnahmen erforderlich sein.
+
+[discrete]
+==== 1.1.20
+
+Stellen Sie sicher, dass die Berechtigungen der Kubernetes PKI-Zertifikatdatei auf `644` oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes verwendet eine Reihe von Zertifikatdateien als Teil des Betriebs seiner Komponenten. Die Berechtigungen für diese Dateien sollten auf 644 oder restriktiver gesetzt werden, um deren Integrität zu schützen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+stat -c %n\ %a /var/lib/rancher/rke2/server/tls/*.crt
+----
+
+Überprüfen Sie, ob die Berechtigungen `644` oder restriktiver sind.
+
+*Behebung:*
+Standardmäßig erstellt RKE2 die Dateien mit den erwarteten Berechtigungen von `644`. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.1.21
+
+Stellen Sie sicher, dass die Berechtigungen der Kubernetes PKI-Schlüsseldatei auf `600` gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes verwendet eine Reihe von Schlüsseldateien als Teil des Betriebs seiner Komponenten. Die Berechtigungen für diese Dateien sollten auf 600 gesetzt werden, um ihre Integrität und Vertraulichkeit zu schützen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+stat -c %n\ %a /var/lib/rancher/rke2/server/tls/*.key
+----
+
+Überprüfen Sie, ob die Berechtigungen `600` oder restriktiver sind.
+
+*Behebung:*
+Standardmäßig erstellt RKE2 die Dateien mit den erwarteten Berechtigungen von `600`. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+== 1.2 API-Server
+
+Dieser Abschnitt enthält Empfehlungen zu den Konfigurationsflags des API-Servers.
+
+[discrete]
+=== 1.2.1
+
+Stellen Sie sicher, dass das --anonymous-auth-Argument auf false gesetzt ist (Manuell).
+
+
+[%collapsible]
+.Erläuterung
+======
+Wenn aktiviert, werden Anfragen, die von anderen konfigurierten Authentifizierungsmethoden nicht abgelehnt werden, als anonyme Anfragen behandelt. Diese Anfragen werden dann vom API-Server bearbeitet. Sie sollten sich auf die Authentifizierung verlassen, um den Zugriff zu autorisieren und anonyme Anfragen zu verweigern.
+
+Wenn Sie RBAC-Autorisierung verwenden, wird es im Allgemeinen als angemessen angesehen, anonymen Zugriff auf den API-Server für Gesundheitsprüfungen und Entdeckungszwecke zuzulassen, und daher ist diese Empfehlung manuell. Sie sollten jedoch in Betracht ziehen, ob anonyme Entdeckung ein akzeptables Risiko für Ihre Zwecke darstellt.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob `--anonymous-auth=false` vorhanden ist.
+
+*Behebung:*
+Standardmäßig ist der RKE2 kube-apiserver so konfiguriert, dass er mit diesem Flag und Wert ausgeführt wird. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.2
+
+Stellen Sie sicher, dass der --token-auth-file-Parameter nicht gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die token-basierte Authentifizierung verwendet statische Token, um Anfragen an den Apiserver zu authentifizieren. Die Token werden im Klartext in einer Datei auf dem Apiserver gespeichert, und können nicht widerrufen oder rotiert werden, ohne den Apiserver neu zu starten. Verwenden Sie daher keine statische tokenbasierte Authentifizierung.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das Argument `--token-auth-file` nicht existiert.
+
+*Behebung:*
+Standardmäßig wird RKE2 nicht mit aktivierter Token-Authentifizierung ausgeführt. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.3
+
+Stellen Sie sicher, dass der --DenyServiceExternalIPs nicht gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Dieser Admission Controller lehnt alle neuartigen Verwendungen des Service-Feldes externalIPs ab. Dieses Feature ist sehr mächtig (ermöglicht die Abfangung von Netzwerkverkehr) und wird nicht gut durch Richtlinie kontrolliert. Wenn es aktiviert ist, dürfen Benutzer des Clusters keine neuen Services erstellen, die externalIPs verwenden, und dürfen keine neuen Werte zu externalIPs bei bestehenden Service-Objekten hinzufügen. Bestehende Verwendungen von externalIPs sind nicht betroffen, und Benutzer dürfen Werte von externalIPs bei bestehenden Service-Objekten entfernen.
+
+Die meisten Benutzer benötigen dieses Feature überhaupt nicht, und Cluster-Administratoren sollten in Betracht ziehen, es zu deaktivieren. Cluster, die dieses Feature benötigen, sollten in Betracht ziehen, eine benutzerdefinierte Richtlinie zur Verwaltung der Nutzung zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--enable-admission-plugins`-Argument nicht `DenyServiceExternalIPs` hat.
+
+*Behebung:*
+Standardmäßig setzt RKE2 `DenyServiceExternalIPs` nicht auf das Admission-Plugin-Flag. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.4
+
+Stellen Sie sicher, dass das `--kubelet-https`-Argument auf true gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Verbindungen vom apiserver zu kubelets könnten potenziell sensible Daten wie Geheimnisse und Schlüssel übertragen. Es ist daher wichtig, eine Verschlüsselung während der Übertragung für jede Kommunikation zwischen dem apiserver und kubelets zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--kubelet-https` Argument nicht existiert.
+
+*Behebung:*
+Standardmäßig wird der RKE2 kube-apiserver nicht mit dem `--kubelet-https` Parameter ausgeführt, da er mit TLS läuft. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.5
+
+Stellen Sie sicher, dass die Argumente `--kubelet-client-certificate` und `--kubelet-client-key` entsprechend gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Der apiserver authentifiziert sich standardmäßig nicht bei den HTTPS-Endpunkten des kubelets. Die Anfragen vom apiserver werden anonym behandelt. Sie sollten eine zertifikatsbasierte kubelet-Authentifizierung einrichten, um sicherzustellen, dass der apiserver sich bei kubelets authentifiziert, wenn er Anfragen stellt.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob die Argumente `--kubelet-client-certificate` und `--kubelet-client-key` existieren und ob sie entsprechend gesetzt sind.
+
+*Behebung:*
+Standardmäßig wird der RKE2 kube-apiserver mit diesen Argumenten für die sichere Kommunikation mit kubelet ausgeführt. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.6
+
+Stellen Sie sicher, dass das `--kubelet-certificate-authority`-Argument entsprechend gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Verbindungen vom apiserver zum kubelet werden verwendet, um Protokolle für Pods abzurufen, sich (über kubectl) mit laufenden Pods zu verbinden und die Port-Weiterleitungsfunktionalität des kubelet zu nutzen. Diese Verbindungen enden am HTTPS-Endpunkt des kubelet. Standardmäßig überprüft der apiserver nicht das Serving-Zertifikat des kubelet, was die Verbindung anfällig für Man-in-the-Middle-Angriffe macht und unsicher für den Betrieb in nicht vertrauenswürdigen und/oder öffentlichen Netzwerken ist.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--kubelet-certificate-authority` Argument vorhanden ist und entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig wird der RKE2 kube-apiserver mit diesem Argument für die sichere Kommunikation mit kubelet ausgeführt. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.7
+
+Stellen Sie sicher, dass das `--authorization-mode` Argument nicht auf `AlwaysAllow` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Der API-Server kann so konfiguriert werden, dass er alle Anfragen zulässt. Dieser Modus sollte in keinem Produktionscluster verwendet werden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, dass der Argumentwert kein `AlwaysAllow` enthält.
+
+*Behebung:*
+Standardmäßig setzt RKE2 `Node,RBAC` als Parameter für das `--authorization-mode` Argument. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.8
+
+Stellen Sie sicher, dass das `--authorization-mode` Argument `Node` enthält (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Der Node-Authorisierungsmodus erlaubt es kubelets nur, Secret-, ConfigMap-, PersistentVolume- und PersistentVolumeClaim-Objekte zu lesen, die mit ihren Knoten verbunden sind.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob `Node` als Parameter für das Argument vorhanden ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 `Node,RBAC` als Parameter für das `--authorization-mode` Argument. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.9
+
+Stellen Sie sicher, dass das `--authorization-mode` Argument `RBAC` enthält (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Rollenbasierte Zugriffskontrolle (RBAC) ermöglicht eine feinkörnige Kontrolle über die Vorgänge, die verschiedene Entitäten an unterschiedlichen Objekten im Cluster durchführen können. Es wird empfohlen, den RBAC-Autorisierungsmodus zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob `RBAC` als Parameter für das Argument vorhanden ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 `Node,RBAC` als Parameter für das `--authorization-mode` Argument. Es sind keine manuellen Maßnahmen erforderlich.
+
+[discrete]
+==== 1.2.10
+
+Stellen Sie sicher, dass das Admission-Control-Plugin EventRateLimit gesetzt ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die Verwendung von `EventRateLimit` Admission Control erzwingt eine Begrenzung der Anzahl von Ereignissen, die der API-Server in einem bestimmten Zeitabschnitt akzeptiert. Eine fehlerhafte Arbeitslast könnte den API-Server überlasten und einen DoS-Angriff verursachen, wodurch er nicht mehr verfügbar ist. Dies gilt insbesondere für einen Multi-Tenant-Cluster, in dem es einen kleinen Prozentsatz von fehlerhaften Mandanten geben könnte, die erhebliche Auswirkungen auf die Gesamtleistung des Clusters haben könnten. Daher wird empfohlen, die Rate der Ereignisse zu begrenzen, die der API-Server akzeptiert.
+
+[NOTE]
+====
+Dies ist ein Alpha-Feature in der Kubernetes-Version 1.15.
+====
+======
+
+*Ergebnis:* *Manuell - Betreiberabhängig*
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--enable-admission-plugins`-Argument auf einen Wert gesetzt ist, der EventRateLimit enthält.
+
+*Behebung:*
+Standardmäßig setzt RKE2 nur `NodeRestriction,PodSecurityPolicy` als Parameter für das `--enable-admission-plugins`-Argument.
+Um dies zu konfigurieren, befolgen Sie die Kubernetes-Dokumentation und setzen Sie die gewünschten Limits in einer Konfigurationsdatei. Verweisen Sie dann auf die RKE2-Dokumentation, um zu sehen, wie zusätzliche API-Server-Konfiguration über den kube-apiserver-arg-Parameter bereitgestellt werden kann.
+
+[discrete]
+==== 1.2.11
+
+Stellen Sie sicher, dass das Admission-Control-Plugin `AlwaysAdmit` nicht gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Das Setzen des Admission-Control-Plugins AlwaysAdmit erlaubt alle Anfragen und filtert keine Anfragen.
+
+Der AlwaysAdmit Admission Controller wurde in Kubernetes v1.13 zum Auslaufen gebracht. Sein Verhalten war gleichbedeutend damit, alle Admission-Controller auszuschalten.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob, falls das `--enable-admission-plugins`-Argument gesetzt ist, sein Wert `AlwaysAdmit` nicht enthält.
+
+*Behebung:*
+Standardmäßig setzt RKE2 nur `NodeRestriction,PodSecurityPolicy` als Parameter für das `--enable-admission-plugins`-Argument. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.12
+
+Stellen Sie sicher, dass das Admission-Control-Plugin AlwaysPullImages gesetzt ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Das Setzen der Admission-Control-Richtlinie auf `AlwaysPullImages` zwingt jeden neuen Pod, die erforderlichen Bilder jedes Mal zu ziehen. In einem Multi-Tenant-Cluster können Benutzer sicher sein, dass ihre privaten Bilder nur von denen verwendet werden können, die die Berechtigungen zum Abrufen haben. Ohne diese Admission-Control-Richtlinie kann jeder Pod von jedem Benutzer, sobald ein Bild auf einen Knoten gezogen wurde, es einfach verwenden, indem er den Namen des Bildes kennt, ohne eine Autorisierungsprüfung gegen den Bildbesitz. Wenn dieses Plugin aktiviert ist, werden Bilder immer vor dem Starten von Containern gezogen, was bedeutet, dass gültige Anmeldeinformationen erforderlich sind.
+======
+
+*Ergebnis:* *Manuell - Betreiberabhängig*
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--enable-admission-plugins`-Argument auf einen Wert gesetzt ist, der `AlwaysPullImages` enthält.
+
+*Behebung:*
+Standardmäßig setzt RKE2 nur `NodeRestriction,PodSecurityPolicy` als Parameter für das `--enable-admission-plugins`-Argument.
+Um dies zu konfigurieren, befolgen Sie die Kubernetes-Dokumentation und setzen Sie die gewünschten Limits in einer Konfigurationsdatei. Verweisen Sie dann auf die RKE2-Dokumentation, um zu sehen, wie zusätzliche API-Server-Konfiguration über den kube-apiserver-arg-Parameter bereitgestellt werden kann.
+
+[discrete]
+==== 1.2.13
+
+Stellen Sie sicher, dass das Admission-Control-Plugin SecurityContextDeny gesetzt ist, wenn PodSecurityPolicy nicht verwendet wird (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+SecurityContextDeny kann verwendet werden, um eine Sicherheitsebene für Cluster bereitzustellen, die keine PodSecurityPolicies aktiviert haben.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--enable-admission-plugins`-Argument auf einen Wert gesetzt ist, der `SecurityContextDeny` enthält, wenn `PodSecurityPolicy` nicht enthalten ist.
+
+*Behebung:*
+Standardmäßig aktiviert RKE2 automatisch das `PodSecurityPolicy` Admission-Plugin. Daher muss das `SecurityContextDeny`-Plugin nicht aktiviert werden. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.14
+
+Stellen Sie sicher, dass das Admission-Control-Plugin `ServiceAccount` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Wenn Sie einen Pod erstellen und kein Servicekonto angeben, wird ihm automatisch das Servicekonto `default` im selben Namespace zugewiesen. Sie sollten Ihr eigenes Servicekonto erstellen und den API-Server die Token verwalten lassen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--disable-admission-plugins`-Argument auf einen Wert gesetzt ist, der `ServiceAccount` nicht einschließt.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 dieses Argument nicht. Wenn der Wunsch besteht, dieses Argument zu verwenden, folgen Sie der Dokumentation und erstellen Sie ServiceAccount-Objekte gemäß Ihrer Umgebung. Verweisen Sie dann auf die RKE2-Dokumentation, um zu sehen, wie zusätzliche API-Server-Konfiguration über den kube-apiserver-arg-Parameter bereitgestellt werden kann.
+
+[discrete]
+==== 1.2.15
+
+Stellen Sie sicher, dass das Admission-Control-Plugin `NamespaceLifecycle` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Festlegung der Admission-Control-Richtlinie auf `NamespaceLifecycle` stellt sicher, dass Objekte nicht in nicht vorhandenen Namespaces erstellt werden können und dass Namespaces, die sich in der Beendigung befinden, nicht für die Erstellung neuer Objekte verwendet werden. Dies wird empfohlen, um die Integrität des Namespace-Beendigungsprozesses zu gewährleisten und auch für die Verfügbarkeit der neueren Objekte.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--disable-admission-plugins`-Argument auf einen Wert gesetzt ist, der `NamespaceLifecycle` nicht einschließt.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 dieses Argument nicht. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.16
+
+Stellen Sie sicher, dass das Admission-Control-Plugin NodeRestriction gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Verwendung des NodeRestriction-Plugins stellt sicher, dass das Kubelet auf die Node- und Pod-Objekte beschränkt ist, die es gemäß den Vorgaben ändern kann. Solche Kubelets dürfen nur ihr eigenes Node-API-Objekt ändern und nur Pod-API-Objekte, die an ihren Knoten gebunden sind, ändern.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--enable-admission-plugins`-Argument auf einen Wert gesetzt ist, der `NodeRestriction` enthält.
+
+*Behebung:*
+Standardmäßig setzt RKE2 nur `NodeRestriction` als Parameter für das `--enable-admission-plugins`-Argument. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.17
+
+Stellen Sie sicher, dass das `--secure-port`-Argument nicht auf `0` (automatisiert) gesetzt ist.
+
+[%collapsible]
+.Erläuterung
+======
+Der sichere Port wird verwendet, um https mit Authentifizierung und Autorisierung bereitzustellen. Wenn Sie es deaktivieren, wird kein https-Verkehr bereitgestellt und der gesamte Verkehr wird unverschlüsselt bereitgestellt.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--secure-port`-Argument entweder nicht gesetzt ist oder auf einen ganzzahligen Wert zwischen 1 und 65535 gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 den Parameter 6443 für das `--secure-port`-Argument. Keine manuelle Behebung ist erforderlich.
+
+[discrete]
+==== 1.2.18
+
+Stellen Sie sicher, dass das `--profiling`-Argument auf `false` (automatisiert) gesetzt ist.
+
+[%collapsible]
+.Erläuterung
+======
+Profiling ermöglicht die Identifizierung spezifischer Leistungsengpässe. Es generiert eine erhebliche Menge an Programmdaten, die potenziell ausgenutzt werden könnten, um System- und Programmdetails aufzudecken. Wenn Sie keine Engpässe erleben und den Profiler nicht für Fehlerbehebungszwecke benötigen, wird empfohlen, ihn auszuschalten, um die potenzielle Angriffsfläche zu verringern.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--profiling`-Argument auf false gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 den `--profiling`-Flag-Parameter auf false. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.19
+
+Stellen Sie sicher, dass das `--audit-log-path`-Argument gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Auditierung des Kubernetes API-Servers bietet eine sicherheitsrelevante, chronologische Aufzeichnung der Aktivitäten, die das System durch einzelne Benutzer, Administratoren oder andere Systemkomponenten beeinflusst haben. Obwohl Kubernetes derzeit nur grundlegende Audit-Funktionen bietet, sollte es aktiviert werden. Sie können es aktivieren, indem Sie einen geeigneten Pfad für die Audit-Protokolldatei festlegen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--audit-log-path`-Argument entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--audit-log-path`-Argument und den Parameter. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.20
+
+Stellen Sie sicher, dass das `--audit-log-maxage`-Argument auf `30` oder entsprechend gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Das Beibehalten von Protokollen für mindestens 30 Tage stellt sicher, dass Sie in der Zeit zurückgehen und Ereignisse untersuchen oder korrelieren können. Setzen Sie Ihre Aufbewahrungsfrist für Audit-Logs auf 30 Tage oder gemäß Ihren geschäftlichen Anforderungen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--audit-log-maxage`-Argument auf 30 oder entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--audit-log-maxage`-Argument und den Parameter auf 30. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.21
+
+Stellen Sie sicher, dass das `--audit-log-maxbackup`-Argument auf `10` oder entsprechend gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes rotiert automatisch die Protokolldateien. Das Beibehalten alter Protokolldateien stellt sicher, dass Sie über ausreichende Protokolldaten verfügen, um Untersuchungen oder Korrelationen durchzuführen. Wenn Sie beispielsweise die Dateigröße auf 100 MB und die Anzahl der alten Protokolldateien, die beibehalten werden sollen, auf 10 festgelegt haben, hätten Sie ungefähr 1 GB an Protokolldaten, die Sie potenziell für Ihre Analyse verwenden könnten.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--audit-log-maxbackup`-Argument auf 10 oder entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--audit-log-maxbackup`-Argument und den Parameter auf 10. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.22
+
+Stellen Sie sicher, dass das `--audit-log-maxsize`-Argument auf `100` oder entsprechend gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes rotiert automatisch die Protokolldateien. Das Beibehalten alter Protokolldateien stellt sicher, dass Sie über ausreichende Protokolldaten verfügen, um Untersuchungen oder Korrelationen durchzuführen. Wenn Sie die Dateigröße auf 100 MB und die Anzahl der alten Protokolldateien, die beibehalten werden sollen, auf 10 festgelegt haben, hätten Sie ungefähr 1 GB an Protokolldaten, die Sie potenziell für Ihre Analyse verwenden könnten.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--audit-log-maxsize`-Argument auf 100 oder entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--audit-log-maxsize`-Argument und den Parameter auf 100. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.23
+
+Stellen Sie sicher, dass das `--request-timeout`-Argument entsprechend gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die globale Anforderungstimeout-Einstellung ermöglicht es, das Timeout-Limit des API-Servers auf eine Dauer zu verlängern, die der Verbindungsgeschwindigkeit des Benutzers angemessen ist. Standardmäßig ist es auf 60 Sekunden eingestellt, was bei langsameren Verbindungen problematisch sein kann, da die Clusterressourcen unzugänglich werden, sobald das Datenvolumen der Anfragen das übersteigt, was in 60 Sekunden übertragen werden kann. Ein zu großes Timeout-Limit kann jedoch die Ressourcen des API-Servers erschöpfen und ihn anfällig für Denial-of-Service-Angriffe machen. Daher wird empfohlen, dieses Limit entsprechend festzulegen und das Standardlimit von 60 Sekunden nur bei Bedarf zu ändern.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--request-timeout`-Argument entweder nicht gesetzt oder auf einen angemessenen Wert gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--request-timeout`-Argument nicht. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.24
+
+Stellen Sie sicher, dass das `--service-account-lookup`-Argument auf `true` (automatisiert) gesetzt ist.
+
+[%collapsible]
+.Erläuterung
+======
+Wenn `--service-account-lookup` nicht aktiviert ist, überprüft der API-Server nur, ob das Authentifizierungs-Token gültig ist, und validiert nicht, dass das im Antrag erwähnte Dienstkonto-Token tatsächlich in etcd vorhanden ist. Dies ermöglicht die Verwendung eines Dienstkonto-Tokens, selbst nachdem das entsprechende Dienstkonto gelöscht wurde. Dies ist ein Beispiel für ein Sicherheitsproblem vom Typ "Time of Check to Time of Use" (TOCTOU).
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--service-account-lookup`-Argument vorhanden ist und auf true gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 dieses Argument nicht zugunsten der Standardwirkung. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.25
+
+Stellen Sie sicher, dass das `--service-account-key-file`-Argument entsprechend gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Standardmäßig verwendet der API-Server, wenn kein `--service-account-key-file` angegeben ist, den privaten Schlüssel aus dem TLS-Serverzertifikat, um Dienstkonto-Token zu überprüfen. Um sicherzustellen, dass die Schlüssel für Dienstkonto-Token nach Bedarf rotiert werden können, sollte ein separates öffentliches/privates Schlüsselpaar zum Signieren von Dienstkonto-Token verwendet werden. Daher sollte der öffentliche Schlüssel dem API-Server mit `--service-account-key-file` angegeben werden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--service-account-key-file`-Argument vorhanden ist und angemessen gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--service-account-key-file` explizit. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.26
+
+Stellen Sie sicher, dass die Argumente `--etcd-certfile` und `--etcd-keyfile` angemessen gesetzt sind (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibler Natur und sollten durch eine Client-Authentifizierung geschützt werden. Dies erfordert, dass der API-Server sich gegenüber dem etcd-Server mit einem Client-Zertifikat und einem Schlüssel identifiziert.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob die Argumente `--etcd-certfile` und `--etcd-keyfile` vorhanden sind und ob sie entsprechend gesetzt sind.
+
+*Behebung:*
+Standardmäßig setzt RKE2 die Argumente `--etcd-certfile` und `--etcd-keyfile` explizit. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.27
+
+Stellen Sie sicher, dass die Argumente `--tls-cert-file` und `--tls-private-key-file` angemessen gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Kommunikation des API-Servers enthält sensible Parameter, die während der Übertragung verschlüsselt bleiben sollten. Konfigurieren Sie den API-Server so, dass er nur HTTPS-Verkehr bedient.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob die Argumente `--tls-cert-file` und `--tls-private-key-file` vorhanden sind und ob sie entsprechend gesetzt sind.
+
+*Behebung:*
+Standardmäßig setzt RKE2 die Argumente `--tls-cert-file` und `--tls-private-key-file` explizit. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.28
+
+Stellen Sie sicher, dass das `--client-ca-file`-Argument entsprechend gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Kommunikation des API-Servers enthält sensible Parameter, die während der Übertragung verschlüsselt bleiben sollten. Konfigurieren Sie den API-Server so, dass er nur HTTPS-Verkehr bedient. Wenn das Argument `--client-ca-file` gesetzt ist, wird jede Anfrage, die ein Client-Zertifikat präsentiert, das von einer der Behörden im `client-ca-file` signiert wurde, mit einer Identität authentifiziert, die dem CommonName des Client-Zertifikats entspricht.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--client-ca-file`-Argument vorhanden ist und ob es entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das Argument `--client-ca-file` explizit. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.29
+
+Stellen Sie sicher, dass das `--etcd-cafile`-Argument entsprechend gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Deployments für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibler Natur und sollten durch eine Client-Authentifizierung geschützt werden. Dies erfordert, dass der API-Server sich gegenüber dem etcd-Server mit einer SSL-CA-Datei identifiziert.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das Argument `--etcd-cafile` vorhanden ist und ob es entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das Argument `--etcd-cafile` explizit. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.30
+
+Stellen Sie sicher, dass das `--encryption-provider-config`-Argument entsprechend gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Deployments für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibler Natur und sollten im Ruhezustand verschlüsselt werden, um Offenlegungen zu vermeiden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das Argument `--encryption-provider-config` auf eine EncryptionConfig-Datei gesetzt ist. Stellen Sie außerdem sicher, dass `EncryptionConfigfile` alle gewünschten Ressourcen abdeckt, insbesondere alle Geheimnisse.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das Argument `--encryption-provider-config` explizit. Keine manuelle Behebung erforderlich. Die Standardkonfigurationsdatei des Verschlüsselungsanbieters von RKE2 befindet sich unter `/var/lib/rancher/rke2/server/cred/encryption-config.json` und ist so konfiguriert, dass sie Geheimnisse verschlüsselt.
+
+[discrete]
+==== 1.2.31
+
+Stellen Sie sicher, dass die Verschlüsselungsanbieter angemessen konfiguriert sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Wo `etcd` Verschlüsselung verwendet wird, ist es wichtig sicherzustellen, dass der geeignete Satz von Verschlüsselungsanbietern verwendet wird. Derzeit sind die `aescbc`, `kms` und `secretbox` wahrscheinlich geeignete Optionen.
+======
+
+*Ergebnis:* Bestanden
+
+*Behebung:*
+Befolgen Sie die Kubernetes-Dokumentation und konfigurieren Sie eine `EncryptionConfig`-Datei.
+Wählen Sie in dieser Datei *aescbc*, *kms* oder *secretbox* als den Verschlüsselungsanbieter aus.
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+grep aescbc /var/lib/rancher/rke2/server/cred/encryption-config.json
+----
+
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+Überprüfen Sie, ob aescbc als der Verschlüsselungsanbieter für alle gewünschten Ressourcen festgelegt ist.
+
+*Behebung*
+Standardmäßig setzt RKE2 das Argument `--encryption-provider-config` und den Parameter. Der Inhalt der Konfigurationsdatei zeigt die Verwendung von aescbc an. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.2.32
+
+Stellen Sie sicher, dass der API-Server nur starke kryptografische Chiffren verwendet (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+TLS-Chiffren hatten eine Reihe bekannter Schwachstellen und Mängel, die den Schutz, den sie bieten, verringern können. Standardmäßig unterstützt Kubernetes eine Reihe von TLS-Verschlüsselungssuiten, einschließlich solcher mit Sicherheitsbedenken, die den Schutz schwächen.
+======
+
+*Ergebnis:* *Manuell - Betreiberabhängig*
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob das `--tls-cipher-suites`-Argument wie im untenstehenden Behebungsverfahren beschrieben festgelegt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 dieses Flag ausdrücklich nicht. Keine manuelle Behebung erforderlich.
+
+[discrete]
+=== 1.3 Controller-Manager
+
+[discrete]
+==== 1.3.1
+
+Stellen Sie sicher, dass das `--terminated-pod-gc-threshold`-Argument entsprechend gesetzt ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Garbage Collection ist wichtig, um eine ausreichende Ressourcenverfügbarkeit sicherzustellen und eine verschlechterte Leistung und Verfügbarkeit zu vermeiden. Im schlimmsten Fall könnte das System abstürzen oder einfach für einen langen Zeitraum unbenutzbar sein. Die aktuelle Einstellung für die Garbage Collection beträgt 12.500 beendete Pods, was für Ihr System zu hoch sein könnte. Wählen Sie basierend auf Ihren Systemressourcen und Tests einen geeigneten Schwellenwert, um die Garbage Collection zu aktivieren.
+======
+
+*Ergebnis:* *Manuell - Betreiberabhängig*
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-controller-manager | grep -v grep
+----
+
+Überprüfen Sie, ob das `--terminated-pod-gc-threshold`-Argument entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--terminated-pod-gc-threshold`-Argument mit einem Wert von 1000. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.3.2
+
+Stellen Sie sicher, dass das `--profiling`-Argument auf false gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Profiling ermöglicht die Identifizierung spezifischer Leistungsengpässe. Es generiert eine erhebliche Menge an Programmdaten, die potenziell ausgenutzt werden könnten, um System- und Programmdetails aufzudecken. Wenn Sie keine Engpässe erleben und den Profiler nicht für Fehlerbehebungszwecke benötigen, wird empfohlen, ihn auszuschalten, um die potenzielle Angriffsfläche zu verringern.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-controller-manager | grep -v grep
+----
+
+Überprüfen Sie, ob das `--profiling`-Argument auf false gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--profiling`-Flag auf false. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.3.3
+
+Stellen Sie sicher, dass das `--use-service-account-credentials`-Argument auf `true` (Automatisiert) gesetzt ist.
+
+[%collapsible]
+.Erläuterung
+======
+Der Controller-Manager erstellt ein Dienstkonto pro Controller im `kube-system`-Namespace, generiert eine Anmeldeinformation dafür und erstellt einen dedizierten API-Client mit dieser Dienstkonto-Anmeldeinformation für jede Controller-Schleife. Das Setzen des `--use-service-account-credentials` auf `true` führt dazu, dass jede Controller-Schleife innerhalb des Controller-Managers mit einer separaten Dienstkonto-Anmeldeinformation ausgeführt wird. In Kombination mit RBAC stellt dies sicher, dass die Steuerungsschleifen mit den minimalen Berechtigungen ausgeführt werden, die erforderlich sind, um ihre vorgesehenen Aufgaben zu erfüllen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-controller-manager | grep -v grep
+----
+
+Überprüfen Sie, ob das `--use-service-account-credentials`-Argument auf true gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--use-service-account-credentials`-Argument auf true. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.3.4
+
+Stellen Sie sicher, dass das `--service-account-private-key-file`-Argument entsprechend gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Um sicherzustellen, dass Schlüssel für Dienstkonto-Token nach Bedarf rotiert werden können, sollte ein separates öffentliches/privates Schlüsselpaar zum Signieren von Dienstkonto-Token verwendet werden. Der private Schlüssel sollte dem Controller-Manager mit `--service-account-private-key-file` entsprechend angegeben werden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-controller-manager | grep -v grep
+----
+
+Überprüfen Sie, ob das `--service-account-private-key-file`-Argument entsprechend gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--service-account-private-key-file`-Argument mit der Dienstkonto-Schlüsseldatei. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.3.5
+
+Stellen Sie sicher, dass das `--root-ca-file`-Argument entsprechend gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Prozesse, die innerhalb von Pods laufen und den API-Server kontaktieren müssen, müssen das Serverzertifikat des API-Servers überprüfen. Das Versäumnis, dies zu tun, könnte zu Man-in-the-Middle-Angriffen führen.
+
+Das Bereitstellen des Root-Zertifikats für das Serving-Zertifikat des API-Servers an den Controller-Manager mit dem `--root-ca-file`-Argument ermöglicht es dem Controller-Manager, das vertrauenswürdige Bundle in Pods zu injizieren, damit diese TLS-Verbindungen zum API-Server überprüfen können.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-controller-manager | grep -v grep
+----
+
+Überprüfen Sie, ob das `--root-ca-file`-Argument vorhanden ist und auf eine Zertifikatsbündeldatei gesetzt ist, die das Root-Zertifikat für das Serverzertifikat des API-Servers enthält.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--root-ca-file`-Argument mit der Root-CA-Datei. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.3.6
+
+Stellen Sie sicher, dass das `RotateKubeletServerCertificate`-Argument auf `true` (Automatisiert) gesetzt ist.
+
+[%collapsible]
+.Erläuterung
+======
+`RotateKubeletServerCertificate` bewirkt, dass kubelet sowohl nach dem Bootstrapping seiner Client-Anmeldeinformationen ein Serverzertifikat anfordert als auch das Zertifikat rotiert, wenn seine bestehenden Anmeldeinformationen ablaufen. Diese automatisierte periodische Rotation stellt sicher, dass es keine Ausfallzeit aufgrund abgelaufener Zertifikate gibt und damit die Verfügbarkeit im CIA-Sicherheitsdreieck gewährleistet wird.
+
+[NOTE]
+====
+Diese Empfehlung gilt nur, wenn Sie den Kubelets erlauben, ihre Zertifikate vom API-Server zu beziehen. Falls Ihre Kubelet-Zertifikate von einer externen Behörde oder einem Tool (z.B. Vault) stammen, müssen Sie sich selbst um die Rotation kümmern.
+====
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-controller-manager | grep -v grep
+----
+
+Überprüfen Sie, ob das RotateKubeletServerCertificate-Argument vorhanden ist und auf true gesetzt ist.
+
+*Behebung:*
+Standardmäßig implementiert RKE2 seine eigene Logik zur Zertifikatserstellung und -rotation.
+
+[discrete]
+==== 1.3.7
+
+Stellen Sie sicher, dass das `--bind-address`-Argument auf `127.0.0.1` (Automatisiert) gesetzt ist.
+
+[%collapsible]
+.Erläuterung
+======
+Der Controller-Manager-API-Dienst, der standardmäßig auf Port 10252/TCP läuft, wird für Gesundheits- und Metrikinformationen verwendet und ist ohne Authentifizierung oder Verschlüsselung verfügbar. Daher sollte er nur an eine localhost-Schnittstelle gebunden werden, um die Angriffsfläche des Clusters zu minimieren.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-controller-manager | grep -v grep
+----
+
+Überprüfen Sie, ob das `--bind-address`-Argument auf 127.0.0.1 gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--bind-address`-Argument auf `127.0.0.1`. Keine manuelle Behebung erforderlich.
+
+[discrete]
+=== 1.4 Scheduler
+
+Dieser Abschnitt enthält Empfehlungen zu den Konfigurationsflags des Schedulers.
+
+[discrete]
+==== 1.4.1
+
+Stellen Sie sicher, dass das `--profiling`-Argument auf `false` (Automatisiert) gesetzt ist.
+
+[%collapsible]
+.Erläuterung
+======
+Profiling ermöglicht die Identifizierung spezifischer Leistungsengpässe. Es generiert eine erhebliche Menge an Programmdaten, die potenziell ausgenutzt werden könnten, um System- und Programmdetails aufzudecken. Wenn Sie keine Engpässe erleben und den Profiler nicht für Fehlerbehebungszwecke benötigen, wird empfohlen, ihn auszuschalten, um die potenzielle Angriffsfläche zu verringern.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-scheduler | grep -v grep
+----
+
+Überprüfen Sie, ob das `--profiling`-Argument auf false gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 den `--profiling`-Flag-Parameter auf false. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 1.4.2
+
+Stellen Sie sicher, dass das `--bind-address`-Argument auf `127.0.0.1` (automatisiert) gesetzt ist.
+
+[%collapsible]
+.Erläuterung
+======
+Der Scheduler-API-Dienst, der standardmäßig auf Port 10251/TCP läuft, wird für Gesundheits- und Metrikinformationen verwendet und ist ohne Authentifizierung oder Verschlüsselung verfügbar. Daher sollte er nur an eine localhost-Schnittstelle gebunden werden, um die Angriffsfläche des Clusters zu minimieren.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-scheduler | grep -v grep
+----
+
+Überprüfen Sie, ob das `--bind-address`-Argument auf 127.0.0.1 gesetzt ist.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--bind-address`-Argument auf `127.0.0.1`. Keine manuelle Behebung erforderlich.
+
+== 2 Etcd Knotenkonfiguration
+
+Dieser Abschnitt behandelt Empfehlungen zur etcd-Konfiguration.
+
+[discrete]
+==== 2.1
+
+Stellen Sie sicher, dass die Felder `cert-file` und `key-file` entsprechend gesetzt sind (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibler Natur und sollten während der Übertragung verschlüsselt werden.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+grep -E 'cert-file|key-file' /var/lib/rancher/rke2/server/db/etcd/config
+----
+
+Überprüfen Sie, ob die Felder `cert-file` und `key-file` entsprechend gesetzt sind.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 eine Konfigurationsdatei für etcd, die unter `/var/lib/rancher/rke2/server/db/etcd/config` zu finden ist. Server- und Peer-Zertifikate sowie Schlüsseldateien sind angegeben. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 2.2
+
+Stellen Sie sicher, dass das `client-cert-auth`-Feld auf `true` gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibler Natur und sollten nicht für nicht authentifizierte Clients verfügbar sein. Sie sollten die Client-Authentifizierung über gültige Zertifikate aktivieren, um den Zugriff auf den etcd-Dienst zu sichern.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+grep 'client-cert-auth' /var/lib/rancher/rke2/server/db/etcd/config
+----
+
+Überprüfen Sie, ob das `client-cert-auth`-Feld auf true gesetzt ist.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 eine Konfigurationsdatei für etcd, die unter `/var/lib/rancher/rke2/server/db/etcd/config` zu finden ist. `client-cert-auth` ist auf true gesetzt. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 2.3
+
+Stellen Sie sicher, dass das `auto-tls`-Feld nicht auf `true` gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibler Natur und sollten nicht für nicht authentifizierte Clients verfügbar sein. Sie sollten die Client-Authentifizierung über gültige Zertifikate aktivieren, um den Zugriff auf den etcd-Dienst zu sichern.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+grep 'auto-tls' /var/lib/rancher/rke2/server/db/etcd/config
+----
+
+Überprüfen Sie, ob das `auto-tls`-Feld nicht existiert.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 eine Konfigurationsdatei für etcd, die unter `/var/lib/rancher/rke2/server/db/etcd/config` zu finden ist. Innerhalb der Datei enthält es nicht das `auto-tls`-Argument. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 2.4
+
+Stellen Sie sicher, dass die Felder `peer-cert-file` und `peer-key-file` entsprechend gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibel und sollten während der Übertragung sowie unter den Peers in den etcd-Clustern verschlüsselt werden.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+grep -E 'peer-server-client.crt|peer-server-client.key' /var/lib/rancher/rke2/server/db/etcd/config
+----
+
+Überprüfen Sie, ob die Felder `peer-server-client.crt` und `peer-server-client.key` entsprechend gesetzt sind.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 eine Konfigurationsdatei für etcd, die unter `/var/lib/rancher/rke2/server/db/etcd/config` zu finden ist. Innerhalb der Datei sind die Felder `peer-server-client.crt` und `peer-server-client.key` gesetzt. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 2.5
+
+Stellen Sie sicher, dass das peer-client-cert-auth-Argument auf true gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibel und sollten nur von authentifizierten etcd-Peers im etcd-Cluster zugänglich sein.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+grep 'peer-client-cert-auth' /var/lib/rancher/rke2/server/db/etcd/config
+----
+
+Überprüfen Sie, ob das `peer-client-cert-auth`-Feld im Peer-Bereich auf true gesetzt ist.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 eine Konfigurationsdatei für etcd, die unter `/var/lib/rancher/rke2/server/db/etcd/config` zu finden ist. Innerhalb der Datei ist das `client-cert-auth`-Feld gesetzt. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 2,6
+
+Stellen Sie sicher, dass das `peer-auto-tls`-Feld nicht auf `true` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Diese Objekte sind sensibel und sollten nur von authentifizierten etcd-Peers im etcd-Cluster zugänglich sein. Verwenden Sie daher keine selbstsignierten Zertifikate zur Authentifizierung.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+grep 'peer-auto-tls' /var/lib/rancher/rke2/server/db/etcd/config
+----
+
+Überprüfen Sie, ob das `peer-auto-tls`-Feld nicht existiert.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 eine Konfigurationsdatei für etcd, die unter `/var/lib/rancher/rke2/server/db/etcd/config` zu finden ist. Innerhalb der Datei enthält es nicht das `peer-auto-tls`-Feld. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 2.7
+
+Stellen Sie sicher, dass eine eindeutige Zertifizierungsstelle für etcd verwendet wird (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+etcd ist ein hochverfügbarer Schlüssel-Wert-Speicher, der von Kubernetes-Implementierungen für die persistente Speicherung aller seiner REST-API-Objekte verwendet wird. Der Zugriff sollte nur auf speziell benannte Clients und Peers beschränkt sein.
+
+Die Authentifizierung zu etcd basiert darauf, ob das präsentierte Zertifikat von einer vertrauenswürdigen Zertifizierungsstelle ausgestellt wurde. Es erfolgt keine Überprüfung von Zertifikatsattributen wie dem gemeinsamen Namen oder dem alternativen Betreffsnamen. Wenn Angreifer also Zugang zu einem Zertifikat erhalten könnten, das von der vertrauenswürdigen Zertifizierungsstelle ausgestellt wurde, könnten sie vollen Zugriff auf die etcd-Datenbank erhalten.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+# To find the ca file used by etcd:
+grep 'trusted-ca-file' /var/lib/rancher/rke2/server/db/etcd/config
+# To find the kube-apiserver process:
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob die Datei, die durch das `client-ca-file`-Flag im apiserver-Prozess referenziert wird, sich von der Datei unterscheidet, die durch den `trusted-ca-file`-Parameter in der etcd-Konfigurationsdatei referenziert wird.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 eine Konfigurationsdatei für etcd, die unter `/var/lib/rancher/rke2/server/db/etcd/config` zu finden ist, und die `trusted-ca-file`-Parameter darin sind auf eindeutige Werte eingestellt, die spezifisch für etcd sind. Keine manuelle Behebung erforderlich.
+
+== 3 Konfiguration der Steuerungsebene
+
+=== 3.1 Authentifizierung und Autorisierung
+
+==== 3.1.1
+
+Die Authentifizierung mit Client-Zertifikaten sollte nicht für Benutzer verwendet werden (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Bei jedem Authentifizierungsmechanismus ist die Möglichkeit, Anmeldeinformationen zu widerrufen, wenn sie kompromittiert oder nicht mehr erforderlich sind, eine wichtige Kontrolle. Die Authentifizierung mit Kubernetes-Client-Zertifikaten erlaubt dies nicht, da es an Unterstützung für die Widerrufung von Zertifikaten fehlt.
+======
+
+*Ergebnis:* Manuell - Betreiberabhängig
+
+*Revision:*
+Überprüfen Sie den Benutzerzugriff auf den Cluster und stellen Sie sicher, dass Benutzer die Authentifizierung mit Kubernetes-Client-Zertifikaten nicht nutzen.
+
+*Behebung:*
+Alternative Mechanismen, die von Kubernetes bereitgestellt werden, wie die Verwendung von OIDC, sollten anstelle von Client-Zertifikaten implementiert werden.
+
+=== 3.2 Protokollierung
+
+==== 3.2.1
+
+Stellen Sie sicher, dass eine minimale Prüfungsrichtlinie erstellt wird (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Protokollierung ist eine wichtige detektive Kontrolle für alle Systeme, um potenziellen unbefugten Zugriff zu erkennen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kube-apiserver | grep -v grep
+----
+
+Überprüfen Sie, ob `--audit-policy-file` gesetzt ist. Überprüfen Sie den Inhalt der angegebenen Datei und stellen Sie sicher, dass sie eine gültige Prüfungsrichtlinie enthält.
+
+*Behebung:*
+Erstellen Sie eine Prüfungsrichtliniendatei für Ihren Cluster.
+
+==== 3.2.2
+
+Stellen Sie sicher, dass die Prüfungsrichtlinie wichtige Sicherheitsbedenken abdeckt (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Sicherheitsprüfprotokolle sollten den Zugriff und die Modifikation wichtiger Ressourcen im Cluster abdecken, um sicherzustellen, dass sie einen effektiven Teil einer Sicherheitsumgebung bilden.
+======
+
+*Ergebnis:* Manuell - Betreiberabhängig
+
+*Behebung:*
+
+== 4 Sicherheitskonfiguration für Arbeitsknoten
+
+=== 4.1 Konfigurationsdateien für Arbeitsknoten
+
+==== 4.1.1
+
+Stellen Sie sicher, dass die Berechtigungen der Kubelet-Dienstdatei auf `644` oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die `kubelet` Kubelet-Dienstdatei steuert verschiedene Parameter, die das Verhalten des Kubelet-Dienstes im Arbeitsknoten festlegen. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu gewährleisten. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Behebung:*
+RKE2 startet den kubelet nicht als Dienst. Er wird vom RKE2-Überwachungsprozess gestartet und verwaltet. Alle Konfigurationen werden zur Laufzeit als Befehlszeilenargumente übergeben.
+
+==== 4.1.2
+
+Stellen Sie sicher, dass der Eigentümer der Kubelet-Dienstdatei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die `kubelet` Kubelet-Dienstdatei steuert verschiedene Parameter, die das Verhalten des Kubelet-Dienstes im Arbeitsknoten festlegen. Sie sollten den Eigentümer der Datei festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Besitz von `root:root` sein.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Behebung:*
+RKE2 startet den kubelet nicht als Dienst. Er wird vom RKE2-Überwachungsprozess gestartet und verwaltet. Alle Konfigurationen werden zur Laufzeit als Befehlszeilenargumente übergeben.
+
+==== 4.1.3
+
+Stellen Sie sicher, dass die Berechtigungen der Proxy-Kubeconfig-Datei auf `644` oder restriktiver gesetzt sind (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die `kube-proxy` Kubeconfig-Datei steuert verschiedene Parameter des `kube-proxy`-Dienstes im Arbeitsknoten. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu gewährleisten. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+
+Es ist möglich, `kube-proxy` mit den Kubeconfig-Parametern als Kubernetes ConfigMap anstelle einer Datei auszuführen. In diesem Fall gibt es keine Proxy-Kubeconfig-Datei.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Arbeitsknoten aus.
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/server/manifests/rke2-kube-proxy.yaml
+644
+----
+
+Überprüfen Sie, ob eine Datei angegeben ist und existiert, ob die Berechtigungen 644 oder restriktiver sind.
+
+*Behebung:*
+Standardmäßig erstellt RKE2 `rke2-kube-proxy.yaml` mit `644` Berechtigungen. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 4.1.4
+
+Stellen Sie sicher, dass der Eigentümer der Proxy-Kubeconfig-Datei auf `root:root` gesetzt ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die Kubeconfig-Datei für `kube-proxy` steuert verschiedene Parameter für den `kube-proxy`-Dienst im Arbeitsknoten. Sie sollten den Eigentümer der Datei festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte im Besitz von `root:root` sein.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/server/manifests/rke2-kube-proxy.yaml
+root:root
+----
+
+Überprüfen Sie, ob eine Datei angegeben ist und existiert, ob die Berechtigungen 644 oder restriktiver sind.
+
+*Behebung:*
+Standardmäßig erstellt RKE2 `rke2-kube-proxy.yaml` mit `root:root` Eigentümerschaft. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 4.1.5
+
+Stellen Sie sicher, dass die Berechtigungen der kubelet.conf-Datei auf `644` oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die `kubelet.conf` Datei ist die kubeconfig-Datei für den Knoten und steuert verschiedene Parameter, die das Verhalten und die Identität des Arbeitsknotens festlegen. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu gewährleisten. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Arbeitsknoten aus.
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/agent/kubelet.kubeconfig
+644
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 `kubelet.kubeconfig` mit `644` Berechtigungen. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 4.1.6
+
+Stellen Sie sicher, dass die Eigentümerschaft der kubelet.conf-Datei auf `root:root` gesetzt ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die `kubelet.conf` Datei ist die kubeconfig-Datei für den Knoten und steuert verschiedene Parameter, die das Verhalten und die Identität des Arbeitsknotens festlegen. Sie sollten den Eigentümer der Datei festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte den Eigentümer `root:root` haben.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/agent/kubelet.kubeconfig
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 `kubelet.kubeconfig` mit `root:root` Eigentümerschaft. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 4.1.7
+
+Stellen Sie sicher, dass die Berechtigungen der Zertifizierungsstellen-Datei auf `644` oder restriktiver gesetzt sind (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die Zertifizierungsstellen-Datei steuert die Zertifizierungsstellen, die zur Validierung von API-Anfragen verwendet werden. Sie sollten die Dateiberechtigungen einschränken, um die Integrität der Datei zu gewährleisten. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+stat -c %a /var/lib/rancher/rke2/server/tls/server-ca.crt
+644
+----
+
+Überprüfen Sie, ob die Berechtigungen 644 sind.
+
+*Behebung:*
+Standardmäßig erstellt RKE2 `/var/lib/rancher/rke2/server/tls/server-ca.crt` mit 644 Berechtigungen.
+
+[discrete]
+==== 4.1.8
+
+Stellen Sie sicher, dass die Eigentümerschaft der Client-Zertifizierungsstellen-Datei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Client-Zertifizierungsstellen-Datei steuert die Zertifizierungsstellen, die zur Validierung von API-Anfragen verwendet werden. Sie sollten den Eigentümer der Datei festlegen, um die Integrität der Datei zu gewährleisten. Die Datei sollte den Eigentümer `root:root` haben.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+stat -c %U:%G /var/lib/rancher/rke2/server/tls/client-ca.crt
+root:root
+----
+
+*Behebung:*
+Standardmäßig erstellt RKE2 `/var/lib/rancher/rke2/server/tls/client-ca.crt` mit `root:root` Eigentümerschaft.
+
+[discrete]
+==== 4.1.9
+
+Stellen Sie sicher, dass die kubelet-Konfigurationsdatei Berechtigungen hat, die auf `600` oder restriktiver gesetzt sind (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Der kubelet liest verschiedene Parameter, einschließlich Sicherheitseinstellungen, aus einer Konfigurationsdatei, die durch das Argument `--config` angegeben wird. Wenn diese Datei angegeben ist, sollten Sie ihre Dateiberechtigungen einschränken, um die Integrität der Datei zu gewährleisten. Die Datei sollte nur von den Administratoren des Systems beschreibbar sein.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Behebung:*
+RKE2 benötigt oder verwaltet keine Konfigurationsdatei für den kubelet-Prozess. Alle Konfigurationen werden zur Laufzeit als Befehlszeilenargumente übergeben.
+
+[discrete]
+==== 4.1.10
+
+Stellen Sie sicher, dass die Eigentümerschaft der kubelet-Konfigurationsdatei auf `root:root` gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Der kubelet liest verschiedene Parameter, einschließlich Sicherheitseinstellungen, aus einer Konfigurationsdatei, die durch das Argument `--config` angegeben wird. Wenn diese Datei angegeben ist, sollten Sie ihre Dateiberechtigungen einschränken, um die Integrität der Datei zu gewährleisten. Die Datei sollte den Eigentümer `root:root` haben.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Behebung:*
+RKE2 benötigt oder verwaltet keine Konfigurationsdatei für den kubelet-Prozess. Alle Konfigurationen werden zur Laufzeit als Kommandozeilenargumente übergeben.
+
+[discrete]
+=== 4.2 Kubelet
+
+Dieser Abschnitt enthält Empfehlungen zur kubelet-Konfiguration.
+
+[discrete]
+==== 4.2.1
+
+Stellen Sie sicher, dass das `--anonymous-auth`-Argument auf "false" gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Wenn aktiviert, werden Anfragen, die von anderen konfigurierten Authentifizierungsmethoden nicht abgelehnt werden, als anonyme Anfragen behandelt. Diese Anfragen werden dann vom Kubelet-Server bedient. Sie sollten sich auf die Authentifizierung verlassen, um den Zugriff zu autorisieren und anonyme Anfragen zu untersagen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+Überprüfen Sie, ob der Wert für `--anonymous-auth` "false" ist.
+
+*Behebung:*
+Standardmäßig startet RKE2 kubelet mit `--anonymous-auth`-Argument, das auf "false" gesetzt ist. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 4.2.2
+
+Stellen Sie sicher, dass das `--authorization-mode`-Argument nicht auf "`AlwaysAllow`" gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubelets erlauben standardmäßig alle authentifizierten Anfragen (auch anonyme), ohne dass explizite Autorisierungsprüfungen vom apiserver erforderlich sind. Sie sollten dieses Verhalten einschränken und nur ausdrücklich autorisierte Anfragen zulassen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+Überprüfen Sie, ob `AlwaysAllow` nicht vorhanden ist.
+
+*Behebung:*
+RKE2 startet kubelet mit "`Webhook`" als Wert für das `--authorization-mode`-Argument. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 4.2.3
+
+Stellen Sie sicher, dass das `--client-ca-file`-Argument entsprechend gesetzt ist (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Verbindungen vom apiserver zum kubelet werden verwendet, um Protokolle für Pods abzurufen, sich (über kubectl) mit laufenden Pods zu verbinden und die Port-Weiterleitungsfunktionalität des Kubelets zu nutzen. Diese Verbindungen enden am HTTPS-Endpunkt des Kubelets. Standardmäßig überprüft der apiserver nicht das Serving-Zertifikat des Kubelets, was die Verbindung anfällig für Man-in-the-Middle-Angriffe macht und unsicher ist, um über nicht vertrauenswürdige und/oder öffentliche Netzwerke betrieben zu werden. Die Aktivierung der Kubelet-Zertifikatauthentifizierung stellt sicher, dass der apiserver das Kubelet authentifizieren kann, bevor er Anfragen einreicht.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+Überprüfen Sie, ob das `--client-ca-file`-Argument eine zugehörige CA-Datei hat.
+
+*Behebung:*
+Standardmäßig startet RKE2 den kubelet-Prozess mit dem `--client-ca-file`. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 4.2.4
+
+Stellen Sie sicher, dass das `--read-only-port`-Argument auf "`0`" gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Der Kubelet-Prozess bietet zusätzlich zur Haupt-Kubelet-API eine schreibgeschützte API. Unauthentifizierter Zugriff wird auf diese schreibgeschützte API gewährt, die möglicherweise potenziell sensible Informationen über den Cluster abrufen könnte.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+Überprüfen Sie, ob das `--read-only-port`-Argument auf 0 gesetzt ist.
+
+*Behebung:*
+Standardmäßig startet RKE2 den Kubelet-Prozess mit dem `--read-only-port`-Argument, das auf 0 gesetzt ist.
+
+[discrete]
+==== 4.2.5
+
+Stellen Sie sicher, dass das `--streaming-connection-idle-timeout`-Argument nicht auf "`0`" gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Das Festlegen von Leerlaufzeitüberschreitungen stellt sicher, dass Sie vor Denial-of-Service-Angriffen, inaktiven Verbindungen und dem Auslaufen von temporären Ports geschützt sind.
+
+[NOTE]
+====
+Standardmäßig ist `--streaming-connection-idle-timeout` auf 4 Stunden eingestellt, was für Ihre Umgebung zu hoch sein könnte. Durch die entsprechende Einstellung wird zudem sichergestellt, dass solche Streaming-Verbindungen nach der Erfüllung legitimer Anwendungsfälle zeitlich begrenzt werden.
+====
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+Überprüfen Sie, ob nichts zurückgegeben wird.
+
+*Behebung:*
+Standardmäßig setzt RKE2 `--streaming-connection-idle-timeout` nicht, wenn Kubelet gestartet wird.
+
+[discrete]
+==== 4.2.6
+
+Stellen Sie sicher, dass das `--protect-kernel-defaults` Argument auf `true` gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kernel-Parameter werden normalerweise von den Systemadministratoren optimiert und gehärtet, bevor die Systeme in die Produktion gehen. Diese Parameter schützen den Kernel und das System. Ihre Kubelet-Kernel-Standardeinstellungen, die auf solchen Parametern basieren, sollten entsprechend eingestellt werden, um den gewünschten gesicherten Systemzustand zu erreichen. Das Ignorieren könnte potenziell dazu führen, dass Pods mit unerwünschtem Kernelverhalten ausgeführt werden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+*Behebung:*
+Wenn Sie mit dem `profile`-Flag, das auf `cis-1.23` gesetzt ist, arbeiten, startet RKE2 den Kubelet-Prozess mit dem `--protect-kernel-defaults`-Argument, das auf true gesetzt ist.
+
+[discrete]
+==== 4.2.7
+
+Stellen Sie sicher, dass das `--make-iptables-util-chains` Argument auf `true` gesetzt ist (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubelets können die erforderlichen Änderungen an iptables automatisch verwalten, basierend darauf, wie Sie Ihre Netzwerkoptionen für die Pods wählen. Es wird empfohlen, Kubelets die Änderungen an iptables verwalten zu lassen. Dies stellt sicher, dass die iptables-Konfiguration mit der Netzwerk-Konfiguration der Pods synchron bleibt. Das manuelle Konfigurieren von iptables mit dynamischen Änderungen der Pod-Netzwerk-Konfiguration könnte die Kommunikation zwischen Pods/Containern und zur Außenwelt beeinträchtigen. Es könnte sein, dass Ihre iptables-Regeln zu restriktiv oder zu offen sind.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+Überprüfen Sie, ob keine Ergebnisse zurückgegeben werden.
+
+*Behebung:*
+Standardmäßig setzt RKE2 das `--make-iptables-util-chains`-Argument nicht. Keine manuelle Behebung erforderlich.
+
+[discrete]
+==== 4.2.8
+
+Stellen Sie sicher, dass das `--hostname-override` Argument nicht gesetzt ist (manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Das Überschreiben von Hostnamen könnte das TLS-Setup zwischen dem Kubelet und dem API-Server potenziell stören. Darüber hinaus wird es mit überschriebenen Hostnamen zunehmend schwierig, Protokolle mit einem bestimmten Knoten zu verknüpfen und sie für Sicherheitsanalysen zu verarbeiten. Daher sollten Sie Ihre Kubelet-Knoten mit auflösbaren FQDNs einrichten und vermeiden, die Hostnamen mit IPs zu überschreiben.
+======
+
+*Ergebnis:* Nicht zutreffend
+
+*Behebung:*
+RKE2 setzt diesen Parameter für jeden Host, verwaltet jedoch auch alle Zertifikate im Cluster. Es wird sichergestellt, dass die Hostnamen-Überschreibung als alternativer Name (SAN) im Zertifikat des Kubelets enthalten ist.
+
+[discrete]
+==== 4.2.9
+
+Stellen Sie sicher, dass das `--event-qps` Argument auf 0 oder ein Niveau gesetzt ist, das eine angemessene Ereigniserfassung gewährleistet (manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Es ist wichtig, alle Ereignisse zu erfassen und die Erstellung von Ereignissen nicht einzuschränken. Ereignisse sind eine wichtige Quelle für Sicherheitsinformationen und Analysen, die sicherstellen, dass Ihre Umgebung kontinuierlich mit den Ereignisdaten überwacht wird.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Behebung:*
+Siehe CIS-Benchmark-Leitfaden für weitere Details zur Konfiguration.
+
+[discrete]
+==== 4.2.10
+
+Stellen Sie sicher, dass die `--tls-cert-file` und `--tls-private-key-file` Argumente entsprechend gesetzt sind (automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Die Kommunikation des Kubelets enthält sensible Parameter, die während der Übertragung verschlüsselt bleiben sollten. Konfigurieren Sie die Kubelets so, dass sie nur HTTPS-Verkehr bedienen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+Überprüfen Sie, ob die `--tls-cert-file` und `--tls-private-key-file` Argumente vorhanden und entsprechend gesetzt sind.
+
+*Behebung:*
+Standardmäßig setzt RKE2 die `--tls-cert-file` und `--tls-private-key-file` Argumente beim Ausführen des Kubelet-Prozesses.
+
+[discrete]
+==== 4.2.11
+
+Stellen Sie sicher, dass das `--rotate-certificates` Argument nicht auf `false` gesetzt ist (manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die `--rotate-certificates` Einstellung bewirkt, dass das Kubelet seine Client-Zertifikate rotiert, indem es neue CSRs erstellt, wenn die vorhandenen Anmeldeinformationen ablaufen. Diese automatisierte periodische Rotation stellt sicher, dass es keine Ausfallzeit aufgrund abgelaufener Zertifikate gibt und somit die Verfügbarkeit im CIA-Sicherheitsdreieck gewährleistet ist.
+
+[NOTE]
+====
+Diese Empfehlung gilt nur, wenn Sie den Kubelets erlauben, ihre Zertifikate vom API-Server zu beziehen. Falls Ihre Kubelet-Zertifikate von einer externen Behörde/einem externen Tool (z. B. Vault) stammen, müssen Sie sich selbst um die Rotation kümmern.
+====
+
+[NOTE]
+====
+Diese Funktion erfordert auch, dass das `RotateKubeletClientCertificate` Feature-Gate aktiviert ist (was seit Kubernetes v1.7 der Standard ist).
+====
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+*Behebung:*
+Standardmäßig implementiert RKE2 seine eigene Logik zur Zertifikatserstellung und -rotation.
+
+[discrete]
+==== 4.2.12
+
+Stellen Sie sicher, dass das `RotateKubeletServerCertificate` Argument auf `true` gesetzt ist (manuell).
+
+[%collapsible]
+.Erläuterung
+======
+`RotateKubeletServerCertificate` bewirkt, dass das Kubelet sowohl nach dem Bootstrapping seiner Client-Anmeldeinformationen ein Serving-Zertifikat anfordert als auch das Zertifikat rotiert, wenn seine bestehenden Anmeldeinformationen ablaufen. Diese automatisierte periodische Rotation stellt sicher, dass es keine Ausfallzeit aufgrund abgelaufener Zertifikate gibt und somit die Verfügbarkeit im CIA-Sicherheitsdreieck gewährleistet ist.
+
+[NOTE]
+====
+Diese Empfehlung gilt nur, wenn Sie den Kubelets erlauben, ihre Zertifikate vom API-Server zu beziehen. Falls Ihre Kubelet-Zertifikate von einer externen Behörde/einem externen Tool (z. B. Vault) stammen, müssen Sie sich selbst um die Rotation kümmern.
+====
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+/bin/ps -ef | grep kubelet | grep -v grep
+----
+
+*Behebung:*
+Standardmäßig implementiert RKE2 seine eigene Logik zur Zertifikatserstellung und -rotation.
+
+[discrete]
+==== 4.2.13
+
+Stellen Sie sicher, dass das Kubelet nur starke kryptografische Chiffren verwendet (manuell).
+
+[%collapsible]
+.Erläuterung
+======
+TLS-Chiffren hatten eine Reihe bekannter Schwachstellen und Mängel, die den Schutz, den sie bieten, verringern können. Standardmäßig unterstützt Kubernetes eine Reihe von TLS-Chiffren-Suiten, einschließlich einiger, die Sicherheitsbedenken aufwerfen und den gebotenen Schutz schwächen.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Behebung:*
+Die Konfiguration des Parameters hängt von Ihrem Anwendungsfall ab. Bitte sehen Sie sich den CIS Kubernetes Benchmark für Vorschläge zur Konfiguration für Ihren Anwendungsfall an.
+
+== 5 Kubernetes-Richtlinien
+
+=== 5.1 RBAC und Dienstkonten
+
+==== 5.1.1
+
+Stellen Sie sicher, dass die Rolle cluster-admin nur dort verwendet wird, wo es erforderlich ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes bietet eine Reihe von Standardrollen, bei denen RBAC verwendet wird. Einige dieser Rollen, wie `cluster-admin`, bieten weitreichende Berechtigungen, die nur dort angewendet werden sollten, wo es unbedingt notwendig ist. Rollen wie `cluster-admin` erlauben Super-User-Zugriff, um jede Aktion auf jeder Ressource auszuführen. Wenn er in einem `ClusterRoleBinding` verwendet wird, gibt er die volle Kontrolle über jede Ressource im Cluster und in allen Namespaces. Wenn er in einem `RoleBinding` verwendet wird, gibt er die volle Kontrolle über jede Ressource im Namespace des RoleBindings, einschließlich des Namespaces selbst.
+======
+
+*Ergebnis:* Bestanden
+
+*Behebung:*
+RKE2 macht keinen unangemessenen Gebrauch der Rolle cluster-admin. Operatoren müssen ihre Arbeitslasten auf zusätzliche Nutzung überprüfen. Siehe den CIS Benchmark-Leitfaden für weitere Details.
+
+==== 5.1.2
+
+Minimieren Sie den Zugriff auf Geheimnisse (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Unangemessener Zugriff auf Geheimnisse, die im Kubernetes-Cluster gespeichert sind, kann es einem Angreifer ermöglichen, zusätzlichen Zugriff auf den Kubernetes-Cluster oder externe Ressourcen zu erlangen, deren Anmeldeinformationen als Geheimnisse gespeichert sind.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Behebung:*
+RKE2 begrenzt die Verwendung von Geheimnissen für die Systemkomponenten angemessen, aber Betreiber müssen die Verwendung von Geheimnissen durch ihre Workloads überprüfen. Siehe den CIS Benchmark-Leitfaden für weitere Details.
+
+==== 5.1.3
+
+Minimieren Sie die Verwendung von Wildcards in Rollen und ClusterRoles (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Das Prinzip der geringsten Privilegien empfiehlt, dass Benutzern nur der Zugriff gewährt wird, der für ihre Rolle erforderlich ist, und nichts weiter. Die Verwendung von Wildcard-Rechten gewährt wahrscheinlich übermäßige Rechte auf die Kubernetes-API.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+# Retrieve the roles defined across each namespaces in the cluster and review for wildcards
+/var/lib/rancher/rke2/bin/kubectl get roles --all-namespaces -o yaml
+
+# Retrieve the cluster roles defined in the    cluster    and    review for wildcards
+/var/lib/rancher/rke2/bin/kubectl get clusterroles -o yaml
+----
+
+Überprüfen Sie, ob keine Wildcards verwendet werden.
+
+*Behebung:*
+Betreiber sollten ihre Workloads auf die ordnungsgemäße Verwendung von Rollen überprüfen. Siehe den CIS Benchmark-Leitfaden für weitere Details.
+
+==== 5.1.4
+
+Minimieren Sie den Zugriff auf das Erstellen von Pods (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die Fähigkeit, Pods in einem Cluster zu erstellen, eröffnet Möglichkeiten zur Privilegieneskalation und sollte, wo möglich, eingeschränkt werden.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Behebung:*
+Betreiber sollten überprüfen, wer Zugriff auf das Erstellen von Pods in ihrem Cluster hat. Siehe den CIS Benchmark-Leitfaden für weitere Details.
+
+==== 5.1.5
+
+Stellen Sie sicher, dass Standard-Dienstkonten nicht aktiv verwendet werden. (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes stellt ein Standard-Dienstkonto zur Verfügung, das von Cluster-Workloads verwendet wird, bei denen kein spezifisches Dienstkonto dem Pod zugewiesen ist.
+
+Wo der Zugriff auf die Kubernetes-API von einem Pod erforderlich ist, sollte ein spezifisches Dienstkonto für diesen Pod erstellt und diesem Dienstkonto Rechte gewährt werden.
+
+Das Standard-Dienstkonto sollte so konfiguriert sein, dass es kein Dienstkonto-Token bereitstellt und keine expliziten Rechtezuweisungen hat.
+======
+
+*Ergebnis:* Bestanden.
+
+*Revision:*
+Überprüfen Sie für jeden Namespace im Cluster die Rechte, die dem Standard-Dienstkonto zugewiesen sind, und stellen Sie sicher, dass ihm keine Rollen oder Clusterrollen zugewiesen sind, abgesehen von den Standardwerten. Stellen Sie zusätzlich sicher, dass die Einstellung automountServiceAccountToken: false für jedes Standard-Dienstkonto vorhanden ist.
+
+*Behebung:*
+Erstellen Sie explizite Dienstkonten, wo immer eine Kubernetes-Arbeitslast spezifischen Zugriff auf den Kubernetes-API-Server benötigt.
+Ändern Sie die Konfiguration jedes Standard-Dienstkontos, um diesen Wert einzuschließen.
+
+[,bash]
+----
+automountServiceAccountToken: false
+----
+
+[discrete]
+==== 5.1.6
+
+Stellen Sie sicher, dass Dienstkontotoken nur dort gemountet werden, wo es notwendig ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Das Mounten von Dienstkontotoken innerhalb von Pods kann einen Weg für Privilegieneskalationsangriffe bieten, bei denen ein Angreifer in der Lage ist, einen einzelnen Pod im Cluster zu kompromittieren.
+
+Das Vermeiden des Mountens dieser Tokens entfernt diesen Angriffsweg.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Behebung:*
+Die von RKE2 gestarteten Pods sind Teil des Control Plane und benötigen im Allgemeinen Zugriff, um mit dem API-Server zu kommunizieren; daher gilt diese Kontrolle nicht für sie. Betreiber sollten ihre Workloads überprüfen und Schritte unternehmen, um die Definition von Pods und Dienstkonten zu ändern, die keine Dienstkontotoken mounten müssen, um dies zu deaktivieren.
+
+[discrete]
+==== 5.1.7
+
+Vermeiden Sie die Verwendung der Gruppe system:masters (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die Gruppe system:masters hat uneingeschränkten Zugriff auf die Kubernetes-API, die im Quellcode des API-Servers fest codiert ist. Ein authentifizierter Benutzer, der Mitglied dieser Gruppe ist, kann seinen Zugriff nicht verringern, selbst wenn alle Bindings und Clusterrollenbindungen, in denen diese Gruppe erwähnt wird, entfernt werden.
+
+In Kombination mit der Authentifizierung über Client-Zertifikate kann die Verwendung dieser Gruppe dazu führen, dass unwiderrufliche Cluster-Admin-Level-Anmeldeinformationen für einen Cluster existieren.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Behebung:*
+Entfernen Sie die Gruppe system:masters von allen Benutzern im Cluster.
+
+[discrete]
+==== 5.1.7
+
+Begrenzen Sie die Verwendung der Berechtigungen Binden, Nachahmen und Eskalieren im Kubernetes-Cluster (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Das Nachahmungsprivileg erlaubt einem Subjekt, andere Benutzer nachzuahmen und deren Rechte im Cluster zu erlangen. Das Bindungsprivileg erlaubt dem Subjekt, eine Bindung zu einer Clusterrolle beziehungsweise Rolle hinzuzufügen, wodurch seine effektiven Berechtigungen im Cluster erhöht werden. Das Eskalationsprivileg erlaubt einem Subjekt, Clusterrollen, an die es gebunden ist, zu ändern und seine Rechte auf dieses Niveau zu erhöhen.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Behebung:*
+ Wo möglich, entfernen Sie die Rechte zum Nachahmen, Binden und Eskalieren von Subjekten.
+
+[discrete]
+=== 5.2 Pod-Sicherheitsstandards
+
+[discrete]
+==== 5.2.1
+
+Stellen Sie sicher, dass der Cluster mindestens einen aktiven Richtlinienkontrollmechanismus hat (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Ohne einen aktiven Richtlinienkontrollmechanismus ist es nicht möglich, die Verwendung von Containern mit Zugriff auf die zugrunde liegenden Clusterknoten über Mechanismen wie privilegierte Container oder die Verwendung von hostPath-Volume-Mounts zu begrenzen.
+======
+
+*Ergebnis:* Manuell - Abhängig vom Betreiber
+
+*Behebung:*
+PSA ist seit v1.23 standardmäßig in RKE2 aktiviert, keine Abhilfe erforderlich.
+
+[discrete]
+==== 5.2.2
+
+Minimieren Sie die Zulassung von privilegierten Containern (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Ein Container, der im PID-Namespace des Hosts läuft, kann Prozesse außerhalb des Containers inspizieren. Wenn der Container auch Zugriff auf ptrace-Funktionen hat, kann dies verwendet werden, um Privilegien außerhalb des Containers zu eskalieren.
+
+Es sollte mindestens eine PodSecurityPolicy (PSP) definiert sein, die es Containern nicht erlaubt, den PID-Namespace des Hosts zu teilen.
+
+Wenn Sie Container ausführen müssen, die hostPID benötigen, sollte dies in einer separaten PSP definiert werden, und Sie sollten die RBAC-Kontrollen sorgfältig überprüfen, um sicherzustellen, dass nur eingeschränkte Dienstkonten und Benutzer die Berechtigung haben, auf diese PSP zuzugreifen.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus, um sicherzustellen, dass die eingeschränkte Ebene in der Konfigurationsdatei aktiviert ist.
+
+[,bash]
+----
+config_file=$(ps aux | grep kube-apiserver |  grep -- --admission-control-config-file | sed 's%.*admission-control-config-file[= ]\([^ ]*\).*%\1%')
+
+grep "enforce:" ${config_file}
+----
+
+Überprüfen Sie, ob der zurückgegebene Wert `enforce: restricted` ist.
+
+*Behebung:*
+Fügen Sie in jedem Namespace im Cluster mit Benutzerarbeitslasten Richtlinien hinzu, um die Zulassung von privilegierten Containern einzuschränken.
+
+[discrete]
+==== 5.2.3
+
+Minimieren Sie die Zulassung von Containern, die den PID-Namespace des Hosts teilen möchten (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Ein Container, der im PID-Namespace des Hosts läuft, kann Prozesse außerhalb des Containers inspizieren. Wenn der Container auch Zugriff auf ptrace-Funktionen hat, kann dies verwendet werden, um Privilegien außerhalb des Containers zu eskalieren.
+
+Es sollte mindestens eine Zulassungskontrollrichtlinie definiert sein, die es Containern nicht erlaubt, den Host-PID-Namespace zu teilen.
+
+Wenn Sie Container ausführen müssen, die hostPID benötigen, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, ob nur eingeschränkte Dienstkonten und Benutzer die Berechtigung haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+config_file=$(ps aux | grep kube-apiserver |  grep -- --admission-control-config-file | sed 's%.*admission-control-config-file[= ]\([^ ]*\).*%\1%')
+
+grep "enforce:" ${config_file}
+----
+
+Überprüfen Sie, ob der zurückgegebene Wert `enforce: restricted` ist.
+
+*Behebung:*
+Fügen Sie in jedem Namespace im Cluster mit Benutzerarbeitslasten Richtlinien hinzu, um die Zulassung von privilegierten Containern einzuschränken.
+
+[discrete]
+==== 5.2.4
+
+Minimieren Sie die Zulassung von Containern, die den Host-IPC-Namespace teilen möchten (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Ein Container, der im IPC-Namespace des Hosts läuft, kann IPC verwenden, um mit Prozessen außerhalb des Containers zu interagieren.
+
+Es sollte mindestens eine Zulassungskontrollrichtlinie definiert sein, die es Containern nicht erlaubt, den Host-IPC-Namespace zu teilen.
+
+Wenn Sie Container ausführen müssen, die hostIPC benötigen, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, ob nur eingeschränkte Dienstkonten und Benutzer die Berechtigung haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+config_file=$(ps aux | grep kube-apiserver |  grep -- --admission-control-config-file | sed 's%.*admission-control-config-file[= ]\([^ ]*\).*%\1%')
+
+grep "enforce:" ${config_file}
+----
+
+Überprüfen Sie, ob der zurückgegebene Wert `enforce: restricted` ist.
+
+*Behebung:*
+Fügen Sie in jedem Namespace im Cluster mit Benutzerarbeitslasten Richtlinien hinzu, um die Zulassung von privilegierten Containern einzuschränken.
+
+[discrete]
+==== 5.2.5
+
+Minimieren Sie die Zulassung von Containern, die den Host-Netzwerk-Namespace teilen möchten (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Ein Container, der im Netzwerk-Namespace des Hosts läuft, könnte auf das lokale Loopback-Gerät zugreifen und Netzwerkverkehr zu und von anderen Pods erreichen.
+
+Es sollte mindestens eine Zulassungskontrollrichtlinie definiert sein, die es Containern nicht erlaubt, den Host-Netzwerk-Namespace zu teilen.
+
+Wenn Sie Container ausführen müssen, die Zugriff auf die Netzwerk-Namespaces des Hosts benötigen, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, ob nur eingeschränkte Dienstkonten und Benutzer die Berechtigung haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+config_file=$(ps aux | grep kube-apiserver |  grep -- --admission-control-config-file | sed 's%.*admission-control-config-file[= ]\([^ ]*\).*%\1%')
+
+grep "enforce:" ${config_file}
+----
+
+Überprüfen Sie, ob der zurückgegebene Wert `enforce: restricted` ist.
+
+*Behebung:*
+Fügen Sie in jedem Namespace im Cluster, der Benutzer-Workloads hat, Richtlinien hinzu, um die Zulassung von hostNetwork-Containern einzuschränken.
+
+[discrete]
+==== 5.2.6
+
+Minimieren Sie die Zulassung von Containern mit `allowPrivilegeEscalation` (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Ein Container, der mit dem Flag allowPrivilegeEscalation auf true ausgeführt wird, kann Prozesse enthalten, die mehr Berechtigungen als der Elternprozess erhalten.
+
+Es sollte mindestens eine Zulassungskontrollrichtlinie definiert sein, die es Containern nicht erlaubt, eine Berechtigungseskalation zuzulassen. Die Option existiert (und ist standardmäßig auf true gesetzt), um setuid-Binärdateien auszuführen.
+
+Wenn Sie Container ausführen müssen, die setuid-Binärdateien verwenden oder eine Berechtigungseskalation erfordern, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, ob nur eingeschränkte Dienstkonten und Benutzer die Berechtigung haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+config_file=$(ps aux | grep kube-apiserver |  grep -- --admission-control-config-file | sed 's%.*admission-control-config-file[= ]\([^ ]*\).*%\1%')
+
+grep "enforce:" ${config_file}
+----
+
+Überprüfen Sie, ob der zurückgegebene Wert `enforce: restricted` ist
+
+*Behebung:*
+Fügen Sie Richtlinien zu jedem Namespace im Cluster hinzu, der Benutzer-Workloads hat, um die Zulassung von Containern mit .spec.allowPrivilegeEscalationset auf true einzuschränken.
+
+[discrete]
+==== 5.2.7
+
+Minimieren Sie die Zulassung von Root-Containern (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Container können als jeder Linux-Benutzer ausgeführt werden. Container, die als Root-Benutzer ausgeführt werden, haben trotz der Einschränkungen durch die Sicherheitsfunktionen der Container-Laufzeit eine erhöhte Wahrscheinlichkeit für einen Container-Ausbruch.
+
+Idealerweise sollten alle Container als ein definierter Nicht-UID 0-Benutzer ausgeführt werden.
+
+Es sollte mindestens eine Zulassungskontrollrichtlinie definiert sein, die Root-Container nicht erlaubt.
+
+Wenn Sie Root-Container ausführen müssen, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, dass nur eingeschränkte Dienstkonten und Benutzer die Berechtigung haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+config_file=$(ps aux | grep kube-apiserver |  grep -- --admission-control-config-file | sed 's%.*admission-control-config-file[= ]\([^ ]*\).*%\1%')
+
+grep "enforce:" ${config_file}
+----
+
+Überprüfen Sie, ob der zurückgegebene Wert `enforce: restricted` ist
+
+*Behebung:*
+Erstellen Sie eine Richtlinie für jeden Namespace im Cluster, die sicherstellt, dass entweder `MustRunAsNonRoot` oder `MustRunAs` mit einem UID-Bereich, der 0 nicht umfasst, gesetzt ist.
+
+[discrete]
+==== 5.2.8
+
+Minimieren Sie die Zulassung von Containern mit der NET_RAW-Fähigkeit (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Container werden mit einem standardmäßigen Satz von Fähigkeiten ausgeführt, die von der Container-Laufzeit zugewiesen werden. Standardmäßig kann dies potenziell gefährliche Fähigkeiten umfassen. Mit Docker als Container-Laufzeit ist die NET_RAW-Fähigkeit aktiviert, die von böswilligen Containern missbraucht werden kann.
+
+Idealerweise sollten alle Container diese Fähigkeit ablegen.
+
+Es sollte mindestens eine Zulassungskontrollrichtlinie definiert sein, die Container mit der NET_RAW-Fähigkeit nicht erlaubt.
+
+Wenn Sie Container mit dieser Fähigkeit ausführen müssen, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, dass nur eingeschränkte Dienstkonten und Benutzer die Berechtigung haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+config_file=$(ps aux | grep kube-apiserver |  grep -- --admission-control-config-file | sed 's%.*admission-control-config-file[= ]\([^ ]*\).*%\1%')
+
+grep "enforce:" ${config_file}
+----
+
+Überprüfen Sie, dass der zurückgegebene Wert `enforce: restricted` ist
+
+*Behebung:*
+Fügen Sie in jedem Namespace im Cluster mit Benutzerarbeitslasten Richtlinien hinzu, um die Zulassung von Containern mit der `NET_RAW` Fähigkeit einzuschränken.
+
+[discrete]
+==== 5.2.9
+
+Minimieren Sie die Zulassung von Containern mit hinzugefügten Fähigkeiten (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Container werden mit einem standardmäßigen Satz von Fähigkeiten ausgeführt, die von der Container-Laufzeit zugewiesen werden. Fähigkeiten außerhalb dieses Sets können Containern hinzugefügt werden, was sie Risiken von Container-Ausbruchsangriffen aussetzen könnte.
+
+Es sollte mindestens eine Richtlinie definiert sein, die verhindert, dass Container mit Fähigkeiten über das Standardset hinaus gestartet werden.
+
+Wenn Sie Container mit zusätzlichen Fähigkeiten ausführen müssen, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, ob nur eingeschränkte Dienstkonten und Benutzer die Erlaubnis haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Manuell
+
+*Behebung:*
+Stellen Sie sicher, dass `allowedCapabilities` in den Richtlinien für den Cluster nicht vorhanden ist, es sei denn, es ist auf ein leeres Array gesetzt.
+
+[discrete]
+==== 5.2.10
+
+Minimieren Sie die Zulassung von Containern mit zugewiesenen Fähigkeiten (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Container werden mit einem standardmäßigen Satz von Fähigkeiten ausgeführt, die von der Container-Laufzeit zugewiesen werden. Fähigkeiten sind Teile der Rechte, die im Allgemeinen auf einem Linux-System dem Root-Benutzer gewährt werden.
+
+In vielen Fällen benötigen Anwendungen, die in Containern ausgeführt werden, keine Fähigkeiten, um zu funktionieren, daher sollte aus der Perspektive des Prinzips der geringsten Privilegien die Verwendung von Fähigkeiten minimiert werden.
+======
+
+*Ergebnis:* Manuell
+
+*Behebung:*
+Überprüfen Sie die Verwendung von Capabilities in Anwendungen, die auf Ihrem Cluster ausgeführt werden. Wenn ein Namespace Anwendungen enthält, die keine Linux-Fähigkeiten benötigen, um zu funktionieren, ziehen Sie in Betracht, eine PSP hinzuzufügen, die die Zulassung von Containern verbietet, die nicht alle Fähigkeiten ablegen.
+
+[discrete]
+==== 5.2.11
+
+Minimieren Sie die Zulassung von Windows HostProcess-Containern (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Container werden mit einem standardmäßigen Satz von Fähigkeiten ausgeführt, die von der Container-Laufzeit zugewiesen werden. Fähigkeiten sind Teile der Rechte, die im Allgemeinen auf einem Linux-System dem Root-Benutzer gewährt werden.
+
+In vielen Fällen benötigen Anwendungen, die in Containern ausgeführt werden, keine Fähigkeiten, um zu funktionieren, daher sollte aus der Perspektive des Prinzips der geringsten Privilegien die Verwendung von Fähigkeiten minimiert werden.
+======
+
+*Ergebnis:* Manuell
+
+*Behebung:*
+ Fügen Sie in jedem Namespace im Cluster mit Benutzerarbeitslasten Richtlinien hinzu, um die Zulassung von Containern einzuschränken, bei denen `.securityContext.windowsOptions.hostProcess` auf `true` gesetzt ist.
+
+[discrete]
+==== 5.2.12
+
+Minimieren Sie die Zulassung von HostPath-Volumes (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Ein Container, der ein HostPath-Volume als Teil seiner Spezifikation einbindet, hat Zugriff auf das Dateisystem des zugrunde liegenden Clusterknotens. Die Verwendung von HostPath-Volumes kann Containern den Zugriff auf privilegierte Bereiche des Knotendateisystems ermöglichen.
+
+Es sollte mindestens eine Zulassungskontrollrichtlinie definiert werden, die es Containern nicht erlaubt, HostPath-Volumes einzubinden.
+
+Wenn Sie Container ausführen müssen, die HostPath-Volumes benötigen, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, ob nur eingeschränkte Dienstkonten und Benutzer die Erlaubnis haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Manuell
+
+*Behebung:*
+ Fügen Sie in jedem Namespace im Cluster mit Benutzerarbeitslasten Richtlinien hinzu, um die Zulassung von Containern mit `hostPath` Volumes einzuschränken.
+
+#### 5.2.13
+Minimieren Sie die Zulassung von Containern, die HostPorts verwenden (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Host-Ports verbinden Container direkt mit dem Netzwerk des Hosts. Dies kann Kontrollen wie Netzwerkrichtlinien umgehen.
+
+Es sollte mindestens eine Zulassungskontrollrichtlinie definiert werden, die es Containern nicht erlaubt, die Verwendung von HostPorts zu verlangen.
+
+Wenn Sie Container ausführen müssen, die HostPorts benötigen, sollte dies in einer separaten Richtlinie definiert werden, und Sie sollten sorgfältig überprüfen, ob nur eingeschränkte Dienstkonten und Benutzer die Erlaubnis haben, diese Richtlinie zu verwenden.
+======
+
+*Ergebnis:* Manuell
+
+*Behebung:*
+ Fügen Sie Richtlinien zu jedem Namespace im Cluster hinzu, der Arbeitslasten hat, um die Zulassung von Containern, die `hostPort` Abschnitte verwenden, einzuschränken.
+
+[discrete]
+=== 5.3 Netzwerk-Richtlinien und CNI
+
+[discrete]
+==== 5.3.1
+
+Stellen Sie sicher, dass das verwendete CNI Netzwerkrichtlinien unterstützt (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes-Netzwerkrichtlinien werden durch das verwendete CNI-Plugin durchgesetzt. Daher ist es wichtig sicherzustellen, dass das CNI-Plugin sowohl Ingress- als auch Egress-Netzwerkrichtlinien unterstützt.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Überprüfen Sie die Dokumentation des im Cluster verwendeten CNI-Plugins und bestätigen Sie, dass es Ingress- und Egress-Netzwerkrichtlinien unterstützt.
+
+*Behebung:*
+Standardmäßig verwendet RKE2 Canal (Calico und Flannel) und unterstützt vollständig Netzwerkrichtlinien.
+
+[discrete]
+==== 5.3.2
+
+Stellen Sie sicher, dass alle Namespaces definierte Netzwerkrichtlinien haben (Automatisiert).
+
+[%collapsible]
+.Erläuterung
+======
+Das Ausführen verschiedener Anwendungen im selben Kubernetes-Cluster birgt das Risiko, dass eine kompromittierte Anwendung eine benachbarte Anwendung angreift. Die Netzwerksegmentierung ist wichtig, um sicherzustellen, dass Container nur mit denjenigen kommunizieren können, mit denen sie sollen. Eine Netzwerk-Richtlinie ist eine Spezifikation, wie Auswahlen von Pods miteinander und mit anderen Netzwerkendpunkten kommunizieren dürfen.
+
+Netzwerk-Richtlinien sind auf den Namespace beschränkt. Wenn eine Netzwerk-Richtlinie in einem bestimmten Namespace eingeführt wird, wird jeglicher Verkehr, der von der Richtlinie nicht erlaubt ist, verweigert. Wenn jedoch keine Netzwerk-Richtlinien in einem Namespace vorhanden sind, wird jeglicher Verkehr in und aus den Pods in diesem Namespace erlaubt.
+======
+
+*Ergebnis:* Bestanden
+
+*Revision:*
+Führen Sie den folgenden Befehl auf dem Master-Knoten aus.
+
+[,bash]
+----
+for i in kube-system kube-public default; do
+    /var/lib/rancher/rke2/bin/kubectl get networkpolicies -n $i;
+done
+----
+
+Überprüfen Sie, ob Netzwerk-Richtlinien auf jeden der Namespace angewendet wurden.
+
+*Behebung:*
+RKE2 wendet, wenn es mit dem `--profile=cis-1.23` Argument ausgeführt wird, eine sichere Netzwerk-Richtlinie an, die nur Verkehr innerhalb des Namespace und DNS zum kube-system erlaubt. Keine manuelle Behebung erforderlich.
+
+[discrete]
+=== 5.4 Secretsverwaltung
+
+[discrete]
+==== 5.4.1
+
+Bevorzugen Sie die Verwendung von Secrets als Dateien gegenüber Secrets als Umgebungsvariablen (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Es ist recht häufig, dass Anwendungscode seine Umgebung protokolliert (insbesondere im Falle eines Fehlers). Dies umfasst alle geheimen Werte, die als Umgebungsvariablen übergeben werden, sodass Secrets leicht für jeden Benutzer oder jede Entität, die Zugriff auf die Protokolle hat, offengelegt werden können.
+======
+
+*Ergebnis:* Manuell
+
+*Revision:*
+Führen Sie den folgenden Befehl aus, um Verweise auf Objekte zu finden, die Umgebungsvariablen verwenden, die aus Secrets definiert sind.
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl get all -o jsonpath='{range .items[?(@..secretKeyRef)]} {.kind} {.metadata.name} {"\n"}{end}' -A
+----
+
+*Behebung:*
+Falls möglich, schreiben Sie den Anwendungscode um, um Secrets aus gemounteten Secret-Dateien zu lesen, anstatt aus Umgebungsvariablen.
+
+[discrete]
+==== 5.4.2
+
+Ziehen Sie einen externen Secret-Speicher in Betracht (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes unterstützt Secrets als Objekte erster Klasse, aber es muss darauf geachtet werden, dass der Zugriff auf Secrets sorgfältig eingeschränkt wird. Die Verwendung eines externen Secrets-Anbieters kann die Verwaltung des Zugriffs auf Secrets erleichtern, insbesondere wenn Secrets sowohl in Kubernetes- als auch in Nicht-Kubernetes-Umgebungen verwendet werden.
+======
+
+*Ergebnis:* Manuell
+
+*Revision:*
+Überprüfen Sie Ihre Implementierung zum Secrets-Management.
+
+*Behebung:*
+Verweisen Sie auf die von Ihrem Cloud-Anbieter oder einer Drittanbieter-Lösung zum Secrets-Management angebotenen Optionen.
+
+[discrete]
+=== 5.5 Erweiterbare Zugangssteuerung
+
+[discrete]
+==== 5.5.1
+
+Konfigurieren Sie die Bildherkunft mithilfe des ImagePolicyWebhook Admission Controllers (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Kubernetes unterstützt das Einfügen von Bildherkunftsregeln, um die Bilder in Ihren Implementierungen zu akzeptieren oder abzulehnen. Sie könnten solche Regeln konfigurieren, um sicherzustellen, dass nur genehmigte Bilder im Cluster bereitgestellt werden.
+======
+
+*Ergebnis:* Manuell
+
+*Revision:*
+Überprüfen Sie die Pod-Definitionen in Ihrem Cluster und vergewissern Sie sich, dass die Bildherkunft entsprechend konfiguriert ist.
+
+*Behebung:*
+Befolgen Sie die Kubernetes-Dokumentation und richten Sie die Provenance ein.
+
+[discrete]
+=== 5.6 Ausgelassen
+
+Der Leitfaden v1.23 überspringt 5.6 und geht von 5.5 zu 5.7. Wir fügen es hier lediglich zur Erklärung hinzu.
+
+[discrete]
+=== 5.7 Allgemeine Richtlinien
+
+Diese Richtlinien beziehen sich auf allgemeine Themen des Cluster-Managements, wie Best Practices für Namespaces und Richtlinien, die auf Pod-Objekte im Cluster angewendet werden.
+
+[discrete]
+==== 5.7.1
+
+Erstellen Sie administrative Grenzen zwischen Ressourcen mithilfe von Namespaces (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Die Einschränkung des Umfangs der Benutzerberechtigungen kann die Auswirkungen von Fehlern oder böswilligen Aktivitäten verringern. Ein Kubernetes-Namespace ermöglicht es Ihnen, erstellte Ressourcen in logisch benannte Gruppen zu partitionieren. Ressourcen, die in einem Namespace erstellt wurden, können vor anderen Namespaces verborgen werden. Standardmäßig läuft jede von einem Benutzer im Kubernetes-Cluster erstellte Ressource in einem Standard-Namespace, der als default bezeichnet wird. Sie können zusätzliche Namespaces erstellen und Ressourcen sowie Benutzer diesen zuweisen. Sie können Kubernetes-Autorisierungsplugins verwenden, um Richtlinien zu erstellen, die den Zugriff auf Namespace-Ressourcen für verschiedene Benutzer einschränken.
+======
+
+*Ergebnis:* Manuell
+
+*Revision:*
+Führen Sie den folgenden Befehl aus und überprüfen Sie die im Cluster vorhandenen Namespaces.
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl get namespaces
+----
+
+Stellen Sie sicher, dass diese Namespaces diejenigen sind, die Sie benötigen, und dass sie gemäß Ihren Anforderungen angemessen verwaltet werden.
+
+*Behebung:*
+Befolgen Sie die Dokumentation und erstellen Sie Namespaces für Objekte in Ihrer Implementierung, wie Sie sie benötigen.
+
+[discrete]
+==== 5.7.2
+
+Stellen Sie sicher, dass das seccomp-Profil in Ihren Pod-Definitionen auf `docker/default` gesetzt ist (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Seccomp (sicherer Betriebsmodus) wird verwendet, um die Menge der Systemaufrufe einzuschränken, die Anwendungen tätigen können, wodurch Clusteradministratoren eine größere Kontrolle über die Sicherheit der in dem Cluster ausgeführten Arbeitslasten erhalten. Kubernetes deaktiviert aus historischen Gründen standardmäßig Seccomp-Profile. Sie sollten es aktivieren, um sicherzustellen, dass die Arbeitslasten innerhalb des Containers eingeschränkte Aktionen zur Verfügung haben.
+======
+
+*Ergebnis:* Manuell
+
+*Revision:*
+Überprüfen Sie die Pod-Definitionen in Ihrem Cluster. Es sollte eine Zeile wie folgt erstellen:
+
+[,yaml]
+----
+annotations:
+  seccomp.security.alpha.kubernetes.io/pod: docker/default
+----
+
+*Behebung:*
+Überprüfen Sie die Kubernetes-Dokumentation und wenden Sie gegebenenfalls eine relevante PodSecurityPolicy an.
+
+[discrete]
+==== 5.7.3
+
+Wenden Sie den Sicherheitskontext auf Ihre Pods und Container an (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Ein Sicherheitskontext definiert die Sicherheitseinstellungen des Betriebssystems (uid, gid, Berechtigungen, SELinux-Rolle usw.), die auf einen Container angewendet werden. Stellen Sie beim Entwerfen Ihrer Container und Pods sicher, dass Sie den Sicherheitskontext für Ihre Pods, Container und Volumes konfigurieren. Ein Sicherheitskontext ist eine Eigenschaft, die in der Deployment-YAML definiert ist. Er steuert die Sicherheitsparameter, die dem Pod/Container/Volume zugewiesen werden. Es gibt zwei Ebenen des Sicherheitskontexts: Sicherheitskontext auf Pod-Ebene und Sicherheitskontext auf Container-Ebene.
+======
+
+*Ergebnis:* Manuell
+
+*Revision:*
+Überprüfen Sie die Pod-Definitionen in Ihrem Cluster und vergewissern Sie sich, dass Sie Sicherheitskontexte definiert haben, die angemessen sind.
+
+*Behebung:*
+Befolgen Sie die Kubernetes-Dokumentation und wenden Sie Sicherheitskontexte auf Ihre Pods an. Für eine empfohlene Liste von Sicherheitskontexten können Sie sich an den CIS-Sicherheitsbenchmark wenden.
+
+[discrete]
+==== 5.7.4
+
+Der Standard-Namespace sollte nicht verwendet werden (Manuell).
+
+[%collapsible]
+.Erläuterung
+======
+Ressourcen in einem Kubernetes-Cluster sollten nach Namespace segregiert werden, um Sicherheitskontrollen auf dieser Ebene anzuwenden und um die Verwaltung der Ressourcen zu erleichtern.
+======
+
+*Ergebnis:* Manuell
+
+*Revision:*
+Führen Sie den folgenden Befehl am Master-Knoten aus.
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl get all -n default
+----
+
+Überprüfen Sie, dass keine Ressourcen auf den Standard-Namespace angewendet werden.
+
+*Behebung:*
+Standardmäßig nutzt RKE2 nicht den Standard-Namespace.

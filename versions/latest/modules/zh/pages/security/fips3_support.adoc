@@ -1,39 +1,39 @@
-= FIPS 140-3 Enablement
+= FIPS 140-3 启用
 :page-languages: [en, zh]
 :revdate: 2026-02-05
 :page-revdate: {revdate}
 
-FIPS 140-3 is a U.S. Federal Government security standard used to approve cryptographic modules. This document explains how RKE2 is built with FIPS validated cryptographic libraries.
+FIPS 140-3 是美国的一个标准。这是联邦政府用于批准加密模块的安全标准。本文档解释了 RKE2 是如何使用通过 FIPS 验证的加密库构建的。
 
-Verification of compliance is avaliable in: xref:attachment$RKE2_FIPS3_Verified.pdf[FIPS 140-3 Verifed].
+合规性验证可在以下位置获得：xref:attachment$RKE2_FIPS3_Verified.pdf[FIPS 140-3 已验证]。
 
-== Use of FIPS Compatible Go compiler
+== 使用 FIPS 兼容的 Go 编译器
 
-The Go compiler being used can be found https://go.googlesource.com/go/+/dev.boringcrypto[here]. Each component of the system is built with the version of this compiler that matches the same standard Go compiler version that would be used otherwise.
+所使用的 Go 编译器可以在 https://go.googlesource.com/go/+/dev.boringcrypto[这里] 找到。系统的每个组件都是使用与标准 Go 编译器版本相匹配的此编译器版本构建的。
 
-This version of Go replaces the standard Go crypto libraries with the FIPS validated BoringCrypto module. For more information, see the https://go.dev/src/crypto/internal/boring/README[GoBoring README] for more details. This module is validated by NIST as the https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4968[BoringCrypto] module on a wide range of systems.
+此版本的 Go 用 FIPS 验证的 BoringCrypto 模块替换了标准 Go 加密库。有关更多信息，请参见 https://go.dev/src/crypto/internal/boring/README[GoBoring README]，以获取更多详细信息。该模块已通过 NIST 验证为 https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4968[BoringCrypto] 模块，并适用于多种系统。
 
-=== FIPS Support in Cluster Components
+=== 集群组件中的 FIPS 支持
 
-Most RKE2 components are statically compiled using the GoBoring Go compiler. Architecturally, RKE2 is divided into several sections, and the following list outlines these sections and their associated components:
+大多数 RKE2 组件使用 GoBoring Go 编译器静态编译。在架构上，RKE2 被划分为几个部分，以下列表概述了这些部分及其相关组件：
 
 * Kubernetes
- ** API Server
- ** Controller Manager
- ** Scheduler
+ ** API 服务器
+ ** 控制器管理器
+ ** 调度程序
  ** Kubelet
  ** Kube Proxy
- ** Metric Server
+ ** 度量服务器
  ** Kubectl
-* Helm Charts
+* Helm 图表
  ** Flannel
  ** Calico
  ** CoreDNS
  ** Traefik
 
-== Runtime
+== 运行时
 
-To ensure the entire architecture utilizes FIPS 140-3 compliant algorithms, RKE2 runtime utilities are statically compiled with the FIPS-enabled Go compiler. This guarantees compliance across every level of the stack, from Kubernetes daemons to container orchestration mechanics.
+为了确保整个架构使用符合 FIPS 140-3 的算法，RKE2 运行时工具使用启用 FIPS 的 Go 编译器进行静态编译。这确保了从 Kubernetes 守护程序到容器编排机制的每个层级都符合要求。
 
 * etcd
 * containerd
@@ -46,20 +46,20 @@ To ensure the entire architecture utilizes FIPS 140-3 compliant algorithms, RKE2
 
 == CNI
 
-RKE2 supports selecting an alternative CNI via the `--cni` flag. It comes bundled with several options, including Canal (default), Calico, Cilium, and Multus. However, only Canal is rebuilt for FIPS compliance.
+RKE2 支持通过 `--cni` 标志选择替代 CNI。它捆绑了多个选项，包括 Canal（默认）、Calico、Cilium 和 Multus。然而，只有 Canal 被重建以符合 FIPS 标准。
 
-== Ingress
+== 入口
 
-RKE2 ships with two ingress controllers: ingress-nginx and Traefik. Both are FIPs compliant.
+RKE2 配备了两个入口控制器：ingress-nginx 和 Traefik。两者均符合 FIPS 标准。
 
-The ingress-nginx controller and the complete Traefik stack (controller and proxy server) are written in Go and compiled using the <<Use of FIPS Compatible Go compiler,FIPS compatible Go compiler>>.
+ingress-nginx 控制器和完整的 Traefik 堆栈（控制器和代理服务器）使用 Go 编写，并使用 <<Use of FIPS Compatible Go compiler,FIPS 兼容的 Go 编译器>> 进行编译。
 
-Ingress-nginx uses the nginx proxy server which is written in C and depends on OpenSSL to function properly. As a result, it leverages a FIPS-validated version of OpenSSL to achieve FIPS compliance.
+Ingress-nginx 使用 C 编写的 nginx 代理服务器，并依赖 OpenSSL 正常工作。因此，它利用经过 FIPS 验证的 OpenSSL 版本以实现 FIPS 合规。
 
 [WARNING]
 ====
-The ingress-nginx controller reaches End of Life (EOL) in March 2026.
+ingress-nginx 控制器将在 2026 年 3 月达到终止服务（EOL）。
 
 
-{rke2-product-name} users will continue to receive support and CVE fixes (8+) for the entire lifecycle of RKE2 v1.32, v1.33, v1.34, v1.35 and v1.36. We recommend switching to Traefik by following the https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[Migrating from Ingress-NGINX to Traefik in a standalone RKE2 cluster] guide.
+{rke2-product-name} 用户将在 RKE2 v1.32、v1.33、v1.34、v1.35 和 v1.36 的整个生命周期内继续获得支持和 CVE 修复（8+）。我们建议按照 https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[从 Ingress-NGINX 迁移到 Traefik 的独立 RKE2 集群] 指南切换到 Traefik。
 ====

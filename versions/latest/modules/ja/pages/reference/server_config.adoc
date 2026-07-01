@@ -1,0 +1,609 @@
+= サーバー構成リファレンス
+:page-languages: [en, zh]
+:revdate: 2026-02-27
+:page-revdate: {revdate}
+
+これは、rke2サーバーを構成するために使用できるすべてのパラメーターへのリファレンスです。これはコマンドライン引数へのリファレンスですが、RKE2を構成する最良の方法はxref:install/configuration.adoc#_configuration_file[設定ファイル]を使用することです。
+
+== 重要な設定値
+
+次のオプションは、クラスター内のすべてのサーバで同じ値に設定する必要があります。これを行わないと、新しいサーバーがクラスターに参加できなくなります。
+
+* `agent-token`
+* `cluster-cidr`
+* `cluster-dns`
+* `cluster-domain`
+* `disable-cloud-controller`
+* `disable-kube-proxy`
+* `egress-selector-mode`
+* `service-cidr`
+
+=== Common(通常のネットワーキング)
+
+|===
+| フラグ | 説明 | デフォルト | 環境変数
+
+| config
+| 設定ファイルへのパス
+| /etc/rancher/rke2/config.yaml
+| RKE2_CONFIG_FILE
+
+| debug
+| デバッグログをオンにします
+|
+| RKE2_DEBUG
+
+| データディレクトリ
+| 状態を保持するフォルダー
+| "/var/lib/rancher/rke2"
+|
+|===
+
+=== Listener
+
+|===
+| フラグ | 説明 | デフォルト
+
+| bind-address
+| rke2バインドアドレス
+| 0.0.0.0
+
+| advertise-address
+| apiserverがクラスターのメンバーにアドバタイズするために使用するIPv4/IPv6アドレス
+| node-external-ip/node-ip
+
+| tls-san
+| サーバーのTLS証明書にSubject Alternative Namesとして追加のホスト名またはIPv4/IPv6アドレスを追加します
+|
+
+| tls-san-security
+| kubernetes apiserver サービス、サーバーノード、または tls-san オプションの値に関連付けられていない Subject Alternative Names を追加することを拒否することで、サーバー TLS 証明書を保護します
+| true
+|===
+
+=== ネットワーキング
+
+|===
+| フラグ | 説明 | デフォルト | 環境変数
+
+| cluster-cidr
+| ポッドIP用に使用するIPv4/IPv6ネットワークCIDR
+| 10.42.0.0/16
+|
+
+| service-cidr
+| サービスIP用に使用するIPv4/IPv6ネットワークCIDR
+| 10.43.0.0/16
+|
+
+| service-node-port-range
+| NodePort 可視性のあるサービスのために予約するポート範囲
+| "30000-32767"
+|
+
+| クラスターDNS
+| corednsサービスのIPv4クラスターIP。サービスCIDR範囲内である必要があります。
+| 10.43.0.10
+|
+
+| クラスタードメイン
+| クラスター ドメイン
+| "cluster.local"
+|
+
+| egress-selector-mode
+| 'エージェント'、'クラスター'、'ポッド'、'無効'のいずれか
+| "agent"
+|
+
+| servicelb-namespace
+| servicelbコンポーネントのポッドのネームスペース
+| "kube-system"
+|
+
+| cni
+| デプロイするCNIプラグイン、none、calico、canal、ciliumのいずれか; multusメタプラグインを有効にするために最初の値としてオプションで指定可能
+| canal
+| RKE2_CNI
+|===
+
+=== [クライアント]
+
+|===
+| フラグ | 説明 | 環境変数
+
+| write-kubeconfig
+| このファイルに管理者クライアントのためのkubeconfigを書き込みます
+| RKE2_KUBECONFIG_OUTPUT
+
+| write-kubeconfig-mode
+| このモードでkubeconfigを書き込みます
+| RKE2_KUBECONFIG_MODE
+|===
+
+=== Helm
+
+|===
+| フラグ | 説明
+
+| helm-job-image
+| helmジョブに使用するデフォルトのイメージ
+|===
+
+=== クラスタ
+
+|===
+| フラグ | 説明 | 環境変数
+
+| token
+| サーバーまたはエージェントをクラスターに参加させるために使用される共有シークレット
+| RKE2_TOKEN
+
+| token-file
+| トークンを含むファイル
+| RKE2_TOKEN_FILE
+
+| agent-token
+| エージェントをクラスターに参加させるために使用される共有シークレットですが、サーバーには使用されません
+| RKE2_AGENT_TOKEN
+
+| agent-token-file
+| エージェントシークレットを含むファイル
+| RKE2_AGENT_TOKEN_FILE
+
+| サーバ
+| 接続するサーバー、クラスターに参加するために使用されます
+| RKE2_URL
+
+| cluster-reset
+| すべてのピアを忘れ、新しいクラスターの唯一のメンバーになります
+| RKE2_CLUSTER_RESET
+|===
+
+=== データベース
+
+|===
+| フラグ | 説明 | デフォルト | 環境変数
+
+| cluster-reset-restore-path
+| 復元するスナップショットファイルへのパス
+|
+|
+
+| etcd-expose-metrics
+| etcdメトリクスをクライアントインターフェースに公開します。
+| false
+|
+
+| etcd-disable-snapshots
+| 自動etcdスナップショットを無効にします。
+|
+|
+
+| etcd-snapshot-name
+| etcdスナップショットのベース名を設定します
+| etcd-snapshot-<unix-timestamp>)
+|
+
+| etcd-snapshot-schedule-cron
+| スナップショットの間隔時間をcron仕様で指定します。例えば、5時間ごとに「0 */5 * * *」のように指定します。
+| "0 */12 * * *"
+|
+
+| etcd-snapshot-retention
+| 保持するスナップショットの数
+| 5
+|
+
+| etcd-snapshot-dir
+| dbスナップショットを保存するディレクトリ。
+| $&#123;data-dir&#125;/db/snapshots
+|
+
+| etcd-snapshot-compress
+| etcdスナップショットを圧縮します。
+|
+|
+|===
+
+=== S3 etcdスナップショットストレージ
+
+|===
+| フラグ | 説明 | デフォルト | 環境変数
+
+| etcd-s3
+| S3へのバックアップを有効にします
+|
+|
+
+| etcd-s3-endpoint
+| S3エンドポイントURL
+| "s3.amazonaws.com"
+|
+
+| etcd-s3-endpoint-ca
+| S3エンドポイントに接続するためのS3カスタムCA証明書
+|
+|
+
+| etcd-s3-skip-ssl-verify
+| S3のSSL証明書検証を無効にします
+|
+|
+
+| etcd-s3-access-key
+| S3アクセスキー
+|
+| AWS_ACCESS_KEY_ID
+
+| etcd-s3-secret-key
+| S3シークレットキー
+|
+| AWS_SECRET_ACCESS_KEY
+
+| etcd-s3-session-token 
+| S3セッショントークン 
+|
+| AWS_SESSION_TOKEN
+
+| etcd-s3-bucket
+| S3バケット名
+|
+|
+
+| etcd-s3-bucket-lookup-type 
+| S3バケットのルックアップタイプ。'auto'、'dns'、'path'のいずれかを指定します。 
+| "auto" 
+|
+
+| etcd-s3-region
+| S3リージョン/バケットの場所（オプション）
+| "us-east-1"
+|
+
+| etcd-s3-folder
+| S3フォルダー
+|
+|
+
+| etcd-s3-bucket-lookup-type 
+| S3バケットのルックアップタイプ。'auto'、'dns'、'path'のいずれかを指定します。 
+| "auto" 
+|
+
+| etcd-s3-insecure
+| HTTPS経由のS3を無効にします
+|
+|
+
+| etcd-s3-timeout
+| S3タイムアウト
+| 5m0s
+|
+|===
+
+=== フラグ
+
+|===
+| フラグ | 説明
+
+| kube-apiserver-arg
+| kube-apiserverプロセスのカスタマイズされたフラグ
+
+| etcd-arg
+| etcdプロセスのカスタマイズされたフラグ
+
+| kube-controller-manager-arg
+| kube-controller-managerプロセスのカスタマイズされたフラグ
+
+| kube-scheduler-arg
+| kube-schedulerプロセスのカスタマイズされたフラグ
+
+| kube-cloud-controller-manager-arg
+| kube-cloud-controller-managerプロセスのカスタマイズされたフラグ
+|===
+
+=== コンポーネント
+
+|===
+| フラグ | 説明 | 環境変数
+
+| disable
+| パッケージ化されたコンポーネントをデプロイせず、デプロイされたコンポーネントを削除します（有効な項目：rke2-coredns、rke2-ingress-nginx、rke2-metrics-server）。
+|
+
+| disable-scheduler
+| Kubernetesのデフォルトスケジューラを無効にします。
+|
+
+| disable-cloud-controller
+| rke2のデフォルトクラウドコントローラーマネージャを無効にします。
+|
+
+| kube-proxyを無効にする
+| kube-proxyの実行を無効にします。
+|
+
+| enable-servicelb
+| rke2のデフォルトクラウドコントローラーマネージャーのサービスコントローラーを有効にする
+| RKE2_ENABLE_SERVICELB
+
+| control-plane-resource-requests
+| コントロールプレーンのリソースリクエスト
+| RKE2_CONTROL_PLANE_RESOURCE_REQUESTS
+
+| control-plane-resource-limits
+| コントロールプレーンのリソース制限
+| RKE2_CONTROL_PLANE_RESOURCE_LIMITS
+
+| control-plane-probe-configuration
+| コントロールプレーンのプローブ設定
+| RKE2_CONTROL_PLANE_PROBE_CONFIGURATION
+
+| kube-apiserver-extra-mount
+| kube-apiserverの追加ボリュームマウント
+| RKE2_KUBE_APISERVER_EXTRA_MOUNT
+
+| kube-scheduler-extra-mount
+| kube-schedulerの追加ボリュームマウント
+| RKE2_KUBE_SCHEDULER_EXTRA_MOUNT
+
+| kube-controller-manager-extra-mount
+| kube-controller-managerの追加ボリュームマウント
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT
+
+| kube-proxy-extra-mount
+| kube-proxyの追加ボリュームマウント
+| RKE2_KUBE_PROXY_EXTRA_MOUNT
+
+| etcd-extra-mount
+| etcdの追加ボリュームマウント
+| RKE2_ETCD_EXTRA_MOUNT
+
+| cloud-controller-manager-extra-mount
+| クラウドコントローラーマネージャーの追加ボリュームマウント
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT
+
+| kube-apiserver-extra-env
+| kube-apiserverの追加環境変数
+| RKE2_KUBE_APISERVER_EXTRA_ENV
+
+| kube-scheduler-extra-env
+| kube-schedulerの追加環境変数
+| RKE2_KUBE_SCHEDULER_EXTRA_ENV
+
+| kube-controller-manager-extra-env
+| kube-controller-managerの追加環境変数
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV
+
+| kube-proxy-extra-env
+| kube-proxyの追加環境変数
+| RKE2_KUBE_PROXY_EXTRA_ENV
+
+| etcd-extra-env
+| etcdの追加環境変数
+| RKE2_ETCD_EXTRA_ENV
+
+| cloud-controller-manager-extra-env
+| cloud-controller-managerの追加環境変数
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
+
+| ingress-controller 
+| デプロイするIngressコントローラーの選択（none、ingress-nginx、traefikのいずれか）
+| 
+
+|===
+
+=== イメージ
+
+|===
+| フラグ | 説明 | 環境変数
+
+| kube-apiserver-image
+| kube-apiserverに使用するイメージの上書き
+| RKE2_KUBE_APISERVER_IMAGE
+
+| kube-controller-manager-image
+| kube-controller-managerに使用するイメージの上書き
+| RKE2_KUBE_CONTROLLER_MANAGER_IMAGE
+
+| cloud-controller-manager-image
+| cloud-controller-managerに使用するイメージの上書き
+| RKE2_CLOUD_CONTROLLER_MANAGER_IMAGE
+
+| kube-proxy-image
+| kube-proxyに使用するイメージの上書き
+| RKE2_KUBE_PROXY_IMAGE
+
+| kube-scheduler-image
+| kube-schedulerに使用するイメージの上書き
+| RKE2_KUBE_SCHEDULER_IMAGE
+
+| pause-image
+| pauseに使用するイメージの上書き
+| RKE2_PAUSE_IMAGE
+
+| ランタイムイメージ
+| ランタイムバイナリ（containerd、kubectl、crictlなど）に使用するイメージの上書き
+| RKE2_RUNTIME_IMAGE
+
+| etcd-image
+| etcdに使用するイメージの上書き
+| RKE2_ETCD_IMAGE
+|===
+
+=== クラウドプロバイダ
+
+|===
+| フラグ | 説明 | 環境変数
+
+| cloud-provider-name
+| クラウドプロバイダ名
+| RKE2_CLOUD_PROVIDER_NAME
+
+| cloud-provider-config
+| クラウドプロバイダー設定ファイルのパス
+| RKE2_CLOUD_PROVIDER_CONFIG
+|===
+
+=== セキュリティ
+
+|===
+| フラグ | 説明 | 環境変数
+
+| profile
+| 選択したベンチマークに対してシステム構成を検証します（有効な項目：cis、cis-1.23（非推奨））
+| RKE2_CIS_PROFILE
+
+| audit-policy-file
+| 監査ポリシー設定を定義するファイルへのパス
+| RKE2_AUDIT_POLICY_FILE
+
+| pod-security-admission-config-file
+| ポッドセキュリティアドミッション設定を定義するファイルへのパス
+| RKE2_POD_SECURITY_ADMISSION_CONFIG_FILE
+
+| シークレット暗号化プロバイダー 
+| 使用する暗号化プロバイダー
+| N/A
+
+|===
+
+=== 実験的
+
+|===
+| フラグ | 説明 | 環境変数
+
+| 埋め込みレジストリ
+| 埋め込み分散コンテナレジストリを有効にします；埋め込みのcontainerdの使用が必要です
+|
+
+| enable-pprof
+| スーパーバイザーポートでpprofエンドポイントを有効にする
+|
+
+| kubelet-path
+| kubeletバイナリのパスをオーバーライドします
+| RKE2_KUBELET_PATH
+|===
+
+=== エージェント/ノード
+
+|===
+| フラグ | 説明 | デフォルト | 環境変数
+
+| node-name
+| Node name(ノード名)
+|
+| RKE2_NODE_NAME
+
+| with-node-id
+| ノード名にIDを追加する
+|
+|
+
+| node-label
+| ラベルのセットで kubelet を登録して起動する
+|
+|
+
+| ノードテイント
+| テイントのセットで kubelet を登録する
+|
+|
+
+| image-credential-provider-bin-dir
+| 資格情報プロバイダプラグインのバイナリがあるディレクトリへのパス
+| "/var/lib/rancher/credentialprovider/bin"
+|
+
+| image-credential-provider-config
+| 資格情報プロバイダプラグイン設定ファイルへのパス
+| "/var/lib/rancher/credentialprovider/config.yaml"
+|
+
+| カーネルのデフォルトを保護する
+| カーネル調整の動作。設定されている場合、カーネルの調整可能パラメータがkubeletのデフォルトと異なるとエラーが発生します。
+|
+|
+
+| selinux
+| containerd でSELinuxを有効にする
+|
+| RKE2_SELINUX
+
+| lb-server-port
+| スーパーバイザークライアントのロードバランサー用のローカルポート。スーパーバイザーとapiserverが同じ場所にない場合、apiserverクライアントのロードバランサーにもこのポートより1つ少ない追加のポートが使用されます。
+| 6444
+| RKE2_LB_SERVER_PORT
+|===
+
+=== エージェント/ランタイム
+
+|===
+| フラグ | 説明 | デフォルト | 環境変数
+
+| コンテナランタイムエンドポイント
+| 組み込みのcontainerdを無効にし、指定されたパスのCRIソケットを使用します。--dockerと一緒に使用する場合、これはdockerソケットのパスを設定します。
+|
+|
+
+| デフォルトランタイム
+| containerdのデフォルトのランタイムを設定します。
+|
+|
+
+| snapshotter
+| デフォルトのcontainerdスナップショッターをオーバーライド
+| "overlayfs"
+|
+
+| プライベートレジストリ
+| プライベート レジストリの設定ファイル
+| "/etc/rancher/rke2/registries.yaml"
+|
+
+| system-default-registry
+| すべてのシステムイメージに使用されるプライベートレジストリ
+|
+| RKE2_SYSTEM_DEFAULT_REGISTRY
+|===
+
+=== エージェント/Containerd
+
+|===
+| フラグ | 説明
+
+| disable-default-registry-endpoint
+| ミラーがそのレジストリに対して構成されている場合、containerdのフォールバックデフォルトレジストリエンドポイントを無効にします
+|===
+
+=== エージェント/ネットワーキング
+
+|===
+| フラグ | 説明 | 環境変数
+
+| node-ip
+| ノードのためにアドバタイズするIPv4/IPv6アドレス
+|
+
+| node-external-ip
+| ノードのためにアドバタイズするIPv4/IPv6外部IPアドレス
+|
+
+| resolv-conf
+| Kubelet resolv.conf file
+| RKE2_RESOLV_CONF
+|===
+
+=== エージェント/フラグ
+
+|===
+| フラグ | 説明
+
+| kubelet-arg
+| kubeletプロセス用のカスタマイズされたフラグ
+
+| kube-proxy-arg
+| kube-proxyプロセス用のカスタマイズされたフラグ
+|===

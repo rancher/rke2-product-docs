@@ -1,13 +1,16 @@
-= Windows Agent 配置参考
+= Windows代理配置参考
 :page-languages: [en, zh]
-:revdate: 2024-09-11
+:revdate: 2025-08-21
 :page-revdate: {revdate}
 
-本文提供了可用于配置 Windows RKE2 Agent 的所有参数的参考。
+这是一个关于可以用于配置Windows RKE2代理的所有参数的参考。
 
-*Windows 支持目前处于实验阶段（从 v1.21.3+rke2r1 开始），你需要选择 Calico 作为 RKE2 集群的 CNI*
+[NOTE]
+====
+Windows支持要求选择Calico或Flannel作为RKE2集群的CNI。
+====
 
-== Windows RKE2 Agent CLI 帮助
+== Windows RKE2代理CLI帮助
 
 [,console]
 ----
@@ -42,7 +45,8 @@ OPTIONS:
    --kube-proxy-arg value                        (agent/flags) Customized flag for kube-proxy process
    --protect-kernel-defaults                     (agent/node) Kernel tuning behavior. If set, error if kernel tunables are different than kubelet defaults.
    --selinux                                     (agent/node) Enable SELinux in containerd [%RKE2_SELINUX%]
-   --lb-server-port value                        (agent/node) Local port for supervisor client load-balancer. If the supervisor and apiserver are not colocated an additional port 1 less than this port will also be used for the apiserver client load-balancer. (default: 6444) [%RKE2_LB_SERVER_PORT%]
+   --lb-server-port value                        (agent/node) Local port for supervisor client load-balancer. If the supervisor and apiserver are not colocated an additional port 1 less than this port w
+ill also be used for the apiserver client load-balancer. (default: 6444) [%RKE2_LB_SERVER_PORT%]
    --kube-apiserver-image value                  (image) Override image to use for kube-apiserver [%RKE2_KUBE_APISERVER_IMAGE%]
    --kube-controller-manager-image value         (image) Override image to use for kube-controller-manager [%RKE2_KUBE_CONTROLLER_MANAGER_IMAGE%]
    --kube-proxy-image value                      (image) Override image to use for kube-proxy [%RKE2_KUBE_PROXY_IMAGE%]
@@ -72,26 +76,29 @@ OPTIONS:
    --help, -h                                    show help
 ----
 
-=== 此 Windows Agent 配置参考使用 v1.22.5+rke2r2 版本进行更新
+[NOTE]
+====
+此 Windows 代理配置参考的最后一次更新是在 v1.22.5+rke2r2 版本。
 
 [,console]
 ----
 rke2-windows-amd64.exe version v1.22.5+rke2r2 (b61d4b3cb989b0380aae97fceb9a3e45a35ee2b9)
 go version go1.16.10b7
 ----
+====
 
-== Windows RKE2 Agent Calico 环境变量
+== Windows RKE2代理Calico环境变量
 
-你可以使用环境变量自定义 Windows 上的 Calico 安装。可以通过以下方式指定这些变量：
+Windows上的Calico安装可以使用环境变量进行自定义。您可以通过以下方式指定这些变量：
 
 [,console]
 ----
 $env:<YOUR_VARIABLE>=<VALUE>
 ----
 
-以下是当前变量：
+这些是当前的变量：
 
 [,console]
 ----
-VXLAN_ADAPTER 		Specifies the interface to be used for the vxlan VTEP. Required if the interface is in team mode
+VXLAN_ADAPTER         Specifies the interface to be used for the vxlan VTEP. Required if the interface is in team mode
 ----

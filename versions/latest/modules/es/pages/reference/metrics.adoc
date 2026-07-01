@@ -1,0 +1,110 @@
+= Métricas
+:page-languages: [en, zh]
+:revdate: 2025-07-22
+:page-revdate: {revdate}
+
+RKE2 proporciona métricas para monitorizar la salud y el rendimiento del clúster.
+
+Los componentes individuales proporcionan la mayoría de las métricas. Consulta la siguiente documentación específica de cada componente para más información:
+
+* https://coredns.io/plugins/metrics/[Métricas de CoreDNS]
+* https://etcd.io/docs/v3.5/metrics/[métricas de etcd]
+* https://kubernetes.io/docs/reference/instrumentation/node-metrics/[Métricas de nodo de Kubernetes]
+* https://kubernetes.io/docs/reference/instrumentation/metrics/[Métricas de componentes de Kubernetes]
+
+Otros componentes pueden proporcionar métricas adicionales. Consulta la documentación del proyecto en sentido ascendente para cualquier componente no listado anteriormente.
+
+== Métricas del Supervisor
+
+Cuando inicias RKE2 con `supervisor-metrics: true`, el supervisor de RKE2 expone métricas. Puedes acceder a estas métricas a través del endpoint `/metrics` en cada nodo en el puerto `9345`:
+
+[,sh]
+----
+kubectl get --server https://NODENAME:9345 --raw /metrics
+----
+
+El proceso supervisor de RKE2 expone las siguientes métricas:
+
+* <<RKE2 Cluster Management Metrics>>
+* https://github.com/rancher/lasso/blob/main/README.md#lasso-controller[métricas del controlador Lasso]
+* https://github.com/kubernetes/client-go/blob/master/README.md[métricas del cliente Kubernetes y de la cola de trabajo]
+* https://pkg.go.dev/runtime/metrics#hdr-Supported_metrics[métricas del tiempo de ejecución de Go]
+
+Si el registro embebido de RKE2 está habilitado, el proceso supervisor de RKE2 también expone las siguientes métricas:
+
+* https://spegel.dev/docs/metrics/[métricas de Spegel]
+* https://github.com/libp2p/go-libp2p/blob/master/README.md[métricas de libp2p]
+
+== Métricas de Gestión del Clúster RKE2
+
+=== rke2_certificate_expiration_seconds
+
+Tiempo de vida restante en segundos del certificado, etiquetado por el sujeto del certificado y los usos.
+
+* Tipo: Medidor
+* Etiquetas: `*subject*`, `*usage*`
+
+=== rke2_loadbalancer_server_connections
+
+Conteo de conexiones actuales al servidor del equilibrador de carga, etiquetado por el nombre del equilibrador de carga y la dirección del servidor.
+
+* Tipo: Medidor
+* Etiquetas: `*name*`, `*server*`
+
+=== rke2_loadbalancer_server_health
+
+Estado de salud actual de los servidores backend del equilibrador de carga, etiquetado por el nombre del equilibrador de carga y la dirección del servidor.
+
+El estado es un enum de 0=INVÁLIDO, 1=FALLO, 2=EN ESPERA, 3=NO VERIFICADO, 4=RECUPERANDO, 5=SALUDABLE, 6=PREFERIDO, 7=ACTIVO.
+
+* Tipo: Medidor
+* Etiquetas: `*name*`, `*server*`
+
+=== rke2_loadbalancer_dial_duration_seconds
+
+Tiempo en segundos tomado para establecer una conexión con un servidor backend, etiquetado por el nombre del equilibrador de carga y el estado de éxito/fallo.
+
+* Tipo: Histograma
+* Etiquetas: `*name*`, `*status*`
+
+=== rke2_etcd_snapshot_save_duration_seconds
+
+Tiempo total en segundos tomado para completar el proceso de instantánea de etcd, etiquetado por el estado de éxito/fallo.
+
+* Tipo: Histograma
+* Etiquetas: `*status*`
+
+=== rke2_etcd_snapshot_save_local_duration_seconds
+
+Tiempo total en segundos tomado para guardar un archivo de instantánea local, etiquetado por el estado de éxito/fallo.
+
+* Tipo: Histograma
+* Etiquetas: `*status*`
+
+=== rke2_etcd_snapshot_save_s3_duration_seconds
+
+Tiempo total en segundos empleado para subir un archivo de instantánea a S3, etiquetado por el estado de éxito/fallo.
+
+* Tipo: Histograma
+* Etiquetas: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_duration_seconds
+
+Tiempo total en segundos empleado para sincronizar la lista de instantáneas de etcd, etiquetado por el estado de éxito/fallo.
+
+* Tipo: Histograma
+* Etiquetas: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_local_duration_seconds
+
+Tiempo total en segundos empleado para listar archivos de instantáneas locales, etiquetado por el estado de éxito/fallo.
+
+* Tipo: Histograma
+* Etiquetas: `*status*`
+
+=== rke2_etcd_snapshot_reconcile_s3_duration_seconds
+
+Tiempo total en segundos empleado para listar archivos de instantáneas de S3, etiquetado por el estado de éxito/fallo.
+
+* Tipo: Histograma
+* Etiquetas: `*status*`

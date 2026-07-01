@@ -1,0 +1,159 @@
+= Upgrades Manuais
+:page-languages: [en, zh]
+:revdate: 2026-01-08
+:page-revdate: {revdate}
+
+Você pode fazer upgrade do RKE2 usando o script de instalação, instalando manualmente o binário da versão desejada ou usando upgrades RPM em caso de instalação via RPM.
+
+[NOTE]
+====
+Faça upgrade primeiro dos nós do servidor, um de cada vez. Uma vez que todos os servidores tenham sido atualizados, você poderá fazer upgrade dos nós agentes.
+====
+
+== Canais de Lançamento
+
+Os upgrades realizados por meio do script de instalação ou utilizando nossa xref:upgrade/automated_upgrade.adoc[atualizações automatizadas] podem estar vinculados a diferentes canais de lançamento. Os seguintes canais estão disponíveis:
+
+|===
+| Canal | Descrição
+
+| estável
+| (Padrão) Estável é recomendado para ambientes de produção. Essas versões passaram por um período de proteção da comunidade e são compatíveis com a versão mais recente do Rancher.
+
+| mais recente
+| A versão 'latest' é recomendada para experimentar os recursos mais recentes.  Essas versões ainda não passaram por um período de proteção da comunidade e podem não ser compatíveis com o Rancher.
+
+| v1.26 (exemplo)
+| Há um canal de lançamento vinculado a cada versão menor do Kubernetes, incluindo versões que estão no fim do serviço. Esses canais selecionarão o último patch disponível, não necessariamente uma versão estável.
+|===
+
+Para uma lista exaustiva e atualizada de canais, você pode visitar o https://update.rke2.io/v1-release/channels[RKE2 channel service API]. Para mais detalhes técnicos sobre o funcionamento dos canais, você pode consultar o https://github.com/rancher/channelserver[projeto channelserver].
+
+[TIP]
+====
+Ao tentar atualizar para uma nova versão do RKE2, aplica-se a https://kubernetes.io/docs/setup/release/version-skew-policy/[política de desvio de versão do Kubernetes]. Certifique-se de que seu plano não pule versões menores intermediárias ao fazer upgrade. Nada no processo de upgrade protegerá contra mudanças não suportadas na versão do Kubernetes.
+====
+
+== Faça upgrade do RKE2 usando o script de instalação.
+
+Para atualizar o RKE2 a partir de uma versão anterior, você pode reexecutar o script de instalação usando as mesmas flags, por exemplo:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | sh -
+----
+
+Isso fará upgrade para a versão mais recente no canal estável por padrão.
+
+Se estiver atualizando nós agentes, você deve especificar a variável de ambiente `INSTALL_RKE2_TYPE`:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=agent sh -
+----
+
+Se você deseja fazer upgrade para a versão mais recente em um canal específico (por exemplo, latest), pode especificar o canal:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_CHANNEL=latest sh -
+----
+
+Se você deseja fazer upgrade para uma versão específica, pode executar o seguinte comando:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Z+rke2rN sh -
+----
+
+Lembre-se de reiniciar o processo do RKE2 após a instalação:
+
+[,sh]
+----
+# Server nodes:
+systemctl restart rke2-server
+
+# Agent nodes:
+systemctl restart rke2-agent
+----
+
+== Atualizar manualmente o RKE2 usando o binário
+
+Ou para atualizar manualmente o RKE2:
+
+. Baixe a versão desejada do binário do RKE2 de https://github.com/rancher/rke2/releases[releases]
+. Copie o binário baixado para `/usr/local/bin/rke2` para o RKE2 instalado a partir de tarball, e `/usr/bin` para o RKE2 instalado a partir de RPM
+. Pare o antigo binário do RKE2
+. Inicie o novo binário do RKE2
+
+== Faça upgrade do RKE2 usando as atualizações RPM.
+
+No caso de instalação via RPM, espera-se atualizar o RKE2 de uma versão anterior usando atualizações RPM, por exemplo:
+
+[,sh]
+----
+# zypper upgrade
+zypper update rke2-server
+----
+
+[,sh]
+----
+yum update rke2-server
+----
+
+Isso atualizará o pacote `rke2-server` RPM para o pacote mais recente no seu canal, que foi configurado inicialmente nos repositórios yum ou zypper pelo script de instalação na instalação inicial.
+
+Se estiver atualizando nós agentes, você deve especificar o nome do pacote `rke2-agent`
+
+[,sh]
+----
+# zypper upgrade
+zypper update rke2-agent
+----
+
+[,sh]
+----
+# yum upgrade
+yum update rke2-agent
+----
+
+Lembre-se de reiniciar o processo do RKE2 após a instalação:
+
+[,sh]
+----
+# Server nodes:
+systemctl restart rke2-server
+
+# Agent nodes:
+systemctl restart rke2-agent
+----
+
+[NOTE] 
+====
+Caso você tenha habilitado `rke2-selinux`, você também deve ser capaz de atualizar o rke2-selinux para a versão mais recente usando:
+
+[,sh]
+----
+yum update rke2-selinux
+----
+====
+
+== Reiniciando o RKE2
+
+Reiniciar o RKE2 é suportado pelo script de instalação para systemd.
+
+=== systemd
+
+Para reiniciar servidores manualmente:
+
+[,sh]
+----
+sudo systemctl restart rke2-server
+----
+
+Para reiniciar agentes manualmente:
+
+[,sh]
+----
+sudo systemctl restart rke2-agent
+----

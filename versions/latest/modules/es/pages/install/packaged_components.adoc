@@ -1,0 +1,47 @@
+= Gestión de Componentes Paquetizados
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+== Manifiestos de Despliegue Automático (AddOns)
+
+En los nodos del servidor, cualquier archivo encontrado en `/var/lib/rancher/rke2/server/manifests` se desplegará automáticamente en Kubernetes de manera similar a `kubectl apply`, tanto al iniciar como cuando el archivo cambie en el disco. Eliminar archivos de este directorio no eliminará los recursos correspondientes del clúster.
+
+Los manifiestos se rastrean como recursos personalizados `AddOn` en el espacio de nombres `kube-system`. Cualquier error o advertencia encontrado al aplicar el archivo de manifiesto puede verse utilizando `kubectl describe` en el correspondiente `AddOn`, o utilizando `kubectl get event -n kube-system` para ver todos los eventos de ese espacio de nombres, incluidos los del controlador de despliegue.
+
+=== Componentes Paquetizados
+
+RKE2 viene con varios componentes en paquete que se despliegan como AddOns a través del directorio de manifiestos, por ejemplo `rke2-coredns`, `rke2-metrics-server`, `rke2-ingress-nginx` y así sucesivamente.
+
+Los manifiestos para componentes en paquete son gestionados por RKE2 y no deben ser alterados. Los archivos se reescriben en el disco cada vez que se inicia RKE2, para garantizar su integridad.
+
+=== AddOns de Usuario
+
+Puede colocar archivos adicionales en el directorio de manifiestos para su despliegue como un `AddOn`. Cada archivo puede contener múltiples recursos de Kubernetes, delimitados por el separador de documentos YAML `---`. Para más información sobre cómo organizar recursos en manifiestos, consulte la sección https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/[Gestión de Recursos] de la documentación de Kubernetes.
+
+==== Requisitos de Nomenclatura de Archivos
+
+El nombre `AddOn` para cada archivo en el directorio de manifiestos se deriva del nombre base del archivo. Asegúrese de que todos los archivos dentro del directorio de manifiestos (o dentro de cualquier subdirectorio) tengan nombres que sean únicos y cumplan con las https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[restricciones de nomenclatura de objetos] de Kubernetes. También se debe tener cuidado de no entrar en conflicto con los nombres utilizados por los componentes en paquete predeterminados de RKE2, incluso si esos componentes están deshabilitados.
+
+[CAUTION]
+====
+Si tienes múltiples nodos de servidor y colocas manifiestos de AddOn adicionales en más de un servidor, es tu responsabilidad asegurarte de que los archivos se mantengan sincronizados entre esos nodos. RKE2 no sincroniza el contenido de AddOn entre nodos y no puede garantizar un comportamiento correcto si diferentes servidores intentan desplegar manifiestos en conflicto.
+====
+
+== Deshabilitando Manifiestos
+
+Hay dos formas de deshabilitar el despliegue de contenido específico del directorio de manifiestos.
+
+=== Usando la bandera `--disable`
+
+Los AddOns para los componentes paquetizados mencionados anteriormente, además de los AddOns para cualquier manifiesto adicional colocado en el directorio `manifests`, se pueden deshabilitar con la bandera `--disable`. Los AddOns deshabilitados se desinstalan activamente del clúster y los archivos fuente se eliminan del directorio `manifests`.
+
+Por ejemplo, para deshabilitar el metrics-server de ser instalado en un nuevo clúster, o para desinstalarlo y eliminar el manifiesto de un clúster existente, puedes iniciar RKE2 con `--disable=rke2-metrics-server`. Se pueden deshabilitar múltiples elementos separando sus nombres con comas, o repitiendo la bandera.
+
+=== Usando archivos .skip
+
+Para cualquier archivo bajo `/var/lib/rancher/rke2/server/manifests`, puedes crear un archivo `.skip` que hará que RKE2 ignore el manifiesto correspondiente. El contenido del archivo `.skip` no importa, solo se verifica su existencia. Ten en cuenta que crear un archivo `.skip` después de que un AddOn ya ha sido creado no eliminará ni modificará de ninguna otra manera este o los recursos que creó; el archivo simplemente se trata como si no existiera.
+
+== Helm AddOns
+
+Para obtener información sobre la gestión de charts de Helm mediante el despliegue automático de manifiestos, consulta la sección sobre xref:add-ons/helm.adoc[Helm].

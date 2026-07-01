@@ -1,0 +1,182 @@
+= Automatisierte Upgrades
+:page-languages: [en, zh]
+:revdate: 2026-01-09
+:page-revdate: {revdate}
+
+== Übersicht
+
+Sie können RKE2-Cluster-Upgrades mit dem System-Upgrade-Controller von Rancher verwalten. Dies ist ein Kubernetes-nativer Ansatz für Cluster-Upgrades. Es nutzt eine https://github.com/rancher/system-upgrade-controller/blob/master/doc/plan.md#planspec[`Plan`] benutzerdefinierte Ressource, um deklarativ zu beschreiben, welche Knoten aktualisiert werden sollen und auf welche Version.
+
+Der Plan definiert Upgrade-Richtlinien und Anforderungen. Er definiert auch, welche Knoten über einen https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/[Label-Selector] aktualisiert werden sollen. Siehe unten für Pläne mit Standardwerten, die für ein Upgrade eines RKE2-Clusters geeignet sind. Für fortgeschrittene Konfigurationsoptionen des Plans siehe die oben verlinkte Plan-Dokumentation.
+
+Der System-Upgrade-Controller plant Upgrades, indem er Pläne überwacht und Knoten auswählt, auf denen Upgrade- https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/[Jobs] ausgeführt werden sollen. Wenn ein Job erfolgreich abgeschlossen wurde, wird der Knoten, auf dem er ausgeführt wurde, entsprechend gekennzeichnet.
+
+[CAUTION]
+====
+Wenn der RKE2-Cluster von Rancher verwaltet wird, sollten Sie die Rancher UI zur Verwaltung von Upgrades verwenden.
+
+* Wenn der RKE2-Cluster in Rancher importiert (registriert) wurde, wird Rancher standardmäßig die Implementierung des System-Upgrade-Controllers und die Pläne verwalten. Befolgen Sie die Schritte auf dieser Seite nicht, es sei denn, Sie haben das Versionsmanagement in Rancher deaktiviert. Siehe https://documentation.suse.com/cloudnative/rancher-manager/v2.13/en/cluster-deployment/register-existing-clusters.html#_configuring_version_management_for_suse_rancher_prime_rke2_and_suse_rancher_prime_k3s_clusters[Konfiguration der Versionsverwaltung für SUSE® Rancher Prime: RKE2 und SUSE® Rancher Prime: K3s Clusters] für weitere Informationen.
+* Wenn der RKE2-Cluster von Rancher bereitgestellt wurde, verwendet Rancher den System-Agenten, um Versions-Upgrades zu verwalten. Befolgen Sie die Schritte auf dieser Seite nicht.
+* Wenn der RKE2-Cluster _nicht_ von Rancher verwaltet wird, können Sie die folgenden Schritte befolgen.
+====
+
+== Verwendung des System-Upgrade-Controllers
+
+Um Upgrades zu automatisieren, müssen Sie Folgendes tun:
+
+. Installieren Sie den System-Upgrade-Controller in Ihrem Cluster.
+. Erstellen Sie Pläne, die beschreiben, welche Gruppen von Knoten aktualisiert werden sollen und wie.
+
+Für weitere Details zum Design und zur Architektur des System-Upgrade-Controllers oder seiner Integration mit RKE2, siehe die folgenden Git-Repositories:
+
+* https://github.com/rancher/system-upgrade-controller[system-upgrade-controller]
+* https://github.com/rancher/rke2-upgrade[rke2-upgrade]
+
+[TIP]
+====
+Beim Versuch, auf eine neue Version von RKE2 zu aktualisieren, gilt die https://kubernetes.io/releases/version-skew-policy/[Kubernetes-Version-Skew-Richtlinie]. Stellen Sie sicher, dass Ihr Plan keine Zwischenversionen überspringt, wenn Sie ein Upgrade durchführen. Der System-Upgrade-Controller selbst schützt nicht vor nicht unterstützten Änderungen an der Kubernetes-Version.
+====
+
+=== Installation
+
+Das Manifest des System-Upgrade-Controllers installiert eine benutzerdefinierte Ressourcenbeschreibung, Implementierung, Dienstkonto, Cluster-Rollenbindung und ConfigMap. Um diese Komponenten zu installieren, führen Sie den folgenden Befehl aus:
+
+[,bash]
+----
+kubectl apply -f https://github.com/rancher/system-upgrade-controller/releases/latest/download/crd.yaml -f https://github.com/rancher/system-upgrade-controller/releases/latest/download/system-upgrade-controller.yaml
+----
+
+Der Controller kann über die zuvor erwähnte ConfigMap konfiguriert und angepasst werden, aber der Controller-Pod muss gelöscht werden, damit die Änderungen wirksam werden.
+
+=== Konfiguration
+
+Serverknoten sollten immer vor Agentenknoten mit einem Upgrade versehen werden.
+
+Aus diesem Grund wird empfohlen, mindestens zwei Pläne zu erstellen: einen Plan für das Upgrade von Serverknoten (Control-Plane-Knoten) und einen Plan für das Upgrade von Agentenknoten.
+
+Sie können bei Bedarf zusätzliche Pläne erstellen, um die Einführung des Upgrades über die Knoten zu steuern.
+Sobald die Pläne erstellt wurden, wird der Controller sie aufgreifen und beginnen, Ihren Cluster zu upgraden.
+
+Die folgenden zwei Beispielpläne halten Ihren Cluster kontinuierlich auf der aktuellen stabilen Version, indem sie den stabilen xref:upgrade/manual_upgrade.adoc#_release_channels[Release-Kanal] anvisieren:
+
+[,yaml]
+----
+# Server plan
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: server-plan
+  namespace: system-upgrade
+spec:
+  concurrency: 1
+  cordon: true
+  nodeSelector:
+    matchExpressions:
+    - key: node-role.kubernetes.io/control-plane
+      operator: In
+      values:
+      - "true"
+  serviceAccountName: system-upgrade
+  upgrade:
+    image: rancher/rke2-upgrade
+  channel: https://update.rke2.io/v1-release/channels/stable
+# Agent plan
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: agent-plan
+  namespace: system-upgrade
+spec:
+  concurrency: 1
+  cordon: true
+  nodeSelector:
+    matchExpressions:
+    - key: node-role.kubernetes.io/control-plane
+      operator: DoesNotExist
+  prepare:
+    args:
+    - prepare
+    - server-plan
+    image: rancher/rke2-upgrade
+  serviceAccountName: system-upgrade
+  upgrade:
+    image: rancher/rke2-upgrade
+  channel: https://update.rke2.io/v1-release/channels/stable
+----
+
+Es gibt einige wichtige Punkte, die in Bezug auf diese Pläne hervorgehoben werden sollten:
+
+. Die Pläne müssen in demselben Namespace erstellt werden, in dem der Controller bereitgestellt wurde.
+. Das `concurrency` Feld gibt an, wie viele Knoten gleichzeitig mit einem Upgrade versehen werden können.
+. Der Server-Plan zielt auf Serverknoten ab, indem er einen Label-Selector angibt, der Knoten mit dem `node-role.kubernetes.io/control-plane` Label auswählt. Der Agentenplan zielt auf Agentenknoten ab, indem er einen Label-Selector angibt, der Knoten ohne dieses Label auswählt.
+. Der `prepare`-Schritt im Agentenplan bewirkt, dass Upgrade-Jobs für diesen Plan warten, bis der Serverplan abgeschlossen ist, bevor sie ausgeführt werden. Diese Logik ist in das Image integriert, das für den Vorbereitungsschritt verwendet wird, und ist nicht Teil des System-Upgrade-Controllers selbst.
+. Beide Pläne haben das `channel` Feld auf die URL des stabilen Release-Kanals gesetzt. Dies bewirkt, dass der Controller die URL überwacht und den Cluster upgraden wird, sobald sie auf ein neues Release verweist. Dies funktioniert gut mit den xref:upgrade/manual_upgrade.adoc#_release_channels[Release-Kanälen]. So können Sie Ihre Pläne mit dem folgenden Kanal konfigurieren, um sicherzustellen, dass Ihr Cluster stets automatisch auf die neueste stabile Version von RKE2 upgradet wird. Alternativ können Sie das `channel` Feld weglassen und das `version` Feld auf ein bestimmtes Release von RKE2 setzen:
++
+[,yaml]
+----
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+# ...
+spec:
+  # ...
+  version: v1.33.4+rke2r1
+----
+
+Das Upgrade beginnt, sobald der Controller erkennt, dass die Zielversion für einen Plan festgelegt wurde, entweder aus dem Versionsfeld oder durch Abfragen des Kanalservers.
+
+Die Modifizierung eines Plans bewirkt, dass der Controller den Plan neu bewertet und feststellt, ob ein weiteres Upgrade erforderlich ist.
+
+Wenn ein Kanal konfiguriert wurde, wird die URL auch regelmäßig abgefragt, um nach neuen Versionen zu suchen.
+
+Sie können den Fortschritt eines Upgrades überwachen, indem Sie den Plan und die Jobs über kubectl anzeigen:
+
+[,bash]
+----
+kubectl -n system-upgrade get plans -o wide
+kubectl -n system-upgrade get jobs
+----
+
+=== Upgrade-Planung
+
+Pläne können darauf beschränkt werden, innerhalb eines bestimmten Zeitfensters zu erfolgen, indem das `window` Feld innerhalb der Planspezifikation gesetzt wird.
+
+Die Zeitfensterfelder sind kompatibel und haben dasselbe Format wie https://kured.dev/docs/configuration/#setting-a-schedule[kured-Planungsoptionen].
+
+Beispiel:
+
+[,yaml]
+----
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+# ...
+spec:
+  # ...
+  window:
+    days:
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+      - friday
+    startTime: 19:00
+    endTime: 21:00
+    timeZone: UTC
+----
+
+Jobs zur Ausführung von Upgrades für einen Plan werden außerhalb des Zeitfensters nicht erstellt. Sobald die Jobs erstellt sind, können sie weiterhin ausgeführt werden, nachdem das Zeitfenster geschlossen wurde.
+
+== Downgrade-Prävention
+
+Kubernetes unterstützt keine Downgrades von Control-Plane-Komponenten. Das rke2-upgrade Image, das von Upgrade-Plänen verwendet wird, enthält derzeit keine Überprüfungen, um zu verhindern, dass ein Plan die Kubernetes-Version herabstuft.
+
+Cluster, die von Rancher bereitgestellt werden, können zusammen mit der Wiederherstellung eines etcd-Snapshots, der Daten enthält, die garantiert von der Zielversion von Kubernetes verwendet werden können, herabgestuft werden. Weitere Informationen finden Sie in den Rancher-Dokumenten.
+
+Cluster, die nicht von Rancher bereitgestellt werden, können manuell auf eine frühere Version zurückgesetzt werden, begleitet von der Wiederherstellung eines etcd-Snapshots. Weitere Informationen finden Sie unter xref:upgrade/roll_back.adoc[RKE2 zurücksetzen].
+
+== Sicherheit
+
+Der gestartete Upgrade-Job muss hochprivilegiert sein, um Änderungen an den zugrunde liegenden Knoten vorzunehmen. Standardmäßig ist er mit Folgendem konfiguriert:
+
+* Host `IPC`, `NET` und `PID` Namespaces
+* Die `CAP_SYS_BOOT` Fähigkeit
+* Host root, gemountet bei `/host` mit Lese- und Schreibberechtigungen

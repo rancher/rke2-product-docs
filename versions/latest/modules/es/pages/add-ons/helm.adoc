@@ -1,0 +1,248 @@
+= Helm
+:page-languages: [en, zh]
+:revdate: 6/11/2025
+:page-revdate: {revdate}
+
+Helm es la herramienta de gestión de paquetes preferida para Kubernetes. Los Charts de Helm proporcionan una sintaxis de plantillas para los documentos de manifiesto YAML de Kubernetes. Con Helm podemos crear despliegues configurables en lugar de utilizar solo archivos estáticos. Para más información sobre cómo crear tu propio catálogo de despliegues, consulta la documentación en https://helm.sh/docs/intro/quickstart/..
+
+RKE2 no requiere ninguna configuración especial para utilizar las herramientas de línea de comandos de Helm. Solo asegúrate de haber configurado correctamente tu kubeconfig según la sección sobre xref:cluster_access.adoc[acceso al clúster]. RKE2 incluye alguna funcionalidad extra para facilitar aún más el despliegue tanto de manifiestos de recursos de Kubernetes tradicionales como de Helm Charts con el <<Using the Helm CRD, rancher/helm-release CRD>>.
+
+== Despliegue Automático de Manifiestos y Helm Charts
+
+Cualquier manifiesto de Kubernetes encontrado en `/var/lib/rancher/rke2/server/manifests` se desplegará automáticamente en RKE2 de manera similar a `kubectl apply`, tanto al iniciar como cuando el archivo cambie en el disco. Eliminar archivos de este directorio no eliminará los recursos correspondientes del clúster.
+
+Los manifiestos desplegados de esta manera se gestionan como recursos personalizados de AddOn y se pueden ver ejecutando `kubectl get addon -A`. Por defecto, encontrarás AddOns para componentes empaquetados como CoreDNS, Nginx-Ingress y Metrics Server. Los AddOns se crean automáticamente por el controlador de despliegue y se nombran en función de su nombre de archivo en el directorio de manifiestos.
+
+También es posible desplegar Helm charts como AddOns. RKE2 incluye un https://github.com/k3s-io/helm-controller/[Controlador de Helm] que gestiona Helm charts utilizando una Definición de Recursos Personalizados (CRD) de HelmChart.
+
+=== Requisitos de Nomenclatura de Archivos
+
+El nombre `AddOn` para cada archivo en el directorio de manifiestos se deriva del nombre base del archivo.
+Asegúrese de que todos los archivos dentro del directorio de manifiestos (o dentro de cualquier subdirectorio) tengan nombres que sean únicos y cumplan con las https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[restricciones de nomenclatura de objetos] de Kubernetes. También se debe tener cuidado de no entrar en conflicto con los nombres utilizados por los componentes empaquetados predeterminados de RKE2, incluso si esos componentes están deshabilitados.
+
+Un ejemplo de un error que se informaría si el nombre del archivo contiene guiones bajos:
+
+[,sh]
+----
+`Failed to process config: failed to process /var/lib/rancher/rke2/server/manifests/example_manifest.yaml:
+   Addon.k3s.cattle.io "example_manifest" is invalid: metadata.name: Invalid value: "example_manifest":
+   a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')`
+----
+
+== Deshabilitando AddOns
+
+Los AddOns para los componentes empaquetados mencionados anteriormente, además de los AddOns para cualquier manifiesto adicional colocado en el directorio de manifiestos, se pueden deshabilitar con la bandera --disable. Los AddOns deshabilitados se desinstalan activamente del clúster y los archivos fuente se eliminan del directorio de manifiestos.
+
+Por ejemplo, para deshabilitar CoreDNS de ser instalado en un nuevo clúster, o para desinstalarlo y eliminar el manifiesto de un clúster existente, puedes iniciar RKE2 con `disable: rke2-coredns` en el archivo de configuración. Se pueden deshabilitar múltiples elementos en una lista anidada.
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable:
+  - rke2-coredns
+  - rke2-metrics-server
+----
+
+== Uso del CRD de Helm
+
+La https://github.com/k3s-io/helm-controller#helm-controller[definición del recurso HelmChart] captura la mayoría de las opciones que normalmente pasarías a la herramienta de línea de comandos `helm`. Aquí hay un ejemplo de cómo podrías desplegar Grafana desde el repositorio de charts predeterminado, sobrescribiendo algunos de los valores predeterminados del chart. Ten en cuenta que el recurso HelmChart en sí está en el espacio de nombres `kube-system`, pero los recursos del chart se desplegarán en el espacio de nombres `monitoring`.
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: grafana
+  namespace: kube-system
+spec:
+  chart: stable/grafana
+  targetNamespace: monitoring
+  set:
+    adminPassword: "NotVerySafePassword"
+  valuesContent: |-
+    image:
+      tag: master
+    env:
+      GF_EXPLORE_ENABLED: true
+    adminUser: admin
+    sidecar:
+      datasources:
+        enabled: true
+----
+
+Un ejemplo de desplegar un Chart de Helm desde un repositorio privado con autenticación:
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  namespace: kube-system
+  name: example-app
+spec:
+  targetNamespace: example-space
+  createNamespace: true
+  version: v1.2.3
+  chart: example-app
+  repo: https://secure-repo.example.com
+  authSecret:
+    name: example-repo-auth
+  repoCAConfigMap:
+    name: example-repo-ca
+  valuesContent: |-
+    image:
+      tag: v1.2.2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: kube-system
+  name: example-repo-auth
+type: kubernetes.io/basic-auth
+stringData:
+  username: user
+  password: pass
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: kube-system
+  name: example-repo-ca
+data:
+  ca.crt: |-
+    -----BEGIN CERTIFICATE-----
+    <YOUR CERTIFICATE>
+    -----END CERTIFICATE-----
+----
+
+=== Definiciones de Campo de HelmChart
+
+|===
+| Campo | Default | Descripción | Equivalente de Argumento / Bandera de Helm
+
+| metadata.name
+|
+| Nombre del Chart de Helm
+| NOMBRE
+
+| spec.chart
+|
+| Nombre del Chart de Helm en el repositorio, o URL HTTPS completa al archivo del Chart (.tgz)
+| CHART
+
+| spec.targetNamespace
+| por defecto
+| Espacio de nombres de destino del Chart de Helm
+| `--namespace`
+
+| spec.createNamespace
+| false
+| Crear espacio de nombres de destino si no está presente
+| `--create-namespace`
+
+| spec.versión
+|
+| Versión del Chart de Helm (al instalar desde el repositorio)
+| `--version`
+
+| spec.repo
+|
+| URL del repositorio del Chart de Helm
+| `--repo`
+
+| spec.repoCA
+|
+| Verificar certificados de servidores habilitados para HTTPS utilizando este paquete de CA. Debería ser una cadena que contenga uno o más certificados CA codificados en PEM.
+| `--ca-file`
+
+| spec.repoCAConfigMap
+|
+| Referencia a un ConfigMap que contiene certificados CA que deben ser confiables por Helm. Se puede usar junto con o en lugar de `repoCA`
+| `--ca-file`
+
+| spec.helmVersion
+| v3
+| Versión de Helm a utilizar (`v2` o `v3`)
+|
+
+| spec.bootstrap
+| False
+| Establecer en Verdadero si este Chart es necesario para iniciar el clúster (Cloud Controller Manager, etc)
+|
+
+| spec.set
+|
+| Sobrescribir valores predeterminados simples del Chart. Estos tienen prioridad sobre las opciones establecidas a través de valuesContent.
+| `--set` / `--set-string`
+
+| spec.jobImage
+|
+| Especificar la imagen a utilizar al instalar el Chart de Helm. E.g. rancher/klipper-helm:v0.3.0 .
+|
+
+| spec.backOffLimit
+| 1000
+| Especifica el número de reintentos antes de considerar que un trabajo ha fallado.
+|
+
+| spec.timeout
+| 300s
+| Tiempo de espera para las operaciones de Helm, como un https://pkg.go.dev/time#ParseDuration[cadena de duración] (`300s`, `10m`, `1h`, etc)
+| `--timeout`
+
+| spec.failurePolicy
+| reinstall
+| Establecer a `abort`, en cuyo caso la operación de Helm se aborta, pendiente de intervención manual por parte del operador.
+|
+
+| spec.authSecret
+|
+| Referencia a Secret de tipo `kubernetes.io/basic-auth` que contiene credenciales de autenticación básica para el repositorio del Chart.
+|
+
+| spec.authPassCredentials
+| false
+| Pasar credenciales de autenticación básica a todos los dominios.
+| `--pass-credentials`
+
+| spec.dockerRegistrySecret
+|
+| Referencia a Secret de tipo `kubernetes.io/dockerconfigjson` que contiene credenciales de autenticación de Docker para el registro basado en OCI que actúa como el repositorio del Chart.
+|
+
+| spec.valuesContent
+|
+| Sobrescribir valores predeterminados complejos del Chart a través del contenido del archivo YAML
+| `--values`
+
+| spec.chartContent
+|
+| Archivo de Chart comprimido en Base64 .tgz - sobrescribe spec.chart
+| CHART
+|===
+
+== Personalizando Componentes Empaquetados con HelmChartConfig
+
+Para permitir la sobrescritura de valores para componentes empaquetados que se despliegan como HelmCharts (como Canal, CoreDNS, Nginx-Ingress, etc.), RKE2 admite la personalización de despliegues a través de un recurso `HelmChartConfig`. El recurso `HelmChartConfig` debe coincidir con el nombre y el espacio de nombres de su correspondiente HelmChart, y admite proporcionar `valuesContent` adicional, que se pasa al comando `helm` como un archivo de valores adicional.
+
+[NOTE]
+====
+Los valores `spec.set` de HelmChart sobrescriben la configuración de HelmChart y HelmChartConfig `spec.valuesContent`.
+====
+
+Por ejemplo, para personalizar la configuración empaquetada de CoreDNS, puedes crear un archivo llamado `/var/lib/rancher/rke2/server/manifests/rke2-coredns-config.yaml` y rellenarlo con el siguiente contenido:
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    image: coredns/coredns
+    imageTag: v1.7.1
+----
+
+Puedes encontrar todos los charts de Helm empaquetados, incluyendo su documentación y valores predeterminados, en el https://github.com/rancher/rke2-charts/tree/main/charts[repositorio de charts de RKE2].

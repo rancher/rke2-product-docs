@@ -3,32 +3,31 @@
 :revdate: 2025-07-17
 :page-revdate: {revdate}
 
-RKE2 is compatible with SELinux-enabled systems, which is the default configuration on CentOS/RHEL systems starting from version 7. The https://github.com/rancher/rke2-selinux[policy] supporting this is a specialization of the https://github.com/containers/container-selinux[container-selinux] policy for containerd. It accounts for the non-standard location(s) which containerd is installed and places persistent and ephemeral state.
+RKE2 与启用 SELinux 的系统兼容，这是从版本 7 开始在 CentOS/RHEL 系统上的默认配置。支持此功能的 https://github.com/rancher/rke2-selinux[策略] 是 https://github.com/containers/container-selinux[container-selinux] 策略的一个特化，适用于 containerd。它考虑了 containerd 安装的非标准位置，并放置持久和临时状态。
 
 [NOTE] 
 ====
-In some circumstances, a reboot of the node may be required after installing the rke2-selinux package and before starting the rke2 service. If you encounter denials in your selinux audit log despite installation of the rke2-selinux and container-selinux packages, please reboot the node.
+在某些情况下，安装 rke2-selinux 软件包后，可能需要重启节点，然后才能启动 rke2 服务。如果您在 selinux 审计日志中遇到拒绝，即使安装了 rke2-selinux 和 container-selinux 软件包，请重启节点。
 ====
 
-== Custom Context Labels
+== 自定义上下文标签
 
-RKE2 runs control-plane services as static pods which require access to multiple https://github.com/containers/container-selinux/blob/RHEL7.5/container.te#L59[`container_var_lib_t`] locations. The `etcd` container must be able to read-write under `/var/lib/rancher/rke2/server/db` and read,
-along with `kube-apiserver`, `kube-controller-manager`, and `kube-scheduler`, from `/var/lib/rancher/rke2/server/tls`. To make this work without over-privileging, e.g., https://github.com/containers/container-selinux/blob/RHEL7.5/container.te#L47-L49[`spc_t`], the RKE2 SELinux policy introduces the https://github.com/rancher/rke2-selinux/blob/v0.3.latest.1/rke2.te#L15-L21[`rke2_service_db_t`] and https://github.com/rancher/rke2-selinux/blob/v0.3.latest.1/rke2.te#L9-L13[`rke2_service_t`] context labels for read-write and read-only access, respectively. These labels will only be applied to the RKE2 control-plane static pods.
+RKE2 以静态 Pod 的形式运行控制平面服务，这需要访问多个 https://github.com/containers/container-selinux/blob/RHEL7.5/container.te#L59[`container_var_lib_t`] 位置。`etcd` 容器必须能够在 `/var/lib/rancher/rke2/server/db` 下进行读写，并且能够从 `/var/lib/rancher/rke2/server/tls` 中读取，连同 `kube-apiserver`、`kube-controller-manager` 和 `kube-scheduler` 一起。为了在不过度授权的情况下使其工作，例如 https://github.com/containers/container-selinux/blob/RHEL7.5/container.te#L47-L49[`spc_t`]，RKE2 SELinux 策略引入了 https://github.com/rancher/rke2-selinux/blob/v0.3.latest.1/rke2.te#L15-L21[`rke2_service_db_t`] 和 https://github.com/rancher/rke2-selinux/blob/v0.3.latest.1/rke2.te#L9-L13[`rke2_service_t`] 上下文标签，分别用于读写和只读访问。这些标签将仅应用于 RKE2 控制平面静态 Pod。
 
-== Specific OS Requirements
+== 特定操作系统要求
 
 === Amazon Linux 2
 
-Amazon Linux 2 requires additional selinux packages to be installed:
+亚马逊 Linux 2 需要安装额外的 SELinux 软件包：
 
 [,bash]
 ----
 sudo amazon-linux-extras enable selinux-ng; sudo yum install selinux-policy-targeted -y
 ----
 
-== Configuration
+== 配置
 
-RKE2 support for SELinux amounts to a single configuration item, the `--selinux` boolean flag. This is a pass-through to the https://github.com/containerd/cri/blob/release/1.4/docs/config.md[`enable_selinux` boolean in the cri section of the containerd/cri toml]. If RKE2 was installed via tarball then SELinux will not be enabled without additional configuration. The recommended method to configure such is via an entry in the RKE2 `config.yaml`, e.g.:
+RKE2 对 SELinux 的支持仅涉及一个配置项，即 `--selinux` 布尔标志.这是对 containerd/cri toml 的 cri 部分中 https://github.com/containerd/cri/blob/release/1.4/docs/config.md[`enable_selinux` 布尔标志] 的直通。如果通过 tarball 安装 RKE2，则在没有额外配置的情况下，SELinux 将不会启用。推荐的配置方法是通过 RKE2 `config.yaml` 中的一个条目，例如：
 
 [,yaml]
 ----
@@ -36,12 +35,12 @@ RKE2 support for SELinux amounts to a single configuration item, the `--selinux`
 selinux: true
 ----
 
-This is equivalent to passing the `--selinux` flag to `rke2 server` or `rke2 agent` command-line or setting the `RKE2_SELINUX=true` environment variable.
+这相当于将 `--selinux` 标志传递给 `rke2 server` 或 `rke2 agent` 命令行，或设置 `RKE2_SELINUX=true` 环境变量。
 
-=== Calico Support
+=== Calico 支持
 
-If you choose to use Calico as your CNI with SELinux enabled, you will also need to install specific policies.
+如果您选择在启用 SELinux 的情况下使用 Calico 作为您的 CNI，您还需要安装特定的策略。
 
-The package to install is provided by Tigera https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el9.noarch.rpm[here].
+要安装的软件包由 Tigera 提供， https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el9.noarch.rpm[在这里]。
 
-See Calico's https://docs.tigera.io/calico-enterprise/latest/getting-started/install-on-clusters/requirements[documentation] for more details.
+请参见 Calico 的 https://docs.tigera.io/calico-enterprise/latest/getting-started/install-on-clusters/requirements[文档] 以获取更多详细信息。

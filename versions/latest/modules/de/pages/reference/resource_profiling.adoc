@@ -1,0 +1,70 @@
+= Ressourcenprofilierung
+:page-languages: [en, zh]
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+Dieser Abschnitt erfasst die Ergebnisse von Tests zur Bestimmung der minimalen Ressourcenanforderungen für RKE2.
+
+== Umfang der Ressourcentests
+
+Die Ressourcentests sollten die folgenden Problemstellungen adressieren:
+
+* Bestimmen Sie in einem Ein-Knoten-Cluster die legitime minimale Menge an CPU und Speicher, die für den gesamten RKE2-Server-Stack erforderlich ist, wobei davon ausgegangen wird, dass eine echte Arbeitslast im Cluster bereitgestellt wird.
+* Bestimmen Sie auf einem Agentenknoten die legitime minimale Menge an CPU und Speicher, die für die kubelet- und RKE2-Agentenkomponenten reserviert werden sollte.
+
+=== Umgebung und Komponenten
+
+|===
+| Arch | BS | System | PROZESSOR | RAM | Festplatte
+
+| x86-64
+| Ubuntu 22.04
+| AWS c6id.xlarge
+| Intel Xeon Platinum 8375C CPU, 4 Kerne 2,90 GHz
+| 8 GB
+| NVME SSD
+|===
+
+Die getesteten Komponenten sind:
+
+* RKE2 v1.27.12 mit allen im Paket enthaltenen Komponenten aktiviert, Canal als CNI
+* https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[Kubernetes Beispiel Nginx Bereitstellung]
+
+=== Methode
+
+`systemd-cgtop` wurde verwendet, um die CPU- und Speicherauslastung auf der Systemd-Cgroup-Ebene zu verfolgen.
+
+* `system.slice/rke2-server.service` verfolgt die Ressourcenauslastung sowohl für RKE2- als auch für containerd-Komponenten.
+* `system.slice/rke2-agent.service` verfolgt die Ressourcenauslastung für die Agentenkomponenten.
+
+Die Nutzungswerte basierten auf den 95. Perzentilwerten aus dem stabilen Betriebszustand auf Knoten, die die beschriebenen Arbeitslasten ausführen, und geben eine obere Grenze für die typische Ressourcennutzung an.
+
+=== RKE2-Server mit einer Arbeitslast
+
+Dies sind die Anforderungen für einen Ein-Knoten-Cluster, in dem der RKE2-Server Ressourcen mit einer https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[einfachen Arbeitslast] teilt.
+
+|===
+| System | CPU-Kernnutzung | Arbeitsspeicher
+
+| Intel 8375C
+| 17 % eines Kerns
+| 4977 MB
+|===
+
+=== RKE2-Cluster mit einem einzelnen Agenten
+
+Dies sind die grundlegenden Anforderungen für einen RKE2-Cluster mit einem RKE2-Serverknoten und einem RKE2-Agenten, jedoch ohne Arbeitslast.
+
+|===
+| Knoten | System | CPU-Kernnutzung | Arbeitsspeicher
+
+| Server
+| Intel 8375C
+| 18 % eines Kerns
+| 4804 MB
+
+| Agent
+| Intel 8375C
+| 5 % eines Kerns
+| 3590 MB
+|===

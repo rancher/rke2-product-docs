@@ -1,115 +1,118 @@
-= 快速开始
+= 快速入门
 :page-languages: [en, zh]
-:revdate: 2025-07-09
+:revdate: 2025-10-23
 :page-revdate: {revdate}
 
-本指南帮助你使用默认选项快速启动集群。
+本指南将帮助您快速启动一个具有默认选项的集群。
+____
+刚接触 Kubernetes 吗？官方Kubernetes文档已经有一些很好的教程，概述了基础知识，详见 https://kubernetes.io/docs/tutorials/kubernetes-basics/[这里]。
+____
 
-____
-Kubernetes 新手？Kubernetes 官方文档介绍了一些很好的link:https://kubernetes.io/docs/tutorials/kubernetes-basics/[基础知识教程]。
-____
+[IMPORTANT]
+====
+您可以使用 Prime Artifacts URL 上列出的任意 RKE2 Prime 版本，用于这些步骤中提到的资产。要了解有关 Prime Artifacts URL 的更多信息，请参阅我们的 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[仅限 Prime 的文档]。需要身份验证。使用您的 https://scc.suse.com/home[SUSE 客户中心 (SCC)] 凭据登录。
+====
 
 == 先决条件
 
-* 确保你的环境满足xref:../install/requirements.adoc[要求]。
- 如果你的主机安装并启用了 NetworkManager，请xref:../known_issues.adoc#_networkmanager[确保将其配置为忽略 CNI 管理的接口]。
-* If the host kernel supports https://apparmor.net/[AppArmor], the AppArmor tools (usually available via the `apparmor-parser` package) must also be present prior to installing RKE2.
-* 必须以 root 用户或通过 `sudo` 执行 {product-name} 安装。
+* 请确保您的环境满足xref:install/requirements.adoc[要求]。如果您的主机上安装并启用了 NetworkManager，xref:known_issues.adoc#_networkmanager[请确保其配置为忽略 CNI 管理的接口]。
+* 如果主机内核支持 https://apparmor.net/[AppArmor]，在安装 RKE2 之前，还必须存在 AppArmor 工具（通常通过`apparmor-parser` 软件包提供）。
+* {product-name} 的安装过程必须以 root 用户身份运行或通过 `sudo` 进行。
 
-== Server 节点安装
+== 服务器节点安装
 
-'''
+{product-name} 提供了一个安装脚本，它是一种便捷的方式，可在基于 systemd 的系统上将其作为服务安装。该脚本可在 https://get.rke2.io. 获得。要使用此方法安装 {product-name}，请执行以下操作：
 
-{product-name} 提供了一个安装脚本，可以方便地将其作为服务安装在基于 systemd 的系统上。该脚本可在 https://get.rke2.io 获得。要使用此方法安装 RKE2，请执行以下操作：
-
---
-. 运行安装程序
+. 运行安装程序，其中 `INSTALL_RKE2_ARTIFACT_URL` 表示 Prime https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL]，而 `INSTALL_RKE2_CHANNEL` 是您可以订阅的发布渠道，默认为 `stable`。在此示例中，`INSTALL_RKE2_CHANNEL="latest"` 为您提供 RKE2 的最新版本。
 +
 [,sh]
 ----
-curl -sfL https://get.rke2.io | sh -
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" sh -
 ----
 +
-[NOTE]
-====
-中国用户，可以使用以下方法加速安装：
-
-----
-curl -sfL https://rancher-mirror.rancher.cn/rke2/install.sh | INSTALL_RKE2_MIRROR=cn sh -
-----
-====
+如果您想指定版本，请设置 `INSTALL_RKE2_VERSION` 环境变量。
 +
-这会将 `rke2-server` 服务和 `rke2` 二进制文件安装到你的主机上。除非以 root 用户或通过 `sudo` 运行，否则它将失败。
+[,bash]
+----
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" sh -
+----
++
+这将把 `rke2-server` 服务和 `rke2` 二进制文件安装到您的机器上。由于其特性，除非以 root 用户身份运行或通过 `sudo` 进行，否则将会失败。
 
-
-. 启用 rke2-server 服务
+. 启用 rke2-server 服务。
 +
 [,sh]
 ----
 systemctl enable rke2-server.service
 ----
 
-. 启动服务
+.  要从 Rancher Prime 注册表中拉取镜像，请在 `etc/rancher/rke2/config.yaml` 中设置以下值：
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+----
++
+此配置指示 RKE2 使用 registry.rancher.com 作为其在集群中部署所需所有容器镜像的默认位置。
+
+. 启动服务。
 +
 [,sh]
 ----
 systemctl start rke2-server.service
 ----
 
-. 如有需要，可以查看日志
+. 使用以下命令查看日志：
 +
 [,sh]
 ----
 journalctl -u rke2-server -f
 ----
-+
+
 运行此安装后：
 
-* `rke2-server` 服务将会安装。`rke2-server` 服务将被配置为在节点重启后或进程崩溃或被杀死时自动重启。
-* 其他实用程序将安装到 `/var/lib/rancher/rke2/bin/`，包括 `kubectl`、`crictl` 和 `ctr`。请注意，默认情况下它们不在你的路径上。
-* 两个清理脚本 `rke2-killall.sh` 和 `rke2-uninstall.sh` 将安装到以下路径：
- ** 如果是常规文件系统，则是 `/usr/local/bin`
- ** 如果是只读和 brtfs 文件系统，则是 `/opt/rke2/bin`
- ** 如果设置了 `INSTALL_RKE2_TAR_PREFIX`，则是 `INSTALL_RKE2_TAR_PREFIX/bin`
-* https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig] 文件将写入 `/etc/rancher/rke2/rke2.yaml`。
-* 可用于注册其他 Server 或 Agent 节点的令牌将在 `/var/lib/rancher/rke2/server/node-token` 中创建。
-+
+* 将安装`rke2-server`服务。`rke2-server`服务将配置为在节点重启后或进程崩溃或被终止时自动重启。
+* 将在`/var/lib/rancher/rke2/bin/`安装其他实用程序。这些包括：`kubectl`、`crictl`和`ctr`。请注意，这些默认情况下不在您的路径中。
+* 两个清理脚本，`rke2-killall.sh`和`rke2-uninstall.sh`，将安装到路径：
+ ** `/usr/local/bin`用于常规文件系统
+ ** `/opt/rke2/bin`用于只读和brtfs文件系统。
+ ** `INSTALL_RKE2_TAR_PREFIX/bin`如果`INSTALL_RKE2_TAR_PREFIX`被设置
+* 将在 `/etc/rancher/rke2/rke2.yaml` 写入一个 https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig] 文件。
+* 将在`/var/lib/rancher/rke2/server/node-token`创建一个可以用于注册其他服务器或代理节点的令牌。
+
 [NOTE]
 ====
-如果要添加其他 Server 节点，则总数必须为奇数。仲裁要求节点数为奇数。有关详细信息，请参阅xref:./ha.adoc[高可用文档]。
+如果您添加额外的服务器节点，您必须总共有一个奇数。需要一个奇数以维持法定人数。有关更多详细信息，请参见xref:install/ha.adoc[高可用性文档]。
 ====
---
 
-== Linux Agent（Worker）节点安装
+== Linux代理（工作）节点安装
 
-本节中的步骤需要 root 级别访问权限或 `sudo` 才能执行。
---
-. 运行安装程序
+本节的步骤需要root级别的访问权限或`sudo`才能工作。
+
+. 运行安装程序。
 +
 [,sh]
 ----
-curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
+curl -sfL https://get.rke2.io | INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_CHANNEL="latest" INSTALL_RKE2_TYPE="agent" sh -
 ----
 +
-[NOTE]
-====
-中国用户，可以使用以下方法加速安装：
-
-----
-curl -sfL https://rancher-mirror.rancher.cn/rke2/install.sh | INSTALL_RKE2_MIRROR=cn INSTALL_RKE2_TYPE="agent" sh -
-----
-====
+如果您想指定版本，请设置 `INSTALL_RKE2_VERSION` 环境变量。
 +
-这会将 `rke2-agent` 服务和 `rke2` 二进制文件安装到你的主机上。除非以 root 用户或通过 `sudo` 运行，否则它将失败。
+[,bash]
+----
+curl -sfL https://get.rke2.io/ | sudo INSTALL_RKE2_ARTIFACT_URL=<PRIME-ARTIFACTS-URL>/rke2 INSTALL_RKE2_VERSION="<VERSION>" INSTALL_RKE2_TYPE="agent" sh -
+----
++
+这将把 `rke2-agent` 服务和 `rke2` 二进制文件安装到您的机器上。由于其特性，除非以 root 用户身份运行或通过 `sudo`，否则将会失败。
 
-. 启用 rke2-agent 服务
+. 启用rke2-agent服务。
 +
 [,sh]
 ----
 systemctl enable rke2-agent.service
 ----
-+
-. 配置 rke2-agent 服务
+
+. 配置rke2-agent服务。
 +
 [,sh]
 ----
@@ -117,7 +120,7 @@ mkdir -p /etc/rancher/rke2/
 vim /etc/rancher/rke2/config.yaml
 ----
 +
-config.yaml 的内容：
+config.yaml的内容：
 +
 [,yaml]
 ----
@@ -127,63 +130,65 @@ token: <token from server node>
 +
 [NOTE]
 ====
-`rke2 server` 进程在端口 `9345` 上侦听新节点注册。Kubernetes API 仍然照常在端口 `6443` 上提供服务。
+`rke2 server` 进程在 `9345` 端口上监听新节点的注册请求。Kubernetes API 仍然在 `6443` 端口上提供服务，正常运行。
 ====
 
-. 启动服务
+. 启动服务。
 +
 [,sh]
 ----
 systemctl start rke2-agent.service
 ----
 +
-*如有需要，可以查看日志*
+. 使用以下命令查看日志：
 +
 [,sh]
 ----
 journalctl -u rke2-agent -f
 ----
-+
-*注意*：每台主机必须具有唯一的主机名。如果你的主机没有唯一的主机名，请在 `config.yaml` 文件中设置 `node-name` 参数，并为每个节点提供一个有效且唯一的主机名。
-+
-有关 `config.yaml` 文件的更多信息，请参阅link:configuration.adoc#配置文件[安装选项文档]。
---
 
-== Windows Agent（Worker）节点安装
+[NOTE]
+====
+每台机器必须有一个唯一的主机名。如果您的机器没有唯一的主机名，请在 `config.yaml` 文件中设置 `node-name` 参数，并为每个节点提供一个有效且唯一的主机名。要了解更多关于 config.yaml 文件的信息，请参考 xref:install/configuration.adoc#_configuration_file[配置选项文档]。
+====
 
-*Windows 支持目前处于实验阶段（从 v1.21.3+rke2r1 开始）* +
-*Windows 支持要求选择 Calico 作为 RKE2 集群的 CNI*
---
-. 准备 Windows Agent 节点
+== Windows 代理（工作节点）安装
+
+Windows 支持与 Calico 或 Flannel 一起作为 RKE2 集群的 CNI。
+
+. 准备 Windows 代理节点。
 +
-*注意*：需要启用 Windows Server Containers 功能才能使 RKE2 Agent 工作。
+[NOTE]
+====
+需要启用 Windows Server 容器功能，以使 RKE2 代理正常工作。
+====
 +
-使用管理员权限打开一个新的 Powershell 窗口。
+.. 以管理员权限打开一个新的 Powershell 窗口。
 +
 [,powershell]
 ----
 powershell -Command "Start-Process PowerShell -Verb RunAs"
 ----
 +
-在新的 Powershell 窗口中，运行以下命令：
+.. 在新的 Powershell 窗口中，运行以下命令以安装容器功能。
 +
 [,powershell]
 ----
 Enable-WindowsOptionalFeature -Online -FeatureName containers –All
 ----
 +
-需要重启才能使 `Containers` 功能正常运行。
-
-. 下载安装脚本
+这将需要重启，以使 `Containers` 功能正常运行。
++
+. 下载安装脚本。
 +
 [,powershell]
 ----
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
 ----
 +
-此脚本会将 `rke2.exe` Windows 二进制文件下载到你的计算机上。
+该脚本将把 `rke2.exe` Windows 二进制文件下载到您的机器上。
 
-. 为 Windows 配置 rke2-agent
+. 为 Windows 配置 rke2-agent。
 +
 [,powershell]
 ----
@@ -194,9 +199,9 @@ token: <token from server node>
 "@
 ----
 +
-有关 `config.yaml` 文件的更多信息，请参阅link:configuration.adoc#配置文件[安装选项文档]。
+要了解更多关于 config.yaml 文件的信息，请参考 xref:install/configuration.adoc#_configuration_file[配置选项文档]。
 
-. 配置 PATH
+. 配置 PATH。
 +
 [,powershell]
 ----
@@ -208,33 +213,35 @@ $env:PATH+=";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin"
     [EnvironmentVariableTarget]::Machine)
 ----
 
-. 运行安装程序
+. 运行安装程序。
 +
 [,powershell]
 ----
 ./install.ps1
 ----
 
-. 启动 Windows RKE2 服务
+. 启动 Windows RKE2 服务。
 +
 [,powershell]
 ----
 rke2.exe agent service --add
 ----
-+
-*注意*：每台主机必须具有唯一的主机名。
-+
+
+[NOTE] 
+====
+每台机器必须有一个唯一的主机名。
+====
+
 不要忘记使用以下命令启动 RKE2 服务：
-+
+
 [,powershell]
 ----
 Start-Service rke2
 ----
-+
-如果想仅使用 CLI 参数，请使用所需参数运行二进制文件。
-+
+
+如果您更愿意仅使用 CLI 参数，请使用所需的参数运行二进制文件。
+
 [,powershell]
 ----
 rke2.exe agent --token <> --server <>
 ----
---

@@ -1,0 +1,75 @@
+= Bilder importieren
+:page-languages: [en, zh]
+:revdate: 2025-12-04
+:page-revdate: {revdate}
+
+Containerbilder werden lokal auf jedem Knoten vom Containerd-Image-Store zwischengespeichert. Bilder können nach Bedarf von der Registry durch Pods abgerufen, vorab geladen oder aus einem Image-Tarball importiert werden.
+
+== Bildabruf nach Bedarf
+
+Kubernetes zieht standardmäßig automatisch Bilder, wenn ein Pod sie benötigt, sofern das Bild nicht bereits auf dem Knoten vorhanden ist. Dieses Verhalten kann durch die Verwendung des https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy[Image-Pull-Richtlinie] Feldes des Pods geändert werden. Bei Verwendung der Standard-`IfNotPresent` Richtlinie zieht containerd das Bild entweder von Upstream (Standard) oder von Ihrer xref:install/private_registry.adoc[privaten Registry] und speichert es im Containerd-Image-Store. Benutzer müssen keine zusätzliche Konfiguration vornehmen, damit der Bildabruf nach Bedarf funktioniert.
+
+== Bilder vorab importieren
+
+[NOTE]
+.Versionssperre
+====
+Die Funktion zum Vorab-Importieren von Bildern während K3s läuft, ist ab den Releases von Januar 2025 verfügbar: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.30.13+rke2r1. Davor hat RKE2 die Bilder nur beim Booten vorab importiert.
+====
+
+Das Vorabimportieren von Bildern auf den Knoten ist entscheidend, wenn Sie Kubernetes' `imagePullPolicy` als `Never` konfigurieren. Sie könnten dies aus Sicherheitsgründen tun oder um die Zeit zu reduzieren, die Ihre RKE2-Knoten zum Hochfahren benötigen.
+
+RKE2 umfasst zwei Mechanismen, um Bilder in den Containerd-Image-Store vorab zu importieren:
+
+[tabs]
+====
+
+Online-Bildimport::
++
+Benutzer können einen Pull von Bildern in den Containerd-Image-Store auslösen, indem sie eine Textdatei mit den Bildnamen, jeweils einen pro Zeile, im `/var/lib/rancher/k3s/agent/images` Verzeichnis ablegen. Die Textdatei kann vor dem Start von RKE2 abgelegt oder während des Betriebs von RKE2 erstellt/geändert werden. RKE2 wird die Bilder sequenziell über die CRI-API abrufen, optional unter Verwendung der Konfiguration [registries.yaml](install/private_registry.md). 
++
+Beispiel:
++
+[,bash]
+----
+mkdir /var/lib/rancher/rke2/agent/images 
+cp example.txt /var/lib/rancher/rke2/agent/images
+----
++
+Wo `example.txt` enthält:
++
+[,bash]
+----
+docker.io/library/redis:latest docker.io/library/mysql:latest
+----
++
+Nach einigen Sekunden sind die `redis` und die `mysql` Bilder im Containerd-Image-Store des Knotens verfügbar. 
++
+Verwenden Sie `ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list`, um den Containerd-Image-Store abzufragen.
+
+Offline-Bildimport::
++
+Benutzer können Bilder direkt in den Containerd-Image-Store importieren, indem sie Bild-Tarballs im `/var/lib/rancher/rke2/agent/images` Verzeichnis ablegen. Der Tarball kann vor dem Start von RKE2 abgelegt oder während des Betriebs von RKE2 erstellt/geändert werden. RKE2 dekomprimiert den Bild-Tarball, falls erforderlich, extrahiert die Bilder und lädt sie in den Containerd-Image-Store. 
++
+Beispiel:
++
+[,bash]
+----
+mkdir /var/lib/rancher/rke2/agent/images 
+curl https://github.com/rancher/rke2/releases/download/v1.33.1%2Brke2r1/rke2-images.linux-amd64.tar.zst -O /var/lib/rancher/rke2/agent/images/rke2-images-amd64.tar.zst
+----
++
+Nach einigen Sekunden sind die im Bild-Tarball enthaltenen Bilder im Containerd-Image-Store des Knotens verfügbar. 
++
+Verwenden Sie `ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list`, um den Containerd-Image-Store abzufragen. 
++
+Dies ist die Methode, die in Airgap verwendet wird. Bitte folgen Sie der [Airgap Installationsdokumentation](install/airgap.md) für detaillierte Informationen.
+
+====
+
+== Richten Sie eine Image-Registry ein
+
+RKE2 unterstützt zwei Alternativen für Image-Registries:
+
+* xref:install/private_registry.adoc[Konfiguration der privaten Registry] behandelt die Verwendung von `registries.yaml`, um die Authentifizierung und das Spiegeln der Container-Image-Registry zu konfigurieren.
+* xref:install/registry_mirror.adoc[Eingebetteter Registry-Mirror] zeigt, wie man den eingebetteten, verteilten Image-Registry-Mirror aktiviert, um Bilder peer-to-peer zwischen den Knoten zu teilen.

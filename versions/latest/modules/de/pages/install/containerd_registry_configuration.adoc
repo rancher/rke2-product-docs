@@ -1,0 +1,163 @@
+= Containerd-Registry-Konfiguration
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Containerd kann so konfiguriert werden, dass es sich mit privaten Registries verbindet und diese verwendet, um private Images auf jedem Knoten abzurufen.
+
+Beim Start überprüft RKE2, ob eine `registries.yaml`-Datei unter `/etc/rancher/rke2/` existiert, und weist containerd an, alle in der Datei definierten Registries zu verwenden. Wenn Sie eine private Registry verwenden möchten, müssen Sie diese Datei als Root auf jedem Knoten erstellen, der die Registry verwenden wird.
+
+Serverknoten sind standardmäßig planbar. Wenn Sie die Serverknoten nicht getaintet haben und Workloads auf ihnen ausführen werden, stellen Sie bitte sicher, dass Sie auch die `registries.yaml`-Datei auf jedem Server erstellen.
+
+Die Konfiguration in containerd kann verwendet werden, um sich mit einer privaten Registry über eine TLS-Verbindung zu verbinden und auch mit Registries, die Authentifizierung ermöglichen. Der folgende Abschnitt erklärt die `registries.yaml`-Datei und gibt verschiedene Beispiele für die Verwendung der privaten Registry-Konfiguration in RKE2.
+
+== Registries-Konfigurationsdatei
+
+Die Datei besteht aus zwei Hauptabschnitten:
+
+* Spiegel
+* configs
+
+=== Spiegel
+
+Spiegel ist eine Direktive, die die Namen und Endpunkte der privaten Registries definiert. Private Registries können als lokaler Spiegel für die Standard-Registry docker.io oder für Images verwendet werden, bei denen die Registry im Namen ausdrücklich angegeben ist.
+
+Zum Beispiel würde die folgende Konfiguration sowohl von der privaten Registry unter `\https://registry.example.com:5000` für `library/busybox:latest` als auch für `registry.example.com/library/busybox:latest` abrufen:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+  registry.example.com:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+Jeder Mirror muss einen Namen und eine Reihe von Endpunkten haben. Beim Abrufen eines Images von einer Registry wird containerd versuchen, diese Endpunkt-URLs nacheinander zu verwenden und den ersten funktionierenden zu nutzen.
+
+[NOTE]
+====
+Wenn kein Endpunkt konfiguriert ist, geht containerd davon aus, dass die Registry anonym über HTTPS auf Port 443 zugänglich ist und ein vom Hostbetriebssystem vertrauenswürdiges Zertifikat verwendet. Für weitere Informationen können Sie https://github.com/containerd/containerd/blob/master/docs/cri/registry.md#configure-registry-endpoint[die containerd-Dokumentation] konsultieren.
+====
+
+==== Umschreibungen
+
+Jeder Spiegel kann eine Reihe von Umschreibungen haben. Umschreibungen können das Tag eines Images basierend auf einem regulären Ausdruck ändern. Dies ist nützlich, wenn die Struktur der Organisation/des Projekts in der Spiegel-Registry von der Upstream-Registry abweicht.
+
+Zum Beispiel würde die folgende Konfiguration das Bild `rancher/rke2-runtime:v1.23.5-rke2r1` von `registry.example.com:5000/mirrorproject/rancher-images/rke2-runtime:v1.23.5-rke2r1` transparent abrufen:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+    rewrite:
+      "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+=== Konfigurationen
+
+Der Abschnitt 'configs' definiert die TLS-Konfiguration und die Anmeldeinformationen für jeden Mirror. Für jeden Mirror können Sie `auth` und/oder `tls` definieren. Der TLS-Teil besteht aus:
+
+|===
+| Direktive | Beschreibung
+
+| `cert_file`
+| Der Pfad des Client-Zertifikats, der zur Authentifizierung bei der Registry verwendet wird.
+
+| `key_file`
+| Der Pfad des Client-Schlüssels, der zur Authentifizierung bei der Registry verwendet wird.
+
+| `ca_file`
+| Definiert den Pfad des CA-Zertifikats, das verwendet wird, um die Serverzertifikatdatei der Registry zu überprüfen.
+
+| `insecure_skip_verify`
+| Ein boolescher Datentyp, der definiert, ob die TLS-Überprüfung für die Registry übersprungen werden soll.
+|===
+
+Die Anmeldeinformationen bestehen entweder aus Benutzername/Passwort oder Authentifizierungs-Token:
+
+* Benutzername: Benutzername der privaten Registry-Basisauthentifizierung
+* Passwort: Benutzerpasswort der privaten Registry-Basisauthentifizierung
+* Auth: Authentifizierungs-Token der privaten Registry-Basisauthentifizierung
+
+Nachfolgend finden Sie einfache Beispiele für die Verwendung privater Registry in verschiedenen Modi:
+
+=== Mit TLS
+
+Im Folgenden finden Sie Beispiele, die zeigen, wie Sie `/etc/rancher/rke2/registries.yaml` auf jedem Knoten konfigurieren können, wenn Sie TLS verwenden.
+
+_Mit Authentifizierung:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+_Ohne Authentifizierung:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+=== Ohne TLS
+
+Im Folgenden finden Sie Beispiele, die zeigen, wie Sie `/etc/rancher/rke2/registries.yaml` auf jedem Knoten konfigurieren können, wenn _nicht_ TLS verwendet wird.
+
+_Klartext HTTP Mit Authentifizierung:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+----
+
+_Klartext HTTP ohne Authentifizierung:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+----
+
+____
+Wenn Sie eine Registry verwenden, die Klartext-HTTP ohne TLS verwendet, müssen Sie `http://` als das URI-Schema des Endpunkts angeben, andernfalls wird es standardmäßig auf `https://` gesetzt.
+____
+
+Damit die Änderungen an der Registry wirksam werden, müssen Sie diese Datei entweder vor dem Start von RKE2 auf dem Knoten konfigurieren oder RKE2 auf jedem konfigurierten Knoten neu starten.

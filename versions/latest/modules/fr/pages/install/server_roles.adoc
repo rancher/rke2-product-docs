@@ -1,0 +1,50 @@
+= Gestion des rôles de serveur
+:page-languages: [en, zh]
+:revdate: 2024-09-11
+:page-revdate: {revdate}
+
+Par défaut, démarrer RKE2 exécutera tous les composants du plan de contrôle, y compris l'apiserver, le controller-manager, le planificateur et etcd. Il est possible de désactiver des composants spécifiques afin de séparer les rôles du plan de contrôle et d'etcd sur des nœuds distincts.
+
+== Nœuds `etcd` dédiés
+
+Pour créer un serveur avec uniquement le rôle `etcd`, déployez une configuration avec tous les composants du plan de contrôle désactivés :
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable-apiserver: true
+disable-controller-manager: true
+disable-scheduler: true
+----
+
+Ce premier nœud démarrera etcd et attendra que d'autres nœuds `etcd` et/ou `control-plane` rejoignent. Le cluster ne sera pas utilisable tant que vous n'aurez pas rejoint un serveur supplémentaire avec les composants `control-plane` activés.
+
+== Nœuds `control-plane` dédiés
+
+[TIP]
+====
+Un nœud `control-plane` dédié ne peut pas être le premier serveur du cluster{nbsp}; il doit y avoir un nœud existant avec le rôle `etcd` avant de rejoindre des nœuds `control-plane` dédiés.
+====
+
+Pour créer un serveur avec uniquement le rôle `control-plane`, déployez une configuration avec etcd désactivé :
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+server: https://<etcd-only-node>:9345
+disable-etcd: true
+----
+
+Après avoir créé des nœuds de serveur dédiés, les rôles sélectionnés seront visibles dans `kubectl get node`{nbsp}:
+
+[,bash]
+----
+$ kubectl get nodes
+NAME           STATUS   ROLES                       AGE     VERSION
+rke2-server-1   Ready    etcd                        5h39m   v1.26.4+rke2r1
+rke2-server-2   Ready    control-plane,master        5h39m   v1.26.4+rke2r1
+----
+
+== Ajout de rôles aux serveurs existants
+
+Des rôles peuvent être ajoutés à des nœuds dédiés existants en redémarrant RKE2 avec les drapeaux de désactivation supprimés. Par exemple, si vous souhaitez ajouter le rôle `control-plane` à un nœud dédié `etcd`, vous pouvez supprimer les lignes `disable-apiserver disable-controller-manager disable-scheduler` du fichier de configuration et redémarrer le service.

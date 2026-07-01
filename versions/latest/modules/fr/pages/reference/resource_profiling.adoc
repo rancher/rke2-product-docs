@@ -1,0 +1,70 @@
+= Profilage des ressources
+:page-languages: [en, zh]
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+Cette section présente les résultats des tests visant à déterminer les exigences minimales en ressources pour RKE2.
+
+== Portée des tests de ressources
+
+Les tests de ressources visaient à traiter les énoncés de problème suivants{nbsp}:
+
+* Sur un cluster à nœud unique, déterminez la quantité minimale légitime d'UC et de mémoire pour l'ensemble de la pile serveur RKE2, en supposant qu'une charge de travail réelle sera déployée sur le cluster.
+* Sur un nœud agent, déterminez la quantité minimale légitime d'UC et de mémoire qui devrait être réservée pour les composants kubelet et agent RKE2.
+
+=== Environnement et composants
+
+|===
+| Arch | SE | Système | UC | Mémoire vive | Disque
+
+| x86_64
+| Ubuntu 22.04
+| AWS c6id.xlarge
+| Processeur Intel Xeon Platinum 8375C, 4 noyaux à 2,90 GHz
+| 8 Go
+| NVME SSD
+|===
+
+Les composants testés sont{nbsp}:
+
+* RKE2 v1.27.12 avec tous les composants empaquetés activés, Canal comme CNI
+* https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[Déploiement Nginx Exemple Kubernetes]
+
+=== Méthodologie
+
+`systemd-cgtop` a été utilisé pour suivre l'utilisation de l'UC et de la mémoire au niveau des cgroups systemd.
+
+* `system.slice/rke2-server.service` suit l'utilisation des ressources pour les composants RKE2 et containerd.
+* `system.slice/rke2-agent.service` suit l'utilisation des ressources pour les composants agents.
+
+Les chiffres d'utilisation étaient basés sur des lectures du 95e percentile provenant d'un fonctionnement en état stable sur des nœuds exécutant les charges de travail décrites, donnant une limite supérieure sur l'utilisation typique des ressources.
+
+=== Serveur RKE2 avec une charge de travail
+
+Voici les exigences pour un cluster à nœud unique dans lequel le serveur RKE2 partage des ressources avec une https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[charge de travail simple].
+
+|===
+| Système | Utilisation des cœurs UC | Mémoire
+
+| Intel 8375C
+| 17 % d'un noyau
+| 4977 Mo
+|===
+
+=== Cluster RKE2 avec un agent unique
+
+Ce sont les exigences de base pour un cluster RKE2 avec un nœud serveur RKE2 et un agent RKE2, mais sans charge de travail.
+
+|===
+| Noeud | Système | Utilisation des cœurs UC | Mémoire
+
+| Serveur 
+| Intel 8375C
+| 18 % d'un noyau
+| 4804 Mo
+
+| Agent
+| Intel 8375C
+| 5 % d'un noyau
+| 3590 Mo
+|===

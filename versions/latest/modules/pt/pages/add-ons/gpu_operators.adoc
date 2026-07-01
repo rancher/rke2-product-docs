@@ -1,0 +1,213 @@
+= Operadores de GPU
+:page-languages: [en, zh]
+:revdate: 2026-01-16
+:page-revdate: {revdate}
+
+== Implantar o operador NVIDIA
+
+O https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html[NVIDIA operator] permite que administradores de clusters Kubernetes gerenciem GPUs assim como CPUs. Inclui tudo o que é necessário para que os pods operem GPUs.
+
+=== Requisitos do sistema operacional do host
+
+Para expor a GPU ao pod corretamente, os drivers do kernel NVIDIA e a biblioteca `libnvidia-ml` devem estar corretamente instalados no sistema operacional do host. O Operador NVIDIA pode instalar automaticamente drivers e bibliotecas em alguns sistemas operacionais. Consulte a documentação da NVIDIA para informações sobre https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html#supported-operating-systems-and-kubernetes-platforms[versões de sistemas operacionais suportadas]. A instalação dos componentes NVIDIA no seu sistema operacional do host está fora do escopo desta documentação, consulte a documentação da NVIDIA para instruções.
+
+Os seguintes três comandos devem retornar uma saída correta se o driver do kernel estiver corretamente instalado:
+
+* `lsmod | grep nvidia` retorna uma lista de módulos do kernel NVIDIA. Por exemplo:
++
+[,sh]
+----
+nvidia_uvm           2129920  0
+nvidia_drm            131072  0
+nvidia_modeset       1572864  1 nvidia_drm
+video                  77824  1 nvidia_modeset
+nvidia               9965568  2 nvidia_uvm,nvidia_modeset
+ecc                    45056  1 nvidia
+----
+
+* `cat /proc/driver/nvidia/version` retorna a versão do NVRM e do GCC do driver. Por exemplo:
++
+[,sh]
+----
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  555.42.06  Release Build  (abuild@host)  Thu Jul 11 12:00:00 UTC 2024
+GCC version:  gcc version 7.5.0 (SUSE Linux)
+----
+
+* `find /usr/ -iname libnvidia-ml.so` retorna um caminho para a biblioteca `libnvidia-ml.so`. Por exemplo:
++
+[,sh]
+----
+/usr/lib64/libnvidia-ml.so
+----
++
+Esta biblioteca é usada pelos componentes do Kubernetes para interagir com o driver do kernel.
+
+=== Instalação do operador
+
+Uma vez que o sistema operacional esteja pronto e o RKE2 esteja em execução, instale o Operador de GPU com o seguinte manifesto yaml.
+
+[tabs,sync-group-id=GPUoperator]
+=====
+v25.3.x::
++
+--
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: gpu-operator
+  namespace: kube-system
+spec:
+  repo: https://helm.ngc.nvidia.com/nvidia
+  chart: gpu-operator
+  version: v25.3.4
+  targetNamespace: gpu-operator
+  createNamespace: true
+  valuesContent: |-
+    toolkit:
+      env:
+      - name: CONTAINERD_SOCKET
+        value: /run/k3s/containerd/containerd.sock
+      - name: ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED
+        value: "false"
+      - name: ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS
+        value: "true"
+    devicePlugin:
+      env:
+      - name: DEVICE_LIST_STRATEGY
+        value: volume-mounts
+----
+
+[NOTE]
+====
+As variáveis de ambiente `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`, `ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` e `DEVICE_LIST_STRATEGY` são necessárias para isolar corretamente os recursos de GPU, conforme explicado neste https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[doc] da NVIDIA.
+====
+
+--
+
+v25.10.x::
++
+--
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: gpu-operator
+  namespace: kube-system
+spec:
+  repo: https://helm.ngc.nvidia.com/nvidia
+  chart: gpu-operator
+  version: v25.10.1
+  targetNamespace: gpu-operator
+  createNamespace: true
+  valuesContent: |-
+    toolkit:
+      env:
+      - name: CONTAINERD_SOCKET
+        value: /run/k3s/containerd/containerd.sock
+----
+
+[NOTE]
+====
+O Operador NVIDIA GPU v25.10.x usa https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[especificação de Interface de Dispositivo de Contêiner (CDI)] e isso simplifica as operações: não precisamos passar variáveis de ambiente extras para cumprir os requisitos de segurança e as cargas de trabalho não precisam mais passar o `runtimeClassName: nvidia`.
+====
+--
+=====
+
+[CAUTION]
+====
+O operador NVIDIA reinicia o containerd com uma chamada de hangup que reinicia o RKE2.
+====
+
+Após aproximadamente um minuto, você pode realizar as seguintes verificações para verificar se tudo está funcionando como esperado:
+
+. Supondo que os drivers e a biblioteca `libnvidia-ml.so` tenham sido instalados anteriormente, verifique se o operador os detecta corretamente:
++
+[,sh]
+----
+kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' | grep "nvidia.com/gpu.deploy.driver"
+----
++
+Você deve ver o valor `pre-installed`. Se você ver `true`, os drivers não foram instalados corretamente. Se os <<_host_os_requirements,pré-requisitos>> estiverem corretos, é possível que você tenha esquecido de reiniciar o nó após instalar todos os pacotes.
++
+Você também pode verificar outros rótulos de driver com:
++
+[,sh]
+----
+kubectl get node $NODENAME -o jsonpath='{.metadata.labels}' |  grep "nvidia.com"
+----
++
+Você deve ver rótulos especificando o driver e a GPU (por exemplo, `nvidia.com/gpu.machine` ou `nvidia.com/cuda.driver.major`).
+
+. Verifique se a GPU foi adicionada por `nvidia-device-plugin-daemonset` como um recurso alocável no nó:
++
+[,sh]
+----
+kubectl get node $NODENAME -o jsonpath='{.status.allocatable}'
+----
++
+Você deve ver `"nvidia.com/gpu":` seguido pelo número de GPUs no nó.
+
+. Verifique se o binário do tempo de execução do contêiner existe (ele é instalado pelo `nvidia-container-toolkit-daemonset`):
++
+[,sh]
+----
+ls /usr/local/nvidia/toolkit/nvidia-container-runtime
+----
+
+. Verifique se a configuração do containerd foi atualizada para incluir o tempo de execução do contêiner NVIDIA:
++
+[,sh]
+----
+grep nvidia /var/lib/rancher/rke2/agent/etc/containerd/config.toml
+----
+
+. Execute um pod para verificar se o recurso da GPU pode ser agendado com sucesso em um pod e se o pod pode detectá-lo
++
+[,yaml]
+----
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nbody-gpu-benchmark
+  namespace: default
+spec:
+  restartPolicy: OnFailure
+  # runtimeClassName: nvidia <== Only needed for v25.3.x
+  containers:
+** name: cuda-container
+image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+args: ["nbody", "-gpu", "-benchmark"]
+resources:
+limits:
+  nvidia.com/gpu: 1
+----
+
+[IMPORTANT]
+.Versão Gate
+====
+Disponível a partir das versões de outubro de 2024: v1.28.15+rke2r1, v1.29.10+rke2r1, v1.30.6+rke2r1, v1.31.2+rke2r1.
+====
+
+O RKE2 agora usará `PATH` para encontrar tempos de execução do contêiner alternativos, além de verificar os caminhos padrão usados pelos pacotes de tempo de execução do contêiner. Para usar este recurso, você deve modificar a variável de ambiente PATH do serviço RKE2 para adicionar os diretórios que contêm os binários do tempo de execução do contêiner.
+
+É recomendado que você modifique um destes dois arquivos de ambiente:
+
+* `/etc/default/rke2-server` # ou rke2-agent
+* `/etc/sysconfig/rke2-server` # ou rke2-agent
+
+Este exemplo adicionará o `PATH` em `/etc/default/rke2-server`:
+
+[CAUTION]
+====
+As alterações em `PATH` devem ser feitas com cuidado para evitar colocar binários não confiáveis no caminho dos serviços que são executados como root.
+====
+
+[,bash]
+----
+echo PATH=$PATH >> /etc/default/rke2-server
+----

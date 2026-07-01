@@ -1,0 +1,163 @@
+= Containerdレジストリの設定
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Containerdはプライベートレジストリに接続し、各ノードでプライベートイメージをプルするためにそれらを使用するように構成できます。
+
+起動時に、RKE2は`registries.yaml`ファイルが`/etc/rancher/rke2/`に存在するかどうかを確認し、containerdにファイルに定義されたレジストリを使用するよう指示します。プライベートレジストリを使用する場合は、レジストリを使用する各ノードでrootとしてこのファイルを作成する必要があります。
+
+サーバーノードはデフォルトでスケジュール可能です。サーバーノードにテイントが設定されていない場合、これらのノードでワークロードを実行するのであれば、各サーバーにも`registries.yaml`ファイルを作成することを確認してください。
+
+containerdの設定を使用して、TLS接続を介してプライベートレジストリに接続し、認証を有効にしたレジストリにも接続できます。次のセクションでは、`registries.yaml`ファイルについて説明し、RKE2でのプライベートレジストリ設定の使用例をいくつか示します。
+
+== レジストリ設定ファイル
+
+このファイルは主に二つのセクションで構成されています：
+
+* ミラー
+* configs
+
+=== ミラー
+
+ミラーは、プライベートレジストリの名前とエンドポイントを定義するディレクティブです。プライベートレジストリは、デフォルトのdocker.ioレジストリのローカルミラーとして、または名前にレジストリが明示的に指定されているイメージに使用できます。
+
+例えば、次の構成は、`library/busybox:latest`と`registry.example.com/library/busybox:latest`の両方に対して`\https://registry.example.com:5000`のプライベートレジストリからプルします：
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+  registry.example.com:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+各ミラーには名前とエンドポイントのセットが必要です。レジストリからイメージをプルする際、containerdはこれらのエンドポイントURLを一つずつ試み、最初に動作するものを使用します。
+
+[NOTE]
+====
+エンドポイントが設定されていない場合、containerdはレジストリにHTTPSでポート443を介して匿名でアクセスできると仮定し、ホストオペレーティングシステムによって信頼された証明書を使用していると見なします。詳細については、 https://github.com/containerd/containerd/blob/master/docs/cri/registry.md#configure-registry-endpoint[containerdのドキュメントを参照してください]。
+====
+
+==== リライト
+
+各ミラーには一連のリライトを持つことができます。リライトは、正規表現に基づいてイメージのタグを変更できます。これは、ミラーレジストリ内の組織/プロジェクト構造がアップストリームのものと異なる場合に便利です。
+
+例えば、次の設定は、`rancher/rke2-runtime:v1.23.5-rke2r1`からイメージ`registry.example.com:5000/mirrorproject/rancher-images/rke2-runtime:v1.23.5-rke2r1`を透過的にプルします：
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+    rewrite:
+      "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+=== 設定
+
+configsセクションは、各ミラーのTLSおよび認証情報の設定を定義します。各ミラーに対して、`auth`および/または`tls`を定義できます。TLS部分は次のように設定されています：
+
+|===
+| ディレクティブ | 説明
+
+| `cert_file`
+| レジストリとの認証に使用されるクライアント証明書のパス
+
+| `key_file`
+| レジストリとの認証に使用されるクライアントキーのパス
+
+| `ca_file`
+| レジストリのサーバー証明書ファイルを検証するために使用されるCA証明書のパスを定義します。
+
+| `insecure_skip_verify`
+| レジストリのTLS検証をスキップするかどうかを定義するブール値
+|===
+
+認証情報は、ユーザー名/パスワードまたは認証トークンのいずれかで構成されています：
+
+* ユーザー名：プライベートレジストリの基本認証のユーザー名
+* パスワード：プライベートレジストリの基本認証のユーザーパスワード
+* 認証：プライベートレジストリの基本認証の認証トークン
+
+以下は、異なるモードでプライベートレジストリを使用する基本的な例です：
+
+=== TLSを使用する場合
+
+以下は、TLSを使用する際に各ノードで`/etc/rancher/rke2/registries.yaml`を設定する方法を示す例です。
+
+_認証を使用する場合:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+_認証を使用しない場合:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+=== TLSなし
+
+以下は、TLSを_使用しない_場合に各ノードで`/etc/rancher/rke2/registries.yaml`を設定する方法を示す例です。
+
+_認証付きの平文HTTP:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+----
+
+_認証なしの平文HTTP:_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+----
+
+____
+TLSなしで平文HTTPを使用するレジストリを使用する場合、`http://`をエンドポイントURIスキームとして指定する必要があります。そうしないと、デフォルトで`https://`になります。
+____
+
+レジストリの変更を有効にするには、ノードでRKE2を開始する前にこのファイルを設定するか、各設定済みノードでRKE2を再起動する必要があります。

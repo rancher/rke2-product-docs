@@ -1,11 +1,11 @@
-= Windows and BGP
+= Windows 和 BGP
 :page-languages: [en, zh]
 :revdate: 2025-10-29
 :page-revdate: {revdate}
 
-== Enabling BGP on Calico with Windows
+== 在 Windows 上启用 Calico 的 BGP
 
-To enable BGP mode for routing traffic with RKE2 using both Linux and Windows nodes, the Calico CNI should be selected in the Server configuration.
+要在使用 Linux 和 Windows 节点的 RKE2 中启用 BGP 模式以路由流量，应该在服务器配置中选择 Calico CNI。
 
 [,yaml]
 ----
@@ -13,7 +13,7 @@ To enable BGP mode for routing traffic with RKE2 using both Linux and Windows no
 cni: calico
 ----
 
-Calico should then be configured with BGP enabled and encapsulation set to `None`.
+然后应将 Calico 配置为启用 BGP，并将封装设置为 `None`。
 
 [,yaml]
 ----
@@ -31,11 +31,11 @@ spec:
       backend: "None"
 ----
 
-== Starting Windows node
+== 启动 Windows 节点
 
-Configure RKE2 on the Windows node as described xref:install/quickstart.adoc#_windows_agentworker节点安装[here].
+按照 xref:install/quickstart.adoc#_windows_agent_worker_node_installation[这里] 的描述在 Windows 节点上配置 RKE2。
 
-Before starting the RKE2 service, `RemoteAccess` must be enabled.
+在启动 RKE2 服务之前，必须启用 `RemoteAccess`。
 
 [,powershell]
 ----
@@ -44,20 +44,20 @@ Install-WindowsFeature RSAT-RemoteAccess-PowerShell
 Install-WindowsFeature Routing
 ----
 
-This requires a reboot to function properly.
+这需要重启才能正常工作。
 
-Next, configure the `RemoteAccess` service:
+接下来，配置 `RemoteAccess` 服务：
 
 [,powershell]
 ----
 Install-RemoteAccess -VpnType RoutingOnly
 ----
 
-To check if the `RemoteAccess` service has started properly, use the following command:
+要检查 `RemoteAccess` 服务是否已正确启动，请使用以下命令：
 
 [,powershell]
 ----
 Start-Service RemoteAccess
 ----
 
-After that, you can start the RKE2 service.
+之后，您可以启动 RKE2 服务。

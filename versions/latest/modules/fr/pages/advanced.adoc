@@ -1,0 +1,343 @@
+= Options et configuration avancées
+:page-languages: [en, zh]
+:revdate: 2026-03-10
+:page-revdate: {revdate}
+
+Cette section contient des informations avancées décrivant les différentes manières de faire fonctionner et de gérer RKE2.
+
+== Rotation des certificats
+
+Par défaut, les certificats dans RKE2 expirent dans 12 mois.
+
+Si les certificats sont expirés ou s'il reste moins de 90 jours avant leur expiration, les certificats sont renouvelés lorsque RKE2 est redémarré.
+
+Les certificats peuvent également être renouvelés manuellement. Pour ce faire, il est préférable d'interrompre le processus rke2-server, de renouveler les certificats, puis de redémarrer le processus :
+
+[,sh]
+----
+systemctl stop rke2-server
+rke2 certificate rotate
+systemctl start rke2-server
+----
+
+Pour renouveler les certificats des agents, redémarrez rke2-agent sur les nœuds agents. Les certificats des agents sont renouvelés chaque fois que l'agent démarre.
+
+[,sh]
+----
+systemctl restart rke2-agent
+----
+
+Il est également possible de renouveler un service individuel en passant l’option `--service`, par exemple{nbsp}: `rke2 certificate rotate --service api-server`. Consultez xref:security/certificates.adoc#_rotating_client_and_server_certificates_manually[Gestion des certificats] pour plus de détails.
+
+== Déploiement automatique de manifestes
+
+Tout fichier trouvé dans `/var/lib/rancher/rke2/server/manifests` sera automatiquement déployé sur Kubernetes de manière similaire à `kubectl apply`.
+
+Pour des informations sur le déploiement de graphiques Helm en utilisant le répertoire des manifestes, reportez-vous à la section sur xref:add-ons/helm.adoc[Helm.]
+
+== Configuration de containerd
+
+[NOTE]
+.Version Gate
+====
+RKE2 inclut containerd 2.0 à partir des versions de février 2025{nbsp}: v1.31.6+rke2r1 et v1.32.2+rke2r1. +
+Soyez conscient que containerd 2.0 préfère la version de configuration 3, tandis que containerd 1.7 préfère la version de configuration 2.
+====
+
+RKE2 générera un fichier de configuration pour containerd à `/var/lib/rancher/rke2/agent/etc/containerd/config.toml`, en utilisant des valeurs spécifiques à la configuration actuelle du cluster et du nœud.
+
+Pour une personnalisation avancée, vous pouvez créer un modèle de configuration containerd dans le même répertoire{nbsp}:
+
+* Pour containerd 2.0, placez un modèle de configuration de version 3 dans `config-v3.toml.tmpl`. Consultez la https://github.com/containerd/containerd/blob/release/2.0/docs/cri/config.md[documentation de containerd 2.0] pour plus d'informations.
+* Pour containerd 1.7 et les versions antérieures, placez un modèle de configuration de version 2 dans `config.toml.tmpl`. Consultez la https://github.com/containerd/containerd/blob/release/1.7/docs/cri/config.md[documentation de containerd 1.7] pour plus d'informations.
+
+Containerd 2.0 est rétrocompatible avec les versions de configuration antérieures, et RKE2 continuera à rendre la configuration de version 2 héritée à partir de `config.toml.tmpl` si `config-v3.toml.tmpl` n'est pas trouvé.
+
+Le fichier modèle est rendu dans la configuration de containerd à l'aide de la bibliothèque https://pkg.go.dev/text/template[`text/template`]. Consultez `ContainerdConfigTemplateV3` et `ContainerdConfigTemplate` dans https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go[`templates.go`] pour le contenu par défaut du modèle. Le modèle est exécuté avec une structure https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go#L22-L33[`ContainerdConfig`] comme valeur dot (argument de données).
+
+=== Modèle de base
+
+Vous pouvez étendre le modèle de base RKE2 au lieu de copier-coller le modèle complet du code source. Ceci est utile si vous devez vous appuyer sur la configuration existante et ajouter quelques lignes supplémentaires à la fin.
+
+[,toml]
+----
+#/var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.tmpl
+
+{{ template "base" . }}
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'custom']
+  runtime_type = "io.containerd.runc.v2"
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'custom'.options]
+  BinaryName = "/usr/bin/custom-container-runtime"
+  SystemdCgroup = true
+----
+
+[WARNING]
+====
+Pour de meilleurs résultats, ne copiez PAS simplement un `config.toml` pré-rendu dans le modèle et apportez vos modifications souhaitées. Utilisez le modèle de base, ou fournissez un modèle complet basé sur les valeurs par défaut liées ci-dessus.
+====
+
+== Configuration d'un proxy HTTP
+
+Si vous exécutez RKE2 dans un environnement qui n'a de connectivité externe que par le biais d'un proxy HTTP, vous pouvez configurer vos paramètres de proxy sur le service systemd de RKE2. Ces paramètres de proxy seront ensuite utilisés dans RKE2 et transmis au containerd et au kubelet intégrés, ainsi qu'aux pods statiques du plan de contrôle, etcd et kube-proxy.
+
+Ajoutez les variables nécessaires `HTTP_PROXY`, `HTTPS_PROXY` et `NO_PROXY` au fichier d'environnement de votre service systemd, généralement{nbsp}:
+
+* `/etc/default/rke2-server`
+* `/etc/default/rke2-agent`
+
+RKE2 ajoutera automatiquement les plages d'adresses IP internes des Pods et des Services du cluster ainsi que le domaine DNS du cluster à la liste des entrées `NO_PROXY`. Vous devez vous assurer que les plages d'adresses IP utilisées par les nœuds Kubernetes eux-mêmes (c'est-à-dire les IP publiques et privées des nœuds) sont incluses dans la liste `NO_PROXY`, ou que les nœuds peuvent être atteints via le proxy.
+
+[,sh]
+----
+HTTP_PROXY=http://your-proxy.example.com:8888
+HTTPS_PROXY=http://your-proxy.example.com:8888
+NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+----
+
+Si vous souhaitez configurer les paramètres du proxy pour containerd sans affecter RKE2 et le Kubelet, vous pouvez préfixer les variables avec `CONTAINERD_`{nbsp}:
+
+[,sh]
+----
+CONTAINERD_HTTP_PROXY=http://your-proxy.example.com:8888
+CONTAINERD_HTTPS_PROXY=http://your-proxy.example.com:8888
+CONTAINERD_NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+----
+
+== Étiquettes et taints de nœud
+
+Les agents RKE2 peuvent être configurés avec les options `node-label` et `node-taint` qui ajoutent une étiquette et un taint au kubelet. Les deux options n'ajoutent que des étiquettes et/ou des taints au moment de l'enregistrement, et ne peuvent être ajoutées qu'une seule fois et ne peuvent pas être supprimées par la suite via des commandes rke2.
+
+Si vous souhaitez modifier les étiquettes et les taints du nœud après son enregistrement, vous devez utiliser `kubectl`. Reportez-vous à la documentation officielle de Kubernetes pour des détails sur la façon d'ajouter https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/[taints] et https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/#add-a-label-to-a-node[étiquettes de nœud].
+
+== Comment fonctionne l'enregistrement des nœuds agents
+
+Les nœuds agents sont enregistrés via une connexion websocket initiée par le processus `rke2 agent`, et la connexion est maintenue par un équilibreur de charge côté client fonctionnant dans le cadre du processus agent.
+
+Les agents s'enregistrent auprès du serveur en utilisant la partie secrète du cluster du jeton de jointure, ainsi qu'un mot de passe spécifique au nœud généré aléatoirement, qui est stocké sur l'agent à `/etc/rancher/node/password`. Le serveur stockera les mots de passe pour les nœuds individuels en tant que secrets Kubernetes, et toute tentative ultérieure doit utiliser le même mot de passe. Les secrets de mot de passe des nœuds sont stockés dans l'espace de noms `kube-system` avec des noms utilisant le modèle `<host>.node-password.rke2`. Ces secrets sont supprimés lorsque le nœud Kubernetes correspondant est supprimé.
+
+Si le répertoire `/etc/rancher/node` d'un agent est supprimé, le fichier de mot de passe doit être recréé pour l'agent avant le démarrage, ou l'entrée supprimée du serveur ou du cluster Kubernetes (selon la version de RKE2).
+
+== Démarrer le serveur avec le script d'installation
+
+Le script d'installation fournit des unités pour systemd, mais n'active ni ne démarre le service par défaut.
+
+Lors de l'exécution avec systemd, des journaux seront créés dans `/var/log/syslog` et consultés à l'aide de `journalctl -u rke2-server` ou `journalctl -u rke2-agent`.
+
+Un exemple d'installation avec le script d'installation{nbsp}:
+
+[,sh]
+----
+curl -sfL https://get.rke2.io | sh -
+systemctl enable rke2-server
+systemctl start rke2-server
+----
+
+== Désactivation des graphiques du serveur
+
+Les graphiques du serveur fournis avec `rke2` déployés lors du démarrage du cluster peuvent être désactivés et remplacés par des alternatives. Un cas d'utilisation courant consiste à remplacer le graphique `rke2-ingress-nginx` fourni par une alternative.
+
+Pour désactiver l'un des graphiques système fournis, définissez le paramètre `disable` dans le fichier de configuration avant le démarrage. Un exemple de désactivation de tous les graphiques système disponibles est{nbsp}:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable:
+  - rke2-coredns
+  - rke2-ingress-nginx
+  - rke2-metrics-server
+  - rke2-snapshot-controller
+  - rke2-snapshot-controller-crd
+  - rke2-snapshot-validation-webhook
+----
+
+[CAUTION]
+====
+Il incombe à l'opérateur du cluster de s'assurer que les composants sont désactivés ou remplacés avec soin, car les graphiques du serveur jouent des rôles importants dans l'opérabilité du cluster.  Consultez l'xref:architecture.adoc#_server_charts[aperçu de l'architecture] pour plus d'informations sur le rôle des graphiques système individuels au sein du cluster.
+====
+
+== Installation sur des régions AWS classifiées ou des réseaux avec des points de terminaison API AWS personnalisés
+
+Dans les régions AWS publiques, pour garantir que RKE2 est activé pour le cloud et capable de provisionner automatiquement certaines ressources cloud, configurez RKE2 avec{nbsp}:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+cloud-provider-name: aws
+----
+
+Lors de l'installation de RKE2 dans des régions classifiées (telles que SC2S ou C2S), il y a quelques prérequis supplémentaires à prendre en compte pour s'assurer que RKE2 sait comment et où communiquer en toute sécurité avec les points de terminaison AWS appropriés{nbsp}:
+
+. Assurez-vous que tous les prérequis communs du fournisseur de cloud AWS https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[sont respectés]. Ceux-ci sont indépendants des régions et sont toujours requis.
+. Assurez-vous que RKE2 sait où envoyer les requêtes API pour les services `ec2` et `elasticloadbalancing` en créant un fichier `cloud.conf`, ci-dessous un exemple pour la région `us-iso-east-1` (C2S){nbsp}:
++
+[,yaml]
+----
+# /etc/rancher/rke2/cloud.conf
+[Global]
+[ServiceOverride "ec2"]
+  Service=ec2
+  Region=us-iso-east-1
+  URL=https://ec2.us-iso-east-1.c2s.ic.gov
+  SigningRegion=us-iso-east-1
+[ServiceOverride "elasticloadbalancing"]
+  Service=elasticloadbalancing
+  Region=us-iso-east-1
+  URL=https://elasticloadbalancing.us-iso-east-1.c2s.ic.gov
+  SigningRegion=us-iso-east-1
+----
++
+Alternativement, si vous utilisez https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-services-overview.html[points de terminaison AWS privés], assurez-vous que le `URL` approprié est utilisé pour chacun des points de terminaison privés.
+
+. Assurez-vous que le paquet de certificats CA AWS approprié est chargé dans le magasin de confiance des CA racines du système.  Cela peut déjà avoir été fait pour vous en fonction de l'AMI que vous utilisez.
++
+[,sh]
+----
+# on CentOS/RHEL 7/8
+cp <ca.pem> /etc/pki/ca-trust/source/anchors/
+update-ca-trust
+----
+
+. Configurez RKE2 pour utiliser le fournisseur de cloud `aws` avec le `cloud.conf` personnalisé créé à l'étape 1{nbsp}:
++
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+...
+cloud-provider-name: aws
+cloud-provider-config: "/etc/rancher/rke2/cloud.conf"
+...
+----
+
+. xref:install/methods.adoc[Installez] RKE2 normalement (probablement dans une capacité xref:install/airgap.adoc[isolée]).
+. Validez l'installation réussie en confirmant l'existence de métadonnées AWS sur les étiquettes des nœuds du cluster avec `kubectl get nodes --show-labels`.
+
+== Demandes/Limites de ressources des composants du plan de contrôle
+
+Les options suivantes sont disponibles sous la sous-commande `server` pour RKE2. Les options permettent de spécifier les demandes et les limites d’UC pour les composants du plan de contrôle au sein de RKE2.
+
+[,sh]
+----
+   --control-plane-resource-requests value       (components) Control Plane resource requests [$RKE2_CONTROL_PLANE_RESOURCE_REQUESTS]
+   --control-plane-resource-limits value         (components) Control Plane resource limits [$RKE2_CONTROL_PLANE_RESOURCE_LIMITS]
+----
+
+Les valeurs sont une liste délimitée par des virgules de `[controlplane-component]-(cpu|memory)=[desired-value]`. Les valeurs possibles pour `controlplane-component` sont{nbsp}:
+
+----
+kube-apiserver
+kube-scheduler
+kube-controller-manager
+kube-proxy
+etcd
+cloud-controller-manager
+----
+
+Ainsi, un exemple de configuration peut ressembler à{nbsp}:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+control-plane-resource-requests:
+  - kube-apiserver-cpu=500m
+  - kube-apiserver-memory=512M
+  - kube-scheduler-cpu=250m
+  - kube-scheduler-memory=512M
+  - etcd-cpu=1000m
+----
+
+Les valeurs d’unité pour l’UC/mémoire sont identiques aux unités de ressources Kubernetes (Voir{nbsp}: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes[Limites de ressources dans Kubernetes]).
+
+== Montages de volumes supplémentaires pour le composant du plan de contrôle
+
+Les options suivantes sont disponibles sous la sous-commande `server` pour RKE2. Ces options spécifient le montage de chemins d'hôte de répertoires du système de fichiers du nœud dans le composant de pod statique qui correspond au nom préfixé.
+
+|===
+| Indicateur | ENV VAR |
+
+| kube-apiserver-extra-mount
+| RKE2_KUBE_APISERVER_EXTRA_MOUNT
+| montages de volumes supplémentaires kube-apiserver
+
+| kube-scheduler-extra-mount
+| RKE2_KUBE_SCHEDULER_EXTRA_MOUNT
+| montages de volumes supplémentaires kube-scheduler
+
+| kube-controller-manager-extra-mount
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT
+|
+
+| kube-proxy-extra-mount
+| RKE2_KUBE_PROXY_EXTRA_MOUNT
+|
+
+| etcd-extra-mount
+| RKE2_ETCD_EXTRA_MOUNT
+|
+
+| cloud-controller-manager-extra-mount
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT
+|
+|===
+
+=== Montage de volume de chemin d'hôte en lecture-écriture
+
+`/source/volume/path/on/host:/destination/volume/path/in/staticpod`
+
+=== Montage de volume de chemin d'hôte en lecture seule
+
+Pour monter un volume en lecture seule, ajoutez `:ro` à la fin du montage de volume{nbsp}: `/source/volume/path/on/host:/destination/volume/path/in/staticpod:ro`
+
+Plusieurs montages de volume peuvent être spécifiés pour le même composant en passant les valeurs d’option sous forme de tableau dans le fichier de configuration.
+
+[IMPORTANT]
+.Version Gate
+====
+Avant les versions d'avril 2024 (v1.27.13+rke2r1, v1.28.9+rke2r1, v1.29.4+rke2r1), seuls les répertoires peuvent être montés.
+====
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+kube-apiserver-extra-mount:
+   - "/tmp/foo:/root/foo"
+   - "/tmp/bar.txt:/etc/bar.txt:ro"
+----
+
+== Variables d'environnement supplémentaires pour le composant de plan de contrôle.
+
+Les options de configuration suivantes sont disponibles pour la sous-commande `server` pour RKE2. Ces options spécifient des variables d'environnement supplémentaires au format standard, c'est-à-dire `KEY=VALUE` pour le composant de pod statique qui correspond au nom préfixé.
+
+|===
+| Indicateur | Variable d'environnement
+
+| kube-apiserver-extra-env
+| RKE2_KUBE_APISERVER_EXTRA_ENV
+
+| kube-scheduler-extra-env
+| RKE2_KUBE_SCHEDULER_EXTRA_ENV
+
+| kube-controller-manager-extra-env
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV
+
+| kube-proxy-extra-env
+| RKE2_KUBE_PROXY_EXTRA_ENV
+
+| etcd-extra-env
+| RKE2_ETCD_EXTRA_ENV
+
+| cloud-controller-manager-extra-env
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
+|===
+
+Plusieurs variables d'environnement peuvent être spécifiées pour le même composant en passant les valeurs du flag sous forme de tableau dans le fichier de configuration.
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+kube-apiserver-extra-env:
+  - "MY_FOO=FOO"
+  - "MY_BAR=BAR"
+kube-scheduler-extra-env: "TZ=America/Los_Angeles"
+----
+

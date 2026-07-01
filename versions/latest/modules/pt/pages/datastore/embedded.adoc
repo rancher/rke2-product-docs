@@ -1,0 +1,57 @@
+= Armazenamento embutido
+:page-languages: [en, zh]
+:revdate: 2025-08-08
+:page-revdate: {revdate}
+
+Usar um armazenamento embutido significa aproveitar um banco de dados que roda dentro do cluster Kubernetes, tipicamente como um serviço conteinerizado, por exemplo, etcd. Essa opção simplifica a implantação e pode melhorar o desempenho e a segurança. A alternativa é xref:datastore/external.adoc[bancos de dados externos].
+
+== Opções de armazenamento
+
+[WARNING]
+.Experimental
+====
+O RKE2 suporta oficialmente o etcd embutido, o SQLite embutido é considerado experimental.
+====
+
+* *Embutido https://etcd.io/[etcd]*: O etcd embutido é o armazenamento padrão e será usado se nenhuma outra configuração de armazenamento estiver presente.
+* *Embutido https://www.sqlite.org/index.html[SQLite]*: O SQLite não pode ser usado em clusters com múltiplos servidores. Ele usa o projeto https://github.com/k3s-io/kine[kine].
+
+== etcd Embutido
+
+O https://etcd.io/[etcd]  embutido é o armazenamento padrão e será usado se nenhuma outra configuração de armazenamento estiver presente.  É a única opção embutida que permite implantar o RKE2 em xref:install/ha.adoc[modo HA]. A menos que o parâmetro seja explicitamente removido, um pod etcd será implantado por servidor RKE2 e todas as instâncias etcd manterão um quórum. O RKE2 inclui ferramentas para criar facilmente instantâneos ao usar este armazenamento, conforme explicado nas instruções de xref:datastore/backup_restore.adoc[Backup e Restauração].
+
+== SQLite embutido
+
+Esta opção embutida não é recomendada para produção, mas pode ser útil se você precisar rodar um cluster simples e de curta duração, por exemplo, em um ambiente de CI/CD. O modo HA não é suportado ao implantar com https://www.sqlite.org/index.html[SQLite].
+
+=== Servidor Único com SQLite
+
+. Defina `disable-etcd` sem o parâmetro `server` no arquivo de configuração.
++
+[,yaml]
+----
+disable-etcd: true
+----
+
+. Install RKE2.
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | sh -
+----
+
+. Ative o serviço rke2-server.
++
+[,sh]
+----
+systemctl enable rke2-server.service
+----
+
+. Inicie o serviço rke2-server.
++
+[,sh]
+----
+systemctl start rke2-server.service
+----
+
+Você pode acompanhar o início do servidor por `kubectl get nodes` para ver o servidor obter o status `Ready`. Veja xref:cluster_access.adoc[Acesso ao cluster] para mais informações sobre como acessar o RKE2.

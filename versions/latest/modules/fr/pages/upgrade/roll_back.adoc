@@ -1,0 +1,181 @@
+= Retour à l'état initial de RKE2
+:page-languages: [en, zh]
+:revdate: 2025-12-04
+:page-revdate: {revdate}
+
+Vous pouvez effectuer un retour à l'état initial de la version Kubernetes de RKE2 après une mise à niveau, en utilisant une combinaison de rétrogradation du binaire RKE2 et de restauration de la base de données. Le retour à l'état initial peut être effectué sur des clusters de tous types, y compris un SQLite à nœud unique, un magasin de données externe ou un etcd intégré. Lorsque vous revenez à l'état initial vers une version mineure précédente de Kubernetes, vous devez disposer d'un instantané de la base de données pris sur la version mineure de Kubernetes vers laquelle vous souhaitez revenir.
+
+[CAUTION]
+====
+Si vous ne pouvez pas restaurer la base de données, vous ne pouvez pas revenir à l'état initial vers une version mineure précédente.
+====
+
+== Considérations importantes
+
+* *Sauvegardes :* Avant de procéder à la mise à niveau, assurez-vous d'avoir un instantané valide de la base de données ou d'etcd de votre cluster exécutant l'ancienne version de RKE2. Sans sauvegarde, un retour à l'état initial est impossible.
+* *Perte de données potentielle :* Le script `rke2-killall.sh` interrompt de force les processus RKE2 et peut entraîner une perte de données si les applications ne sont pas correctement arrêtées.
+* *Détails de la version :* Vérifiez toujours les versions de RKE2 et des composants avant et après le retour à l'état initial.
+
+== Retour à l'état initial d'un cluster RKE2
+
+[tabs]
+=====
+SQLite::
++
+--
+
+Pour revenir à l'état initial d'un cluster RKE2 utilisant une base de données SQLite, remplacez le fichier `.db` par la copie du fichier `.db` que vous avez faite lors de la sauvegarde de votre base de données.
+
+--
+
+etcd intégré::
++
+--
+
+Pour revenir à l'état initial d'un cluster RKE2 utilisant un etcd intégré (par défaut), suivez ces étapes{nbsp}:
+
+. Si le cluster est en cours d'exécution et que l'API Kubernetes est disponible, arrêtez gracieusement les charges de travail en drainant tous les nœuds{nbsp}:
++
+[,bash]
+----
+ kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
+----
+
+. Sur chaque nœud, arrêtez le service RKE2 et tous les processus de pod en cours d'exécution{nbsp}:
++
+[,bash]
+----
+ rke2-killall.sh
+----
+
+. Sur chaque nœud, rétrogradez le binaire RKE2 à la version précédente.
+ ** Clusters avec accès Internet{nbsp}:
+  *** Nœuds de serveur{nbsp}:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
+----
+
+  *** Nœuds d'agent{nbsp}:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
+----
+ ** Clusters isolés physiquement{nbsp}:
+  *** Téléchargez les artefacts et exécutez le xref:install/airgap.adoc#_install_rke2[script d'installation] localement.
+. Sur le premier nœud de serveur ou le nœud sans entrée `server:` dans son xref:install/configuration.adoc[fichier de configuration RKE2], initiez la restauration du cluster. Référez-vous aux xref:datastore/backup_restore.adoc#_snapshot_restore_steps[Étapes de restauration de l'instantané] pour plus d'informations{nbsp}:
++
+[,bash]
+----
+ rke2 server --cluster-reset --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+[WARNING]
+==== 
+Cela écrase toutes les données dans la base de données etcd. Vérifiez l'intégrité de l'instantané avant de restaurer. Soyez conscient que les grands instantanés peuvent prendre beaucoup de temps à restaurer.
+====
+
+. Démarrez le service RKE2 sur le premier nœud de serveur{nbsp}:
++
+[,bash]
+----
+ systemctl start rke2-server
+----
+
+. Sur les autres nœuds de serveur, supprimez le répertoire de base de données RKE2{nbsp}:
++
+[,bash]
+----
+ rm -rf /var/lib/rancher/rke2/server/db
+----
+
+. Démarrez le service RKE2 sur les autres nœuds de serveur{nbsp}:
++
+[,bash]
+----
+ systemctl start rke2-server
+----
+
+. Démarrez le service RKE2 sur tous les nœuds d'agent{nbsp}:
++
+[,bash]
+----
+ systemctl start rke2-agent
+----
+
+. Vérifiez l'état du service RKE2 avec `systemctl status rke2-server` ou `systemctl status rke2-agent`.
+
+--
+
+Base de données externe::
++
+--
+
+Pour effectuer un retour à l'état initial d'un cluster RKE2 en utilisant une base de données externe (par exemple, PostgreSQL, MySQL), suivez ces étapes{nbsp}:
+
+. Si le cluster est en cours d'exécution et que l'API Kubernetes est disponible, arrêtez gracieusement les charges de travail en drainant tous les nœuds{nbsp}:
++
+[,bash]
+----
+ kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
+----
++
+[NOTE]
+==== 
+Ce processus peut perturber les applications en cours d'exécution.
+====
+
+. Sur chaque nœud, arrêtez le service RKE2 et tous les processus de pod en cours d'exécution{nbsp}:
++
+[,bash]
+----
+ rke2-killall.sh
+----
+
+. Restaurez un instantané de base de données pris avant la mise à niveau de RKE2 et vérifiez l'intégrité de la base de données. Par exemple, si vous utilisez PostgreSQL, exécutez la commande suivante{nbsp}:
++
+[,bash]
+----
+ pg_restore -U <DB-USER> -d <DB-NAME> <BACKUP-FILE>
+----
+
+. Sur chaque nœud, rétrogradez le binaire RKE2 à la version précédente.
+ ** Clusters avec accès Internet{nbsp}:
+  *** Nœuds de serveur{nbsp}:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
+----
+
+  *** Nœuds d'agent{nbsp}:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
+----
+ ** Clusters isolés physiquement{nbsp}:
+  *** Téléchargez les artefacts et exécutez le xref:install/airgap.adoc#_install_rke2[script d'installation] localement.
+. Démarrez le service RKE2 sur chaque nœud{nbsp}:
++
+[,bash]
+----
+ systemctl start rke2-server #or rke2-agent
+----
+
+. Vérifiez l'état du service RKE2 avec `systemctl status rke2-server` ou `systemctl status rke2-agent`.
+
+--
+
+=====
+
+== Vérification
+
+Après le retour à l'état initial, vérifiez ce qui suit{nbsp}:
+
+* Version de RKE2{nbsp}: `rke2 --version`
+* État du cluster Kubernetes{nbsp}: `kubectl get nodes`
+* Fonctionnalité de l'application.
+* Vérifiez les journaux de RKE2 pour détecter des erreurs.

@@ -1,0 +1,57 @@
+= Base de données intégrée
+:page-languages: [en, zh]
+:revdate: 2025-08-08
+:page-revdate: {revdate}
+
+Utiliser une base de données intégrée signifie tirer parti d'une base de données qui fonctionne au sein du cluster Kubernetes, généralement en tant que service conteneurisé, par exemple etcd. Cette option simplifie le déploiement et peut améliorer les performances et la sécurité. L'alternative est xref:datastore/external.adoc[bases de données externes].
+
+== Options de base de données
+
+[WARNING]
+.Expérimental
+====
+RKE2 prend officiellement en charge etcd intégré, SQLite intégré est considéré comme expérimental.
+====
+
+* *Intégré https://etcd.io/[etcd]*: Etcd intégré est la base de données par défaut et sera utilisée si aucune autre configuration de base de données n'est présente.
+* *Intégré https://www.sqlite.org/index.html[SQLite]*: SQLite ne peut pas être utilisé sur des clusters avec plusieurs serveurs. Il utilise le projet https://github.com/k3s-io/kine[kine].
+
+== etcd intégré
+
+Etcd https://etcd.io/[intégré] est la base de données par défaut et sera utilisée si aucune autre configuration de base de données n'est présente.  C'est la seule option intégrée qui permet de déployer RKE2 en xref:install/ha.adoc[mode HA]. À moins d'être explicitement désactivé, un pod etcd sera déployé par serveur RKE2 et toutes les instances etcd maintiendront un quorum. RKE2 inclut des outils pour créer facilement des instantanés lors de l'utilisation de cette base de données, comme expliqué dans les instructions xref:datastore/backup_restore.adoc[Sauvegarde et restauration].
+
+== SQLite intégré
+
+Cette option intégrée n'est pas recommandée pour la production mais peut être utile si vous devez exécuter un cluster simple et éphémère, par exemple dans un environnement CI/CD. Le mode HA n'est pas pris en charge lors du déploiement avec https://www.sqlite.org/index.html[SQLite].
+
+=== Serveur unique avec SQLite
+
+. Définissez `disable-etcd` sans le paramètre `server` dans le fichier de configuration.
++
+[,yaml]
+----
+disable-etcd: true
+----
+
+. Installez RKE2.
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | sh -
+----
+
+. Activez le service rke2-server.
++
+[,sh]
+----
+systemctl enable rke2-server.service
+----
+
+. Démarrez le service rke2-server.
++
+[,sh]
+----
+systemctl start rke2-server.service
+----
+
+Vous pouvez suivre le démarrage du serveur en `kubectl get nodes` pour voir le serveur obtenir le statut `Ready`. Voir xref:cluster_access.adoc[Accès au cluster] pour plus d'informations sur la façon d'accéder à RKE2.

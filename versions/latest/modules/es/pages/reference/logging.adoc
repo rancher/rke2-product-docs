@@ -1,0 +1,30 @@
+= Registro
+:page-languages: [en, zh]
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+Cuando se ejecuta con systemd, los registros se envían a journald y se pueden ver usando `journalctl -u rke2-server` o `journalctl -u rke2-agent`. Algunas configuraciones de systemd también pueden escribir registros combinados en `/var/log/syslog`, en cuyo caso los registros de RKE2 también estarán disponibles allí.
+
+Los registros de Containerd se escriben en `/var/lib/rancher/rke2/agent/containerd/containerd.log`.
+
+Los registros de kubelet se escriben en `/var/lib/rancher/rke2/agent/logs/kubelet.log`.
+
+Etcd y los componentes del plano de control de Kubernetes se ejecutan como Pods estáticos en el espacio de nombres `kube-system`.
+
+Los registros de cada Pod de Kubernetes se pueden acceder con `kubectl`:
+
+[,bash]
+----
+/var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml logs -n kube-system -l component=kube-apiserver
+----
+
+Los registros de cada contenedor se escriben en `/var/log/pods` o se pueden acceder con `crictl`:
+
+[,bash]
+----
+export CONTAINER_RUNTIME_ENDPOINT=unix:///run/k3s/containerd/containerd.sock
+# list running containers
+/var/lib/rancher/rke2/bin/crictl ps
+# get logs from container by container id
+/var/lib/rancher/rke2/bin/crictl logs <container_id>
+----

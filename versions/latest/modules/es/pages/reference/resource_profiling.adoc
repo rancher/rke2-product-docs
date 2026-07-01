@@ -1,0 +1,70 @@
+= Perfilado de recursos
+:page-languages: 2025-08-21
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+Esta sección recoge los resultados de las pruebas para determinar los requisitos mínimos de recursos para RKE2.
+
+== Alcance de las pruebas de recursos
+
+Las pruebas de recursos estaban destinadas a abordar las siguientes declaraciones de problema:
+
+* En un clúster de un solo nodo, determine la cantidad mínima legítima de CPU y memoria para toda la pila del servidor RKE2, asumiendo que se desplegará una carga de trabajo real en el clúster.
+* En un nodo agente, determine la cantidad mínima legítima de CPU y memoria que se debe reservar para los componentes kubelet y del agente RKE2.
+
+=== Entorno y Componentes
+
+|===
+| Arquitectura | SO | Sistema | CPU | RAM | Disco
+
+| x86_64
+| Ubuntu 22.04
+| AWS c6id.xlarge
+| CPU Intel Xeon Platinum 8375C, 4 núcleos a 2.90 GHz
+| 8 GB
+| NVME SSD
+|===
+
+Los componentes probados son:
+
+* RKE2 v1.27.12 con todos los componentes empaquetados habilitados, Canal como el CNI
+* https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[Ejemplo de despliegue de Nginx de Kubernetes]
+
+=== Metodología
+
+`systemd-cgtop` se utilizó para rastrear la utilización de CPU y memoria a nivel de cgroup de systemd.
+
+* `system.slice/rke2-server.service` rastrea la utilización de recursos tanto para RKE2 como para los componentes de containerd.
+* `system.slice/rke2-agent.service` rastrea la utilización de recursos para los componentes del agente.
+
+Las cifras de utilización se basaron en lecturas del percentil 95 de la operación en estado estable en nodos que ejecutan las cargas de trabajo descritas, dando un límite superior al uso típico de recursos.
+
+=== Servidor RKE2 con una Carga de Trabajo
+
+Estos son los requisitos para un clúster de un solo nodo en el que el servidor RKE2 comparte recursos con una https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[carga de trabajo simple].
+
+|===
+| Sistema | Uso de núcleos de CPU | Memoria
+
+| Intel 8375C
+| 17% de un núcleo
+| 4977 MB
+|===
+
+=== Clúster RKE2 con un único agente
+
+Estos son los requisitos básicos para un clúster RKE2 con un nodo servidor RKE2 y un agente RKE2, pero sin carga de trabajo.
+
+|===
+| Nodo | Sistema | Uso de núcleos de CPU | Memoria
+
+| Servidor
+| Intel 8375C
+| 18% de un núcleo
+| 4804 MB
+
+| oficina postal
+| Intel 8375C
+| 5% de un núcleo
+| 3590 MB
+|===

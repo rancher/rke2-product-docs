@@ -1,0 +1,10 @@
+= アップグレードする {product-name} クラスター
+:page-languages: [en, zh]
+:revdate: 2026-01-08
+:page-revdate: {revdate}
+
+このセクションでは、{product-name} クラスターをアップグレードする方法について説明します。
+
+xref:upgrade/manual_upgrade.adoc[手動アップグレード]では、クラスターを手動でアップグレードするためのいくつかの技術について説明しています。また、 https://www.terraform.io/[Terraform]のようなサードパーティのInfrastructure as Codeツールを使用してアップグレードするための基盤としても利用できます。
+
+xref:upgrade/automated_upgrade.adoc[自動アップグレード]では、Rancherの https://github.com/rancher/system-upgrade-controller[system-upgrade-controller]を使用してKubernetesネイティブの自動アップグレードを実行する方法について説明しています。

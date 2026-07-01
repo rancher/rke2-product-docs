@@ -1,0 +1,47 @@
+= Gestion des composants en paquet
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+== Manifestes de déploiement automatique (AddOns)
+
+Sur les nœuds de serveur, tout fichier trouvé dans `/var/lib/rancher/rke2/server/manifests` sera automatiquement déployé sur Kubernetes de manière similaire à `kubectl apply`, à la fois au démarrage et lorsque le fichier est modifié sur le disque. Supprimer des fichiers de ce répertoire ne supprimera pas les ressources correspondantes du cluster.
+
+Les manifestes sont suivis en tant que ressources personnalisées `AddOn` dans l'espace de noms `kube-system`. Toutes les erreurs ou avertissements rencontrés lors de l'application du fichier manifeste peuvent être consultés en utilisant `kubectl describe` sur le `AddOn` correspondant, ou en utilisant `kubectl get event -n kube-system` pour voir tous les événements de cet espace de noms, y compris ceux du contrôleur de déploiement.
+
+=== Composants en paquet
+
+RKE2 est livré avec un certain nombre de composants en paquet qui sont déployés en tant qu'AddOns via le répertoire des manifestes, par exemple `rke2-coredns`, `rke2-metrics-server`, `rke2-ingress-nginx`, etc.
+
+Les manifestes pour les composants en paquet sont gérés par RKE2 et ne doivent pas être modifiés. Les fichiers sont réécrits sur le disque chaque fois que RKE2 est démarré, afin d'assurer leur intégrité.
+
+=== AddOns utilisateur
+
+Vous pouvez placer des fichiers supplémentaires dans le répertoire des manifestes pour un déploiement en tant qu'`AddOn`. Chaque fichier peut contenir plusieurs ressources Kubernetes, délimitées par le séparateur de document YAML `---`. Pour plus d'informations sur l'organisation des ressources dans les manifestes, consultez la section https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/[Gestion des ressources] de la documentation Kubernetes.
+
+==== Exigences de nommage des fichiers
+
+Le nom de fichier `AddOn` pour chaque fichier dans le répertoire des manifestes est dérivé du nom de base du fichier. Assurez-vous que tous les fichiers dans le répertoire des manifestes (ou dans tout sous-répertoire) ont des noms uniques et respectent les https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[restrictions de nommage des objets] Kubernetes. Il convient également de veiller à ne pas entrer en conflit avec les noms utilisés par les composants en paquet par défaut de RKE2, même si ces composants sont désactivés.
+
+[CAUTION]
+====
+Si vous avez plusieurs nœuds de serveur et que vous placez des manifestes AddOn supplémentaires sur plus d'un serveur, il est de votre responsabilité de vous assurer que les fichiers restent synchronisés entre ces nœuds. RKE2 ne synchronise pas le contenu des AddOn entre les nœuds et ne peut garantir un comportement correct si différents serveurs tentent de déployer des manifestes conflictuels.
+====
+
+== Désactivation des manifestes
+
+Il existe deux façons de désactiver le déploiement de contenu spécifique du répertoire des manifestes.
+
+=== Utilisation du drapeau `--disable`
+
+Les AddOns pour les composants en paquet énumérés ci-dessus, en plus des AddOns pour tout manifeste supplémentaire placé dans le répertoire `manifests`, peuvent être désactivés avec le drapeau `--disable`. Les AddOns désactivés sont activement désinstallés du cluster, et les fichiers sources sont supprimés du répertoire `manifests`.
+
+Par exemple, pour désactiver le metrics-server afin qu'il ne soit pas installé sur un nouveau cluster, ou pour le désinstaller et supprimer le manifeste d'un cluster existant, vous pouvez démarrer RKE2 avec `--disable=rke2-metrics-server`. Plusieurs éléments peuvent être désactivés en séparant leurs noms par des virgules, ou en répétant le drapeau.
+
+=== Utilisation des fichiers .skip
+
+Pour tout fichier sous `/var/lib/rancher/rke2/server/manifests`, vous pouvez créer un fichier `.skip` qui fera que RKE2 ignorera le manifeste correspondant. Le contenu du fichier `.skip` n'a pas d'importance, seule son existence est vérifiée. Notez que la création d'un fichier `.skip` après qu'un AddOn a déjà été créé ne supprimera ni ne modifiera autrement celui-ci ou les ressources qu'il a créées{nbsp}; le fichier est simplement traité comme s'il n'existait pas.
+
+== AddOns Helm
+
+Pour des informations sur la gestion des charts Helm via le déploiement automatique de manifestes, veuillez vous référer à la section sur xref:add-ons/helm.adoc[Helm].

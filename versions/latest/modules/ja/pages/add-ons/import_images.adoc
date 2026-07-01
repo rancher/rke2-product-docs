@@ -1,0 +1,75 @@
+= 画像をインポートする
+:page-languages: [en, zh]
+:revdate: 2025-12-04
+:page-revdate: {revdate}
+
+コンテナイメージは、containerd イメージストアによって各ノードにローカルにキャッシュされます。イメージは、ポッドによって必要に応じてレジストリからプルされるか、イメージプルを介して事前にロードされるか、イメージtarボールからインポートされます。
+
+== オンデマンドイメージプル
+
+Kubernetesは、デフォルトで、ノードにイメージが存在しない場合、ポッドが必要とする際に自動的にイメージをプルします。この動作は、ポッドの https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy[イメージプルポリシー]フィールドを使用することで変更できます。デフォルトの`IfNotPresent`ポリシーを使用する場合、containerdはアップストリーム（デフォルト）またはxref:install/private_registry.adoc[プライベートレジストリ]からイメージをプルし、イメージストアに保存します。ユーザーは、オンデマンドイメージプルが機能するために、追加の設定を適用する必要はありません。
+
+== 事前にインポートされたイメージ
+
+[NOTE]
+.バージョンゲート
+====
+K3sが実行中の間にイメージを事前にインポートする機能は、2025年1月のリリース（v1.32.0+rke2r1、v1.31.5+rke2r1、v1.30.9+rke2r1、v1.30.13+rke2r1）から利用可能です。それ以前は、RKE2は起動時にのみイメージを事前にインポートしていました。
+====
+
+ノードにイメージを事前にインポートすることは、Kubernetesの`imagePullPolicy`を`Never`として構成する場合に重要です。これは、セキュリティ上の理由や、RKE2ノードの起動時間を短縮するために行うことがあります。
+
+RKE2には、containerdイメージストアにイメージを事前にインポートするための2つのメカニズムが含まれています：
+
+[tabs]
+====
+
+オンラインイメージインポート::
++
+ユーザーは、イメージ名を1行ごとに含むテキストファイルを`/var/lib/rancher/k3s/agent/images`ディレクトリに配置することで、containerdイメージストアへのイメージのプルをトリガーできます。テキストファイルは、RKE2が起動する前に配置するか、RKE2が実行中に作成または変更することができます。RKE2は、オプションで[registries.yaml](install/private_registry.md)設定を使用しながら、CRI APIを介してイメージを順次プルします。
++
+次に例を示します。
++
+[,bash]
+----
+mkdir /var/lib/rancher/rke2/agent/images 
+cp example.txt /var/lib/rancher/rke2/agent/images
+----
++
+`example.txt` には次の内容が含まれます：
++
+[,bash]
+----
+docker.io/library/redis:latest docker.io/library/mysql:latest
+----
++
+数秒後、`redis`と`mysql`のイメージがノードのcontainerdイメージストアに利用可能になります。
++
+containerdイメージストアをクエリするには`ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list`を使用してください。
+
+オフラインイメージのインポート::
++
+ユーザーは、`/var/lib/rancher/rke2/agent/images`ディレクトリにイメージtarballを配置することで、containerdイメージストアに直接イメージをインポートできます。tarballは、RKE2が起動する前に配置するか、RKE2が実行中に作成または変更することができます。RKE2は、必要に応じてイメージtarballを解凍し、イメージを抽出して、containerdイメージストアにロードします。
++
+次に例を示します。
++
+[,bash]
+----
+mkdir /var/lib/rancher/rke2/agent/images 
+curl https://github.com/rancher/rke2/releases/download/v1.33.1%2Brke2r1/rke2-images.linux-amd64.tar.zst -O /var/lib/rancher/rke2/agent/images/rke2-images-amd64.tar.zst
+----
++
+数秒後、イメージtarballに含まれるイメージがノードのcontainerdイメージストアで利用可能になります。
++
+containerdイメージストアをクエリするには`ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list`を使用してください。
++
+これはAirgapで使用される方法です。詳細情報については、[Airgapインストールドキュメント](install/airgap.md)に従ってください。
+
+====
+
+== イメージレジストリを設定する
+
+RKE2はイメージレジストリのための2つの代替手段をサポートしています：
+
+* xref:install/private_registry.adoc[プライベートレジストリの設定]では、`registries.yaml`を使用してコンテナイメージレジストリの認証とミラーリングを設定する方法について説明します。
+* xref:install/registry_mirror.adoc[埋め込みレジストリミラー]では、ノード間でのイメージのピアツーピア共有のために、埋め込まれた分散イメージレジストリミラーを有効にする方法を示します。

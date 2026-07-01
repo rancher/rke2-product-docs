@@ -1,0 +1,213 @@
+= Directivas de seguridad predeterminadas de pods
+:page-languages: [en, zh]
+:revdate: 2025-07-17
+:page-revdate: {revdate}
+
+Este documento describe cómo RKE2 configura `PodSecurityPolicies` y `NetworkPolicies` para ser seguro por defecto, al mismo tiempo que proporciona a los operadores la máxima flexibilidad de configuración.
+
+[IMPORTANT]
+.Puerta de Versión
+====
+Este documento se aplica a RKE2 v1.24 y versiones anteriores, por favor consulta la xref:security/pod_security_standards.adoc[Documentación de estándares de seguridad del pod] para la información de políticas predeterminadas para RKE2 v1.25 y versiones superiores.
+====
+
+== Directivas de seguridad de pods
+
+RKE2 puede ejecutarse con o sin el parámetro de configuración `profile: cis-1.6`. Esto hará que aplique diferentes `PodSecurityPolicies` (PSPs) al inicio.
+
+* Si se ejecuta con el perfil `cis-1.6`, RKE2 aplicará una directiva restrictiva llamada `global-restricted-psp` a todos los espacios de nombres excepto `kube-system`. El espacio de nombres `kube-system` necesita una directiva menos restrictiva llamada `system-unrestricted-psp` para lanzar componentes críticos.
+* Si se ejecuta sin el perfil `cis-1.6`, RKE2 aplicará una directiva completamente no restringida llamada `global-unrestricted-psp`, que es equivalente a ejecutar sin el controlador de admisión PSP habilitado.
+
+RKE2 implementará estas directivas al inicio, pero no las modificará después de eso, a menos que sea explícitamente activado por el operador del clúster como se describe a continuación. Esto es para permitir que el operador controle completamente los PSPs sin que los valores predeterminados de RKE2 interfieran.
+
+La creación y aplicación de los PSPs están controladas por la presencia o ausencia de ciertas anotaciones en el espacio de nombres `kube-system`. Estos se mapean directamente a los PSPs que se pueden crear y son:
+
+* `psp.rke2.io/global-restricted`
+* `psp.rke2.io/system-unrestricted`
+* `psp.rke2.io/global-unrestricted`
+
+La siguiente lógica se realiza al inicio para las directivas y sus anotaciones:
+
+* Si la anotación existe, RKE2 continúa sin más acciones.
+* Si la anotación no existe, RKE2 verifica si la directiva asociada existe y, si es así, la elimina y la recrea, junto con la adición de la anotación al espacio de nombres.
+* En el caso de `global-unrestricted-psp`, la directiva no se recrea. Esto es para tener en cuenta el movimiento entre modos CIS y no CIS sin hacer que el clúster sea menos seguro.
+* Al crear una directiva, también se crean roles de clúster y enlaces de roles de clúster para garantizar que las directivas apropiadas se utilicen por defecto.
+
+Así que, después del inicio inicial, los operadores pueden modificar o eliminar las directivas de RKE2 y RKE2 respetará esos cambios. Además, para "restablecer" una directiva, un operador solo necesita eliminar la anotación asociada del espacio de nombres `kube-system` y reiniciar RKE2.
+
+Las directivas se describen a continuación, comenzando con el PSP `global-restricted` más restrictivo.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: global-restricted-psp
+spec:
+  privileged: false                # CIS - 5.2.1
+  allowPrivilegeEscalation: false  # CIS - 5.2.5
+  requiredDropCapabilities:        # CIS - 5.2.7/8/9
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false               # CIS - 5.2.4
+  hostIPC: false                   # CIS - 5.2.3
+  hostPID: false                   # CIS - 5.2.2
+  runAsUser:
+    rule: 'MustRunAsNonRoot'       # CIS - 5.2.6
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+----
+
+Si RKE2 se inicia en modo no CIS, las anotaciones se verifican como se mencionó anteriormente; sin embargo, la aplicación resultante de las directivas de seguridad de pods es permisiva. Consulte a continuación.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: global-unrestricted-psp
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  volumes:
+  - '*'
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  hostIPC: true
+  hostPID: true
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+----
+
+En ambos casos, se aplica la "directiva del sistema sin restricciones". Consulte a continuación.
+
+[,yaml]
+----
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: system-unrestricted-psp
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  volumes:
+  - '*'
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  hostIPC: true
+  hostPID: true
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+----
+
+Para ver las directivas de seguridad de pods actualmente desplegadas en su sistema, ejecute el siguiente comando:
+
+[,bash]
+----
+kubectl get psp -A
+----
+
+== Directivas de Red
+
+Cuando RKE2 se ejecuta con el parámetro `profile: cis-1.6`, aplicará 2 directivas de red a los espacios de nombres `kube-system`, `kube-public` y `default` y aplicará las anotaciones asociadas. La misma lógica se aplica a estas directivas y anotaciones como a los PSP. Al iniciar, se verifica la existencia de las anotaciones para cada espacio de nombres y, si existen, RKE2 no toma ninguna acción. Si la anotación no existe, RKE2 verifica si la directiva existe y, si es así, la recrea.
+
+La primera directiva aplicada es restringir el tráfico de red solo al espacio de nombres en sí. Consulte a continuación.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  managedFields:
+  - apiVersion: networking.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:spec:
+        f:ingress: {}
+        f:policyTypes: {}
+  name: default-network-policy
+  namespace: default
+spec:
+  ingress:
+  - from:
+    - podSelector: {}
+  podSelector: {}
+  policyTypes:
+  - Ingress
+----
+
+La segunda directiva aplicada es al espacio de nombres `kube-system` y permite el tráfico DNS. Consulte a continuación.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  managedFields:
+  - apiVersion: networking.k8s.io/v1
+    fieldsV1:
+      f:spec:
+        f:ingress: {}
+        f:podSelector:
+          f:matchLabels:
+        f:policyTypes: {}
+  name: default-network-dns-policy
+  namespace: kube-system
+spec:
+  ingress:
+  - ports:
+    - port: 53
+      protocol: TCP
+    - port: 53
+      protocol: UDP
+  podSelector:
+    matchLabels:
+  policyTypes:
+  - Ingress
+----
+
+RKE2 aplica la directiva `default-network-policy` y la anotación `np.rke2.io` a todos los espacios de nombres integrados. El espacio de nombres `kube-system` además recibe la directiva `default-network-dns-policy` y la anotación `np.rke2.io/dns` aplicadas a él.
+
+Para ver las directivas de red actualmente desplegadas en su sistema, ejecute el siguiente comando:
+
+[,bash]
+----
+kubectl get networkpolicies -A
+----

@@ -1,0 +1,163 @@
+= Configuration du registre containerd
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Containerd peut être configuré pour se connecter à des registres privés et les utiliser pour extraire des images privées sur chaque nœud.
+
+Au démarrage, RKE2 vérifiera si un fichier `registries.yaml` existe à `/etc/rancher/rke2/` et instruira containerd d'utiliser tous les registres définis dans le fichier. Si vous souhaitez utiliser un registre privé, vous devrez créer ce fichier en tant que root sur chaque nœud qui utilisera le registre.
+
+Les nœuds serveurs sont planifiables par défaut. Si vous n'avez pas tainté les nœuds serveurs et que vous y exécutez des charges de travail, veuillez également vous assurer de créer le fichier `registries.yaml` sur chaque serveur.
+
+La configuration dans containerd peut être utilisée pour se connecter à un registre privé avec une connexion TLS et avec des registres qui permettent également l'authentification. La section suivante expliquera le fichier `registries.yaml` et donnera différents exemples d'utilisation de la configuration de registre privé dans RKE2.
+
+== Fichier de configuration des registres
+
+Le fichier se compose de deux sections principales{nbsp}:
+
+* miroirs
+* configs
+
+=== Miroirs
+
+Les miroirs sont une directive qui définit les noms et les points de terminaison des registres privés. Les registres privés peuvent être utilisés comme miroir local pour le registre docker.io par défaut, ou pour des images où le registre est explicitement spécifié dans le nom.
+
+Par exemple, la configuration suivante permettrait d'extraire les images depuis le registre privé à `\https://registry.example.com:5000` pour `library/busybox:latest` et `registry.example.com/library/busybox:latest`{nbsp}:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+  registry.example.com:
+    endpoint:
+      - "https://registry.example.com:5000"
+----
+
+Chaque miroir doit avoir un nom et un ensemble de points de terminaison. Lors de l'extraction d'une image depuis un registre, containerd essaiera ces URL de point de terminaison une par une et utilisera la première qui fonctionne.
+
+[NOTE]
+====
+Si aucun point de terminaison n'est configuré, containerd suppose que le registre peut être accessible anonymement via HTTPS sur le port 443 et utilise un certificat approuvé par le système d'exploitation hôte. Pour plus d'informations, vous pouvez https://github.com/containerd/containerd/blob/master/docs/cri/registry.md#configure-registry-endpoint[consulter la documentation de containerd].
+====
+
+==== Réécritures
+
+Chaque miroir peut avoir un ensemble de réécritures. Les réécritures peuvent changer le tag d'une image en fonction d'une expression régulière. Ceci est utile si la structure de l'organisation/projet dans le registre miroir est différente de celle en amont.
+
+Par exemple, la configuration suivante extrairait de manière transparente l'image `rancher/rke2-runtime:v1.23.5-rke2r1` depuis `registry.example.com:5000/mirrorproject/rancher-images/rke2-runtime:v1.23.5-rke2r1`{nbsp}:
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+    rewrite:
+      "^rancher/(.*)": "mirrorproject/rancher-images/$1"
+----
+
+=== Configurations
+
+La section configs définit la configuration TLS et des identifiants pour chaque miroir. Pour chaque miroir, vous pouvez définir `auth` et/ou `tls`. La partie TLS se compose de{nbsp}:
+
+|===
+| Directive | Description
+
+| `cert_file`
+| Le chemin du certificat client qui sera utilisé pour s'authentifier auprès du registre
+
+| `key_file`
+| Le chemin de la clé client qui sera utilisé pour s'authentifier auprès du registre
+
+| `ca_file`
+| Définit le chemin du certificat CA à utiliser pour vérifier le fichier de certificat du serveur du registre
+
+| `insecure_skip_verify`
+| Booléen qui définit si la vérification TLS doit être ignorée pour le registre
+|===
+
+Les identifiants se composent soit d'un nom d'utilisateur/mot de passe, soit d'un jeton d'authentification{nbsp}:
+
+* nom d'utilisateur{nbsp}: nom d'utilisateur de l'authentification de base du registre privé
+* mot de passe{nbsp}: mot de passe utilisateur de l'authentification de base du registre privé
+* auth{nbsp}: jeton d'authentification de l'authentification de base du registre privé
+
+Voici des exemples de base d'utilisation des registres privés dans différents modes{nbsp}:
+
+=== Avec TLS
+
+Voici des exemples montrant comment vous pouvez configurer `/etc/rancher/rke2/registries.yaml` sur chaque nœud lors de l'utilisation de TLS.
+
+_Avec authentification :_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+_Sans authentification :_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    tls:
+      cert_file:            # path to the cert file used to authenticate to the registry
+      key_file:             # path to the key file for the certificate used to authenticate to the registry
+      ca_file:              # path to the ca file used to verify the registry's certificate
+      insecure_skip_verify: # may be set to true to skip verifying the registry's certificate
+----
+
+=== Sans TLS
+
+Voici des exemples montrant comment vous pouvez configurer `/etc/rancher/rke2/registries.yaml` sur chaque nœud lorsque _TLS n'est pas utilisé_.
+
+_HTTP en texte clair avec authentification :_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+configs:
+  "registry.example.com:5000":
+    auth:
+      username: xxxxxx # this is the registry username
+      password: xxxxxx # this is the registry password
+----
+
+_HTTP en texte clair sans authentification :_
+
+[,yaml]
+----
+mirrors:
+  docker.io:
+    endpoint:
+      - "http://registry.example.com:5000"
+----
+
+____
+Si vous utilisez un registre utilisant HTTP en texte clair sans TLS, vous devez spécifier `http://` comme schéma URI de point de terminaison, sinon il sera par défaut `https://`.
+____
+
+Pour que les modifications du registre prennent effet, vous devez soit configurer ce fichier avant de démarrer RKE2 sur le nœud, soit redémarrer RKE2 sur chaque nœud configuré.

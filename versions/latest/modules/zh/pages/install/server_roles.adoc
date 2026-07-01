@@ -1,13 +1,13 @@
-= 管理 Server 角色
-:page-languages: [en, zh]
+= 管理服务器角色
+:page-languages: 默认情况下，启动 RKE2 会运行所有控制平面组件，包括 apiserver、controller-manager、scheduler 和 etcd。
 :revdate: 2024-09-11
 :page-revdate: {revdate}
 
-默认情况下，启动 RKE2 将运行所有 control-plane 组件，包括 apiserver、controller-manager、scheduler 和 etcd。你可以通过禁用特定组件来将 control-plane 和 etcd 角色拆分到单独的节点上。
+默认情况下，启动 RKE2 会运行所有控制平面组件，包括 apiserver、controller-manager、scheduler 和 etcd。可以禁用特定组件，以便将控制平面和 etcd 角色分配到不同的节点。
 
 == 专用 `etcd` 节点
 
-要创建仅具有 `etcd` 角色的 Server，请部署一个禁用所有 Control Plane 组件的配置：
+要创建仅具有 `etcd` 角色的服务器，请部署一个禁用所有控制平面组件的配置：
 
 [,yaml]
 ----
@@ -17,17 +17,16 @@ disable-controller-manager: true
 disable-scheduler: true
 ----
 
-第一个节点将启动 etcd，然后等待其他 `etcd` 和/或 `control-plane` 节点加入。在加入启用了 `control-plane` 组件的其他 server 之前，集群将无法使用。
+第一个节点将启动 etcd，并等待其他 `etcd` 和/或 `control-plane` 节点加入。在您加入启用 `control-plane` 组件的其他服务器之前，集群将无法使用。
 
 == 专用 `control-plane` 节点
 
-[IMPORTANT]
+[TIP]
 ====
-专用 `control-plane` 节点不能是集群中的第一个 server。在加入专用 `control-plane` 节点之前，必须有一个具有 `etcd` 角色的现有节点。
+专用 `control-plane` 节点不能是集群中的第一个服务器；在加入专用 `control-plane` 节点之前，必须有一个现有的 `etcd` 角色节点。
 ====
 
-
-要创建仅具有 `control-plane` 角色的 server，请部署一个禁用 etcd 的配置：
+要创建仅具有 `control-plane` 角色的服务器，请部署一个禁用 etcd 的配置：
 
 [,yaml]
 ----
@@ -36,7 +35,7 @@ server: https://<etcd-only-node>:9345
 disable-etcd: true
 ----
 
-创建专用 Server 节点后，所选角色将在 `kubectl get node` 中可见：
+创建专用服务器节点后，所选角色将在 `kubectl get node` 中可见：
 
 [,bash]
 ----
@@ -46,6 +45,6 @@ rke2-server-1   Ready    etcd                        5h39m   v1.26.4+rke2r1
 rke2-server-2   Ready    control-plane,master        5h39m   v1.26.4+rke2r1
 ----
 
-== 将角色添加到现有 server
+== 向现有服务器添加角色
 
-如果在删除了 disable 标志的情况下重启 RKE2，你可以将角色添加到现有的专用节点。例如，要将 `control-plane` 角色添加到专用的 `etcd` 节点，你可以从配置文件中删除 `disable-apiserver disable-controller-manager disable-scheduler` 行，并重启服务。
+可以通过重新启动 RKE2 并去除禁用标志，向现有专用节点添加角色。例如，如果您想向专用 `control-plane` 节点添加 `etcd` 角色，可以从配置文件中去除 `disable-apiserver disable-controller-manager disable-scheduler` 行，然后重新启动服务。

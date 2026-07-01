@@ -1,35 +1,34 @@
-= Import Images
+= 导入镜像
 :page-languages: [en, zh]
 :revdate: 2025-12-04
 :page-revdate: {revdate}
 
-Container images are cached locally on each node by the containerd image store. Images can be pulled from the registry as needed by pods, preloaded via image pull, or imported from an image tarball.
+容器镜像在每个节点上由 containerd 镜像存储本地缓存。镜像可以根据需要从注册表中拉取、通过镜像拉取进行预加载，或从镜像归档文件中导入。
 
-== On-demand image pulling
+== 按需镜像拉取
 
-Kubernetes, by default, automatically pulls images when a Pod requires them if the image is not already present on the node. This behavior can be changed by using the https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy[image pull policy] field of the Pod. When using the default `IfNotPresent` policy, containerd will pull the image from either upstream (default) or your xref:install/private_registry.adoc[private registry] and store it in its image store. Users do not need to apply any additional configuration for on-demand image pulling to work.
+Kubernetes默认情况下，当Pod需要镜像而节点上尚不存在该镜像时，会自动拉取镜像。可以通过使用Pod的 https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy[镜像拉取策略]字段来更改此行为。使用默认的`IfNotPresent`策略时，containerd将从上游（默认）或您的xref:install/private_registry.adoc[私有注册表]拉取镜像，并将其存储在其镜像存储中。用户无需为按需镜像拉取工作应用任何额外配置。
 
-== Pre-import images
+== 预导入镜像
 
 [NOTE]
-.Version Gate
+.版本门控
 ====
-The pre-importing of images while K3s is running feature is available as of January 2025 releases: v1.32.0+rke2r1, v1.31.5+rke2r1, v1.30.9+rke2r1, v1.30.13+rke2r1
-Before that, RKE2 pre-imported the images only when booting.
+K3s运行时的镜像预导入功能自2025年1月的版本开始可用：v1.32.0+rke2r1，v1.31.5+rke2r1，v1.30.9+rke2r1，v1.30.13+rke2r1。在此之前，RKE2仅在启动时预导入镜像。
 ====
 
-Pre-importing images onto the node is essential if you configure Kubernetes' `imagePullPolicy` as `Never`. You might do this for security reasons or to reduce the time it takes for your RKE2 nodes to spin up.
+如果将 Kubernetes 的 `imagePullPolicy` 配置为 `Never`，则在节点上预导入镜像是必不可少的。您可能出于安全原因或为了减少RKE2节点启动所需的时间而这样做。
 
-RKE2 includes two mechanisms to pre-import images into the containerd image store:
+RKE2包含两种机制将镜像预导入到containerd镜像存储中：
 
 [tabs]
 ====
 
-Online image importing::
+在线镜像导入::
 +
-Users can trigger a pull of images into the containerd image store by placing a text file containing the image names, one per line, in the `/var/lib/rancher/k3s/agent/images` directory. The text file can be placed before RKE2 is started, or created/modified while RKE2 is running. RKE2 will sequentially pull the images via the CRI API, optionally using the [registries.yaml](install/private_registry.md) configuration. 
+用户可以通过在 `/var/lib/rancher/k3s/agent/images` 目录中放置一个包含镜像名称（每行一个）的文本文件，来触发将镜像拉取至 containerd 镜像存储中。文本文件可以在RKE2启动之前放置，或在RKE2运行时创建/修改。RKE2将通过CRI API顺序拉取镜像，选用[registries.yaml](install/private_registry.md)配置。
 +
-For example:
+例如：
 +
 [,bash]
 ----
@@ -37,22 +36,22 @@ mkdir /var/lib/rancher/rke2/agent/images
 cp example.txt /var/lib/rancher/rke2/agent/images
 ----
 +
-Where `example.txt` contains:
+`example.txt` 包含：
 +
 [,bash]
 ----
 docker.io/library/redis:latest docker.io/library/mysql:latest
 ----
 +
-After a few seconds, the `redis` and the `mysql` images will be available in the containerd image store of the node. 
+几秒钟后，`redis`和`mysql`的镜像将在节点的containerd镜像存储中可用。
 +
-Use `ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list` to query the containerd image store.
+使用`ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list`查询containerd镜像存储。
 
-Offline image importing::
+离线镜像导入::
 +
-Users can import images directly into the containerd image store by placing image tarballs in the `/var/lib/rancher/rke2/agent/images` directory. The tarball can be placed before RKE2 is started, or created/modified while RKE2 is running. RKE2 will decompress the image tarball if necessary, extract the images, and load them into the containerd image store. 
+用户可以通过将镜像归档文件放置在`/var/lib/rancher/rke2/agent/images`目录中，直接将镜像导入到containerd镜像存储中。归档文件可以在RKE2启动之前放置，或在RKE2运行时创建/修改。RKE2会在必要时解压镜像归档文件，提取镜像，并将其加载到containerd镜像存储中。
 +
-For example:
+例如：
 +
 [,bash]
 ----
@@ -60,17 +59,17 @@ mkdir /var/lib/rancher/rke2/agent/images
 curl https://github.com/rancher/rke2/releases/download/v1.33.1%2Brke2r1/rke2-images.linux-amd64.tar.zst -O /var/lib/rancher/rke2/agent/images/rke2-images-amd64.tar.zst
 ----
 +
-After a few seconds, the images included in the image tarball will be available in the containerd image store of the node. 
+几秒钟后，镜像归档文件中包含的镜像将在节点的containerd镜像存储中可用。
 +
-Use `ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list` to query the containerd image store. 
+使用`ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images list`查询containerd镜像存储。
 +
-This is the method used in Airgap. Please follow the [Airgap install documentation](install/airgap.md) for detailed information.
+这是在Airgap中使用的方法。请遵循[Airgap安装文档](install/airgap.md)以获取详细信息。
 
 ====
 
-== Set up an image registry
+== 设置镜像注册表
 
-RKE2 supports two alternatives for image registries:
+RKE2支持两种镜像注册表的替代方案：
 
-* xref:install/private_registry.adoc[Private Registry Configuration] covers use of `registries.yaml` to configure container image registry authentication and mirroring.
-* xref:install/registry_mirror.adoc[Embedded Registry Mirror] shows how to enable the embedded distributed image registry mirror, for peer-to-peer sharing of images between nodes.
+* xref:install/private_registry.adoc[私有注册表配置]涉及使用`registries.yaml`配置容器镜像注册表的身份验证和镜像同步。
+* xref:install/registry_mirror.adoc[嵌入式注册表镜像]显示如何启用嵌入式分布式镜像注册表，以便实现节点之间镜像的点对点共享。

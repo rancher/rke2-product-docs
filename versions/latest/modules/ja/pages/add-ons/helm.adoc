@@ -1,0 +1,248 @@
+= Helm
+:page-languages: [en, zh]
+:revdate: 2025-11-06
+:page-revdate: {revdate}
+
+HelmはKubernetesのためのパッケージ管理ツールです。Helmチャートは、Kubernetes YAMLマニフェストドキュメントのテンプレート構文を提供します。Helmを使用すると、静的ファイルを使用する代わりに、設定可能なデプロイメントを作成できます。独自のデプロイメントカタログを作成する方法についての詳細は、 https://helm.sh/docs/intro/quickstart/.のドキュメントを参照してください。
+
+RKE2は、Helmコマンドラインツールと一緒に使用するために特別な設定を必要としません。xref:cluster_access.adoc[クラスターアクセス]に関するセクションに従って、kubeconfigを正しく設定していることを確認してください。RKE2には、従来のKubernetesリソースマニフェストとHelmチャートの両方をさらに簡単にデプロイするための追加機能が含まれています。<<Using the Helm CRD,rancher/helm-release CRD>>。
+
+== マニフェストとHelmチャートの自動デプロイ
+
+`/var/lib/rancher/rke2/server/manifests`に見つかったKubernetesマニフェストは、`kubectl apply`と同様の方法でRKE2に自動的にデプロイされ、起動時およびディスク上のファイルが変更されたときに適用されます。このディレクトリからファイルを削除しても、クラスターから対応するリソースは削除されません。
+
+この方法でデプロイされたマニフェストはAddOnカスタムリソースとして管理され、`kubectl get addon -A`を実行することで表示できます。デフォルトでは、CoreDNS、Nginx-Ingress、Metrics Serverなどのパッケージ化されたコンポーネントのAddOnsが見つかります。AddOnsはデプロイコントローラーによって自動的に作成され、マニフェストディレクトリ内のファイル名に基づいて名前が付けられます。
+
+HelmチャートをAddOnsとしてデプロイすることも可能です。RKE2には、HelmチャートをHelmChartカスタムリソース定義（CRD）を使用して管理する https://github.com/k3s-io/helm-controller/[Helm Controller]が含まれています。
+
+=== ファイル名の要件
+
+マニフェストディレクトリ内の各ファイルの `AddOn` 名は、ファイルのベース名から派生しています。
+マニフェストディレクトリ内のすべてのファイル（または任意のサブディレクトリ内）の名前が一意であり、Kubernetes の https://kubernetes.io/docs/concepts/overview/working-with-objects/names/[オブジェクト名の制限] に従っていることを確認してください。デフォルトのRKE2パッケージ化されたコンポーネントによって使用されている名前と衝突しないように注意する必要があります。たとえそれらのコンポーネントが無効になっていても。
+
+ファイル名にアンダースコアが含まれている場合に報告されるエラーの例は次のとおりです：
+
+[,sh]
+----
+`Failed to process config: failed to process /var/lib/rancher/rke2/server/manifests/example_manifest.yaml:
+   Addon.k3s.cattle.io "example_manifest" is invalid: metadata.name: Invalid value: "example_manifest":
+   a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')`
+----
+
+== AddOnsの無効化
+
+上記にリストされたパッケージ化されたコンポーネントのAddOnsに加えて、マニフェストディレクトリに配置された追加のマニフェストのAddOnsは、--無効化フラグで無効にできます。無効化されたAddOnsはクラスターから積極的にアンインストールされ、ソースファイルはマニフェストディレクトリから削除されます。
+
+たとえば、新しいクラスターにCoreDNSをインストールしないようにするか、既存のクラスターからアンインストールしてマニフェストを削除するには、`disable: rke2-coredns`を設定ファイルに記載してRKE2を起動できます。ネストされたリスト内の複数の項目を無効にすることができます。
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable:
+  - rke2-coredns
+  - rke2-metrics-server
+----
+
+== Helm CRDの使用
+
+https://github.com/k3s-io/helm-controller#helm-controller[HelmChartリソース定義]は、通常`helm`コマンドラインツールに渡すオプションのほとんどをキャプチャします。デフォルトのチャートリポジトリからGrafanaをデプロイする方法の例を示します。デフォルトのチャート値の一部を上書きします。HelmChartリソース自体は`kube-system`ネームスペースにありますが、チャートのリソースは`monitoring`ネームスペースにデプロイされます。
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: grafana
+  namespace: kube-system
+spec:
+  chart: stable/grafana
+  targetNamespace: monitoring
+  set:
+    adminPassword: "NotVerySafePassword"
+  valuesContent: |-
+    image:
+      tag: master
+    env:
+      GF_EXPLORE_ENABLED: true
+    adminUser: admin
+    sidecar:
+      datasources:
+        enabled: true
+----
+
+認証付きのプライベートリポジトリから Helm チャートをデプロイする例：
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  namespace: kube-system
+  name: example-app
+spec:
+  targetNamespace: example-space
+  createNamespace: true
+  version: v1.2.3
+  chart: example-app
+  repo: https://secure-repo.example.com
+  authSecret:
+    name: example-repo-auth
+  repoCAConfigMap:
+    name: example-repo-ca
+  valuesContent: |-
+    image:
+      tag: v1.2.2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: kube-system
+  name: example-repo-auth
+type: kubernetes.io/basic-auth
+stringData:
+  username: user
+  password: pass
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: kube-system
+  name: example-repo-ca
+data:
+  ca.crt: |-
+    -----BEGIN CERTIFICATE-----
+    <YOUR CERTIFICATE>
+    -----END CERTIFICATE-----
+----
+
+=== HelmChartフィールド定義
+
+|===
+| フィールド | デフォルト | 説明 | Helm引数/フラグの対応
+
+| metadata.name
+|
+| Helmチャート名
+| 名前
+
+| spec.chart
+|
+| リポジトリ内のHelmチャート名、またはチャートアーカイブ（.tgz）への完全なHTTPS URL
+| CHART
+
+| spec.targetNamespace
+| default
+| Helmチャートのターゲットネームスペース
+| `--namespace`
+
+| spec.createNamespace
+| false
+| 存在しない場合はターゲットネームスペースを作成します
+| `--create-namespace`
+
+| spec.version
+|
+| Helmチャートのバージョン（リポジトリからインストールする場合）
+| `--version`
+
+| spec.repo
+|
+| HelmチャートリポジトリのURL
+| `--repo`
+
+| spec.repoCA
+|
+| このCAバンドルを使用してHTTPS対応サーバーの証明書を検証します。1つ以上のPEMエンコードされたCA証明書を含む文字列である必要があります。
+| `--ca-file`
+
+| spec.repoCAConfigMap
+|
+| Helmによって信頼されるCA証明書を含むConfigMapへの参照。`repoCA`と一緒に使用するか、または代わりに使用できます。
+| `--ca-file`
+
+| spec.helmVersion
+| v3
+| 使用するHelmのバージョン（`v2`または`v3`）
+|
+
+| spec.bootstrap
+| False
+| このチャートがクラスターの起動に必要な場合はTrueに設定します（Cloud Controller Managerなど）
+|
+
+| spec.set
+|
+| シンプルなデフォルトチャート値を上書きします。これらは、valuesContentを介して設定されたオプションよりも優先されます。
+| `--set` / `--set-string`
+
+| spec.jobImage
+|
+| Helmチャートをインストールする際に使用するイメージを指定します。例：rancher/klipper-helm:v0.3.0。
+|
+
+| spec.backOffLimit
+| 1000
+| ジョブが失敗と見なされる前の再試行回数を指定してください。
+|
+
+| spec.timeout
+| 300秒
+| Helm操作のタイムアウト、 https://pkg.go.dev/time#ParseDuration[期間文字列] (`300s`, `10m`, `1h` など)
+| `--timeout`
+
+| spec.failurePolicy
+| 再インストール
+| `abort`に設定すると、Helm操作は中止され、オペレーターによる手動介入が必要になります。
+|
+
+| spec.authSecret
+|
+| Chartリポジトリの基本認証資格情報を保持するタイプ`kubernetes.io/basic-auth`のSecretへの参照。
+|
+
+| spec.authPassCredentials
+| false
+| すべてのドメインに基本認証資格情報を渡します。
+| `--pass-credentials`
+
+| spec.dockerRegistrySecret
+|
+| Chartリポジトリとして機能するOCIベースのレジストリのDocker認証資格情報を保持するタイプ`kubernetes.io/dockerconfigjson`のSecretへの参照。
+|
+
+| spec.valuesContent
+|
+| YAMLファイルの内容を介して複雑なデフォルトチャート値を上書きします。
+| `--values`
+
+| spec.chartContent
+|
+| Base64エンコードされたチャートアーカイブ.tgz - spec.chartを上書きします
+| CHART
+|===
+
+== HelmChartConfigを使用したパッケージコンポーネントのカスタマイズ
+
+HelmCharts（Canal、CoreDNS、Nginx-Ingressなど）としてデプロイされるパッケージコンポーネントの値を上書きできるようにするために、RKE2は`HelmChartConfig`リソースを介してデプロイメントのカスタマイズをサポートしています。`HelmChartConfig`リソースは、対応するHelmChartの名前とネームスペースと一致し、追加の`valuesContent`を提供することをサポートしており、これは`helm`コマンドに追加の値ファイルとして渡されます。
+
+[NOTE]
+====
+HelmChart `spec.set`の値は、HelmChartおよびHelmChartConfig `spec.valuesContent`の設定を上書きします。
+====
+
+たとえば、パッケージ化されたCoreDNSの設定をカスタマイズするには、`/var/lib/rancher/rke2/server/manifests/rke2-coredns-config.yaml`という名前のファイルを作成し、次の内容で埋めることができます：
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    image: coredns/coredns
+    imageTag: v1.7.1
+----
+
+すべてのパッケージ化されたHelmチャートとそのドキュメントおよびデフォルト値は、 https://github.com/rancher/rke2-charts/tree/main/charts[RKE2チャートリポジトリ]にあります。

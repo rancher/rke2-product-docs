@@ -1,0 +1,45 @@
+= アンインストール
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+[CAUTION]
+====
+RKE2をアンインストールすると、クラスターデータとすべてのスクリプトが削除されます。
+====
+
+[NOTE]
+====
+デプロイされた{rancher-product-name}{product-name}クラスターをクリーンアップするには、 https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-admin/manage-clusters/clean-cluster-nodes.html#_cleaning_up_nodes[クラスター ノードのクリーンアップ]をご覧ください。
+====
+
+== Linux アンインストール
+
+RKE2のインストール方法によって、アンインストールプロセスは異なります。
+
+=== RPM方式
+
+RPM方式でインストールされたRKE2をシステムからアンインストールするには、インストールされているRKE2のバージョンに対応するコマンドを、ルートユーザとしてまたは`sudo`を通じて実行してください。これにより、RKE2プロセスがシャットダウンし、RKE2 RPMが削除され、RKE2で使用されていたファイルがクリーンアップされます。
+
+[,bash]
+----
+/usr/bin/rke2-uninstall.sh
+----
+
+=== Tarball方式
+
+Tarball方式でインストールされたRKE2をシステムからアンインストールするには、以下のコマンドを実行してください。これにより、プロセスが終了し、RKE2バイナリが削除され、RKE2で使用されていたファイルがクリーンアップされます。
+
+[,bash]
+----
+/usr/local/bin/rke2-uninstall.sh
+----
+
+== Windows アンインストール
+
+Tarball方式でインストールされたRKE2 Windowsエージェントをシステムからアンインストールするには、以下のコマンドを実行してください。これにより、すべてのRKE2 Windowsプロセスがシャットダウンし、RKE2 Windowsバイナリが削除され、RKE2で使用されていたファイルがクリーンアップされます。
+
+[,powershell]
+----
+c:/usr/local/bin/rke2-uninstall.ps1
+----

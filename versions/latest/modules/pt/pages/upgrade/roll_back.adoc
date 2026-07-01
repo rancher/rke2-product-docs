@@ -1,0 +1,181 @@
+= Rollback do RKE2
+:page-languages: [en, zh]
+:revdate: 2025-12-04
+:page-revdate: {revdate}
+
+Você pode reverter a versão do Kubernetes do RKE2 após fazer upgrade, usando uma combinação de downgrade do binário do RKE2 e restauração do datastore. O rollback pode ser realizado em clusters de todos os tipos, incluindo um SQLite de nó único, um datastore externo ou um etcd embutido. Ao reverter para uma versão menor anterior do Kubernetes, você deve ter um instantâneo do datastore feito na versão menor do Kubernetes para a qual deseja reverter.
+
+[CAUTION]
+====
+Se você não puder restaurar o banco de dados, não poderá reverter para uma versão menor anterior.
+====
+
+== Considerações Importantes
+
+* *Backups:* Antes de fazer upgrade, certifique-se de ter um instantâneo válido do banco de dados ou etcd do seu cluster executando a versão mais antiga do RKE2. Sem um backup, um rollback é impossível.
+* *Potencial Perda de Dados:* O script `rke2-killall.sh` encerra forçosamente os processos do RKE2 e pode resultar em perda de dados se os aplicativos não forem encerrados corretamente.
+* *Especificidades da Versão:* Sempre verifique as versões do RKE2 e dos componentes antes e depois do rollback.
+
+== Rollback de um Cluster RKE2
+
+[tabs]
+=====
+SQLite::
++
+--
+
+Para reverter um cluster RKE2 ao usar um banco de dados SQLite, substitua o arquivo `.db` pela cópia do arquivo `.db` que você fez ao fazer backup do seu banco de dados.
+
+--
+
+etcd Embutido::
++
+--
+
+Para reverter um cluster RKE2 ao usar um etcd embutido (padrão), siga estas etapas:
+
+. Se o cluster estiver em execução e a API do Kubernetes estiver disponível, pare os workloads de forma controlada, drenando todos os nós:
++
+[,bash]
+----
+ kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
+----
+
+. Em cada nó, pare o serviço RKE2 e todos os processos de pod em execução:
++
+[,bash]
+----
+ rke2-killall.sh
+----
+
+. Em cada nó, reverta o binário do RKE2 para a versão anterior.
+ ** Clusters com Acesso à Internet:
+  *** Nós de servidor:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
+----
+
+  *** Nós de agente:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
+----
+ ** Clusters air-gapped:
+  *** Baixe os artefatos e execute o xref:install/airgap.adoc#_install_rke2[script de instalação] localmente.
+. No primeiro nó de servidor ou no nó sem uma entrada `server:` em seu xref:install/configuration.adoc[arquivo de configuração do RKE2], inicie a restauração do cluster. Consulte os xref:datastore/backup_restore.adoc#_snapshot_restore_steps[Passos de Restauração de Instantâneo] para mais informações:
++
+[,bash]
+----
+ rke2 server --cluster-reset --cluster-reset-restore-path=<PATH-TO-SNAPSHOT>
+----
++
+[WARNING]
+==== 
+Isso sobrescreve todos os dados no datastore etcd. Verifique a integridade do instantâneo antes de restaurá-lo. Esteja ciente de que instantâneos grandes podem levar muito tempo para serem restaurados.
+====
+
+. Inicie o serviço RKE2 no primeiro nó de servidor:
++
+[,bash]
+----
+ systemctl start rke2-server
+----
+
+. Nos outros nós de servidor, remova o diretório do banco de dados RKE2:
++
+[,bash]
+----
+ rm -rf /var/lib/rancher/rke2/server/db
+----
+
+. Inicie o serviço RKE2 nos outros nós de servidor:
++
+[,bash]
+----
+ systemctl start rke2-server
+----
+
+. Inicie o serviço RKE2 em todos os nós de agente:
++
+[,bash]
+----
+ systemctl start rke2-agent
+----
+
+. Verifique o status do serviço RKE2 com `systemctl status rke2-server` ou `systemctl status rke2-agent`.
+
+--
+
+Armazenamento Externo::
++
+--
+
+Para reverter um cluster RKE2 ao usar um banco de dados externo (por exemplo, PostgreSQL, MySQL), siga estas etapas:
+
+. Se o cluster estiver em execução e a API do Kubernetes estiver disponível, pare os workloads de forma controlada, drenando todos os nós:
++
+[,bash]
+----
+ kubectl drain --ignore-daemonsets --delete-emptydir-data <NODE-ONE-NAME> <NODE-TWO-NAME> <NODE-THREE-NAME> ...
+----
++
+[NOTE]
+==== 
+Esse processo pode interromper aplicativos em execução.
+====
+
+. Em cada nó, pare o serviço RKE2 e todos os processos de pod em execução:
++
+[,bash]
+----
+ rke2-killall.sh
+----
+
+. Restaure um instantâneo do banco de dados feito antes de fazer upgrade do RKE2 e verifique a integridade do banco de dados. Por exemplo, se você estiver usando PostgreSQL, execute o seguinte comando:
++
+[,bash]
+----
+ pg_restore -U <DB-USER> -d <DB-NAME> <BACKUP-FILE>
+----
+
+. Em cada nó, reverta o binário do RKE2 para a versão anterior.
+ ** Clusters com Acesso à Internet:
+  *** Nós de servidor:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 sh -
+----
+
+  *** Nós de agente:
++
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_TYPE=agent sh -
+----
+ ** Clusters air-gapped:
+  *** Baixe os artefatos e execute o xref:install/airgap.adoc#_install_rke2[script de instalação] localmente.
+. Inicie o serviço RKE2 em cada nó:
++
+[,bash]
+----
+ systemctl start rke2-server #or rke2-agent
+----
+
+. Verifique o status do serviço RKE2 com `systemctl status rke2-server` ou `systemctl status rke2-agent`.
+
+--
+
+=====
+
+== Verificação
+
+Após o rollback, verifique o seguinte:
+
+* Versão do RKE2: `rke2 --version`
+* Saúde do cluster Kubernetes: `kubectl get nodes`
+* Funcionalidade do aplicativo.
+* Verifique os logs do RKE2 em busca de erros.

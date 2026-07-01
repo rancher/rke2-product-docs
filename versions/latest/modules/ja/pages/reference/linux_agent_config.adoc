@@ -1,0 +1,299 @@
+= エージェント構成リファレンス
+:page-languages: [en, zh]
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+これはRKE2エージェントを構成するために使用できるすべてのパラメータへのリファレンスです。これはコマンドライン引数へのリファレンスですが、RKE2を構成する最良の方法はxref:../install/configuration.adoc#_configuration_file[設定ファイル]を使用することです。
+
+== Common(通常のネットワーキング)
+
+|===
+| フラグ | 説明 | デフォルト | 環境変数
+
+| config
+| 設定ファイルへのパス
+| /etc/rancher/rke2/config.yaml
+| RKE2_CONFIG_FILE
+
+| debug
+| デバッグログをオンにします
+|
+| RKE2_DEBUG
+
+| データディレクトリ
+| 状態を保持するフォルダー
+| "/var/lib/rancher/rke2"
+|
+|===
+
+== クラスタ
+
+|===
+| フラグ | 説明 | 環境変数
+
+| token
+| 認証に使用するトークン
+| RKE2_TOKEN
+
+| token-file
+| 認証に使用するトークンファイル
+| RKE2_TOKEN_FILE
+
+| サーバ
+| 接続するサーバー
+| RKE2_URL
+|===
+
+== ノード
+
+|===
+| フラグ | 説明 | デフォルト | 環境変数
+
+| node-name
+| Node name(ノード名)
+|
+| RKE2_NODE_NAME
+
+| with-node-id
+| ノード名にIDを追加する
+|
+|
+
+| node-label
+| ラベルのセットで kubelet を登録して起動する
+|
+|
+
+| ノードテイント
+| テイントのセットで kubelet を登録する
+|
+|
+
+| image-credential-provider-bin-dir
+| 資格情報プロバイダプラグインのバイナリが格納されているディレクトリへのパス
+| "/var/lib/rancher/credentialprovider/bin"
+|
+
+| image-credential-provider-config
+| 資格情報プロバイダプラグインの設定ファイルへのパス
+| "/var/lib/rancher/credentialprovider/config.yaml"
+|
+
+| selinux
+| containerd でSELinuxを有効にする
+|
+| RKE2_SELINUX
+
+| lb-server-port
+| スーパーバイザークライアントのロードバランサー用のローカルポート。スーパーバイザーとapiserverが同じ場所にない場合、apiserverクライアントのロードバランサーにもこのポートより1つ少ない追加のポートが使用されます。
+| 6444
+| RKE2_LB_SERVER_PORT
+
+| カーネルのデフォルトを保護する
+| カーネル調整の動作。設定されている場合、カーネルの調整可能パラメータがkubeletのデフォルトと異なるとエラーが発生します。
+|
+|
+|===
+
+== ランタイム
+
+|===
+| フラグ | 説明 | デフォルト
+
+| コンテナランタイムエンドポイント
+| 組み込みのcontainerdを無効にし、指定されたパスのCRIソケットを使用します。--dockerと一緒に使用する場合、これはdockerソケットのパスを設定します。
+|
+
+| デフォルトランタイム
+| containerdのデフォルトのランタイムを設定します。
+|
+
+| snapshotter
+| デフォルトのcontainerdスナップショッターをオーバーライドする
+| "overlayfs"
+
+| プライベートレジストリ
+| プライベート レジストリの設定ファイル
+| "/etc/rancher/rke2/registries.yaml"
+|===
+
+== Containerd
+
+|===
+| フラグ | 説明
+
+| disable-default-registry-endpoint
+| ミラーがそのレジストリに対して設定されている場合、containerdのフォールバックデフォルトレジストリエンドポイントを無効にします
+|===
+
+== ネットワーキング
+
+|===
+| フラグ | 説明 | 環境変数
+
+| node-ip
+| ノードのために広告するIPv4/IPv6アドレス
+|
+
+| node-external-ip
+| ノードのために広告するIPv4/IPv6外部IPアドレス
+|
+
+| resolv-conf
+| Kubelet resolv.conf file
+| RKE2_RESOLV_CONF
+|===
+
+== コンポーネント
+
+|===
+| フラグ | 説明 | 環境変数
+
+| kubelet-arg
+| kubeletプロセス用のカスタマイズされたフラグ
+|
+
+| kube-proxy-arg
+| kube-proxyプロセス用のカスタマイズされたフラグ
+|
+
+| control-plane-resource-requests
+| コントロールプレーンリソースリクエスト
+| RKE2_CONTROL_PLANE_RESOURCE_REQUESTS
+
+| control-plane-resource-limits
+| コントロールプレーンリソース制限
+| RKE2_CONTROL_PLANE_RESOURCE_LIMITS
+
+| control-plane-probe-configuration
+| コントロールプレーンプローブ設定
+| RKE2_CONTROL_PLANE_PROBE_CONFIGURATION
+
+| kube-apiserver-extra-mount
+| kube-apiserverの追加ボリュームマウント
+| RKE2_KUBE_APISERVER_EXTRA_MOUNT
+
+| kube-scheduler-extra-mount
+| kube-schedulerの追加ボリュームマウント
+| RKE2_KUBE_SCHEDULER_EXTRA_MOUNT
+
+| kube-controller-manager-extra-mount
+| kube-controller-managerの追加ボリュームマウント
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_MOUNT
+
+| kube-proxy-extra-mount
+| kube-proxyの追加ボリュームマウント
+| RKE2_KUBE_PROXY_EXTRA_MOUNT
+
+| etcd-extra-mount
+| etcdの追加ボリュームマウント
+| RKE2_ETCD_EXTRA_MOUNT
+
+| cloud-controller-manager-extra-mount
+| cloud-controller-managerの追加ボリュームマウント
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_MOUNT
+
+| kube-apiserver-extra-env
+| kube-apiserverの追加環境変数
+| RKE2_KUBE_APISERVER_EXTRA_ENV
+
+| kube-scheduler-extra-env
+| kube-schedulerの追加環境変数
+| RKE2_KUBE_SCHEDULER_EXTRA_ENV
+
+| kube-controller-manager-extra-env
+| kube-controller-managerの追加環境変数
+| RKE2_KUBE_CONTROLLER_MANAGER_EXTRA_ENV
+
+| kube-proxy-extra-env
+| kube-proxyの追加環境変数
+| RKE2_KUBE_PROXY_EXTRA_ENV
+
+| etcd-extra-env
+| etcdの追加環境変数
+| RKE2_ETCD_EXTRA_ENV
+
+| cloud-controller-manager-extra-env
+| cloud-controller-managerの追加環境変数
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
+|===
+
+== イメージ
+
+|===
+| フラグ | 説明 | 環境変数
+
+| kube-apiserver-image
+| kube-apiserverに使用するイメージを上書きする
+| RKE2_KUBE_APISERVER_IMAGE
+
+| kube-controller-manager-image
+| kube-controller-managerに使用するイメージを上書きする
+| RKE2_KUBE_CONTROLLER_MANAGER_IMAGE
+
+| cloud-controller-manager-image
+| cloud-controller-managerに使用するイメージを上書きする
+| RKE2_CLOUD_CONTROLLER_MANAGER_IMAGE
+
+| kube-proxy-image
+| kube-proxyに使用するイメージを上書きする
+| RKE2_KUBE_PROXY_IMAGE
+
+| kube-scheduler-image
+| kube-schedulerに使用するイメージを上書きする
+| RKE2_KUBE_SCHEDULER_IMAGE
+
+| pause-image
+| pause用に使用するイメージを上書きする
+| RKE2_PAUSE_IMAGE
+
+| ランタイムイメージ
+| ランタイムバイナリ（containerd、kubectl、crictlなど）用に使用するイメージを上書きする
+| RKE2_RUNTIME_IMAGE
+
+| etcd-image
+| etcd用に使用するイメージを上書きする
+| RKE2_ETCD_IMAGE
+|===
+
+== クラウドプロバイダ
+
+|===
+| フラグ | 説明 | 環境変数
+
+| cloud-provider-name
+| クラウドプロバイダ名
+| RKE2_CLOUD_PROVIDER_NAME
+
+| cloud-provider-config
+| クラウドプロバイダ設定ファイルのパス
+| RKE2_CLOUD_PROVIDER_CONFIG
+|===
+
+== セキュリティ
+
+|===
+| フラグ | 説明 | 環境変数
+
+| profile
+| 選択したベンチマークに対してシステム設定を検証する（有効な項目：cis、cis-1.23（非推奨））
+| RKE2_CIS_PROFILE
+
+| audit-policy-file
+| 監査ポリシー設定を定義するファイルへのパス
+| RKE2_AUDIT_POLICY_FILE
+
+| pod-security-admission-config-file
+| ポッドセキュリティアドミッション設定を定義するファイルへのパス
+| RKE2_POD_SECURITY_ADMISSION_CONFIG_FILE
+|===
+
+== 実験的
+
+|===
+| フラグ | 説明 | 環境変数
+
+| kubelet-path
+| kubeletバイナリパスを上書きする
+| RKE2_KUBELET_PATH
+|===

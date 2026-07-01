@@ -1,0 +1,50 @@
+= Gerenciando Funções do Servidor
+:page-languages: [en, zh]
+:revdate: 2024-09-11
+:page-revdate: {revdate}
+
+Por padrão, iniciar o RKE2 executará todos os componentes do plano de controle, incluindo o apiserver, controller-manager, scheduler e etcd. É possível desabilitar componentes específicos para dividir as funções do plano de controle e etcd em nós separados.
+
+== Nós `etcd` Dedicados
+
+Para criar um servidor com apenas a função `etcd`, implante uma configuração com todos os componentes do plano de controle desabilitados:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable-apiserver: true
+disable-controller-manager: true
+disable-scheduler: true
+----
+
+Este primeiro nó iniciará o etcd e aguardará a junção de nós adicionais `etcd` e/ou `control-plane`. O cluster não será utilizável até que você junte um servidor adicional com os componentes `control-plane` habilitados.
+
+== Nós `control-plane` Dedicados
+
+[TIP]
+====
+Um nó `control-plane` dedicado não pode ser o primeiro servidor no cluster; deve haver um nó existente com a função `etcd` antes de juntar nós dedicados `control-plane`.
+====
+
+Para criar um servidor com apenas a função `control-plane`, implante uma configuração com o etcd desabilitado:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+server: https://<etcd-only-node>:9345
+disable-etcd: true
+----
+
+Após criar nós de servidor dedicados, as funções selecionadas estarão visíveis em `kubectl get node`:
+
+[,bash]
+----
+$ kubectl get nodes
+NAME           STATUS   ROLES                       AGE     VERSION
+rke2-server-1   Ready    etcd                        5h39m   v1.26.4+rke2r1
+rke2-server-2   Ready    control-plane,master        5h39m   v1.26.4+rke2r1
+----
+
+== Adicionando Funções a Servidores Existentes
+
+Funções podem ser adicionadas a nós dedicados existentes reiniciando o RKE2 com as flags de desabilitação removidas. Por exemplo, se você deseja adicionar a função `control-plane` a um nó `etcd` dedicado, você pode remover as linhas `disable-apiserver disable-controller-manager disable-scheduler` do arquivo de configuração e reiniciar o serviço.

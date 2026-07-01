@@ -1,0 +1,480 @@
+= CNCF KI-Konformität
+:page-languages: [en, zh]
+:revdate: 2025-11-06
+:page-revdate: {revdate}
+
+Die https://docs.google.com/document/d/1hXoSdh9FEs13Yde8DivCYjjXyxa7j4J8erjZPEGWuzc/edit?tab=t.0[CNCF Kubernetes KI-Konformität] definiert eine Reihe zusätzlicher Fähigkeiten, APIs und Konfigurationen, die ein Kubernetes-Cluster zusätzlich zur standardmäßigen CNCF Kubernetes-Konformität bieten MUSS, um KI/ML-Workloads zuverlässig und effizient auszuführen.
+
+Diese Seite zeigt, wie man diese Anforderungen mit RKE2 v1.34.1+rke2r1 erfüllt.
+
+== Unterstützung der dynamischen Ressourcenallokation (DRA)
+
+https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/[DRA] ist eine neue API, die flexiblere, feinere Ressourcenanforderungen über einfache Zählungen hinaus ermöglicht und seit v1.34 allgemein verfügbar (GA) ist.
+
+Überprüfen Sie, ob alle `resource.k8s.io/v1` DRA-API-Ressourcen aktiviert sind, indem Sie Folgendes ausführen:
+
+[,bash]
+----
+kubectl api-resources --api-group=resource.k8s.io
+----
+
+Erwartete Ausgabe:
+
+[,yaml]
+----
+NAME                     SHORTNAMES   APIVERSION           NAMESPACED   KIND
+deviceclasses                         resource.k8s.io/v1   false        DeviceClass
+resourceclaims                        resource.k8s.io/v1   true         ResourceClaim
+resourceclaimtemplates                resource.k8s.io/v1   true         ResourceClaimTemplate
+resourceslices                        resource.k8s.io/v1   false        ResourceSlice
+----
+
+== Unterstützung der Gateway-API
+
+https://gateway-api.sigs.k8s.io/[Gateway-API] stellt die nächste Generation von Kubernetes-Ingress-, Lastausgleichs- und Service-Mesh-APIs dar.
+
+Um die Gateway-API in RKE2 zu aktivieren, muss der Cluster mit aktiviertem Traefik bereitgestellt und der KubernetesGateway-Anbieter konfiguriert werden, wie in den xref:networking/networking_services.adoc#_ingress_controller[Ingress-Controller-Dokumenten] erklärt.
+
+Überprüfen Sie, ob alle `gateway.networking.k8s.io/v1` Gateway-API-Ressourcen aktiviert sind, indem Sie Folgendes ausführen:
+
+[,bash]
+----
+kubectl api-resources --api-group=gateway.networking.k8s.io/v1
+----
+
+Erwartete Ausgabe:
+
+[,yaml]
+----
+NAME              SHORTNAMES   APIVERSION                          NAMESPACED   KIND
+gatewayclasses    gc           gateway.networking.k8s.io/v1        false        GatewayClass
+gateways          gtw          gateway.networking.k8s.io/v1        true         Gateway
+grpcroutes                     gateway.networking.k8s.io/v1        true         GRPCRoute
+httproutes                     gateway.networking.k8s.io/v1        true         HTTPRoute
+referencegrants   refgrant     gateway.networking.k8s.io/v1beta1   true         ReferenceGrant
+----
+
+Um zu überprüfen, ob Traefik Gateway-API-Ressourcen verwendet:
+
+. Erstellen Sie eine GatewayClass:
++
+[,yaml]
+----
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: traefik
+spec:
+  controllerName: traefik.io/gateway-controller
+----
+
+. Überprüfen Sie den Status:
++
+[,yaml]
+----
+kubectl get gatewayclass traefik -o jsonpath='{.status}'
+----
++
+Erwartete Ausgabe:
++
+[,json]
+----
+"message":"Handled by Traefik controller","observedGeneration":1,"reason":"Handled","status":"True","type":"Accepted"
+----
+
+== Gang-Scheduling
+
+Eine Gang-Scheduling-Lösung (z. B. Kueue oder Volcano) muss zur Installation verfügbar sein, um ein All-or-Nothing-Scheduling für verteilte KI-Workloads sicherzustellen.
+
+Wir werden Volcano in RKE2 für diesen Verifizierungstest verwenden.
+
+[,bash]
+----
+helm repo add volcano-sh https://volcano-sh.github.io/helm-charts
+helm repo update
+helm install volcano volcano-sh/volcano -n volcano-system --create-namespace
+----
+
+Die Installation erstellt drei Deployments im `volcano-system` Namespace:
+
+----
+NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/volcano-admission     1/1     1            1           130m
+deployment.apps/volcano-controllers   1/1     1            1           130m
+deployment.apps/volcano-scheduler     1/1     1            1           130m
+----
+
+Die Überprüfung ist abgeschlossen, aber wir werden einen Funktionstest durchführen. Der folgende Schritt erstellt einen Gang-Job mit zwei Aufgaben (jeweils mit einer NVIDIA-GPU) auf einem Zwei-GPU-Cluster:
+
+[,yaml]
+----
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: gpu-nbody-gang-job
+  namespace: default
+spec:
+  minAvailable: 2
+  schedulerName: volcano
+
+  tasks:
+    - name: nbody-task-1
+      replicas: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          runtimeClassName: nvidia
+          containers:
+            - name: cuda-container-1
+              image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+              command: ["/bin/bash", "-c"]
+              args:
+                - "while true; do sleep 5 && cuda-samples/nbody -gpu -benchmark; done"
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+
+    - name: nbody-task-2
+      replicas: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          runtimeClassName: nvidia
+          containers:
+            - name: cuda-container-2
+              image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+              command: ["/bin/bash", "-c"]
+              args:
+                - "while true; do sleep 5 && cuda-samples/nbody -gpu -benchmark; done"
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+----
+
+Beide Pods sollten nach wenigen Sekunden laufen.
+
+Um einen Gang-Scheduling-Fehler zu testen, ändern Sie das Manifest, um `minAvailable: 3` zu verwenden, und fügen Sie eine dritte Aufgabe hinzu. Reichen Sie den Job erneut ein:
+
+[,yaml]
+----
+    - name: nbody-task-3
+      replicas: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          runtimeClassName: nvidia
+          containers:
+            - name: cuda-container-3
+              image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+              command: ["/bin/bash", "-c"]
+              args:
+                - "while true; do sleep 5 && cuda-samples/nbody -gpu -benchmark; done"
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+----
+
+Beobachten Sie, dass die drei Pods im Status "Ausstehend" bleiben. Dies zeigt, dass das Gang-Scheduling wie erwartet funktioniert.
+
+[,bash]
+----
+default          gpu-nbody-gang-job-nbody-task-1-0                             0/1     Pending     0          50s
+default          gpu-nbody-gang-job-nbody-task-2-0                             0/1     Pending     0          50s
+default          gpu-nbody-gang-job-nbody-task-3-0                             0/1     Pending     0          50s
+----
+
+== Cluster-Autoskalierer
+
+Wenn die Plattform einen Cluster-Autoskalierer oder einen gleichwertigen Mechanismus bereitstellt, muss er in der Lage sein, Beschleuniger-spezifische Knoten-Gruppen basierend auf ausstehenden Pods zu skalieren. Da RKE2 als Kubernetes-Distribution fungiert, bietet es keinen integrierten Cluster-Autoskalierer.
+
+Zur Referenz erklären wir, wie man den Upstream-Autoskalierer https://github.com/kubernetes/autoscaler[autoscaler] mit Azure als Beispiel verwendet.
+
+. Erstellen Sie ein https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview[Virtual Machine Scale Set (VMSS)] mit GPU-ausgestatteten VMs.
+. Stellen Sie RKE2 mit den folgenden Optionen bereit:
++
+[,yaml]
+----
+disable-cloud-controller: true # Only in rke2-server
+kubelet-arg: # On both rke2-server and rke2-agent
+- --cloud-provider=external
+----
+
+. Installieren Sie den Azure CCM:
++
+[,bash]
+----
+helm install --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure --generate-name --set cloudControllerManager.imageRepository=mcr.microsoft.com/oss/kubernetes --set cloudControllerManager.imageName=azure-cloud-controller-manager --set cloudNodeManager.imageRepository=mcr.microsoft.com/oss/kubernetes --set cloudNodeManager.imageName=azure-cloud-node-manager --set cloudControllerManager.configureCloudRoutes=false --set cloudControllerManager.allocateNodeCidrs=false
+----
+
+. Erstellen Sie die `azure.json`-Datei und speichern Sie sie unter `/etc/kubernetes/azure.json`. Stellen Sie sicher, dass sie die folgenden zwei Optionen enthält:
++
+[,json]
+----
+  "useManagedIdentityExtension": false,
+  "useInstanceMetadata": true
+----
++
+Die bereitgestellten Knoten sollten eine ProviderID enthalten. Überprüfen Sie dies mit:
++
+[,bash]
+----
+kubectl get nodes -o yaml | grep ProviderID
+----
++
+Die ProviderID wird aus den Metadaten der Instanz abgerufen. Überprüfen Sie dies mit:
++
+[,bash]
+----
+curl -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2021-02-01"
+----
+
+. Installieren Sie den Upstream-Autoskalierer. 
+.. Erstellen Sie zunächst eine `values.yaml`-Konfigurationsdatei, in der das VMSS aus Schritt 1 und andere notwendige Azure-Details angegeben sind. 
+.. Führen Sie die folgenden `helm` Befehle aus:
++
+[,bash]
+----
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update
+helm install cluster-autoscaler autoscaler/cluster-autoscaler -f values.yaml
+----
+
+. Wenn korrekt bereitgestellt, überwacht der Autoscaler Pods, die eine GPU-Ressource anfordern. Wenn der Cluster die Anfrage nicht erfüllen kann, kontaktiert der Autoscaler Azure, um automatisch einen neuen GPU-Knoten zum Cluster bereitzustellen und hinzuzufügen.
+
+== Horizontaler Pod-Autoscaler
+
+Die Fähigkeit, Pods basierend auf benutzerdefinierten Metriken, die für AI/ML-Workloads relevant sind, zu skalieren, wird mit dem https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/[HorizontalPodAutoscaler (HPA)] erreicht, der standardmäßig in Kubernetes enthalten ist.
+
+Um diese Anforderung zu demonstrieren, installieren Sie eine Ollama-Implementierung in RKE2. Das folgende Manifest wird dann zur Überprüfung verwendet:
+
+[,yaml]
+----
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ollama-hpa
+spec:
+  scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ollama
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Object
+    object:
+      describedObject:
+        apiVersion: v1
+        kind: Namespace
+        name: suse-private-ai
+      metric:
+        name: gpu_utilization
+      target:
+        type: AverageValue
+        averageValue: "70"
+----
+
+Eine Erhöhung der Last auf Ollama wird die GPU-Auslastung auf 70 % erhöhen, was die Implementierung neuer Ollama-Pods auslöst.
+
+== Leistungsmetriken des Beschleunigers
+
+Diese Anforderung verlangt eine funktionale Lösung für Beschleuniger-Metriken, die feingranulare Leistungsmetriken über einen standardisierten, maschinenlesbaren Metrik-Endpunkt bereitstellt. Diese Lösung muss einen Kernsatz von Metriken für die Nutzung pro Beschleuniger und den Speicherverbrauch enthalten.
+
+Wenn der NVIDIA GPU Operator installiert ist (wie in der xref:add-ons/gpu_operators.adoc#_deploy_nvidia_operator[Dokumentation zu GPU-Operatoren] beschrieben), werden ein `nvidia-dcgm-exporter` DaemonSet und ein Service bereitgestellt. Abfragen Sie diesen Service, um die erforderlichen GPU-Metriken zu sammeln, wie z. B. die Nutzung des Beschleunigers, den Speicherverbrauch, die Temperatur, den Stromverbrauch usw.
+
+Wenn Sie beispielsweise über SSH in einen Cluster-Knoten innerhalb des Clusters zugreifen, werden die Metriken angezeigt, die im OpenMetrics-Textformat bereitgestellt werden. Der folgende Abschnitt beschreibt, wie Prometheus und Grafana bereitgestellt werden, um diese zu konsumieren.
+
+[,bash]
+----
+# Get the clusterIP
+svcIP=$(kubectl get svc nvidia-dcgm-exporter -n gpu-operator -o jsonpath='{.spec.clusterIP}')
+# Get the port
+svcPort=$(kubectl get svc nvidia-dcgm-exporter -n gpu-operator -o jsonpath='{.spec.ports[0].port}')
+# Output the metrics
+curl -sL http://${svcIP}:${svcPort}/metrics
+----
+
+== Metriken für AI-Jobs und Inferenzdienste
+
+Diese Anforderung verlangt ein System, das in der Lage ist, Metriken zu entdecken und zu sammeln, die von Workloads in einem standardisierten Format bereitgestellt werden.
+
+Prometheus und Grafana erfüllen diese Anforderung. Zuerst installieren Sie sie:
+
+[,bash]
+----
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install prometheus-stack prometheus-community/kube-prometheus-stack \
+>   --namespace monitoring \
+>   --create-namespace
+----
+
+Nach der Installation erstellen Sie einen ServiceMonitor, um Metriken von Workloads zu sammeln. Als Beispiel konfiguriert das folgende Manifest Prometheus, um DCGM-Metriken vom NVIDIA GPU Operator zu sammeln:
+
+[,yaml]
+----
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nvidia-dcgm-monitor
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: nvidia-dcgm-exporter
+  namespaceSelector:
+    matchNames:
+      - gpu-operator
+  endpoints:
+  - port: gpu-metrics
+    path: /metrics
+    interval: 15s
+----
+
+Nach einigen Minuten zeigt das Grafana-Dashboard die DCGM-Metriken, wie `DCGM_FI_DEV_GPU_UTIL`.
+
+== Sicheren Zugriff auf Beschleuniger
+
+Diese Anforderung schreibt vor, dass der Zugriff auf Beschleuniger aus Containern ordnungsgemäß isoliert und von Kubernetes vermittelt werden muss. Um dies zu erreichen, installieren Sie den NVIDIA GPU Operator, wie in der Dokumentation zum GPU Operator beschrieben xref:add-ons/gpu_operators.adoc#_deploy_nvidia_operator[docs].
+
+Überprüfen Sie nach der Installation, ob die Toolkit-Konfiguration bei `/usr/local/nvidia/toolkit/.config/nvidia-container-runtime/config.toml` Folgendes enthält:
+
+[,yaml]
+----
+accept-nvidia-visible-devices-as-volume-mounts = true
+accept-nvidia-visible-devices-envvar-when-unprivileged = false
+----
+
+Stellen Sie sicher, dass das `device-plugin` DaemonSet die folgende Umgebungsvariable enthält:
+
+[,yaml]
+----
+DEVICE_LIST_STRATEGY:        volume-mounts
+----
+
+Wenn die Konfiguration korrekt ist, überprüfen Sie die Isolationsanforderung, indem Sie die folgenden drei Pods in einem Cluster mit nur einer GPU ausführen:
+
+[,yaml]
+----
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nbody-gpu-benchmark1
+  namespace: default
+spec:
+  restartPolicy: OnFailure
+  runtimeClassName: nvidia
+  containers:
+  - name: cuda-container
+    image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+    command: ["/bin/bash", "-c"]
+    args:
+      - "while true; do sleep 5 && cuda-samples/nbody -gpu -benchmark; done"
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nbody-gpu-benchmark2
+  namespace: default
+spec:
+  restartPolicy: OnFailure
+  runtimeClassName: nvidia
+  containers:
+  - name: cuda-container2
+    image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+    command: ["/bin/bash", "-c"]
+    args:
+      - "while true; do sleep 5 && cuda-samples/nbody -gpu -benchmark; done"
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nbody-gpu-benchmark3
+  namespace: default
+spec:
+  restartPolicy: OnFailure
+  runtimeClassName: nvidia
+  containers:
+  - name: cuda-container3
+    image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+    command: ["/bin/bash", "-c"]
+    args:
+      - "while true; do sleep 5 && cuda-samples/nbody -gpu -benchmark; done"
+----
+
+Erwartete Ergebnisse (Isolation bestätigt):
+
+* Pod 1 läuft erfolgreich und nutzt die GPU.
+* Pod 2 wird von Kubernetes nicht geplant, da die einzige im Cluster verfügbare GPU bereits von Pod 1 genutzt wird.
+* Pod 3 läuft, kann jedoch keine verfügbare GPU finden, wie in den Protokollen zu sehen ist.
+
+Dieses Ergebnis zeigt, dass die Isolierung der Beschleuniger korrekt funktioniert.
+
+== Robuster Betrieb von CRDs und Controllern
+
+Diese Anforderung schreibt die Installation und zuverlässige Funktion von mindestens einem komplexen KI-Operator mit CRDs vor. Die Überprüfung erfordert die Bestätigung, dass CRDs registriert sind und dass ein Admission Webhook ungültige Konfigurationen ablehnt.
+
+Um diese Anforderung zu überprüfen, installieren Sie den Kubeflow Training Operator in RKE2. Da kein Helm-Chart verfügbar ist, verwenden Sie den folgenden `kubectl` Befehl als Workaround:
+
+[,bash]
+----
+kubectl apply -k "github.com/kubeflow/training-operator/manifests/overlays/standalone?ref=v1.8.0"
+----
+
+Überprüfen Sie, ob die CRDs installiert sind und der Webhook registriert ist:
+
+[,bash]
+----
+$> kubectl get crds | grep kubeflow
+mpijobs.kubeflow.org                                       2025-10-24T13:04:27Z
+mxjobs.kubeflow.org                                        2025-10-24T13:04:27Z
+paddlejobs.kubeflow.org                                    2025-10-24T13:04:28Z
+pytorchjobs.kubeflow.org                                   2025-10-24T13:04:28Z
+tfjobs.kubeflow.org                                        2025-10-24T13:04:29Z
+xgboostjobs.kubeflow.org                                   2025-10-24T13:04:29Z
+
+$> kubectl get validatingwebhookconfigurations
+validator.training-operator.kubeflow.org   5          10m
+
+$> kubectl get pods -n kubeflow
+NAME                                READY   STATUS    RESTARTS   AGE
+training-operator-f7d4b59f6-vdnh9   1/1     Running   0          9m54s
+----
+
+Testen Sie die Ablehnungsfähigkeit des Admission Webhooks, indem Sie versuchen, das folgende ungültige TFJob-Manifest anzuwenden (das erforderliche Bildfeld fehlt):
+
+[,yaml]
+----
+# saved as invalid-tfjob.yaml
+apiVersion: kubeflow.org/v1
+kind: TFJob
+metadata:
+  name: tfjob-invalid-test
+spec:
+  tfReplicaSpecs:
+    Chief:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - name: tensorflow
+              # INTENTIONAL ERROR: Missing the 'image' field
+              # image: tensorflow/tensorflow:latest
+              # command: ["/bin/bash", "-c"]
+              # args: ["echo 'Chief running'; sleep 10;"]
+----
+
+Der Admission Webhook gibt den erwarteten Fehler zurück und bestätigt damit seine Funktion:
+
+[,bash]
+----
+Error from server (Forbidden): error when creating "invalid-tfjob.yaml": admission webhook "validator.tfjob.training-operator.kubeflow.org" denied the request: spec.tfReplicaSpecs[Chief].template.spec.containers[0].image: Required value: must be required
+----
+
+Entfernen Sie die Kommentare im vorherigen Beispiel und versuchen Sie den Job erneut, um eine erfolgreiche Bereitstellung zu sehen.

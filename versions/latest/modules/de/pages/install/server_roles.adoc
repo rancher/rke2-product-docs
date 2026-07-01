@@ -1,0 +1,50 @@
+= Verwalten von Serverrollen
+:page-languages: [en, zh]
+:revdate: 2024-09-11
+:page-revdate: {revdate}
+
+Standardmäßig werden beim Starten von RKE2 alle Steuerungskomponenten ausgeführt, einschließlich des apiservers, des controller-managers, des schedulers und etcd. Es ist möglich, bestimmte Komponenten zu deaktivieren, um die Steuerungs- und etcd-Rollen auf separate Knoten zu verteilen.
+
+== Dedizierte `etcd` Knoten
+
+Um einen Server mit nur der `etcd` Rolle zu erstellen, stellen Sie eine Konfiguration bereit, bei der alle Steuerungskomponenten deaktiviert sind:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable-apiserver: true
+disable-controller-manager: true
+disable-scheduler: true
+----
+
+Dieser erste Knoten startet etcd und wartet darauf, dass sich zusätzliche `etcd` und/oder `control-plane` Knoten anschließen. Der Cluster ist nicht nutzbar, bis ein zusätzlicher Server mit den aktivierten `control-plane` Komponenten dem Cluster beigetreten ist.
+
+== Dedizierte `control-plane` Knoten
+
+[TIP]
+====
+Ein dedizierter `control-plane` Knoten kann nicht der erste Server im Cluster sein; es muss bereits ein Knoten mit der `etcd` Rolle vorhanden sein, bevor dedizierte `control-plane` Knoten beitreten.
+====
+
+Um einen Server mit nur der `control-plane` Rolle zu erstellen, stellen Sie eine Konfiguration bereit, bei der etcd deaktiviert ist:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+server: https://<etcd-only-node>:9345
+disable-etcd: true
+----
+
+Nach der Erstellung dedizierter Serverknoten werden die ausgewählten Rollen in `kubectl get node` sichtbar sein:
+
+[,bash]
+----
+$ kubectl get nodes
+NAME           STATUS   ROLES                       AGE     VERSION
+rke2-server-1   Ready    etcd                        5h39m   v1.26.4+rke2r1
+rke2-server-2   Ready    control-plane,master        5h39m   v1.26.4+rke2r1
+----
+
+== Rollen zu bestehenden Servern hinzufügen
+
+Rollen können bestehenden dedizierten Knoten hinzugefügt werden, indem RKE2 neu gestartet wird, nachdem die Disable-Flags entfernt wurden. Wenn Sie beispielsweise die `control-plane` Rolle zu einem dedizierten `etcd` Knoten hinzufügen möchten, können Sie die `disable-apiserver disable-controller-manager disable-scheduler` Zeilen aus der Konfigurationsdatei entfernen und den Dienst neu starten.

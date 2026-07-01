@@ -1,0 +1,36 @@
+= Einführung
+:page-languages: [en, zh]
+:revdate: 2025-07-10
+:page-revdate: {revdate}
+
+image::logo-horizontal-rke2.svg[RKE2 Logo, 346,111]
+
+{product-name} ist die unternehmensbereite Kubernetes-Distribution der nächsten Generation von Rancher. Es ist auch als RKE Government bekannt.
+
+Es handelt sich um eine vollständig https://landscape.cncf.io/?group=projects-and-products&view-mode=card&item=platform--certified-kubernetes-distribution--rke-government#app-definition-and-development--application-definition-image-build[konforme Kubernetes-Distribution], die sich auf Sicherheit und Compliance innerhalb der USA konzentriert. US-Bundesbehörden liegt.
+
+Um diese Ziele zu erreichen, führt {product-name} Folgendes aus:
+
+* Bietet xref:security/hardening_guide.adoc[Standardeinstellungen und Konfigurationsoptionen], die es Clustern ermöglichen, den CIS Kubernetes Benchmark xref:security/cis_self_assessment19.adoc[v1.9] oder xref:security/cis_self_assessment110.adoc[v1.10] mit minimalem Eingriff durch den Betreiber zu bestehen.
+* Ermöglicht xref:security/fips3_support.adoc[FIPS 140-3-Konformität].
+* Scannt regelmäßig Komponenten auf CVEs mit https://github.com/aquasecurity/trivy[trivy] in unserer Build-Pipeline.
+
+== Wie unterscheidet sich das von RKE oder {k3s-product-name}?
+
+{product-name} kombiniert das Beste aus beiden Welten der 1.x-Version von RKE (im Folgenden als RKE1 bezeichnet) und {k3s-product-name}.
+
+Von {k3s-product-name} erbt es die Benutzerfreundlichkeit, die einfache Bedienung und das Bereitstellungsmodell.
+
+Von RKE1 erbt es die enge Ausrichtung an Upstream Kubernetes. An einigen Stellen hat sich {k3s-product-name} von Upstream Kubernetes entfernt, um für Edge-Bereitstellungen zu optimieren, aber RKE1 und RKE2 können eng mit Upstream verbunden bleiben.
+
+Wichtig ist, dass {product-name} nicht auf Docker angewiesen ist, wie es RKE1 tut. RKE1 nutzte Docker zur Bereitstellung und Verwaltung der Steuerungskomponenten sowie der Container-Laufzeit für Kubernetes. RKE2 startet Steuerungskomponenten als statische Pods, die vom Kubelet verwaltet werden. Die integrierte Container-Laufzeit ist containerd.
+
+== Warum zwei Namen?
+
+Es ist bekannt als {product-name}, da es die nächste Iteration des Rancher Kubernetes Engine für Rechenzentrumsanwendungen ist. Die Distribution läuft eigenständig oder integriert in Rancher. Die automatisierte Bereitstellung neuer {product-name} Cluster ist in Rancher v2.6+ verfügbar.
+
+Es war auch als RKE Government bekannt, da es entwickelt wurde, um Sektoren mit erhöhten Sicherheitsanforderungen anzusprechen.
+
+== Sicherheit
+
+Rancher Labs unterstützt verantwortungsvolle Offenlegung und bemüht sich, Sicherheitsprobleme in einem angemessenen Zeitrahmen zu lösen. Um eine Sicherheitsschwachstelle zu melden, senden Sie eine E-Mail an link:mailto:security@rancher.com[security@rancher.com].

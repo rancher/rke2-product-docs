@@ -1,0 +1,319 @@
+= Requisitos
+:page-languages: [en, zh]
+:revdate: 2026-02-06
+:page-revdate: {revdate}
+
+RKE2 é muito leve, mas possui alguns requisitos mínimos conforme descrito abaixo.
+
+== Pré-requisitos
+
+Dois nós RKE2 não podem ter o mesmo nome de nó. Por padrão, o nome do nó é obtido do hostname da máquina.
+
+Se duas ou mais de suas máquinas tiverem o mesmo hostname, você deve fazer uma das seguintes opções:
+
+* Atualize o hostname para um valor único.
+* Defina o parâmetro `node-name` no arquivo de configuração para um valor único.
+* Defina o parâmetro `with-node-id` no arquivo de configuração para `true` para adicionar um número de ID gerado aleatoriamente ao hostname.
+
+Se o Tempo de Ida e Volta (RTT) entre os nós do plano de controle exceder 2ms, consulte o seguinte https://support.scc.suse.com/s/kb/Maximum-RTT-Round-Trip-Time-for-an-RKE2-cluster?language=en_US[guia].
+
+== Arquitetura
+
+RKE2 está disponível para x86_64 e arm64/aarch64.
+
+== Sistemas operacionais
+
+=== O teste do Linux
+
+Veja a https://www.suse.com/suse-rke2/support-matrix/all-supported-versions[Matriz de Suporte RKE2] para todas as versões de sistema operacional que foram validadas com o RKE2. Em geral, o RKE2 deve funcionar em qualquer distribuição Linux que use systemd e iptables.
+
+==== RHEL 10
+
+No RHEL 10 (e seus derivados como Rocky Linux), um pacote adicional é necessário para habilitar o nf_conntrack.
+
+[,bash]
+----
+sudo dnf install kernel-modules-extra -y
+----
+
+=== Windows
+
+[IMPORTANT]
+====
+O suporte ao Windows requer a escolha de Calico ou Flannel como o CNI para o cluster RKE2.
+====
+
+[NOTE] 
+====
+O recurso de Contêineres do Windows Server precisa ser habilitado para que o agente Windows do RKE2 funcione.
+====
+
+O agente RKE2 Windows Node (Worker) foi testado e validado nos seguintes sistemas operacionais e suas versões não principais subsequentes:
+
+* Windows Server 2019 LTSC (amd64) (Build do SO 17763.2061)
+* Windows Server 2022 LTSC (amd64) (Build do SO 20348.169)
+
+Abra uma nova janela do Powershell com privilégios de administrador.
+
+[,powershell]
+----
+powershell -Command "Start-Process PowerShell -Verb RunAs"
+----
+
+Na nova janela do Powershell, execute o seguinte comando.
+
+[,powershell]
+----
+Enable-WindowsOptionalFeature -Online -FeatureName Containers -All
+----
+
+Isso exigirá uma reinicialização para que o recurso `Containers` funcione corretamente.
+
+== Hardware
+
+Os requisitos de hardware variam com base no tamanho das suas implantações. As recomendações mínimas estão descritas aqui.
+
+=== Linux/Windows
+
+* RAM: 4GB Mínimo (recomendamos pelo menos 8GB)
+* CPU: Mínimo de 2 CPUs (recomendamos pelo menos 4 CPUs)
+
+=== Guia de Dimensionamento de VM
+
+Quando há limitações de CPU e RAM nos nós de controle + etcd, pode haver limitações na quantidade de nós agentes que podem ser adicionados sob condições de carga de trabalho padrão.
+
+|===
+| CPU do Servidor | RAM do Servidor | Número de Agentes
+
+| 2
+| 4 GB
+| 0-225
+
+| 4
+| 8 GB
+| 226-450
+
+| 8
+| 16 GB
+| 451-1300
+
+| 16+
+| 32 GB
+| 1300+
+|===
+
+Recomenda-se juntar nós de agentes em lotes de 50 ou menos para permitir que a CPU libere espaço, pois há um pico na junção de nós. Lembre-se de modificar o padrão `cluster-cidr` se desejar mais de 255 nós!
+
+Esses dados foram recuperados sob condições de teste específicas. Isso variará dependendo do ambiente e das cargas de trabalho. Os passos abaixo fornecem uma visão geral do teste que foi realizado para recuperar isso. Foi realizado pela última vez na versão v1.27.4+rke2r1. Todas as máquinas foram provisionadas na AWS com volumes gp3 padrão de 20 GiB.
+
+. Monitore os recursos no Grafana usando a fonte de dados Prometheus.
+. Implante cargas de trabalho de forma a simular atividade contínua do cluster:
+** Uma carga de trabalho básica que escala para cima e para baixo continuamente
+** Uma carga de trabalho que é deletada e recriada em um loop
+** Uma carga de trabalho constante que contém vários outros recursos, incluindo CRDs.
+. Junte os nós agentes em lotes de 30-50 de cada vez.
+
+==== Discos
+
+O desempenho do RKE2 depende do desempenho do banco de dados, e como o RKE2 executa o etcd embutido e armazena o diretório de dados no disco, recomendamos o uso de um SSD sempre que possível para garantir um desempenho ideal.
+
+== Projeto de Rede
+
+[IMPORTANT]
+====
+Se o seu nó tiver o NetworkManager instalado e habilitado, xref:known_issues.adoc#_networkmanager[garanta que ele esteja configurado para ignorar interfaces gerenciadas pelo CNI]. Se o seu nó tiver o Wicked instalado e habilitado, xref:known_issues.adoc#_wicked[garanta que a configuração do sysctl de encaminhamento esteja habilitada].
+====
+
+O servidor RKE2 precisa que a porta 6443 e 9345 sejam acessíveis por outros nós no cluster.
+
+Todos os nós precisam ser capazes de alcançar outros nós pela porta UDP 8472 quando o Flannel VXLAN é usado.
+
+Se você deseja utilizar o servidor de métricas, precisará abrir a porta 10250 em cada nó.
+
+[IMPORTANT] 
+====
+A porta VXLAN nos nós não deve ser exposta ao mundo, pois isso abre sua rede de cluster para ser acessada por qualquer um. Execute seus nós atrás de um firewall/grupo de segurança que desative o acesso à porta 8472.
+====
+
+=== Regras de rede de entrada
+
+|===
+| Portar | Protocolo | Origem | Destino | Descrição
+
+| 6443
+| TCP
+| Todos os nós do RKE2
+| Nós do servidor RKE2
+| API Kubernetes
+
+| 9345
+| TCP
+| Todos os nós do RKE2
+| Nós do servidor RKE2
+| API do supervisor RKE2
+
+| 10250
+| TCP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Métricas do kubelet
+
+| 2379
+| TCP
+| Nós do servidor RKE2
+| Nós do servidor RKE2
+| Porta do cliente etcd
+
+| 2380
+| TCP
+| Nós do servidor RKE2
+| Nós do servidor RKE2
+| Porta do par etcd
+
+| 2381
+| TCP
+| Nós do servidor RKE2
+| Nós do servidor RKE2
+| Porta de métricas do etcd
+
+| 30000-32767
+| TCP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Intervalo de portas NodePort
+|===
+
+==== Regras de rede de entrada específicas do CNI
+
+[tabs]
+======
+
+Canal::
++
+|===
+| Portar | Protocolo | Origem | Destino | Descrição
+
+| 8472
+| UDP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Canal CNI com VXLAN
+
+| 9099
+| TCP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Verificações de saúde do Canal CNI
+
+| 51820
+| UDP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Canal CNI com WireGuard IPv4
+
+| 51821
+| UDP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Canal CNI com WireGuard IPv6/dual-stack
+|===
+
+Cilium::
++
+|===
+| Portar | Protocolo | Origem | Destino | Descrição
+
+| 8/0
+| ICMP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Verificações de saúde do CNI Cilium
+
+| 4240
+| TCP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Verificações de saúde do CNI Cilium
+
+| 8472
+| UDP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| CNI Cilium com VXLAN
+
+| 51871
+| UDP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| CNI Cilium com WireGuard
+
+|===
+
+Calico::
++
+|===
+| Portar | Protocolo | Origem | Destino | Descrição
+
+| 179
+| TCP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| CNI Calico com BGP
+
+| 4789
+| UDP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| CNI Calico com VXLAN
+
+| 5473
+| TCP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| CNI Calico com Typha
+
+| 9098
+| TCP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Verificações de saúde do Calico Typha
+
+| 9099
+| TCP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Verificações de saúde do Calico
+|===
+
+Flannel::
++
+|===
+| Portar | Protocolo | Origem | Destino | Descrição
+
+| 4789
+| UDP
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Flannel CNI com VXLAN
+|===
+======
+
+=== Regras de rede de entrada específicas do Windows
+
+|===
+| Protocolo | Portar | Origem | Destino | Descrição
+
+| UDP
+| 4789
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| Necessário para Calico e Flannel VXLAN
+
+| TCP
+| 179
+| Todos os nós do RKE2
+| Todos os nós do RKE2
+| CNI Calico com BGP
+|===
+
+Normalmente, todo o tráfego de saída será permitido.

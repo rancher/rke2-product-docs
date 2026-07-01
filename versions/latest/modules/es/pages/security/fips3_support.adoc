@@ -1,0 +1,65 @@
+= Habilitación de FIPS 140-3
+:page-languages: [en, zh]
+:revdate: 2026-02-05
+:page-revdate: {revdate}
+
+FIPS 140-3 es de EE. UU. FIPS 140-3 es un estándar de seguridad del Gobierno de EE. UU. utilizado para aprobar módulos criptográficos. Este documento explica cómo se construye RKE2 con bibliotecas criptográficas validadas por FIPS.
+
+La verificación de cumplimiento está disponible en: xref:attachment$RKE2_FIPS3_Verified.pdf[FIPS 140-3 Verificado].
+
+== Uso del compilador Go compatible con FIPS
+
+El compilador Go que se está utilizando se puede encontrar https://go.googlesource.com/go/+/dev.boringcrypto[aquí]. Cada componente del sistema se construye con la versión de este compilador que coincide con la misma versión estándar del compilador Go que se utilizaría de otro modo.
+
+Esta versión de Go reemplaza las bibliotecas criptográficas estándar de Go con el módulo BoringCrypto validado por FIPS. Para más información, consulta el https://go.dev/src/crypto/internal/boring/README[README de GoBoring]. Este módulo está validado por NIST como el módulo https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4968[BoringCrypto] en una amplia gama de sistemas.
+
+=== Soporte de FIPS en componentes del clúster
+
+La mayoría de los componentes de RKE2 están compilados estáticamente utilizando el compilador GoBoring. Arquitectónicamente, RKE2 se divide en varias secciones, y la siguiente lista describe estas secciones y sus componentes asociados:
+
+* Kubernetes
+ ** Servidor API
+ ** Gestor de Controladores
+ ** Programador
+ ** Kubelet
+ ** Kube Proxy
+ ** Servidor de Métricas
+ ** Kubectl
+* Charts de Helm
+ ** Flannel
+ ** Calico
+ ** CoreDNS
+ ** Traefik
+
+== Entorno de ejecución
+
+Para asegurar que toda la arquitectura utilice algoritmos compatibles con FIPS 140-3, las utilidades de tiempo de ejecución de RKE2 se compilan estáticamente con el compilador Go habilitado para FIPS. Esto garantiza el cumplimiento en todos los niveles de la pila, desde los daemons de Kubernetes hasta los mecanismos de orquestación de contenedores.
+
+* etcd
+* containerd
+ ** containerd-shim
+ ** containerd-shim-runc-v1
+ ** containerd-shim-runc-v2
+ ** ctr
+* crictl
+* runc
+
+== CNI
+
+RKE2 admite la selección de un CNI alternativo a través de la bandera `--cni`. Viene empaquetado con varias opciones, incluyendo Canal (por defecto), Calico, Cilium y Multus. Sin embargo, solo Canal se reconstruye para el cumplimiento de FIPS.
+
+== Ingress
+
+RKE2 se envía con dos controladores de ingreso: ingress-nginx y Traefik. Ambos son compatibles con FIPS.
+
+El controlador ingress-nginx y la pila completa de Traefik (controlador y servidor proxy) están escritos en Go y se compilan utilizando el <<Use of FIPS Compatible Go compiler,compilador Go compatible con FIPS>>.
+
+Ingress-nginx utiliza el servidor proxy nginx que está escrito en C y depende de OpenSSL para funcionar correctamente. Como resultado, aprovecha una versión validada por FIPS de OpenSSL para lograr el cumplimiento de FIPS.
+
+[WARNING]
+====
+El controlador ingress-nginx alcanzará el final de su vida útil (EOL) en marzo de 2026.
+
+
+Los usuarios de {rke2-product-name} continuarán recibiendo soporte y correcciones de CVE (8+) durante todo el ciclo de vida de RKE2 v1.32, v1.33, v1.34, v1.35 y v1.36. Recomendamos cambiar a Traefik siguiendo la guía de https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[Migrando de Ingress-NGINX a Traefik en un clúster RKE2 independiente].
+====

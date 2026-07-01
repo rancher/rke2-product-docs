@@ -1,0 +1,364 @@
+= Guia de Proteção CIS
+:page-languages: [en, zh]
+:revdate: 2026-02-27
+:page-revdate: {revdate}
+
+Este documento fornece orientações prescritivas para a proteção de uma instalação de produção do {product-name}. Ele descreve as configurações e controles necessários para atender aos controles de referência do Kubernetes do Center for Internet Security (CIS).
+
+Para mais detalhes sobre a avaliação de um cluster protegido em relação ao benchmark oficial do CIS, consulte o guia de autoavaliação do CIS apropriado:
+
+* xref:security/cis_self_assessment111.adoc[Guia de Autoavaliação do CIS v1.11] para RKE2 v1.29 e versões mais recentes
+* xref:security/cis_self_assessment110.adoc[Guia de Autoavaliação do CIS v1.10] para RKE2 v1.29-v1.31
+* xref:security/cis_self_assessment19.adoc[Guia de Autoavaliação do CIS v1.9] para RKE2 v1.27-v1.29
+
+O RKE2 foi projetado para ser "protegido por padrão" e passar a maioria dos controles do CIS do Kubernetes sem modificação. Existem algumas exceções notáveis a isso que exigem intervenção manual para passar totalmente o Benchmark do CIS:
+
+. O RKE2 não modificará o sistema operacional do host. Portanto, você, o operador, deve fazer algumas modificações a nível de host.
+. Certos controles do CIS para Políticas de Rede e Padrões de Segurança de Pod (ou Políticas de Segurança de Pod (PSP) em versões do RKE2 anteriores à v1.25) restringirão a funcionalidade do cluster. Você deve optar por ter o RKE2 configurando isso para você. Para ajudar a garantir que esses requisitos sejam atendidos, o RKE2 pode ser iniciado com a flag `profile` definida como `cis` ou `cis-1.23`, dependendo da versão do RKE2.
+
+[NOTE]
+====
+Este guia assume que o RKE2 foi instalado, mas ainda não está em execução. Se você já iniciou o RKE2, precisará parar o serviço do RKE2.
+====
+
+== Requisitos a nível de host
+
+Existem três áreas de requisitos a nível de host: parâmetros do kernel, protect-kernel-defaults do kubelet e configuração do processo/diretório etcd. Esses são descritos nesta seção.
+
+=== Parâmetros kernel
+
+O benchmark do CIS requer que algumas configurações específicas de parâmetros do kernel sejam definidas. Quando o RKE2 é instalado, ele cria um arquivo de configuração sysctl para definir os parâmetros necessários de forma apropriada. No entanto, ele não configura automaticamente o host para usar essa configuração. Você deve fazer isso manualmente. A localização do arquivo de configuração depende do método de instalação utilizado.
+
+Se o RKE2 foi instalado via RPM, YUM ou DNF (o padrão em sistemas operacionais que usam RPMs, como CentOS), execute os seguintes comandos:
+
+[,bash]
+----
+sudo cp -f /usr/share/rke2/rke2-cis-sysctl.conf /etc/sysctl.d/60-rke2-cis.conf
+sudo systemctl restart systemd-sysctl
+----
+
+Se o RKE2 foi instalado via tarball (o padrão em sistemas operacionais que não usam RPMs, como Ubuntu), execute os seguintes comandos:
+
+[,bash]
+----
+sudo cp -f /usr/local/share/rke2/rke2-cis-sysctl.conf /etc/sysctl.d/60-rke2-cis.conf
+sudo systemctl restart systemd-sysctl
+----
+
+Se o seu sistema não tiver o diretório `systemd-sysctl.service` e/ou o diretório `/etc/sysctl.d`, você vai querer garantir que os sysctls sejam aplicados na inicialização executando o seguinte comando durante a inicialização:
+
+[,bash]
+----
+sudo sysctl -p /usr/local/share/rke2/rke2-cis-sysctl.conf
+----
+
+Por favor, realize esta etapa apenas em instalações novas, antes de realmente usar o RKE2 para implantar o Kubernetes. Muitos componentes do Kubernetes, incluindo plugins CNI, configuram seus próprios sysctls. Reiniciar o serviço `systemd-sysctl` em um cluster Kubernetes em execução pode resultar em efeitos colaterais inesperados.
+
+=== O parâmetro do Kubelet `protect-kernel-defaults` está definido como `true`
+
+Esta é uma flag do kubelet que fará com que o kubelet saia se os parâmetros do kernel exigidos não estiverem definidos ou estiverem definidos com valores diferentes dos padrões do kubelet.
+
+O RKE2 definirá automaticamente a flag como `true` quando a flag `profile` estiver definida.
+
+[NOTE]
+====
+`protect-kernel-defaults` é exposto como uma flag de nível superior para o RKE2. Se você definiu `profile` como `cis-1.XX` e `protect-kernel-defaults` como `false` explicitamente, o RKE2 sairá com um erro.
+====
+
+O RKE2 também verificará os mesmos parâmetros do kernel que o kubelet e sairá com um erro seguindo as mesmas regras que o kubelet. Isso é feito como uma conveniência para ajudar o operador a identificar mais rapidamente e facilmente quais parâmetros do kernel estão violando os padrões do kubelet.
+
+=== etcd está configurado corretamente
+
+O CIS Benchmark exige que o diretório de dados do etcd seja de propriedade do usuário e grupo `etcd`. Isso requer implicitamente que o processo etcd seja executado como o usuário `etcd` em nível de host. Para alcançar isso, o RKE2 toma várias medidas quando iniciado com um arquivo de controle `cis` ou `cis-1.XX` válido:
+
+. Verifique se o usuário e grupo `etcd` existem no host. Se não existirem, saia com um erro.
+. Crie o diretório de dados do etcd com `etcd` como o proprietário do usuário e do grupo.
+. Certifique-se de que o processo etcd seja executado como o usuário e grupo `etcd` configurando o `SecurityContext` do pod estático etcd adequadamente.
+
+Em algumas distribuições Linux, o comando `useradd` não criará um grupo. A flag `-U` está incluída abaixo para levar isso em conta. Essa flag informa ao `useradd` para criar um grupo com o mesmo nome que o usuário.
+
+[,bash]
+----
+sudo useradd -r -c "etcd user" -s /sbin/nologin -M etcd -U
+----
+
+[NOTE]
+====
+O usuário e grupo `etcd` devem ser definidos nos arquivos de banco de dados tradicionais em /etc/passwd e /etc/group. O pacote `os/user` da biblioteca padrão do Golang não suporta bancos de dados de usuários externos, como NSS ou systemd userdb (varlink).
+====
+
+== Configuração do RKE2
+
+[tabs]
+======
+v1.29 e versões mais recentes::
++
+--
+
+[,yaml]
+----
+profile: "cis"
+# For cis-1.11 only, not needed on cis-1.9/cis-1.10
+kube-apiserver-arg:
+  - 'service-account-extend-token-expiration=false'
+----
+
+--
+
+v1.25 - v1.28::
++
+--
+
+*Configuração CIS Genérica*
+
+[,yaml]
+----
+profile: "cis"
+----
+
+Usar o arquivo de controle genérico `cis` garantirá que o cluster passe no benchmark CIS (rke2-cis-1.XX-profile-hardened) associado à versão do Kubernetes que o RKE2 está executando. Por exemplo, o RKE2 v1.26.XX com o `profile: cis` passará no `rke2-cis-1.8-profile-hardened` no Rancher. 
+
+O uso do arquivo de controle genérico `cis` garante que as atualizações para o RKE2 não exijam uma alteração na configuração existente. Quaisquer alterações necessárias para passar no benchmark CIS aplicável serão aplicadas automaticamente. 
+
+Um mapeamento aproximado das versões do RKE2 para as versões do benchmark CIS é o seguinte: 
+
+|===
+| Minors do RKE2 | Benchmark CIS Aplicável | Flag do arquivo de controle 
+| 1.27-1.28 
+| 1.9 
+| `cis` 
+
+| 1.26 
+| 1.8 
+| `cis-1.23`, `cis`
+
+| 1.25 
+| 1.7 
+| `cis-1.23`, `cis`
+
+| 1.24 
+| 1.24 
+| `cis-1.23`
+
+| 1.23 
+| 1.23 
+| `cis-1.23`
+
+| 1.19-1.22 
+| 1.6 
+| `cis-1.6` 
+|===
+--
+
+v1.24 e versões anteriores::
++
+--
+[,yaml]
+----
+profile: "cis-1.23"
+----
+
+O arquivo de configuração deve ser nomeado `config.yaml` e colocado em `/etc/rancher/rke2`. O diretório precisa ser criado antes de instalar o RKE2.
+
+Quando a flag `profile` está definida, ela faz o seguinte:
+--
+======
+
+[tabs]
+======
+v1.25 e versões mais recentes::
++
+--
+. Verifica se os requisitos em nível de host foram atendidos. Se não foram, o RKE2 sairá com um erro fatal descrevendo os requisitos não atendidos.
+. Configura o pod estático etcd para rodar como o usuário e grupo etcd, conforme explicado no xref:security/hardening_guide#_etcd_is_configured_properly[guia de proteção do etcd].
+. Aplica políticas de rede que permitem que o cluster passe os controles associados.
+. Aplica permissões de arquivo mais restritivas (600 vs 644) aos manifests de agente e outros arquivos de configuração.
+. Configura o Controlador de Admissão de Segurança de Pod para impor o modo restrito em todos os namespaces, com exceção dos namespaces `kube-system`, `cis-operator-system` e `tigera-operator`. Esses namespaces são isentos para permitir que os pods do sistema sejam executados sem restrições, o que é necessário para o funcionamento adequado do cluster. Para mais informações sobre a configuração do PSA, consulte as configurações padrão xref:security/pod_security_standards.adoc#_pod_security_standards[de Admissão de Segurança de Pod]. Para mais informações sobre os Padrões de Segurança de Pod, consulte a https://kubernetes.io/docs/concepts/security/pod-security-standards/[documentação oficial].
+--
+
+v1.24 e versões anteriores::
++
+--
+. Verifica se os requisitos em nível de host foram atendidos. Se não foram, o RKE2 sairá com um erro fatal descrevendo os requisitos não atendidos.
+. Aplica políticas de rede que permitem que o cluster passe os controles associados.
+. Configura políticas de segurança de pod de runtime que permitem que o cluster passe os controles associados.
+--
+======
+
+== Requisitos de runtime do Kubernetes
+
+Os requisitos de runtime para passar o Benchmark CIS estão centrados em segurança de pod e políticas de rede. A maior parte disso é tratada automaticamente pelo RKE2 ao usar um arquivo de controle `cis-1.XX` válido, mas alguma intervenção adicional do operador é necessária.
+
+=== Segurança de Pods
+
+O RKE2 sempre opera com algum nível de segurança de pod.
+
+[tabs]
+======
+v1.25 e versões mais recentes::
++
+--
+Na versão v1.25 e mais recente, https://kubernetes.io/docs/concepts/security/pod-security-admission/[o Controle de Admissão de Segurança de Pod (PSA)] é usado para segurança de pod. Um arquivo de configuração padrão de Admissão de Segurança de Pod será adicionado ao cluster na inicialização da seguinte forma: 
+
+Com o arquivo de controle `cis`/`cis-1.23`:
+
+* O RKE2 aplicará um padrão de segurança de pod restrito por meio de um arquivo de configuração que imporá o modo `restricted` em todo o cluster, com exceção dos namespaces `kube-system`, `cis-operator-system` e `tigera-operator` para garantir a operação bem-sucedida dos pods do sistema. 
+
+Sem o arquivo de controle `cis`/`cis-1.23`:
+
+* O RKE2 aplicará um padrão de segurança de pod não restrito por meio de um arquivo de configuração que imporá o modo `privileged` em todo o cluster, permitindo um modo completamente irrestrito para todos os pods no cluster. Veja a página xref:security/pod_security_standards.adoc[Políticas de Segurança de Pod] para mais detalhes. 
+--
+
+v1.24 e versões anteriores::
++
+--
+Na versão v1.24 e anteriores, o controlador de admissão `PodSecurityPolicy` está sempre habilitado. Uma política é aplicada com base no arquivo de controle passado para o RKE2. 
+
+Com o arquivo de controle `cis-1.6`:
+
+* O RKE2 implementará um conjunto de políticas muito mais restritivas. Essas políticas atendem aos requisitos descritos na seção 5.2 do CIS Benchmark. 
+
+Sem o arquivo de controle `cis-1.6`:
+
+* O RKE2 implementará uma política irrestrita que permite que o Kubernetes funcione como se o controlador de admissão `PodSecurityPolicy` não estivesse habilitado. Veja a página xref:security/pod_security_policies.adoc[Políticas de Segurança de Pod] para mais detalhes.
+--
+======
+
+[NOTE]
+====
+Os componentes do plano de controle do Kubernetes e adições críticas, como CNI, DNS e Ingress, são executados como pods no namespace `kube-system`. Portanto, este namespace terá uma política que é menos restritiva para que esses componentes possam funcionar corretamente.
+====
+
+=== Políticas de Rede
+
+Quando executado com um arquivo de controle válido "cis-1.XX", o RKE2 implementará `NetworkPolicies` que atende ao CIS Benchmark para os namespaces incorporados do Kubernetes. Esses namespaces são: `kube-system`, `kube-public` e `default`.
+
+O `NetworkPolicy` utilizado permitirá apenas que pods dentro do mesmo namespace se comuniquem entre si. Existem algumas exceções notáveis, que permitem que as solicitações DNS sejam resolvidas.
+
+* As solicitações DNS podem alcançar o servidor DNS.
+* As solicitações HTTP/s podem alcançar o serviço ingress-nginx.
+* As solicitações HTTPs podem alcançar o metrics-server.
+* Solicitações para o webhook ingress-nginx no pod especificado pelo pod ingress-nginx (normalmente 8443).
+* Solicitações HTTPs para o rke2-snapshot-validation-webhook.
+
+[CAUTION]
+.Intervenção do Operador Necessária
+====
+Os operadores devem gerenciar as políticas de rede normalmente para namespaces adicionais que são criados.
+====
+
+=== Configurar a conta de serviço `default`.
+
+[NOTE] 
+====
+Defina `automountServiceAccountToken` como `false` para as contas de serviço `default`.
+====
+
+O Kubernetes fornece uma `default` conta de serviço que é usada pelos workloads do cluster onde nenhuma conta de serviço específica é atribuída ao pod. Quando o acesso à API do Kubernetes a partir de um pod é necessário, uma conta de serviço específica deve ser criada para esse pod, e os direitos devem ser concedidos a essa conta de serviço. A conta de serviço `default` deve ser configurada de forma que não forneça um token de conta de serviço e não tenha nenhuma atribuição de direitos explícita.
+
+Para cada namespace, incluindo `default` e `kube-system` em uma instalação padrão do RKE2, a conta de serviço `default` deve incluir este valor:
+
+[,yaml]
+----
+automountServiceAccountToken: false
+----
+
+O RKE2 definirá automaticamente o valor corretamente para os namespaces kube-system, cis-operator-system, kube-node-lease e tigera-operator.
+
+[WARNING]
+.Intervenção do Operador Necessária
+====
+
+Para namespaces criados pelo operador do cluster, o seguinte script e arquivo de configuração podem ser usados para configurar a conta de serviço `default`.
+
+A configuração abaixo deve ser salva em um arquivo chamado `account_update.yaml`.
+
+[,yaml]
+----
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+automountServiceAccountToken: false
+----
+
+Crie um arquivo de script bash chamado `account_update.sh`. Certifique-se de `sudo chmod +x account_update.sh` para que o script tenha permissões de execução.
+
+[,bash]
+----
+#!/bin/bash -e
+
+for namespace in $(kubectl get namespaces -A -o=jsonpath="{.items[*]['metadata.name']}"); do
+  echo -n "Patching namespace $namespace - "
+  kubectl patch serviceaccount default -n ${namespace} -p "$(cat account_update.yaml)"
+done
+----
+
+Execute este script para aplicar a configuração `account_update.yaml` à conta de serviço `default` em todos os namespaces.
+====
+
+=== Configuração de auditoria do servidor API
+
+Os requisitos do CIS 1.2.22 a 1.2.25 estão relacionados à configuração de logs de auditoria para o servidor API. Quando o RKE2 é iniciado com a flag `profile` definida, ele configurará automaticamente os parâmetros `--audit-log-` endurecidos no API Server para passar essas verificações CIS.
+
+A política de auditoria padrão do RKE2 é configurada para não registrar solicitações no API Server. Isso é feito para permitir que os operadores do cluster tenham flexibilidade para personalizar uma política de auditoria que atenda às suas necessidades e requisitos de auditoria, pois estes são específicos para o ambiente e políticas de cada usuário.
+
+Uma política de auditoria padrão é criada pelo RKE2 quando iniciado com a flag `profile` definida. A política é definida em `/etc/rancher/rke2/audit-policy.yaml`.
+
+[,yaml]
+----
+apiVersion: audit.k8s.io/v1
+kind: Policy
+metadata:
+  creationTimestamp: null
+rules:
+- level: None
+----
+
+[CAUTION]
+.Intervenção do Operador Necessária
+====
+Para começar a registrar solicitações no API Server, pelo menos o parâmetro `level` deve ser modificado, por exemplo, para `Metadata`. Informações detalhadas sobre a configuração da política para o servidor API podem ser encontradas na https://kubernetes.io/docs/tasks/debug-application-cluster/audit/[documentação] do Kubernetes.
+
+Após adaptar a política de auditoria, o RKE2 deve ser reiniciado para carregar a nova configuração.
+
+[,shell]
+----
+sudo systemctl restart rke2-server.service
+----
+====
+
+Os logs de auditoria do API Server serão gravados em `/var/lib/rancher/rke2/server/logs/audit.log`.
+
+== Problemas conhecidos
+
+Os seguintes são controles que o RKE2 padrão atualmente não passa. Cada lacuna será explicada e como ela é abordada.
+
+=== Controle 1.1.12
+
+Certifique-se de que a propriedade do diretório de dados etcd esteja definida como `etcd:etcd`.
+
+==== Fundamento Lógico
+
+etcd é um armazenamento de chave-valor altamente disponível usado pelas implantações do Kubernetes para armazenamento persistente de todos os seus objetos da API REST. Este diretório de dados deve ser protegido contra qualquer leitura ou escrita não autorizada. Ele deve ser de propriedade de `etcd:etcd`.
+
+==== de incidentes
+
+Isso pode ser corrigido criando um usuário e grupo `etcd` conforme descrito <<etcd is configured properly,acima>>.
+
+=== Controle 5.1.5
+
+Garanta que contas de serviço padrão não estejam sendo usadas ativamente
+
+==== Fundamento Lógico
+O Kubernetes fornece uma `default` conta de serviço que é usada pelos workloads do cluster onde nenhuma conta de serviço específica é atribuída ao pod.
+
+Quando o acesso à API do Kubernetes a partir de um pod é necessário, uma conta de serviço específica deve ser criada para esse pod, e os direitos devem ser concedidos a essa conta de serviço.
+
+A conta de serviço `default` deve ser configurada de forma que não forneça um token de conta de serviço e não tenha nenhuma atribuição de direitos explícita.
+
+Isso pode ser corrigido atualizando o campo `automountServiceAccountToken` para `false` para a conta de serviço `default` em cada namespace.
+
+== Conclusão
+
+Se você seguiu este guia, seu cluster RKE2 estará configurado para passar no CIS Kubernetes Benchmark. Você pode revisar nossos Guias de Autoavaliação do CIS para entender como verificamos cada um dos benchmarks e como você pode fazer o mesmo em seu cluster.

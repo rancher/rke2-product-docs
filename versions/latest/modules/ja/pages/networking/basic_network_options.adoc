@@ -1,0 +1,346 @@
+= ネットワークオプション
+:page-languages: [en, zh]
+:revdate: 2026-01-16
+:page-revdate: {revdate}
+
+KubernetesはPodネットワークを提供するために、1つ以上のCNIプラグインのインストールを必要とします。RKE2は4つの主要なCNIプラグインをバンドルしています：Canal、Cilium、Calico、およびFlannel。CalicoとFlannelのみがMicrosoft Windowsをサポートしています。RKE2には、主要なCNIプラグインと一緒に有効にする必要がある二次CNIプラグインとしてMultusも含まれています。詳細については、xref:networking/multus_sriov.adoc[MultusとSR-IOV]のドキュメントを参照してください。
+
+CanalはデフォルトのCNIプラグインですが、すべてのバンドルされたプラグインがサポートされています。 バンドルされたCNIプラグインはHelmチャートを介してインストールされ、追加のチャート値を持つHelmChartConfigをデプロイすることでカスタマイズできます。HelmChartConfigリソースの使用に関する詳細は、xref:add-ons/helm.adoc[Helm統合]のドキュメントおよび以下に提供されているCNI固有の例を参照してください。
+
+== CNIプラグインを選択する
+
+使用したいCNIプラグインを選択するには、`cni` xref:install/configuration.adoc[環境設定ファイルキー]を使用してください。バンドルされたCNIプラグインのいずれも使用したくない場合は、`cni`を`none`に設定できます。CNIプラグインがインストールされるまで、ノードはNotReadyのままであり、スケジュール不可として汚染されます。
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+cni: canal
+----
+
+バンドルされたCNIプラグインは、xref:add-ons/helm.adoc[Helm統合]のドキュメントに記載されているように、HelmChartリソースをデプロイするAddOnとして提供されます。CNIプラグインチャートは`rke2-<CNI-PLUGIN-NAME>`と名付けられ、`kube-system`ネームスペースにあります。
+
+バンドルされたCNIプラグインチャートのHelmチャート値をカスタマイズするには、対応するHelmChartの名前とネームスペースに一致するHelmChartConfigリソースを作成する必要があります。各バンドルされたCNIプラグインのチャート値をカスタマイズする例については、以下のタブを参照してください。
+
+デフォルトのチャート値は、 https://github.com/rancher/rke2-charts/tree/main/charts[RKE2チャートリポジトリ]をブラウズすることで見つけることができ、RKE2バージョンにバンドルされたチャートのバージョンについては`values.yaml`を参照してください。
+
+[tabs]
+=====
+CNIプラグイン::
++
+--
+カナルは、ノード間のトラフィックにフランネルを、ノード内のトラフィックおよびネットワークポリシーにカリコを使用します。デフォルトでは、ノード間にオーバーレイネットワークを作成するためにvxlanカプセル化を使用します。例えば、フランネルインターフェースをオーバーライドするには、次のチャート値を適用できます：
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-canal-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-canal
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    flannel:
+      iface: "eth1"
+----
+フランネルの https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md#wireguard[ワイヤガードバックエンド]（ https://www.wireguard.com/install/[カーネル < 5.6 のユーザーはモジュールをインストールする必要があります]）を使用するには、次のチャート値を使用する必要があります：
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-canal-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-canal
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    flannel:
+      backend: "wireguard"
+----
+
+その後、次のコマンドを実行して新しい設定を使用するためにCanalデーモンセットを再起動してください：`kubectl rollout restart ds rke2-canal -n kube-system`。
+
+カナル設定の完全なオプションに関する詳細情報は、 https://github.com/rancher/rke2-charts/blob/main-source/packages/rke2-canal/charts/values.yaml[rke2-charts]を参照してください。
+
+.eBPFデータプレーン
+[%collapsible]
+======
+[NOTE]
+.バージョンゲート
+====
+RKE2は、2026年1月のリリースからCalico eBPFデータプレーンをサポートしています：v1.33.8+rke2r1、v1.34.4+rke2r1、およびv1.35.1+rke2r1。
+====
+
+カリコは、デフォルトのiptablesベースの実装の代わりに有効にできる効率的なeBPFデータプレーンを提供します。カリコのデータプレーンは、デフォルトのKubernetes kube-proxy実装を置き換えるためにも使用できます。
+
+カリコのeBPFデータプレーンを有効にするには、設定ファイルに`disable-kube-proxy: true`を指定してRKE2をデプロイし、次のHelmChartConfigを使用してください：
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-calico
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    installation:
+      calicoNetwork:
+        kubeProxyManagement: Enabled
+        linuxDataplane: BPF
+    kubernetesServiceEndpoint:
+      host: "localhost"
+      port: "6443"
+----
+
+CalicoのeBPFデータプレーンに関する詳細情報は、 https://docs.tigera.io/calico/latest/operations/ebpf/[Calicoのドキュメント]を参照してください。
+======
+
+[NOTE]
+====
+カナルは、ノードにiptablesまたはxtables-nftパッケージがインストールされている必要があります。
+====
+
+[WARNING]
+====
+カナルは、現在Windowsノードを持つクラスターではサポートされていません。
+====
+
+IP割り当ての問題が発生した場合は、xref:known_issues.adoc[既知の問題と制限]を確認してください。
+--
+
+Cilium CNIプラグイン::
++
+--
+Ciliumを使用する場合、ノードがサポートされているカーネルバージョン（>= 4.9.17）を持ち、 https://docs.cilium.io/en/stable/operations/system_requirements/[要件]を満たしていることを確認する必要があります。デフォルトのオプションをオーバーライドするには、HelmChartConfigリソースを使用してください。HelmChartConfigリソースは、対応するHelmChartの名前とネームスペースと一致する必要があります。例えば、WireGuardを有効にするには、
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-cilium
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    encryption:
+      enabled: true
+      type: wireguard
+----
+
+Ciliumチャートで利用可能な値に関する詳細については、 https://github.com/rancher/rke2-charts/blob/main/charts/rke2-cilium/rke2-cilium/1.19.101/values.yaml[rke2-chartsリポジトリ]を参照してください。
+
+.Kube-proxyの置き換え
+[%collapsible]
+======
+
+Ciliumは、kube-proxyを完全に置き換え、iptablesの代わりにeBPFを使用してサービスのルーティングを実装する高度な機能を含んでいます。カーネルがv5.8未満の場合、重要なバグ修正や機能が欠落するため、Ciliumでkube-proxyを置き換えることは推奨されません。このモードを有効にするには、設定ファイルに`disable-kube-proxy: true`を指定してRKE2をデプロイし、次のチャート値を使用します:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-cilium
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    kubeProxyReplacement: true
+    k8sServiceHost: "localhost"
+    k8sServicePort: "6443"
+----
+
+詳細については、 https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/[アップストリームドキュメント]を確認してください。
+
+======
+
+.Cilium Hubble
+[%collapsible]
+======
+
+Ciliumには、 https://docs.cilium.io/en/stable/overview/intro/#what-is-hubble[Hubble]と呼ばれる監視プラットフォームも含まれています。Hubbleを有効にするには、次のチャート値を使用してください:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-cilium
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    hubble:
+      enabled: true
+      relay:
+        enabled: true
+      ui:
+        enabled: true
+---- 
+
+======
+
+[WARNING]
+====
+Ciliumは現在、Windowsではサポートされていません。
+====
+--
+
+[[install_a_cni_plugin]]Calico CNIプラグイン::
++
+--
+例えば、インターフェースのMTUを変更するには、次のチャート値を使用できます:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-calico-config.yaml
+--- 
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-calico
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    installation:
+      calicoNetwork:
+        mtu: 9000
+----
+
+5.7以前のバージョンのカーネルにバグがあるため、Calicoはハードウェアチェックサムオフロードを無効にします。その設定はTCPパフォーマンスを約2.5Gbpsに制限します。より高いスループットが必要で、カーネルバージョンが5.7より大きい場合は、次のHelmChartConfigを使用してチェックサムオフロードを有効にできます:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-calico-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-calico
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    felixConfiguration:
+      featureDetectOverride: "ChecksumOffloadBroken=false"
+----
+
+Calicoチャートで利用可能な値に関する詳細については、https://github.com/rancher/rke2-charts/blob/main/charts/rke2-calico/rke2-calico/v3.31.400/values.yaml[rke2-chartsリポジトリ]を参照してください。
+
+[NOTE]
+====
+Calicoはノードにiptablesまたはxtables-nftパッケージがインストールされている必要があります。
+====
+
+[WARNING]
+====
+SELinuxを有効にしてCalicoをインストールする場合は、このxref:security/selinux.adoc#_calico_support[セクション]をお読みください。
+====
+--
+
+Flannel CNIプラグイン::
++
+--
+[NOTE]
+====
+Flannelは2024年2月のリリース、v1.29.2、v1.28.7、v1.27.11、v1.26.14から利用可能です。`vxlan`バックエンドのみがサポートされています。
+====
+
+例えば、インターフェースのMTUを変更するには、次のチャート値を使用できます:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-flannel-config.yaml
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-flannel
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    flannel:
+      mtu: 9000
+----
+
+[WARNING]
+====
+Flannelはネットワークポリシーをサポートしていません。したがって、強化されたインストールには推奨されません。
+====
+--
+=====
+
+== デュアルスタック構成
+
+IPv4/IPv6デュアルスタックネットワーキングは、PodとサービスにIPv4およびIPv6アドレスの両方を割り当てることを可能にします。デュアルスタックモードでRKE2を構成するには、コントロールプレーンノードでPodとサービスのために有効なIPv4/IPv6デュアルスタックCIDRを設定する必要があります。そのためには、`cluster-cidr`と`service-cidr`の設定ファイルキーを使用してください：
+
+[,yaml]
+----
+#/etc/rancher/rke2/config.yaml
+cluster-cidr: "10.42.0.0/16,2001:cafe:42::/56"
+service-cidr: "10.43.0.0/16,2001:cafe:43::/112"
+----
+
+クラスターが最初に作成されるときにデュアルスタックネットワーキングを構成する必要があります。IPv4専用として起動された既存のクラスターでは有効にできません。
+
+各CNIプラグインは、デュアルスタックのために異なる設定を必要とする場合があります：
+
+[tabs]
+====
+カナルCNIプラグイン::
++
+カナルはデュアルスタックのためのRKE2設定を自動的に検出し、追加の設定は必要ありません。デュアルスタックは現在、RKE2のWindowsインストールではサポートされていません。
+
+Cilium CNIプラグイン::
++
+CiliumはデュアルスタックのためのRKE2設定を自動的に検出し、追加の設定は必要ありません。
+
+Calico CNIプラグイン::
++
+Calicoは、デュアルスタック用のRKE2設定を自動的に検出し、追加の設定は不要です。デュアルスタックモードで展開されると、2つの異なるippoolリソースが作成されます。デュアルスタックを使用する際は、CalicoがVXLANカプセル化の代わりにBGPを利用することに注意してください。デュアルスタックとBGPは現在、RKE2のWindowsインストールではサポートされていません。
+
+Flannel CNIプラグイン::
+Flannelは、デュアルスタック用のRKE2設定を自動的に検出し、追加の設定は不要です。
+
+====
+
+== IPv6セットアップ
+
+IPv6のみの設定の場合、RKE2はETCDポッドのライブネスURLにアクセスするために`localhost`を使用する必要があります。オペレーティングシステムが`/etc/hosts`ファイルを正しく設定していることを確認してください。
+
+[,bash]
+----
+::1       localhost
+----
+
+[CAUTION]
+.既知の問題
+====
+IPv6のデフォルトルートがルーター広告（RA）によって設定されている場合、sysctl `net.ipv6.conf.all.accept_ra=2`を設定する必要があります。そうでない場合、ノードはデフォルトルートが期限切れになるとそれを削除します。RAを受け入れることは、https://github.com/kubernetes/kubernetes/issues/91507[中間者攻撃]のリスクを高める可能性があることに注意してください。
+====
+
+IPv6専用モードでは、Ciliumはノード間のIPv6トラフィックのカプセル化をサポートしていません。異なるノード上のポッド間の通信は、ホストのネットワークに依存して、パケットをポッドIPに適切にルーティングします。Ciliumは、次の設定を使用してノード間の静的ルートを自動的に管理するように設定できます。::
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+---
+kind: HelmChartConfig
+metadata:
+  name: rke2-cilium
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    autoDirectNodeRoutes: true
+----
+
+== ホスト名のないノード
+
+Linodeなどの一部のクラウドプロバイダーは、ホスト名として"localhost"を持つマシンを作成し、他のプロバイダーはホスト名が全く設定されていない場合があります。これにより、ドメイン名解決に問題が生じる可能性があります。RKE2を`node-name`パラメータで実行すると、ノード名が渡されてこの問題が解決されます。

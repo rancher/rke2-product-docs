@@ -1,0 +1,16 @@
+= ハードニングされたイメージについて
+:page-languages: [en, zh]
+:revdate: 2026-02-05
+:page-revdate: {revdate}
+
+{product-name} ハードニングされたイメージは、ビルド時に脆弱性がスキャンされ、潜在的な弱点を減少させるために追加のセキュリティ保護が追加されています。
+
+* イメージは単にアップストリームのビルドからミラーリングされるわけではありません。イメージは、現行の https://www.suse.com/products/base-container-images/[SLEベースコンテナイメージ (BCI)]の上に構築された、ハードニングされた最小限のベースイメージからソースを利用して作成されています。
+* Goで書かれたバイナリは、FIPS 140-3準拠のビルドプロセスを使用してコンパイルされます。このコンパイラに関する詳細は、xref:security/fips3_support.adoc#_use_of_fips_compatible_go_compiler[こちら]を参照してください。
+
+イメージ名によって、上記のようにイメージがハードニングされているかどうかがわかります。RKE2は、各リリースに対してイメージリストを公開します。公開されたイメージリストの例については、 https://github.com/rancher/rke2/releases/download/v1.23.14%2Brke2r1/rke2-images-all.linux-amd64.txt[こちら]を参照してください。
+
+[NOTE]
+====
+現在、RKE2のハードニングされたイメージはマルチアーキテクチャです。Linux AMD64アーキテクチャのみがFIPS準拠です。Windowsおよびs390xアーキテクチャはFIPS準拠ではありません。
+====

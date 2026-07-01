@@ -1,0 +1,142 @@
+= Standard-Pod-Sicherheitsstandards
+:page-languages: [en, zh]
+:revdate: 2025-07-17
+:page-revdate: {revdate}
+
+Dieses Dokument beschreibt, wie RKE2 `PodSecurityStandards` und `NetworkPolicies` konfiguriert, um standardmäßig sicher zu sein und gleichzeitig den Betreibern maximale Konfigurationsflexibilität zu bieten.
+
+[IMPORTANT]
+.Versionssperre
+====
+Dieses Dokument gilt für RKE2 v1.25 und neuer. Bitte beziehen Sie sich auf die xref:security/pod_security_policies.adoc[Dokumentation zu Pod-Sicherheitsrichtlinien] für die Standardrichtlinieninformationen für RKE2 v1.24 und älter.
+====
+
+== Pod-Sicherheitsstandards
+
+Ab Kubernetes-Version v1.25.0 werden Pod-Sicherheitsrichtlinien (PSP) vollständig aus Kubernetes entfernt und durch https://kubernetes.io/docs/concepts/security/pod-security-admission/[Pod-Sicherheitszulassung (PSA)] ersetzt. Eine Standardkonfigurationsdatei für die Pod-Sicherheitszulassung wird beim Start des Clusters wie folgt hinzugefügt:
+
+Wenn mit der `profile: cis` oder `profile: cis-1.23` Konfiguration ausgeführt wird:
+
+* RKE2 wird einen eingeschränkten Pod-Sicherheitsstandard über eine Konfigurationsdatei anwenden, die den `restricted` Modus im gesamten Cluster durchsetzt, mit Ausnahme der `kube-system`, `cis-operator-system` und `tigera-operator` Namespaces, um den erfolgreichen Betrieb von System-Pods sicherzustellen.
+
+Wenn ohne eine `profile` Konfiguration ausgeführt wird:
+
+* RKE2 wird einen uneingeschränkten Pod-Sicherheitsstandard über eine Konfigurationsdatei anwenden, die den `privileged` Modus im gesamten Cluster durchsetzt, der einen völlig uneingeschränkten Modus für alle Pods im Cluster erlaubt.
+
+RKE2 wird diese Konfigurationsdatei unter `/etc/rancher/rke2/rke2-pss.yaml` ablegen. Der Inhalt der Konfigurationsdatei variiert je nach dem CIS-Modus, mit dem Sie RKE2 gestartet haben:
+
+* *CIS-Modus*
++
+[,yaml]
+----
+apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+- name: PodSecurity
+  configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1beta1
+    kind: PodSecurityConfiguration
+    defaults:
+      enforce: "restricted"
+      enforce-version: "latest"
+      audit: "restricted"
+      audit-version: "latest"
+      warn: "restricted"
+      warn-version: "latest"
+    exemptions:
+      usernames: []
+      runtimeClasses: []
+      namespaces: [kube-system, cis-operator-system, tigera-operator]
+----
+
+* *Nicht-CIS-Modus*
++
+[,yaml]
+----
+apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+- name: PodSecurity
+  configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1beta1
+    kind: PodSecurityConfiguration
+    defaults:
+      enforce: "privileged"
+      enforce-version: "latest"
+    exemptions:
+      usernames: []
+      runtimeClasses: []
+      namespaces: []
+----
+
+Nach dem Platzieren dieser Konfigurationsdatei wird RKE2 den kube-apiserver mit dem folgenden Flag `--admission-control-config-file` starten, das auf den Pfad der PSA-Konfigurationsdatei gesetzt wird.
+
+Wenn Sie die Standardkonfigurationsdatei für den Pod-Sicherheitsstandard überschreiben möchten, können Sie `pod-security-admission-config-file: <path-to-custom-psa-config-file>` in die RKE2-Konfigurationsdatei übergeben.
+
+=== Netzwerkrichtlinien
+
+Wenn RKE2 mit dem `profile: cis-1.23` Parameter ausgeführt wird, werden 2 Netzwerkrichtlinien auf die `kube-system`, `kube-public` und `default` Namespaces angewendet und die zugehörigen Annotationen hinzugefügt. Die gleiche Logik gilt für diese Richtlinien und Annotationen wie für die PSPs. Beim Start werden die Annotationen für jeden Namespace auf ihre Existenz überprüft, und wenn sie existieren, unternimmt RKE2 keine Maßnahmen. Wenn die Annotation nicht existiert, überprüft RKE2, ob die Richtlinie existiert, und wenn ja, wird sie neu erstellt.
+
+Die erste angewandte Richtlinie besteht darin, den Netzwerkverkehr nur auf den Namespace selbst zu beschränken. Siehe unten.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  managedFields:
+  - apiVersion: networking.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:spec:
+        f:ingress: {}
+        f:policyTypes: {}
+  name: default-network-policy
+  namespace: default
+spec:
+  ingress:
+  - from:
+    - podSelector: {}
+  podSelector: {}
+  policyTypes:
+  - Ingress
+----
+
+Die zweite angewandte Richtlinie gilt für den `kube-system` Namespace und erlaubt DNS-Verkehr. Siehe unten.
+
+[,yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  managedFields:
+  - apiVersion: networking.k8s.io/v1
+    fieldsV1:
+      f:spec:
+        f:ingress: {}
+        f:podSelector:
+          f:matchLabels:
+        f:policyTypes: {}
+  name: default-network-dns-policy
+  namespace: kube-system
+spec:
+  ingress:
+  - ports:
+    - port: 53
+      protocol: TCP
+    - port: 53
+      protocol: UDP
+  podSelector:
+    matchLabels:
+  policyTypes:
+  - Ingress
+----
+
+RKE2 wendet die `default-network-policy` Richtlinie und die `np.rke2.io` Annotation auf alle integrierten Namespaces an. Der `kube-system` Namespace erhält zusätzlich die `default-network-dns-policy` Richtlinie und die `np.rke2.io/dns` Annotation, die auf ihn angewendet werden.
+
+Um die derzeit auf Ihrem System bereitgestellten Netzwerkrichtlinien anzuzeigen, führen Sie den folgenden Befehl aus:
+
+[,bash]
+----
+kubectl get networkpolicies -A
+----

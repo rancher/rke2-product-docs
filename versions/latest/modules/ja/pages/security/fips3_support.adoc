@@ -1,0 +1,65 @@
+= FIPS 140-3の有効化
+:page-languages: [en, zh]
+:revdate: 2026-02-05
+:page-revdate: {revdate}
+
+FIPS 140-3は、米国の連邦政府のセキュリティ標準であり、暗号モジュールの承認に使用されます。この文書は、RKE2がFIPS検証済みの暗号ライブラリで構築されている方法を説明します。
+
+準拠の検証は以下で利用可能です：xref:attachment$RKE2_FIPS3_Verified.pdf[FIPS 140-3検証済み]。
+
+== FIPS互換のGoコンパイラの使用
+
+使用されているGoコンパイラは、 https://go.googlesource.com/go/+/dev.boringcrypto[こちら]で見つけることができます。システムの各コンポーネントは、通常使用される標準のGoコンパイラバージョンと一致するこのコンパイラのバージョンで構築されています。
+
+このGoのバージョンは、標準のGo暗号ライブラリをFIPS検証済みのBoringCryptoモジュールに置き換えます。詳細については、 https://go.dev/src/crypto/internal/boring/README[GoBoring README]を参照してください。このモジュールは、広範なシステムにおける https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4968[BoringCrypto]モジュールとしてNISTによって検証されています。
+
+=== クラスターコンポーネントにおけるFIPSサポート
+
+ほとんどのRKE2コンポーネントは、GoBoring Goコンパイラを使用して静的にコンパイルされています。アーキテクチャ的に、RKE2は複数のセクションに分かれており、以下のリストはこれらのセクションと関連するコンポーネントを概説しています：
+
+* Kubernetes
+ ** APIサーバー
+ ** コントローラーマネージャー
+ ** スケジューラ
+ ** Kubelet
+ ** Kube Proxy
+ ** メトリックサーバー
+ ** Kubectl
+* Helmチャート
+ ** Flannel
+ ** Calico
+ ** CoreDNS
+ ** Traefik
+
+== ランタイム
+
+全体のアーキテクチャがFIPS 140-3準拠のアルゴリズムを利用することを保証するために、RKE2ランタイムユーティリティはFIPS対応のGoコンパイラで静的にコンパイルされています。これにより、Kubernetesデーモンからコンテナオーケストレーションメカニズムまで、スタックのすべてのレベルでの準拠が保証されます。
+
+* etcd
+* containerd
+ ** containerd-shim
+ ** containerd-shim-runc-v1
+ ** containerd-shim-runc-v2
+ ** ctr
+* crictl
+* runc
+
+== CNI
+
+RKE2は、`--cni`フラグを使用して代替CNIを選択することをサポートしています。それには、Canal（デフォルト）、Calico、Cilium、Multusなど、いくつかのオプションがバンドルされています。ただし、FIPS準拠のために再構築されているのはCanalのみです。
+
+== Ingress
+
+RKE2には、ingress-nginxとTraefikの2つのイングレスコントローラーが付属しています。どちらもFIPS準拠です。
+
+ingress-nginxコントローラーと完全なTraefikスタック（コントローラーとプロキシサーバー）はGoで記述され、<<Use of FIPS Compatible Go compiler,FIPS互換のGoコンパイラ>>を使用してコンパイルされています。
+
+Ingress-nginxは、Cで記述され、適切に機能するためにOpenSSLに依存するnginxプロキシサーバーを使用しています。その結果、FIPS準拠を達成するためにFIPS検証済みのOpenSSLバージョンを活用しています。
+
+[WARNING]
+====
+ingress-nginxコントローラーは2026年3月にサービス終了（EOL）となります。
+
+
+{rke2-product-name}ユーザーは、RKE2 v1.32、v1.33、v1.34、v1.35、v1.36のライフサイクル全体にわたってサポートとCVE修正（8+）を受け続けます。 https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[スタンドアロンRKE2クラスターにおけるIngress-NGINXからTraefikへの移行]ガイドに従ってTraefikに切り替えることをお勧めします。
+====

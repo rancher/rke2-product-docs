@@ -1,70 +1,70 @@
-= Resource Profiling
-:page-languages: [en, zh]
-:revdate: 2024-09-11
+= 资源剖析
+:page-languages: 本节记录了确定 RKE2 最低资源需求的测试结果。
+:revdate: 2025-08-21
 :page-revdate: {revdate}
 
-This section captures the results of tests to determine minimum resource requirements for RKE2.
+本节记录了确定 RKE2 最低资源需求的测试结果。
 
-== Scope of Resource Testing
+== 资源测试范围
 
-The resource tests were intended to address the following problem statements:
+资源测试旨在解决以下问题：
 
-* On a single-node cluster, determine the legitimate minimum amount of CPU and memory entire RKE2 server stack, assuming that a real workload will be deployed on the cluster.
-* On an agent node, determine the legitimate minimum amount of CPU and memory that should be set aside for the kubelet and RKE2 agent components.
+* 在单节点集群上，确定整个 RKE2 服务器堆栈的合法最低处理器和内存量，假设将在集群上部署实际工作负载。
+* 在代理节点上，确定应为 kubelet 和 RKE2 代理组件预留的合法最低处理器和内存量。
 
-=== Environment and Components
+=== 环境和组件
 
 |===
-| Arch | OS | System | CPU | RAM | Disk
+| 架构 | OS | 系统 | CPU | RAM | 磁盘
 
 | x86_64
 | Ubuntu 22.04
 | AWS c6id.xlarge
-| Intel Xeon Platinum 8375C CPU, 4 Core 2.90 GHz
+| 英特尔至强铂金8375C CPU，4核 2.90 GHz
 | 8 GB
 | NVME SSD
 |===
 
-The tested components are:
+测试的组件包括：
 
-* RKE2 v1.27.12 with all packaged components enabled, Canal as the CNI
-* https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[Kubernetes Example Nginx Deployment]
+* RKE2 v1.27.12，启用所有软件包组件，使用 Canal 作为 CNI。
+* https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[Kubernetes 示例 Nginx 部署]
 
-=== Methodology
+=== 方法
 
-`systemd-cgtop` was used to track systemd cgroup-level CPU and memory utilization.
+`systemd-cgtop` 用于跟踪 systemd cgroup 级别的处理器和内存利用率。
 
-* `system.slice/rke2-server.service` tracks resource utilization for both RKE2 and containerd components.
-* `system.slice/rke2-agent.service` tracks resource utilization for the agent components.
+* `system.slice/rke2-server.service` 跟踪 RKE2 和 containerd 组件的资源利用率。
+* `system.slice/rke2-agent.service` 跟踪代理组件的资源利用率。
 
-Utilization figures were based on 95th percentile readings from steady state operation on nodes running the described workloads, giving an upper bounds on typical resource usage.
+利用率数据基于在运行所述工作负载的节点上进行的稳态操作的第95百分位数读数，从而给出典型资源使用的上限。
 
-=== RKE2 Server with a Workload
+=== 带有工作负载的 RKE2 服务器
 
-These are the requirements for a single-node cluster in which the RKE2 server shares resources with a https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[simple workload].
+这些是单节点集群的要求，其中 RKE2 服务器与 https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[简单工作负载] 共享资源。
 
 |===
-| System | CPU Core Usage | Memory
+| 系统 | CPU核心使用情况 | 内存
 
-| Intel 8375C
-| 17% of a core
+| 英特尔8375C
+| 17% 的内核
 | 4977 MB
 |===
 
-=== RKE2 Cluster with a Single Agent
+=== 单代理的 RKE2 集群
 
-These are the baseline requirements for a RKE2 cluster with a RKE2 server node and a RKE2 agent, but no workload.
+这些是 RKE2 集群的基本要求，包含一个 RKE2 服务器节点和一个 RKE2 代理，但没有工作负载。
 
 |===
-| Node | System | CPU Core Usage | Memory
+| 节点 | 系统 | CPU核心使用情况 | 内存
 
-| Server
-| Intel 8375C
-| 18% of a core
+| 服务器
+| 英特尔8375C
+| 18% 的内核
 | 4804 MB
 
-| Agent
-| Intel 8375C
-| 5% of a core
+| 代理
+| 英特尔8375C
+| 5% 的内核
 | 3590 MB
 |===

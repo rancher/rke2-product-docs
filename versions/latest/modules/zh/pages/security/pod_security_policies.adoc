@@ -3,39 +3,39 @@
 :revdate: 2025-07-17
 :page-revdate: {revdate}
 
-本文档描述了 RKE2 如何配置 `PodSecurityPolicies` 和 `NetworkPolicies` 来确保默认安全，同时还为操作人员提供了最大的配置灵活性。
+本文档描述了 RKE2 如何配置 `PodSecurityPolicies` 和 `NetworkPolicies` 以确保默认安全，同时为操作员提供最大的配置灵活性。
 
 [IMPORTANT]
-.版本
+.版本门控
 ====
-本文档适用于 RKE2 v1.24 及更早版本，请参阅 xref:security/pod_security_standards.adoc[Pod 安全标准文档]了解 RKE2 v1.25 及更高版本的默认策略。
+本文档适用于 RKE2 v1.24 及更早版本，请参阅 xref:security/pod_security_standards.adoc[Pod 安全标准文档] 以获取 RKE2 v1.25 及更高版本的默认策略信息。
 ====
 
 == Pod 安全策略
 
-RKE2 可以在有或没有 `profile: cis-1.6` 配置参数的情况下运行。这将导致它在启动时应用不同的 `PodSecurityPolicies` (PSP)。
+RKE2 可以在有或没有 `profile: cis-1.6` 配置参数的情况下运行。这将导致它在启动时应用不同的 `PodSecurityPolicies` (PSPs)。
 
-* 如果使用 `cis-1.6` 配置文件运行，RKE2 将对除 `kube-system` 之外的所有命名空间应用名为 `global-restricted-psp` 的限制性策略。`kube-system` 命名空间需要一个名为 `system-unrestricted-psp` 的低限制策略才能启动关键组件。
-* 如果在没有 `cis-1.6` 配置文件的情况下运行，RKE2 将应用一个名为 `global-unrestricted-psp` 的完全不受限制的策略，相当于在没有启用 PSP 准入控制器的情况下运行。
+* 如果使用 `cis-1.6` 控制文件运行，RKE2 将对所有名称空间应用一个名为 `global-restricted-psp` 的限制性策略，除了 `kube-system`。`kube-system` 名称空间需要一个名为 `system-unrestricted-psp` 的不太限制的策略，以便启动关键组件。
+* 如果在没有 `cis-1.6` 控制文件的情况下运行，RKE2 将应用一个完全不受限制的策略，称为 `global-unrestricted-psp`，这相当于在没有启用 PSP 准入控制器的情况下运行。
 
-RKE2 将在初始启动时实施这些策略，但之后不会修改它们，除非如下文所述由集群操作员明确触发。这是为了让操作员能够完全控制 PSP，而不被 RKE2 的默认值所干扰。
+RKE2 将在初始启动时实施这些策略，但之后不会修改它们，除非由集群操作员明确触发，如下所述。这样可以让操作员完全控制 PSP，而不受 RKE2 默认设置的干扰。
 
-PSP 的创建和应用由 `kube-system` 命名空间上是否存在某些注释来控制。它们直接映射到可以创建的 PSP：
+PSP 的创建和应用由 `kube-system` 名称空间上某些注释的存在或缺失来控制。这些直接映射到可以创建的 PSP，具体如下：
 
 * `psp.rke2.io/global-restricted`
 * `psp.rke2.io/system-unrestricted`
 * `psp.rke2.io/global-unrestricted`
 
-在启动时对策略及其注释执行以下逻辑：
+在启动时，对策略及其注释执行以下逻辑：
 
-* 如果注释存在，RKE2 将继续执行而不采取进一步操作。
-* 如果注解不存在，RKE2 会检查相关策略是否存在，如果存在，则删除并重新创建，同时将注解添加到命名空间中。
-* 对于 `global-unrestricted-psp`，不会重新创建策略。这是为了在不降低集群安全性的情况下在 CIS 和非 CIS 模式之间移动。
-* 在创建策略的时候，集群角色和集群角色绑定也被创建，从而确保默认使用合适的策略。
+* 如果注释存在，RKE2 将继续而不采取进一步行动。
+* 如果注释不存在，RKE2 将检查关联的策略是否存在，如果存在，则删除并重新创建它，同时将注释添加到名称空间。
+* 在 `global-unrestricted-psp` 的情况下，策略不会被重新创建。这是为了在 CIS 和非 CIS 模式之间移动时，不使集群的安全性降低。
+* 在创建策略时，还会创建集群角色和集群角色绑定，以确保默认情况下使用适当的策略。
 
-因此，在初始启动后，操作员可以修改或删除 RKE2 的策略，RKE2 将尊重这些变化。此外，要 "重置" 一个策略，操作者只需要从 `kube-system` 命名空间中删除相关的注释，然后重新启动 RKE2。
+因此，在初始启动后，操作员可以修改或删除 RKE2 的策略，RKE2 将尊重这些更改。此外，要 "重置" 策略，操作员只需从 `kube-system` 名称空间中删除相关注释并重启 RKE2。
 
-这些策略概述如下，以最受限制的 `global-restricted` PSP 开始。
+以下是策略的概述，从最严格的 `global-restricted` PSP 开始。
 
 [,yaml]
 ----
@@ -75,7 +75,7 @@ spec:
   readOnlyRootFilesystem: false
 ----
 
-如果 RKE2 在非 CIS 模式下启动，则会像上面一样检查注释，但是产生的 pod 安全策略是宽松的。见下文。
+如果 RKE2 在非 CIS 模式下启动，注释将像上面那样检查，但应用的 pod 安全策略是宽松的。请参见下文。
 
 [,yaml]
 ----
@@ -106,7 +106,7 @@ spec:
     rule: 'RunAsAny'
 ----
 
-这两种情况都应用了 "system unrestricted policy"。见下文。
+在这两种情况下，都会应用 "系统无限制策略"。请参见下文。
 
 [,yaml]
 ----
@@ -137,7 +137,7 @@ spec:
     rule: 'RunAsAny'
 ----
 
-要查看系统上当前部署的 pod 安全策略，请运行以下命令：
+要查看当前在系统上部署的 pod 安全策略，请运行以下命令：
 
 [,bash]
 ----
@@ -146,9 +146,9 @@ kubectl get psp -A
 
 == 网络策略
 
-当 RKE2 使用 `profile: cis-1.6` 参数运行时，它会将两个网络策略应用到 `kube-system`、`kube-public` 和 `default` 命名空间并应用关联的注释。与 PSP 相同的逻辑将应用于这些策略和注释。开始时会检查每个命名空间的注解是否存在，如果存在，RKE2 不会执行任何操作。如果注释不存在，RKE2 将检查策略是否存在，如果存在，则重新创建它。
+当 RKE2 使用 `profile: cis-1.6` 参数运行时，它将对 `kube-system`、`kube-public` 和 `default` 名称空间应用 2 个网络策略，并应用相关注释。这些策略和注释与 PSP 的逻辑相同。启动时，将检查每个名称空间的注释是否存在，如果存在，RKE2 不会采取任何行动。如果注释不存在，RKE2 会检查策略是否存在，如果存在，则重新创建它。
 
-应用的第一个策略是将网络流量限制为仅命名空间本身。见下文。
+应用的第一个策略是限制网络流量仅限于名称空间本身。请参见下文。
 
 [,yaml]
 ----
@@ -173,7 +173,7 @@ spec:
   - Ingress
 ----
 
-第二个策略应用到 `kube-system` 命名空间并允许 DNS 流量。见下文。
+应用的第二个策略是针对 `kube-system` 名称空间，并允许 DNS 流量。请参见下文。
 
 [,yaml]
 ----
@@ -203,9 +203,9 @@ spec:
   - Ingress
 ----
 
-RKE2 将 `default-network-policy` 策略和 `np.rke2.io` 注释应用于所有内置命名空间。`kube-system` 命名空间还获得了 `default-network-dns-policy` 策略和应用于它的 `np.rke2.io/dns` 注解。
+RKE2 将 `default-network-policy` 策略和 `np.rke2.io` 注释应用于所有内置名称空间。`kube-system` 名称空间还会应用 `default-network-dns-policy` 策略和 `np.rke2.io/dns` 注释。
 
-要查看系统上当前部署的网络策略，请运行以下命令：
+要查看当前在系统上部署的网络策略，请运行以下命令：
 
 [,bash]
 ----

@@ -1,0 +1,46 @@
+= SELinux
+:page-languages: [en, zh]
+:revdate: 2025-07-17
+:page-revdate: {revdate}
+
+RKE2は、バージョン7以降のCentOS/RHELシステムでのデフォルト設定であるSELinux対応システムと互換性があります。これをサポートする https://github.com/rancher/rke2-selinux[ポリシー]は、containerd用の https://github.com/containers/container-selinux[container-selinux]ポリシーの特化版です。これは、containerdがインストールされている非標準の場所を考慮し、永続的および一時的な状態を配置します。
+
+[NOTE] 
+====
+rke2-selinuxパッケージをインストールした後、rke2サービスを開始する前に、ノードの再起動が必要な場合があります。rke2-selinuxおよびcontainer-selinuxパッケージをインストールしてもSELinux監査ログに拒否が表示される場合は、ノードを再起動してください。
+====
+
+== カスタムコンテキストラベル
+
+RKE2は、複数の https://github.com/containers/container-selinux/blob/RHEL7.5/container.te#L59[`container_var_lib_t`]場所へのアクセスを必要とする静的ポッドとしてコントロールプレーンサービスを実行します。`etcd`コンテナは、`/var/lib/rancher/rke2/server/db`の下で読み書きできる必要があり、`kube-apiserver`、`kube-controller-manager`、`kube-scheduler`とともに`/var/lib/rancher/rke2/server/tls`から読み取る必要があります。これを過剰な権限を与えずに機能させるために、 https://github.com/containers/container-selinux/blob/RHEL7.5/container.te#L47-L49[`spc_t`]RKE2 SELinuxポリシーは、読み書きおよび読み取り専用アクセスのためにそれぞれ https://github.com/rancher/rke2-selinux/blob/v0.3.latest.1/rke2.te#L15-L21[`rke2_service_db_t`]および https://github.com/rancher/rke2-selinux/blob/v0.3.latest.1/rke2.te#L9-L13[`rke2_service_t`]コンテキストラベルを導入します。これらのラベルは、RKE2コントロールプレーンの静的ポッドにのみ適用されます。
+
+== 特定のOS要件
+
+=== Amazon Linux 2
+
+Amazon Linux 2には、追加のSELinuxパッケージをインストールする必要があります：
+
+[,bash]
+----
+sudo amazon-linux-extras enable selinux-ng; sudo yum install selinux-policy-targeted -y
+----
+
+== 設定
+
+RKE2のSELinuxサポートは、単一の構成項目、`--selinux`ブール値に相当します。これは、containerd/cri tomlのcriセクション内の https://github.com/containerd/cri/blob/release/1.4/docs/config.md[`enable_selinux`ブール値にパススルーします]。RKE2がtarball経由でインストールされた場合、追加の設定なしではSELinuxは有効になりません。その設定を行う推奨方法は、RKE2の`config.yaml`へのエントリを介して行うことです。例：
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml is the default location
+selinux: true
+----
+
+これは、`--selinux`フラグを`rke2 server`または`rke2 agent`コマンドラインに渡すか、`RKE2_SELINUX=true`環境変数を設定することに相当します。
+
+=== Calicoサポート
+
+SELinuxを有効にした状態でCalicoをCNIとして使用することを選択した場合、特定のポリシーをインストールする必要があります。
+
+インストールするパッケージはTigera https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el9.noarch.rpm[こちら]から提供されています。
+
+詳細についてはCalicoの https://docs.tigera.io/calico-enterprise/latest/getting-started/install-on-clusters/requirements[ドキュメント]を参照してください。

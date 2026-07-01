@@ -1,0 +1,124 @@
+= Air-Gap-Installation
+:page-languages: [en, zh]
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+Um {product-name} in einer Air-Gapped-Umgebung zu installieren, müssen Sie zunächst die Images in die Air-Gapped-Umgebung laden und dann RKE2 installieren.
+
+[IMPORTANT]
+====
+Sie können jede RKE2 Prime-Version verwenden, die auf der Prime Artifacts-URL für die in diesen Schritten genannten Assets aufgeführt ist. Um mehr über die Prime Artifacts-URL zu erfahren, siehe unsere https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime-only-Dokumentation]. Eine Authentifizierung ist erforderlich. Verwenden Sie Ihre https://scc.suse.com/home[SUSE Customer Center (SCC)]-Anmeldeinformationen, um sich anzumelden.
+====
+
+== Voraussetzungen
+
+Stellen Sie sicher, dass Sie die folgenden Voraussetzungen basierend auf Ihrer Umgebung erfüllen, bevor Sie fortfahren. Alle auf dieser Seite aufgeführten Schritte müssen als Root-Benutzer oder über `sudo` ausgeführt werden.
+
+[CAUTION]
+====
+Wenn Ihr Knoten NetworkManager installiert und aktiviert hat, xref:known_issues.adoc#_networkmanager[stellen Sie sicher, dass Sie NetworkManager so konfigurieren, dass CNI-verwaltete Schnittstellen ignoriert werden].
+====
+
+* Wenn Sie auf einem Air-Gapped-Knoten mit aktiviertem SELinux arbeiten, müssen Sie das erforderliche SELinux-Policy-RPM manuell installieren, bevor Sie diese Schritte ausführen. Siehe unsere xref:install/methods.adoc#_rpm[RPM-Dokumentation], um zu bestimmen, was Sie benötigen.
+* Wenn Sie auf einem Air-Gapped-Knoten mit aktiviertem SELinux arbeiten, sind die folgenden Abhängigkeiten für SLES, CentOS oder RHEL 8 erforderlich, wenn Sie eine xref:install/methods.adoc#_rpm[RPM-Installation] durchführen: `container-selinux iptables libnetfilter_conntrack libnfnetlink libnftnl policycoreutils-python-utils rke2-common rke2-selinux`
+* Wenn Ihre Knoten keine Schnittstelle mit einer Standardroute haben, muss eine Standardroute konfiguriert werden; sogar eine Black-Hole-Route über eine Dummy-Schnittstelle reicht aus.  RKE2 benötigt eine Standardroute, um die primäre IP des Knotens automatisch zu erkennen und damit das Kube-Proxy ClusterIP-Routing korrekt funktioniert. Um eine Dummy-Route hinzuzufügen, gehen Sie wie folgt vor:
++
+[,bash]
+----
+ip link add dummy0 type dummy
+ip link set dummy0 up
+ip addr add 203.0.113.254/31 dev dummy0
+ip route add default via 203.0.113.255 dev dummy0 metric 1000
+----
+
+== 1. Bilder laden
+
+Es gibt zwei verschiedene Methoden, um die Images zu laden. Jede Methode zum Laden von Bildern hat unterschiedliche Anforderungen und eignet sich für verschiedene Air-Gapped-Szenarien. Wählen Sie die Methode, die am besten zu Ihrer Infrastruktur und Ihren Sicherheitsanforderungen passt.
+
+
+=== Tarball-Methode
+
+. Laden Sie die Air Gap Images-Tarballs von der https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts-URL] für die RKE2-Version, CNI und Plattform, die Sie verwenden.
+ ** `rke2-images.linux-<ARCH>.tar.zst` oder `rke2-images-core.linux-<ARCH>.tar.gz`. Dieser Tarball enthält die erforderlichen Kernel-Container-Images, damit RKE2 Prime funktioniert. Zstandard bietet im Vergleich zu gzip bessere Kompressionsverhältnisse und schnellere Dekompressionsgeschwindigkeiten.
+ ** `rke2-images-<CNI>.linux-<ARCH>.tar.gz`: Dieser Tarball enthält speziell die Container-Images für Ihre Container-Netzwerkschnittstelle (CNI). Die Standard-CNI in RKE2 ist Canal.
+ *** Wenn Sie die Standard-CNI, Canal (`--cni=canal`), verwenden, können Sie entweder das `rke2-image` Legacy-Archiv wie oben beschrieben oder die Archive `rke2-images-core` und `rke2-images-canal` verwenden.
+ *** Wenn Sie die alternative CNI, Cilium (`--cni=cilium`), verwenden, müssen Sie die Archive `rke2-images-core` und `rke2-images-cilium` herunterladen.
+ *** Wenn Sie Ihr eigenes CNI (`--cni=none`) verwenden, laden Sie nur das `rke2-images-core` Archiv herunter.
+ ** Wenn Sie die vSphere CPI/CSI-Diagramme (`--cloud-provider-name=rancher-vsphere`) aktivieren, müssen Sie auch das `rke2-images-vsphere` Archiv herunterladen.
+. Erstellen Sie ein Verzeichnis namens `/rke2-artifacts` auf dem Knoten und speichern Sie die zuvor heruntergeladenen Dateien dort.
+. <<2. Install RKE2, RKE2 installieren>>.
+
+
+=== Private Registry-Methode
+
+Die Unterstützung für private Registries berücksichtigt alle Einstellungen aus der xref:install/containerd_registry_configuration.adoc[containerd-Registry-Konfiguration], einschließlich der Überschreibung des Endpunkts, des Transportprotokolls (HTTP/HTTPS), der Authentifizierung, der Zertifikatsüberprüfung und mehr.
+
+. Fügen Sie alle erforderlichen Systembilder zu Ihrer privaten Registry hinzu. Eine Liste der Bilder kann aus der `.txt` Datei abgerufen werden, die jedem oben genannten Tarball entspricht. Alternativ können Sie die `docker load` TAR-Archive herunterladen, dann die geladenen Bilder taggen und pushen.
+. <<2. Install RKE2, RKE2 installieren>> mit dem `system-default-registry` Parameter oder verwenden Sie die xref:install/containerd_registry_configuration.adoc[containerd-Registry-Konfiguration], um Ihre Registry als Spiegel für docker.io zu verwenden.
+
+
+== 2. Install RKE2
+
+Die folgenden Optionen zur Installation von RKE2 sollten nur nach Abschluss entweder des <<Tarball Method>> oder <<Private Registry Method>> durchgeführt werden.
+
+RKE2 kann entweder durch direktes Ausführen der <<RKE2 Binary Install,Binärdatei>> oder durch Verwendung des <<RKE2 Install.sh Script Install,install.sh Skripts>> installiert werden.
+
+=== RKE2 Binärinstallation
+
+. Erhalten Sie die RKE2-Binärdatei `rke2.linux-<ARCH>.tar.gz`.
+. Stellen Sie sicher, dass die Binärdatei den Namen `rke2` trägt und sich in `/usr/local/bin` befindet. Stellen Sie sicher, dass sie ausführbar ist.
+. Führen Sie die Binärdatei mit den gewünschten Parametern aus.
+* Wenn Sie die Rancher Prime-Registry verwenden, setzen Sie die folgenden Werte in `config.yaml`:
+.. Setzen Sie `system-default-registry: registry.rancher.com`.
+.. Wenn Sie nicht das Standard-CNI, Canal, verwenden, setzen Sie `cni: <CNI>`.
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+cni: <CNI>
+----
+* Wenn Sie die Private Registry-Methode verwenden, setzen Sie die folgenden Werte in `config.yaml`:
++
+[,yaml]
+----
+system-default-registry: "registry.example.com:5000"
+----
++
+[NOTE]
+====
+Der `system-default-registry`-Parameter muss ausschließlich gültige RFC 3986-URI-Autoritäten angeben, d. h. einen Host und einen optionalen Port.
+====
+
+=== RKE2 Install.sh Skriptinstallation
+
+`install.sh` kann im Offline-Modus verwendet werden, indem die `INSTALL_RKE2_ARTIFACT_PATH` Variable auf einen Pfad gesetzt wird, der vorab heruntergeladene Artefakte enthält. Dies wird eine Standardinstallation durchlaufen, einschließlich der Erstellung von systemd-Einheiten.
+
+. Laden Sie das Installationsskript, die RKE2-Binärdateien, die RKE2-Images und die SHA256-Prüfsummenarchive von der https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] in das `/rke2-artifacts` Verzeichnis herunter, wie im folgenden Beispiel:
++
+[,bash]
+----
+mkdir /rke2-artifacts && cd /rke2-artifacts/
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2-images.linux-<ARCH>.tar.zst
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2.linux-<ARCH>.tar.gz
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/sha256sum-<ARCH>.txt
+curl -sfL https://get.rke2.io --output install.sh
+----
+
+. Führen Sie `install.sh` mit dem Verzeichnis aus, wie im folgenden Beispiel:
++
+[,bash]
+----
+INSTALL_RKE2_ARTIFACT_PATH=/rke2-artifacts sh install.sh
+----
+
+. Wenn Sie die Rancher Prime-Registry verwenden, setzen Sie die folgenden Werte in `config.yaml`:
+.. Setzen Sie `system-default-registry: registry.rancher.com`.
+.. Wenn Sie nicht das Standard-CNI, Canal, verwenden, setzen Sie `cni: <CNI>`.
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+cni: <CNI>
+----
+
+. Aktivieren und starten Sie den Dienst, wie xref:install/quickstart.adoc[hier] beschrieben.
