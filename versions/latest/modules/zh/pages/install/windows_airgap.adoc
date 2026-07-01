@@ -1,6 +1,6 @@
 = Windows隔离安装
 :page-languages: [en, zh]
-:revdate: 2025-08-06
+:revdate: 2026-06-19
 :page-revdate: {revdate}
 
 *Windows支持要求使用Calico或Flannel作为RKE2集群的CNI。*

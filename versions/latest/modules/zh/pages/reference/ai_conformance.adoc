@@ -1,6 +1,6 @@
 = CNCF AI 一致性
 :page-languages: [en, zh]
-:revdate: 2025-11-06
+:revdate: 2026-06-25
 :page-revdate: {revdate}
 
 https://docs.google.com/document/d/1hXoSdh9FEs13Yde8DivCYjjXyxa7j4J8erjZPEGWuzc/edit?tab=t.0[CNCF Kubernetes AI 一致性] 定义了一组额外的能力、API 和配置，Kubernetes 集群必须提供这些能力，以可靠和高效地运行 AI/ML 工作负载，超出标准的 CNCF Kubernetes 一致性。
@@ -365,7 +365,6 @@ metadata:
   namespace: default
 spec:
   restartPolicy: OnFailure
-  runtimeClassName: nvidia
   containers:
   - name: cuda-container
     image: nvcr.io/nvidia/k8s/cuda-sample:nbody
@@ -382,7 +381,6 @@ metadata:
   namespace: default
 spec:
   restartPolicy: OnFailure
-  runtimeClassName: nvidia
   containers:
   - name: cuda-container2
     image: nvcr.io/nvidia/k8s/cuda-sample:nbody
@@ -399,7 +397,6 @@ metadata:
   namespace: default
 spec:
   restartPolicy: OnFailure
-  runtimeClassName: nvidia
   containers:
   - name: cuda-container3
     image: nvcr.io/nvidia/k8s/cuda-sample:nbody

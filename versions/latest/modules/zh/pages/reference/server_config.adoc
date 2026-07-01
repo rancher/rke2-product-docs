@@ -1,6 +1,6 @@
 = 服务器配置参考
 :page-languages: [en, zh]
-:revdate: 2026-04-01
+:revdate: 2026-06-19
 :page-revdate: {revdate}
 
 这是一个关于可以用于配置 rke2 服务器的所有参数的参考。请注意，虽然这是命令行参数的参考，但配置 RKE2 的最佳方式是使用 xref:install/configuration.adoc#_configuration_file[配置文件]。
@@ -36,7 +36,8 @@
 | 数据目录
 | 用于保存状态的文件夹
 | "/var/lib/rancher/rke2"
-|
+| RKE2_DATA_DIR
+
 |===
 
 === 侦听器
@@ -59,6 +60,7 @@
 | tls-san-security
 | 通过拒绝添加与 kubernetes apiserver 服务、服务器节点或 tls-san 选项的值无关的主题备用名称来保护服务器 TLS 证书
 | true
+
 |===
 
 === 网络
@@ -69,42 +71,48 @@
 | cluster-cidr
 | 用于 Pod IP 的 IPv4/IPv6 网络 CIDR
 | 10.42.0.0/16
-|
+| 
 
 | service-cidr
 | 用于服务 IP 的 IPv4/IPv6 网络 CIDR
 | 10.43.0.0/16
-|
+| 
 
 | service-node-port-range
 | 为具有 NodePort 可见性的服务保留的端口范围
 | "30000-32767"
-|
+| 
 
 | 集群 DNS
 | coredns 服务的 IPv4 集群 IP。应在您的 service-cidr 范围内
 | 10.43.0.10
-|
+| 
 
 | 集群域
 | 集群域
 | "cluster.local"
-|
+| 
 
 | 出口选择器模式
 | 其中之一为 'agent'、'cluster'、'pod'、'disabled'
 | "agent"
-|
+| 
 
 | servicelb-namespace
 | servicelb 组件的 pod 命名空间
 | "kube-system"
-|
+| 
 
 | cni
 | 要部署的 CNI 插件，选项为 none、calico、canal、cilium；可选地将 multus 作为第一个值以启用 multus 元插件
 | canal
 | RKE2_CNI
+
+| ingress-controller
+| Ingress Controllers to deploy, one of none, traefik, ingress-nginx; the first value will be set as the default ingress class
+| 
+| RKE2_INGRESS_CONTROLLER
+
 |===
 
 === 客户端
@@ -119,9 +127,14 @@
 | write-kubeconfig-mode
 | 使用此模式写入 kubeconfig
 | RKE2_KUBECONFIG_MODE
+
+| write-kubeconfig-group
+| Write kubeconfig with this group
+| RKE2_KUBECONFIG_GROUP
+
 |===
 
-=== Helm
+== Helm
 
 |===
 | 标志 | 说明
@@ -158,6 +171,7 @@
 | cluster-reset
 | 忘记所有对等体，成为新集群的唯一成员
 | RKE2_CLUSTER_RESET
+
 |===
 
 === 数据库
@@ -173,7 +187,7 @@
 | etcd-expose-metrics
 | 将 etcd 指标暴露给客户端接口。
 | false
-|
+| 
 
 | etcd-disable-snapshots
 | 禁用自动 etcd 快照
@@ -188,12 +202,17 @@
 | etcd-snapshot-schedule-cron
 | 快照间隔时间的 cron 规范。例如，每 5 小时 '0 */5 * * *'
 | "0 */12 * * *"
-|
+| 
+
+| etcd-snapshot-reconcile-interval
+| Snapshot reconcile interval
+| 10m0s
+| 
 
 | etcd-snapshot-retention
 | 要保留的快照数量
 | 5
-|
+| 
 
 | etcd-snapshot-dir
 | 保存数据库快照的目录。
@@ -391,6 +410,7 @@
 | ingress-controller 
 | 要部署的 Ingress 控制器，选项为 none、ingress-nginx 或 traefik
 | 
+| RKE2_CLOUD_CONTROLLER_MANAGER_EXTRA_ENV
 
 |===
 
@@ -430,6 +450,7 @@
 | etcd镜像
 | 覆盖 etcd 使用的镜像
 | RKE2_ETCD_IMAGE
+
 |===
 
 === 云提供商
@@ -444,6 +465,12 @@
 | cloud-provider-config
 | 云提供商配置文件路径
 | RKE2_CLOUD_PROVIDER_CONFIG
+
+| node-name-from-cloud-provider-metadata
+| Set node name from instance metadata service hostname
+| false
+| RKE2_NODE_NAME_FROM_CLOUD_PROVIDER_METADATA
+
 |===
 
 === 安全性
@@ -485,6 +512,7 @@
 | kubelet-path
 | 覆盖 kubelet 二进制文件路径
 | RKE2_KUBELET_PATH
+
 |===
 
 === 代理/节点
@@ -515,12 +543,12 @@
 | image-credential-provider-bin-dir
 | 凭证提供者插件二进制文件所在目录的路径
 | "/var/lib/rancher/credentialprovider/bin"
-|
+| 
 
 | image-credential-provider-config
 | 凭证提供者插件配置文件的路径
 | "/var/lib/rancher/credentialprovider/config.yaml"
-|
+| 
 
 | protect-kernel-defaults
 | 内核调优行为。如果设置，内核可调参数与kubelet默认值不同则报错。
@@ -536,6 +564,7 @@
 | 用于主管客户端负载均衡器的本地端口。如果主管和apiserver不在同一位置，将使用比此端口少1的额外端口用于apiserver客户端负载均衡器。
 | 6444
 | RKE2_LB_SERVER_PORT
+
 |===
 
 === 代理/运行时
@@ -556,17 +585,18 @@
 | snapshotter
 | 覆盖默认的 containerd 快照器
 | "overlayfs"
-|
+| 
 
 | private-registry
 | 私有注册表配置文件
 | "/etc/rancher/rke2/registries.yaml"
-|
+| 
 
 | system-default-registry
 | 用于所有系统镜像的专用注册表
 |
 | RKE2_SYSTEM_DEFAULT_REGISTRY
+
 |===
 
 === 代理/Containerd
@@ -594,6 +624,7 @@
 | resolv.conf
 | Kubelet resolv.conf 文件
 | RKE2_RESOLV_CONF
+
 |===
 
 === 代理/标志
@@ -607,3 +638,4 @@
 | kube-proxy-arg
 | 用于 kube-proxy 进程的自定义标志
 |===
+

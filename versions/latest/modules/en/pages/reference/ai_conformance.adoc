@@ -1,11 +1,11 @@
 = CNCF AI Conformance
 :page-languages: [en, zh]
-:revdate: 2025-11-06
+:revdate: 2026-06-25
 :page-revdate: {revdate}
 
 The https://docs.google.com/document/d/1hXoSdh9FEs13Yde8DivCYjjXyxa7j4J8erjZPEGWuzc/edit?tab=t.0[CNCF Kubernetes AI Conformance] defines a set of additional capabilities, APIs and configurations that a Kubernetes cluster MUST offer, on top of standard CNCF Kubernetes Conformance, to reliably and efficiently run AI/ML workloads.
 
-This page shows how to meet these requirements using RKE2 v1.34.1+rke2r1.
+This page shows how to meet these requirements using RKE2 v1.35.5+rke2r2 and NVIDIA GPU operator v26.3.2. The operator is installed following the xref:add-ons/gpu_operators.adoc#_deploy_nvidia_operator[GPU Operators documentation]
 
 == Support Dynamic Resource Allocation (DRA)
 
@@ -28,6 +28,77 @@ resourceclaims                        resource.k8s.io/v1   true         Resource
 resourceclaimtemplates                resource.k8s.io/v1   true         ResourceClaimTemplate
 resourceslices                        resource.k8s.io/v1   false        ResourceSlice
 ----
+
+== Driver Runtime Management
+
+DRA is the ideal API to verify that GPU drivers and container runtime configurations are correctly installed and maintained on nodes with accelerators. However, because DRA features are still evolving into the Kubernetes core ecosystem, platforms utilize Node Feature Discovery (NFD) and GPU Feature Discovery (GFD) to fulfill this requirement via node metadata attestation. 
+
+=== 1. Verifying Base Container Runtime Version
+To confirm the base engine handling the container lifecycle, the platform exposes the underlying `containerd` runtime via the core Node API:
+
+[,bash]
+----
+kubectl get nodes -l nvidia.com/gpu.present=true -o jsonpath='{.items[*].status.nodeInfo.containerRuntimeVersion}'
+----
+
+Expected output:
+----
+containerd://2.2.3-k3s1
+----
+
+=== 2. Verifying Accelerator Drivers and Runtime Configurations
+By querying the node labels, administrators can programmatically verify both the driver installation and the specialized container runtime configuration patch applied to `containerd`:
+
+[,bash]
+----
+kubectl get nodes -l nvidia.com/gpu.present=true -o jsonpath='{.items[*].metadata.labels}'
+----
+
+Expected output:
+[,yaml]
+----
+nvidia.com/cuda.driver-version.full: "595.71.05"
+nvidia.com/gpu.deploy.container-toolkit: "true"
+nvidia.com/gpu-driver-upgrade-state: "upgrade-done"
+----
+
+* `gpu.deploy.container-toolkit: "true"` explicitly confirms that the container runtime configuration (the toolkit patch to `containerd`) is successfully injected and active.
+* `gpu-driver-upgrade-state: "upgrade-done"` confirms the operator is actively maintaining the lifecycle of these components.
+
+
+== GPU Sharing support
+
+There are different strategies to share a GPU. We are going to use time-slicing because it is a pure software trick handled by the NVIDIA driver and container runtime. Therefore, it is compatible with almost every GPU.
+
+Please refer to the https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/gpu-sharing.html#applying-one-cluster-wide-configuration[NVIDIA documentation] for details about how to apply time-slicing.
+
+If everything worked as expected, you can verify it worked by executing:
+
+[,bash]
+----
+kubectl describe node $GPU-NODE-NAME
+----
+
+Expected output (assuming 4 replicas were configured):
+[,yaml]
+----
+Labels:
+        nvidia.com/gpu.product=Tesla-T4-SHARED
+        nvidia.com/gpu.replicas=4
+        nvidia.com/gpu.sharing-strategy=time-slicing
+
+Capcity:
+  nvidia.com/gpu:     4
+
+Allocatable:
+  nvidia.com/gpu:     4
+----
+
+== Maintain API consistency when using vGPUs and GPUs
+
+Maintaining consistency with the API and request mechanisms of physical fractional GPUs ensures that workloads, scheduling, policies, and user expectations remain the same across both physical and virtual backends, enabling portability and avoiding fragmented, vendor-specific resource models.
+
+The NVIDIA GPU operator supports vGPUs and maintain the required API consistency. Please refer to the https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/install-gpu-operator-vgpu.html[NVIDIA documentation] for details about how to configure the NVIDIA GPU operator to support vGPU.
 
 == Support the Gateway API
 
@@ -337,24 +408,11 @@ After a few minutes, the Grafana dashboard will show the DCGM metrics, such as `
 
 == Secure accelerator access
 
-This requirement mandates access to accelerators from within containers must be properly isolated and mediated by Kubernetes. To achieve this, install the NVIDIA GPU Operator as described in the GPU Operator documentation xref:add-ons/gpu_operators.adoc#_deploy_nvidia_operator[docs].
+This requirement mandates access to accelerators from within containers must be properly isolated and mediated by Kubernetes
 
-After installation, verify the toolkit configuration at `/usr/local/nvidia/toolkit/.config/nvidia-container-runtime/config.toml` contains:
+The NVIDIA GPU operator in v26.3.2 automatically configures that stack with the proper isolation.
 
-[,yaml]
-----
-accept-nvidia-visible-devices-as-volume-mounts = true
-accept-nvidia-visible-devices-envvar-when-unprivileged = false
-----
-
-Ensure the `device-plugin` DaemonSet includes the following environment variable:
-
-[,yaml]
-----
-DEVICE_LIST_STRATEGY:        volume-mounts
-----
-
-If the configuration is correct, verify the isolation requirement by running the following three Pods in a cluster with only one GPU:
+Verify the isolation requirement by running the following three Pods in a cluster with only one GPU:
 
 [,yaml]
 ----
@@ -365,7 +423,6 @@ metadata:
   namespace: default
 spec:
   restartPolicy: OnFailure
-  runtimeClassName: nvidia
   containers:
   - name: cuda-container
     image: nvcr.io/nvidia/k8s/cuda-sample:nbody
@@ -382,7 +439,6 @@ metadata:
   namespace: default
 spec:
   restartPolicy: OnFailure
-  runtimeClassName: nvidia
   containers:
   - name: cuda-container2
     image: nvcr.io/nvidia/k8s/cuda-sample:nbody
@@ -399,7 +455,6 @@ metadata:
   namespace: default
 spec:
   restartPolicy: OnFailure
-  runtimeClassName: nvidia
   containers:
   - name: cuda-container3
     image: nvcr.io/nvidia/k8s/cuda-sample:nbody
