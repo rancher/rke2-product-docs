@@ -11,7 +11,7 @@ It is a fully https://landscape.cncf.io/?group=projects-and-products&view-mode=c
 
 To meet these goals, {product-name} does the following:
 
-* Provides xref:security/hardening_guide.adoc[defaults and configuration options] that allow clusters to pass the CIS Kubernetes Benchmark xref:security/cis_self_assessment19.adoc[v1.9] or xref:security/cis_self_assessment110.adoc[v1.10] with minimal operator intervention.
+* Provides defaults and configuration options that allow clusters to pass the latest CIS Kubernetes Benchmarks with minimal operator intervention. (See xref:security/hardening_guide.adoc[CIS Hardening Guide] for the full list of supported benchmark versions.)
 * Enables xref:security/fips3_support.adoc[FIPS 140-3 compliance].
 * Regularly scans components for CVEs using https://github.com/aquasecurity/trivy[trivy] in our build pipeline.
 
