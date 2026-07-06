@@ -1,6 +1,6 @@
 = 快速开始
 :page-languages: [en, zh]
-:revdate: 2025-07-09
+:revdate: 2026-07-06
 :page-revdate: {revdate}
 
 本指南帮助你使用默认选项快速启动集群。
@@ -48,6 +48,28 @@ curl -sfL https://rancher-mirror.rancher.cn/rke2/install.sh | INSTALL_RKE2_MIRRO
 ----
 systemctl enable rke2-server.service
 ----
+
+. 设置正确的 Prime 配置。
+
+如果使用 2026 年 5 月版本或更新版本：1.36.1+rke2r2、1.35.5+rke2r2、1.34.8+rke2r2、1.33.11+rke2r2。请在所有 Server 节点上打开 xref:install/configuration.adoc[RKE2 配置文件] 并启用 prime 标志：
++
+[,sh]
+----
+# /etc/rancher/rke2/config.yaml
+
+prime: true
+----
+此配置会将 `registry.rancher.com` 设为所有容器镜像的默认位置，并为 ingress-nginx 用户指向受支持的 ingress-nginx 镜像。
+
+如果使用 2026 年 4 月版本或更早版本：v1.35.3+rke2r3、v1.34.6+rke2r3、v1.33.10+rke2r3。请在所有 Server 节点上打开 xref:install/configuration.adoc[RKE2 配置文件] 并设置 `system-default-registry`：
++
+[,sh]
+----
+# /etc/rancher/rke2/config.yaml
+
+system-default-registry: registry.rancher.com
+----
+此配置告诉 RKE2 使用 `registry.rancher.com` 作为其在集群中部署所需全部容器镜像的默认位置。
 
 . 启动服务
 +
