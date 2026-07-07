@@ -1,6 +1,6 @@
 = Ingress NGINX to Traefik Migration Guide
 :page-languages: [en, zh]
-:revdate: 2026-04-01
+:revdate: 2026-07-03
 :page-revdate: {revdate}
 
 The Kubernetes Ingress NGINX project has announced its https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/[retirement in March 2026]. As a result, RKE2 is transitioning to Traefik as the default ingress controller for new clusters starting with RKE2 v1.36.
@@ -108,11 +108,18 @@ spec:
             websecure:
                 hostPort: 8443
         providers:
-            kubernetesIngressNginx:
+            # Check info Version Gate below
+            kubernetesIngressNGINX:
                 enabled: true
                 ingressClass: "rke2-ingress-nginx-migration"
                 controllerClass: "rke2.cattle.io/ingress-nginx-migration"
 ----
+
+[NOTE]
+.Version Gate
+====
+Starting with the RKE2 June releases: v1.36.2+rke2r1, v1.35.6+rke2r1, v1.34.9+rke2r1, v1.33.13+rke2r1, Traefik chart changes the provider name from `kubernetesIngressNginx` to `kubernetesIngressNGINX`
+====
 
 === 4. Restart RKE2
 
@@ -262,11 +269,18 @@ metadata:
 spec:
     valuesContent: |-
         providers:
-            kubernetesIngressNginx:
+            # Check info Version Gate below
+            kubernetesIngressNGINX:
                 enabled: true
                 ingressClass: "rke2-ingress-nginx-migration"
                 controllerClass: "rke2.cattle.io/ingress-nginx-migration"
 ----
+
+[NOTE]
+.Version Gate
+====
+Starting with the RKE2 June releases: v1.36.2+rke2r1, v1.35.6+rke2r1, v1.34.9+rke2r1, v1.33.13+rke2r1, Traefik chart changes the provider name from `kubernetesIngressNginx` to `kubernetesIngressNGINX`
+====
 
 === 3. Restart RKE2
 
@@ -305,3 +319,8 @@ done
 . Potential race conditions as both ingress controllers would read the same ingress resource and could try to update the status at the same time.
 . The ingressClass nginx gets removed automatically when Ingress NGINX is uninstalled in Phase 3.
 * Ingress NGINX might take a long time to be removed.
+
+[NOTE]
+====
+For more detailed information, check our https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[Prime Guide for migration]
+====
