@@ -10,6 +10,7 @@ To install {product-name} can be installed in an air-gapped environment, you mus
 You can use any RKE2 Prime version listed on the Prime Artifacts URL for the assets mentioned in these steps. To learn more about the Prime Artifacts URL, see our https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime-only documentation]. Authentication is required. Use your https://scc.suse.com/home[SUSE Customer Center (SCC)] credentials to log in.
 ====
 
+[#_prerequisites_1]
 == Prerequisites
 
 Ensure you meet the following prerequisites based on your environment before proceeding. All the steps listed on this page must be run as the root user or through `sudo`.
@@ -37,11 +38,13 @@ Note that the commands above apply only to the running system and will be lost o
 +
 Once configured, confirm the default route is present with `ip route show default`. After RKE2 starts, confirm the node's primary IP was detected correctly with `kubectl get nodes -o wide`.
 
+[#_1_load_images]
 == 1. Load Images
 
 There are two different methods to load the images. Each image loading method has different requirements and is suited for different air-gapped scenarios. Choose the method that best fits your infrastructure and security requirements.
 
 
+[#_tarball_method]
 === Tarball Method
 
 . Download the air-gap images tarballs from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] for the RKE2 version, CNI, and platform you are using.
@@ -55,6 +58,7 @@ There are two different methods to load the images. Each image loading method ha
 . <<2. Install RKE2, Istall RKE2>>.
 
 
+[#_private_registry_method]
 === Private Registry Method
 
 Private registry support honors all settings from the xref:install/containerd_registry_configuration.adoc[containerd registry configuration], including endpoint override, transport protocol (HTTP/HTTPS), authentication, certificate verification, and more.
@@ -63,6 +67,7 @@ Private registry support honors all settings from the xref:install/containerd_re
 . <<2. Install RKE2, Install RKE2>> using the `system-default-registry` parameter, or use the xref:install/containerd_registry_configuration.adoc[containerd registry configuration] to use your registry as a mirror for docker.io.
 
 
+[#_hauler_method]
 === Hauler Method
 
 The airgap tool https://docs.hauler.dev/docs/intro[Hauler] allows you to aggregate and transport the RKE2 artifacts to disconnected environments, where you can seed a private registry or serve a registry of the Hauler store. Follow the https://docs.hauler.dev/docs/introduction/install[Hauler installation instructions], then proceed with the following steps. This pattern is repeatable for other artifacts you may want to bring into your airgapped environment.
@@ -134,12 +139,14 @@ hauler store extract sha256sum.txt --output /root/rke2-artifacts
 hauler store extract rke2-binary:v1.36.1+rke2r1 --output /usr/local/bin
 ----
 
+[#_2_install_rke2]
 == 2. Install RKE2
 
 The following options to install RKE2 should only be performed after completing either the <<Tarball Method>> or <<Private Registry Method>>.
 
 RKE2 can be installed either by running the <<RKE2 Binary Install,binary>> directly or by using the <<RKE2 Install.sh Script Install,install.sh script>>.
 
+[#_rke2_binary_install]
 === RKE2 Binary Install
 
 . Obtain the RKE2 binary file `rke2.linux-<ARCH>.tar.gz`.
@@ -166,6 +173,7 @@ system-default-registry: "registry.example.com:5000"
 The `system-default-registry` parameter must specify only valid RFC 3986 URI authorities, i.e. a host and optional port.
 ====
 
+[#_rke2_installsh_script_install]
 === RKE2 Install.sh Script Install
 
 `install.sh` may be used in an offline mode by setting the `INSTALL_RKE2_ARTIFACT_PATH` variable to a path containing pre-downloaded artifacts. This will run through a standard install, including creating systemd units.

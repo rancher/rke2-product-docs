@@ -7,12 +7,14 @@ FIPS 140-3 is a U.S. Federal Government security standard used to approve crypto
 
 Verification of compliance is avaliable in: xref:attachment$RKE2_FIPS3_Verified.pdf[FIPS 140-3 Verifed].
 
+[#_use_of_fips_compatible_go_compiler]
 == Use of FIPS Compatible Go compiler
 
 The Go compiler being used can be found https://go.googlesource.com/go/+/dev.boringcrypto[here]. Each component of the system is built with the version of this compiler that matches the same standard Go compiler version that would be used otherwise.
 
 This version of Go replaces the standard Go crypto libraries with the FIPS validated BoringCrypto module. For more information, see the https://go.dev/src/crypto/internal/boring/README[GoBoring README] for more details. This module is validated by NIST as the https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4968[BoringCrypto] module on a wide range of systems.
 
+[#_fips_support_in_cluster_components]
 === FIPS Support in Cluster Components
 
 Most RKE2 components are statically compiled using the GoBoring Go compiler. Architecturally, RKE2 is divided into several sections, and the following list outlines these sections and their associated components:
@@ -31,6 +33,7 @@ Most RKE2 components are statically compiled using the GoBoring Go compiler. Arc
  ** CoreDNS
  ** Traefik
 
+[#_runtime]
 == Runtime
 
 To ensure the entire architecture utilizes FIPS 140-3 compliant algorithms, RKE2 runtime utilities are statically compiled with the FIPS-enabled Go compiler. This guarantees compliance across every level of the stack, from Kubernetes daemons to container orchestration mechanics.
@@ -44,10 +47,12 @@ To ensure the entire architecture utilizes FIPS 140-3 compliant algorithms, RKE2
 * crictl
 * runc
 
+[#_cni]
 == CNI
 
 RKE2 supports selecting an alternative CNI via the `--cni` flag. It comes bundled with several options, including Canal (default), Calico, Cilium, and Multus. However, only Canal is rebuilt for FIPS compliance.
 
+[#_ingress]
 == Ingress
 
 RKE2 ships with two ingress controllers: ingress-nginx and Traefik. Both are FIPs compliant.

@@ -5,6 +5,7 @@
 
 RKE2 is very lightweight, but has some minimum requirements as outlined below.
 
+[#_prerequisites]
 == Prerequisites
 
 Two RKE2 nodes cannot have the same node name. By default, the node name is taken from the machine's hostname.
@@ -17,16 +18,20 @@ If two or more of your machines have the same hostname, you must do one of the f
 
 If the Round-Trip Time (RTT) between control-plane nodes exceeds 2ms, refer to the following https://support.scc.suse.com/s/kb/Maximum-RTT-Round-Trip-Time-for-an-RKE2-cluster?language=en_US[guide].
 
+[#_architecture]
 == Architecture
 
 RKE2 is available for x86_64 and arm64/aarch64.
 
+[#_operating_systems]
 == Operating Systems
 
+[#_linux]
 === Linux
 
 See the https://www.suse.com/suse-rke2/support-matrix/all-supported-versions[RKE2 Support Matrix] for all the OS versions that have been validated with RKE2. In general, RKE2 should work on any Linux distribution that uses systemd and iptables.
 
+[#_rhel_10]
 ==== RHEL 10
 
 On RHEL 10 (and its derivatives like Rocky Linux) an additional package is required to allow nf_conntrack.
@@ -36,6 +41,7 @@ On RHEL 10 (and its derivatives like Rocky Linux) an additional package is requi
 sudo dnf install kernel-modules-extra -y
 ----
 
+[#_windows]
 === Windows
 
 [IMPORTANT]
@@ -69,15 +75,18 @@ Enable-WindowsOptionalFeature -Online -FeatureName Containers -All
 
 This will require a reboot for the `Containers` feature to properly function.
 
+[#_hardware]
 == Hardware
 
 Hardware requirements scale based on the size of your deployments. Minimum recommendations are outlined here.
 
+[#_linuxwindows]
 === Linux/Windows
 
 * RAM: 4GB Minimum (we recommend at least 8GB)
 * CPU: 2 Minimum (we recommend at least 4CPU)
 
+[#_vm_sizing_guide]
 === VM Sizing Guide
 
 When limited on CPU and RAM on the control-plane + etcd nodes, there could be limitations for the amount of agent nodes that can be joined under standard workload conditions.
@@ -113,10 +122,12 @@ This data was retrieved under specific test conditions. It will vary depending u
 ** A constant workload that contains multiple other resources including CRDs.
 . Join agent nodes in batches of 30-50 at a time.
 
+[#_disks]
 ==== Disks
 
 RKE2 performance depends on the performance of the database, and since RKE2 runs etcd embeddedly and it stores the data dir on disk, we recommend using an SSD when possible to ensure optimal performance.
 
+[#_kernel_parameters]
 == Kernel Parameters
 
 Some workloads particularly those that run many pods or watch large numbers of files, such as GPU operator validators can exhaust a node's default inotify limits. When this happens, pods fail to start with an error like:
@@ -141,6 +152,7 @@ To persist the change across reboots, write it to `/etc/sysctl.d/99-inotify.conf
 sudo sysctl --system
 ----
 
+[#_networking]
 == Networking
 
 [IMPORTANT]
@@ -159,6 +171,7 @@ If you wish to utilize the metrics server, you will need to open port 10250 on e
 The VXLAN port on nodes should not be exposed to the world as it opens up your cluster network to be accessed by anyone. Run your nodes behind a firewall/security group that disables access to port 8472.
 ====
 
+[#_inbound_network_rules]
 === Inbound Network Rules
 
 |===
@@ -207,6 +220,7 @@ The VXLAN port on nodes should not be exposed to the world as it opens up your c
 | NodePort port range
 |===
 
+[#_cni_specific_inbound_network_rules]
 ==== CNI Specific Inbound Network Rules
 
 [tabs]
@@ -323,6 +337,7 @@ Flannel::
 |===
 ======
 
+[#_windows_specific_inbound_network_rules]
 === Windows Specific Inbound Network Rules
 
 |===

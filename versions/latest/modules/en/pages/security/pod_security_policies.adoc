@@ -11,6 +11,7 @@ This document describes how RKE2 configures `PodSecurityPolicies` and `NetworkPo
 This document applies to RKE2 v1.24 and older, please refer to the xref:security/pod_security_standards.adoc[Pod Security Standards Documentation] for the default policy information for RKE2 v1.25 and higher.
 ====
 
+[#_pod_security_policies]
 == Pod Security Policies
 
 RKE2 can be ran with or without the `profile: cis-1.6` configuration parameter. This will cause it to apply different `PodSecurityPolicies` (PSPs) at start-up.
@@ -144,6 +145,7 @@ To view the pod security policies currently deployed on your system, run the bel
 kubectl get psp -A
 ----
 
+[#_network_policies_2]
 == Network Policies
 
 When RKE2 is run with the `profile: cis-1.6` parameter, it will apply 2 network policies to the `kube-system`, `kube-public`, and `default` namespaces and applies associated annotations. The same logic applies to these policies and annotations as the PSPs. On start, the annotations for each namespace are checked for existence and if they exist, RKE2 takes no action. If the annotation doesn't exist, RKE2 checks to see if the policy exists and if it does, recreates it.

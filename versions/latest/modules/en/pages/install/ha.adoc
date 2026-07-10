@@ -26,6 +26,7 @@ Setting up an HA cluster requires the following steps:
 . Join additional server nodes
 . Join agent nodes
 
+[#_1_configure_the_fixed_registration_address]
 == 1. Configure the Fixed Registration Address
 
 Server nodes beyond the first one and all agent nodes need a URL to register against. This can be the IP or hostname of any of the server nodes, but in many cases those may change over time as nodes are created and destroyed. Therefore, you should have a stable endpoint in front of the server nodes.
@@ -40,6 +41,7 @@ This endpoint can also be used for accessing the Kubernetes API. So you can, for
 
 Note that the `rke2 server` process listens on port `9345` for new nodes to register. The Kubernetes API is served on port `6443`, as normal. Configure your load balancer accordingly.
 
+[#_2_launch_the_first_server_node]
 == 2. Launch the first server node
 
 The first server node establishes the secret token that other server or agent nodes will register with when connecting to the cluster.
@@ -65,6 +67,7 @@ tls-san:
   - another-kubernetes-domain.com
 ----
 
+[#_2a_optional_consider_server_node_taints]
 === 2a. Optional: Consider server node taints
 
 By default, server nodes will be schedulable and thus your workloads can get launched on them. If you wish to have a dedicated control plane where no user workloads will run, you can use taints. The `node-taint` parameter will allow you to configure nodes with taints. Here is an example of adding a node taint to the configuration file:
@@ -80,6 +83,7 @@ node-taint:
 The NGINX Ingress and Metrics Server addons will *not* be deployed when all nodes are tainted with `CriticalAddonsOnly`. If your server nodes are so tainted, these addons will remain pending until untainted agent nodes are added to the cluster.
 ====
 
+[#_3_launch_additional_server_nodes]
 == 3. Launch additional server nodes
 
 Additional server nodes are launched much like the first, except that you must specify the `server` and `token` parameters so that they can successfully connect to the initial server node.
@@ -105,6 +109,7 @@ As mentioned previously, you must have an odd number of server nodes in total.
 
 If an etcd datastore is found on disk either because that node has either initialized or joined a cluster already, the configuration `server: <XXX>` is ignored.
 
+[#_4_confirm_cluster_is_functional]
 == 4. Confirm cluster is functional
 
 Once you've launched the `rke2 server` process on all server nodes, ensure that the cluster has come up properly with:
@@ -122,6 +127,7 @@ You should see your server nodes in the Ready state.
 By default, any `kubectl` command will require root user access, unless `RKE2_KUBECONFIG_MODE` override is provided. Read more about it in xref:cluster_access.adoc[cluster access page].
 ====
 
+[#_5_optional_join_agent_nodes]
 == 5. Optional: Join Agent Nodes
 
 Because RKE2 server nodes are schedulable by default, the minimum number of nodes for an HA RKE2 server cluster is three server nodes and zero agent nodes. To add nodes designated to run your apps and services, join agent nodes to your cluster.

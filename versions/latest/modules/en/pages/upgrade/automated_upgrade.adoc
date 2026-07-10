@@ -3,6 +3,7 @@
 :revdate: 2026-01-09
 :page-revdate: {revdate}
 
+[#_overview]
 == Overview
 
 You can manage RKE2 cluster upgrades using Rancher's system-upgrade-controller. This is a Kubernetes-native approach to cluster upgrades. It leverages a https://github.com/rancher/system-upgrade-controller/blob/master/doc/plan.md#planspec[`Plan`] Custom Resource to declaratively describe what nodes to upgrade, and to what version.
@@ -20,6 +21,7 @@ If the RKE2 cluster is managed by Rancher, you should use the Rancher UI to mana
 * If the RKE2 cluster is _not_ managed by Rancher, you may follow the steps below.
 ====
 
+[#_using_the_system_upgrade_controller]
 == Using the System Upgrade Controller
 
 To automate upgrades , you must do the following:
@@ -37,6 +39,7 @@ For more details on the design and architecture of the system-upgrade-controller
 When attempting to upgrade to a new version of RKE2, the https://kubernetes.io/releases/version-skew-policy/[Kubernetes version skew policy] applies. Ensure that your plan does not skip intermediate minor versions when upgrading. The system-upgrade-controller itself will not protect against unsupported changes to the Kubernetes version.
 ====
 
+[#_installation]
 === Installation
 
 The system-upgrade-controller manifest installs a custom resource definition, deployment, service account, cluster role binding, and configmap. To install these components, run the following command:
@@ -48,6 +51,7 @@ kubectl apply -f https://github.com/rancher/system-upgrade-controller/releases/l
 
 The controller can be configured and customized via the previously mentioned configmap, but the controller pod must be deleted for the changes to be applied.
 
+[#_configuration]
 === Configuration
 
 Server nodes should always be upgraded before agent nodes.
@@ -136,6 +140,7 @@ kubectl -n system-upgrade get plans -o wide
 kubectl -n system-upgrade get jobs
 ----
 
+[#_scheduling_upgrades]
 === Scheduling Upgrades
 
 Plans can be restricted to occurring within a specific time window by setting the `window` field within the plan spec.
@@ -165,6 +170,7 @@ spec:
 
 Jobs to execute upgrades for a plan will not be created outside the time window. Once the jobs are created, they may continue running once the window has closed.
 
+[#_downgrade_prevention]
 == Downgrade Prevention
 
 Kubernetes does not support downgrades of control-plane components. The rke2-upgrade image used by upgrade plans does not currently include any checks to prevent a Plan from downgrading the Kubernetes version.
@@ -173,6 +179,7 @@ Clusters provisioned by Rancher may be downgraded alongside restoration of an et
 
 Clusters not provisioned by Rancher may be manually rolled back to a prior release accompanied by restoration of an etcd snapshot. For more information, see xref:upgrade/roll_back.adoc[Rolling Back RKE2].
 
+[#_security_1]
 == Security
 
 The upgrade job that is launched must be highly privileged in order to effect change to the underlying nodes. By default, it is configured with the following:

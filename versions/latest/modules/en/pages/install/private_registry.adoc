@@ -13,6 +13,7 @@ Upon startup, RKE2 will check to see if `/etc/rancher/rke2/registries.yaml` exis
 Note that server nodes are schedulable by default. If you have not tainted the server nodes and will be running workloads on them,
 please ensure you also create the `registries.yaml` file on each server as well.
 
+[#_default_endpoint_fallback_1]
 == Default Endpoint Fallback
 
 Containerd has an implicit "default endpoint" for all registries. The default endpoint is always tried as a last resort, even if there are other endpoints listed for that registry in `registries.yaml`. Rewrites are not applied to pulls against the default endpoint. For example, when pulling `registry.example.com:5000/rancher/mirrored-pause:3.6`, containerd will use a default endpoint of `\https://registry.example.com:5000/v2`.
@@ -34,6 +35,7 @@ This may be desired if your cluster is in a true air-gapped environment where th
 
 Disabling the default registry endpoint applies only to registries configured via `registries.yaml`. If the registry is not explicitly configured via mirror entry in `registries.yaml`, the default fallback behavior will still be used.
 
+[#_registries_configuration_file_1]
 == Registries Configuration File
 
 The file consists of two top-level keys, with subkeys for each registry:
@@ -57,6 +59,7 @@ configs:
       insecure_skip_verify: <SKIP TLS CERT VERIFICATION BOOLEAN>
 ----
 
+[#_mirrors_1]
 === Mirrors
 
 The mirrors section defines the names and endpoints of registries, for example:
@@ -76,6 +79,7 @@ Each mirror must have a name and set of endpoints. When pulling an image from a 
 If no endpoint is configured, containerd assumes that the registry can be accessed anonymously via HTTPS on port 443, and is using a certificate trusted by the host operating system. For more information, you may https://github.com/containerd/containerd/blob/master/docs/cri/registry.md#configure-registry-endpoint[consult the containerd documentation].
 ====
 
+[#_redirects]
 ==== Redirects
 
 If the private registry is used as a mirror for another registry, such as when configuring a https://docs.docker.com/registry/recipes/mirror/[pull through cache], images pulls are transparently redirected to the listed endpoints. The original registry name is passed to the mirror endpoint via the `ns` query parameter.
@@ -92,6 +96,7 @@ mirrors:
 
 Then pulling `docker.io/rancher/mirrored-pause:3.6` will transparently pull the image as `registry.example.com:5000/rancher/mirrored-pause:3.6`.
 
+[#_rewrites_1]
 ==== Rewrites
 
 Each mirror can have a set of rewrites, which use regular expressions to match and transform the name of an image when it is pulled from that mirror. This is useful if the organization/project structure in the private registry is different than the registry it is mirroring. Rewrites match and transform only the image name, NOT the tag.
@@ -130,6 +135,7 @@ mirrors:
 
 Note that when using mirrors and rewrites, images will still be stored under the original name. For example, `crictl image ls` will show `docker.io/rancher/rke2-runtime:v1.30.1-rke2r1` as available on the node, even if the image was pulled from a mirror with a different name.
 
+[#_configs_1]
 === Configs
 
 The configs section defines the TLS and credential configuration for each mirror. For each mirror you can define `auth` and/or `tls`.
@@ -169,6 +175,7 @@ The `auth` part consists of either username/password or authentication token:
 
 Below are basic examples of using private registries in different modes:
 
+[#_wildcard_support]
 === Wildcard Support
 
 [NOTE]
@@ -194,6 +201,7 @@ configs:
       insecure_skip_verify: true
 ----
 
+[#_with_tls_1]
 === With TLS
 
 Below are examples showing how you may configure `/etc/rancher/rke2/registries.yaml` on each node when using TLS.
@@ -240,6 +248,7 @@ configs:
 
 ======
 
+[#_without_tls_1]
 === Without TLS
 
 Below are examples showing how you may configure `/etc/rancher/rke2/registries.yaml` on each node when _not_ using TLS.
@@ -280,6 +289,7 @@ ____
 
 In order for the registry changes to take effect, you need to either configure this file before starting RKE2 on the node, or restart RKE2 on each configured node.
 
+[#_troubleshooting_image_pulls]
 == Troubleshooting Image Pulls
 
 When Kubernetes experiences problems pulling an image, the error displayed by the kubelet may only reflect the terminal error returned by the pull attempt made against the default endpoint, making it appear that the configured endpoints are not being used.

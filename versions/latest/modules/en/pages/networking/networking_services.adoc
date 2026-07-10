@@ -9,6 +9,7 @@ Refer to the xref:networking/basic_network_options.adoc[Basic Network Options] p
 
 For information on which ports need to be opened for RKE2, refer to the xref:install/requirements.adoc[Installation Requirements].
 
+[#_coredns]
 == CoreDNS
 
 CoreDNS is deployed by default when starting the server. To disable, run each server with `disable: rke2-coredns` option in your configuration file.
@@ -17,6 +18,7 @@ If you don't install CoreDNS, you will need to install a cluster DNS provider yo
 
 CoreDNS is deployed with the https://github.com/kubernetes-incubator/cluster-proportional-autoscaler[autoscaler] by default. To disable it or change its config, use the xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig] resource.
 
+[#_nodelocal_dnscache]
 === NodeLocal DNSCache
 
 https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/[NodeLocal DNSCache] improves the performance by running a dns caching agent on each node. To activate this feature, apply the following HelmChartConfig:
@@ -67,6 +69,7 @@ kubelet-arg:
     - "cluster-dns=169.254.20.10"
 ----
 
+[#_nodelocal_dns_cache_with_cilium_in_kube_proxy_replacement_mode]
 === NodeLocal DNS Cache with Cilium in kube-proxy replacement mode
 
 This feature is available starting from versions v1.28.13+rke2r1, v1.29.8+rke2r1 and v1.30.4+rke2r1.
@@ -112,6 +115,7 @@ spec:
       use_cilium_lrp: true
 ----
 
+[#_ingress_controller]
 == Ingress Controller
 
 [tabs]
@@ -188,6 +192,7 @@ To see all configurable options, visit the chart's https://github.com/rancher/rk
 
 To disable the ingress controller, start each server with the `ingress-controller: none` option in your configuration file.
 
+[#_gateway_api]
 === Gateway API
 
 Gateway API is a family of Kubernetes resources that provide dynamic infrastructure provisioning and advanced traffic routing. While the traditional Ingress API is still supported (and not planned to be deprecated), the Gateway API provides a more expressive, role-oriented, and extensible way to manage service exposure.
@@ -223,6 +228,7 @@ Prior to the April 2026 releases (v1.33.11+rke2r1, v1.34.7+rke2r1 and v1.35.4+rk
 If you need support for experimental Gateway API resources, you must install them separately. For example, for Gateway API v1.4, install the https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml[v1.4 experimental-install.yaml] from the official https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0[gateway-api releases] and use the option `providers.kubernetesGateway.experimentalChannel=true` in the rke2-traefik chart values.
 ====
 
+[#_service_load_balancer]
 == Service Load Balancer
 
 Kubernetes Services can be of type LoadBalancer but it requires an external load balancer controller to implement things correctly and for example, provide the external-ip. RKE2 can optionally deploy a load balancer controller known as https://github.com/k3s-io/klipper-lb[ServiceLB] that uses available host ports. For more information, please read the following https://documentation.suse.com/cloudnative/k3s/latest/en/networking/networking-services.html#_service_load_balancer[link].

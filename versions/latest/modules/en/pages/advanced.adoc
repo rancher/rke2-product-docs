@@ -5,6 +5,7 @@
 
 This section contains advanced information describing the different ways you can run and manage RKE2.
 
+[#_certificate_rotation]
 == Certificate Rotation
 
 By default, certificates in RKE2 expire in 12 months.
@@ -29,12 +30,14 @@ systemctl restart rke2-agent
 
 It is also possible to rotate an individual service by passing the `--service` flag, for example: `rke2 certificate rotate --service api-server`. See xref:security/certificates.adoc#_rotating_client_and_server_certificates_manually[Certificate Management] for more details.
 
+[#_auto_deploying_manifests]
 == Auto-Deploying Manifests
 
 Any file found in `/var/lib/rancher/rke2/server/manifests` will automatically be deployed to Kubernetes in a manner similar to `kubectl apply`.
 
 For information about deploying Helm charts using the manifests directory, refer to the section about xref:add-ons/helm.adoc[Helm.]
 
+[#_configuring_containerd]
 == Configuring containerd
 
 [NOTE]
@@ -55,6 +58,7 @@ Containerd 2.0 is backwards compatible with prior config versions, and RKE2 will
 
 The template file is rendered into the containerd config using the https://pkg.go.dev/text/template[`text/template`] library. See `ContainerdConfigTemplateV3` and `ContainerdConfigTemplate` in https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go[`templates.go`] for the default template content. The template is executed with a https://github.com/k3s-io/k3s/blob/master/pkg/agent/templates/templates.go#L22-L33[`ContainerdConfig`] struct as its dot value (data argument).
 
+[#_base_template]
 === Base Template
 
 You can extend the RKE2 base template instead of copy-pasting the complete stock template out of the source code. This is useful if you need to build on the existing configuration, and add a few extra lines at the end.
@@ -77,6 +81,7 @@ You can extend the RKE2 base template instead of copy-pasting the complete stock
 For best results, do NOT simply copy a prerendered `config.toml` into the template and make your desired changes. Use the base template, or provide a full template based on the defaults linked above.
 ====
 
+[#_configuring_an_http_proxy]
 == Configuring an HTTP proxy
 
 If you are running RKE2 in an environment, which only has external connectivity through an HTTP proxy, you can configure your proxy settings on the RKE2 systemd service. These proxy settings will then be used in RKE2 and passed down to the embedded containerd and kubelet, as well as the control-plane, etcd, and kube-proxy static pods.
@@ -104,12 +109,14 @@ CONTAINERD_HTTPS_PROXY=http://your-proxy.example.com:8888
 CONTAINERD_NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 ----
 
+[#_node_labels_and_taints]
 == Node Labels and Taints
 
 RKE2 agents can be configured with the options `node-label` and `node-taint` which adds a label and taint to the kubelet. The two options only add labels and/or taints at registration time, and can only be added once and not removed after that through rke2 commands.
 
 If you want to change node labels and taints after node registration you should use `kubectl`. Refer to the official Kubernetes documentation for details on how to add https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/[taints] and https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/#add-a-label-to-a-node[node labels].
 
+[#_how_agent_node_registration_works]
 == How Agent Node Registration Works
 
 Agent nodes are registered via a websocket connection initiated by the `rke2 agent` process, and the connection is maintained by a client-side load balancer running as part of the agent process.
@@ -118,6 +125,7 @@ Agents register with the server using the cluster secret portion of the join tok
 
 If the `/etc/rancher/node` directory of an agent is removed, the password file should be recreated for the agent prior to startup, or the entry removed from the server or Kubernetes cluster (depending on the RKE2 version).
 
+[#_starting_the_server_with_the_installation_script]
 == Starting the Server with the Installation Script
 
 The installation script provides units for systemd, but does not enable or start the service by default.
@@ -133,6 +141,7 @@ systemctl enable rke2-server
 systemctl start rke2-server
 ----
 
+[#_disabling_server_charts]
 == Disabling Server Charts
 
 The server charts bundled with `rke2` deployed during cluster bootstrapping can be disabled and replaced with alternatives. A common use case is replacing the bundled `rke2-ingress-nginx` chart with an alternative.
@@ -156,6 +165,7 @@ disable:
 It is the cluster operator's responsibility to ensure that components are disabled or replaced with care, as the server charts play important roles in cluster operability.  Refer to the xref:architecture.adoc#_server_charts[architecture overview] for more information on the individual system charts role within the cluster.
 ====
 
+[#_installation_on_classified_aws_regions_or_networks_with_custom_aws_api_endpoints]
 == Installation on classified AWS regions or networks with custom AWS API endpoints
 
 In public AWS regions, to ensure RKE2 is cloud-enabled, and capable of auto-provisioning certain cloud resources, config RKE2 with:
@@ -212,6 +222,7 @@ cloud-provider-config: "/etc/rancher/rke2/cloud.conf"
 . xref:install/methods.adoc[Install] RKE2 normally (most likely in an xref:install/airgap.adoc[airgapped] capacity).
 . Validate successful installation by confirming the existence of AWS metadata on cluster node labels with `kubectl get nodes --show-labels`.
 
+[#_control_plane_component_resource_requestslimits]
 == Control Plane Component Resource Requests/Limits
 
 The following options are available under the `server` sub-command for RKE2. The options allow for specifying CPU requests and limits for the control plane components within RKE2.
@@ -248,6 +259,7 @@ control-plane-resource-requests:
 
 The unit values for CPU/memory are identical to Kubernetes resource units (See: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes[Resource Limits in Kubernetes]).
 
+[#_extra_control_plane_component_volume_mounts]
 == Extra Control Plane Component Volume Mounts
 
 The following options are available under the `server` sub-command for RKE2. These options specify host-path mounting of directories from the node filesystem into the static pod component that corresponds to the prefixed name.
@@ -280,10 +292,12 @@ The following options are available under the `server` sub-command for RKE2. The
 |
 |===
 
+[#_rw_host_path_volume_mount]
 === RW Host Path Volume Mount
 
 `/source/volume/path/on/host:/destination/volume/path/in/staticpod`
 
+[#_ro_host_path_volume_mount]
 === RO Host Path Volume Mount
 
 In order to mount a volume as read only, append `:ro` to the end of the volume mount: `/source/volume/path/on/host:/destination/volume/path/in/staticpod:ro`
@@ -304,6 +318,7 @@ kube-apiserver-extra-mount:
    - "/tmp/bar.txt:/etc/bar.txt:ro"
 ----
 
+[#_extra_control_plane_component_environment_variables]
 == Extra Control Plane Component Environment Variables
 
 The following configuration options are available to the `server` sub-command for RKE2. These options specify additional environment variables in standard format i.e. `KEY=VALUE` for the static pod component that corresponds to the prefixed name.

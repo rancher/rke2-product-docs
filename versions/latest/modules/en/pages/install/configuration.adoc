@@ -3,6 +3,7 @@
 :revdate: 2026-01-16
 :page-revdate: {revdate}
 
+[#_configuration_file]
 == Configuration File
 
 The primary way to configure RKE2 is through its config file. Command line arguments and environment variables are also available, but RKE2 is installed as a systemd service and thus these are not as easy to leverage.
@@ -45,6 +46,7 @@ It is also possible to use both a configuration file and CLI arguments.  In thes
 
 Finally, the location of the config file can be changed either through the cli argument `--config FILE, -c FILE`, or the environment variable `$RKE2_CONFIG_FILE`.
 
+[#_multiple_config_files]
 === Multiple Config Files
 
 Multiple configuration files are supported. By default, configuration files are read from `/etc/rancher/rke2/config.yaml` and `/etc/rancher/rke2/config.yaml.d/*.yaml` in alphabetical order.
@@ -90,6 +92,7 @@ node-taint:
   - charlie=delta:NoSchedule
 ----
 
+[#_kubelet_configuration]
 == Kubelet Configuration
 
 [NOTE]
@@ -106,6 +109,7 @@ RKE2 uses a default kubelet configuration which is stored under `/var/lib/ranche
 . By using the flag `--kubelet-arg=config=$PATHTOFILE`, where `$PATHTOFILE` is the path to a file that includes kubelet config parameters (e.g. `/etc/rancher/rke2/kubelet.conf`) or the flag `--kubelet-arg=config-dir=$PATHTODIR`, where `$PATHTODIR` is the path to a directory which can include files that contain kubelet config parameters (e.g. `/etc/rancher/rke2/kubelet.conf.d`).
 . By using the flag `--kubelet-arg=$FLAG`, where `$FLAG` is a kubelet configuration parameter (e.g. `image-gc-high-threshold=100`).
 
+[#_legacy_kubelet_logging_flags]
 === Legacy kubelet logging flags
 
 RKE2 supports additional flags to configure kubelet logging that were previously supported by the kubelet itself. These flags are intercepted by RKE2, and control how RKE2 wraps logs written to stdout and stderr by the kubelet:
@@ -134,6 +138,7 @@ RKE2 supports additional flags to configure kubelet logging that were previously
 | Specifies the maximum size (in megabytes) a log file can reach before it is rotated (Default `50`)
 |===
 
+[#_configuring_the_linux_installation_script]
 == Configuring the Linux Installation Script
 
 As mentioned in the xref:install/quickstart.adoc[Quick Start Guide], you can use the installation script available at https://get.rke2.io to install RKE2 as a service.
@@ -172,6 +177,7 @@ This installation script is straight-forward and will do the following:
 . Obtain the desired version to install based on the above parameters. If no parameters are supplied, the latest official release will be used.
 . Determine and execute the installation method. There are two methods: rpm and tar. If the `INSTALL_RKE2_METHOD` variable is set, that will be respected, Otherwise, `rpm` will be used on operating systems that use this package management system. On all other systems, tar will be used. In the case of the tar method, the script will simply unpack the tar archive associated with the desired release. In the case of rpm, a yum repository will be set up and the rpm will be installed using yum.
 
+[#_configuring_the_windows_installation_script]
 == Configuring the Windows Installation Script
 
 [NOTE]
@@ -208,8 +214,10 @@ OPTIONS
 -ArtifactPath      If set, the install script will use the local path for sourcing the `rke2.windows-$SUFFIX` and `sha256sum-$ARCH.txt` files rather than the downloading the files from GitHub. Disabled by default.
 ----
 
+[#_other_windows_installation_script_usage_examples]
 === Other Windows Installation Script Usage Examples
 
+[#_install_the_latest_version_instead_of_stable]
 ==== Install the Latest Version Instead of Stable
 
 [,powershell]
@@ -218,6 +226,7 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/ins
 ./install.ps1 -Channel Latest
 ----
 
+[#_install_the_latest_version_using_tar_installation_method]
 ==== Install the Latest Version using Tar Installation Method
 
 [,powershell]
@@ -226,6 +235,7 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/rancher/rke2/master/ins
 ./install.ps1 -Channel Latest -Method Tar
 ----
 
+[#_running_the_binary_directly]
 == Running the Binary Directly
 
 As stated, the installation script is primarily concerned with configuring RKE2 to run as a service. If you choose to not use the script, you can run RKE2 simply by downloading the binary from our https://github.com/rancher/rke2/releases/latest[release page], placing it on your path, and executing it. The important commands are:
@@ -243,6 +253,7 @@ As stated, the installation script is primarily concerned with configuring RKE2 
 | Shows a list of commands or help for one command
 |===
 
+[#_more_info]
 == More Info
 
 For details on configuring the RKE2 server, refer to the xref:reference/server_config.adoc[server configuration reference].

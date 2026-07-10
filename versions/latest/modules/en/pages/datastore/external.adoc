@@ -5,6 +5,7 @@
 
 Using an external datastore means leveraging a database that resides outside the Kubernetes cluster. Instead of being contained within the cluster, Kubernetes access the external datastore over the network. This approach could be common for organizations with existing database infrastructure or those who have more experience operating an enterprise-grade SQL database like MySQL or PostgreSQL. The project https://github.com/k3s-io/kine[kine] is used for SQL databases. The alternative to external datastore is xref:datastore/embedded.adoc[embedded datastore].
 
+[#_datastore_options_1]
 == Datastore Options
 
 * *External Database*
@@ -19,6 +20,7 @@ Using an external datastore means leveraging a database that resides outside the
 RKE2 requires prepared statements support from the DB. This means that connection poolers such as https://www.pgbouncer.org/faq.html#how-to-use-prepared-statements-with-transaction-pooling[PgBouncer] may require additional configuration to work with RKE2.
 ====
 
+[#_external_datastore_configuration_parameters]
 === External Datastore Configuration Parameters
 
 If you wish to use an external datastore such as PostgreSQL, MySQL, or etcd you must set the `datastore-endpoint` config so that RKE2 knows how to connect to it. You may also specify parameters to configure the authentication and encryption of the connection. The below table summarizes these options:
@@ -43,6 +45,7 @@ If you wish to use an external datastore such as PostgreSQL, MySQL, or etcd you 
 | TLS key file used for client certificate based authentication to your datastore. See the previous `datastore-certfile` parameter for more details.
 |===
 
+[#_datastore_endpoint_format_and_functionality]
 === Datastore Endpoint Format and Functionality
 
 As mentioned, the format of the value passed to the `datastore-endpoint` parameter is dependent upon the datastore backend. The following details this format and functionality for each supported external datastore.
@@ -95,12 +98,15 @@ The above assumes a typical three node etcd cluster. The parameter accepts comma
 --
 ======
 
+[#_external_database]
 == External database
 
+[#_1_create_an_external_datastore]
 === 1. Create an External Datastore
 
 You will first need to create an external datastore for the cluster. See the <<Datastore Options>> section for more details.
 
+[#_2_launch_server_nodes]
 === 2. Launch Server Nodes
 
 RKE2 requires two or more server nodes for this HA configuration. See the xref:install/requirements.adoc[Requirements] guide for minimum machine requirements.
@@ -128,6 +134,7 @@ By default, server nodes will be schedulable and thus your workloads can get lau
 
 Once you've started the `rke2-server` process on all server nodes, ensure that the cluster has come up properly with `kubectl get nodes`. You should see your server nodes in the `Ready` state.
 
+[#_3_optional_join_additional_server_nodes]
 === 3. Optional: Join Additional Server Nodes
 
 The same example config specified in step 2 can be used to join additional server nodes and the same token from the first node must be added to the config.
@@ -159,6 +166,7 @@ There are a few config flags that must be the same in all server nodes:
 Ensure that you retain a copy of this token as it is required when restoring from backup and adding nodes.
 ====
 
+[#_4_optional_join_agent_nodes]
 === 4. Optional: Join Agent Nodes
 
 Because RKE2 server nodes are schedulable by default, agent nodes are not required for a RKE2 cluster. However, you may wish to have dedicated agent nodes to run your apps and services.

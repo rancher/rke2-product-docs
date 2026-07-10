@@ -14,6 +14,7 @@ Individual components provide most metrics. See the following component-specific
 
 Other components may provide additional metrics. Consult the upstream project documentation for any components not listed above.
 
+[#_supervisor_metrics]
 == Supervisor Metrics
 
 When you start RKE2 with `supervisor-metrics: true`, the RKE2 supervisor exposes metrics. You can access these metrics through the `/metrics` endpoint on each node at port `9345`:
@@ -35,8 +36,10 @@ If the RKE2 embedded registry is enabled, the RKE2 supervisor process also expos
 * https://spegel.dev/docs/metrics/[Spegel metrics]
 * https://github.com/libp2p/go-libp2p/blob/master/README.md[libp2p metrics]
 
+[#_rke2_cluster_management_metrics]
 == RKE2 Cluster Management Metrics
 
+[#_rke2certificateexpirationseconds]
 === rke2_certificate_expiration_seconds
 
 Remaining lifetime in seconds of the certificate, labeled by certificate subject and usages.
@@ -44,6 +47,7 @@ Remaining lifetime in seconds of the certificate, labeled by certificate subject
 * Type: Gauge
 * Labels: `*subject*`, `*usage*`
 
+[#_rke2loadbalancerserverconnections]
 === rke2_loadbalancer_server_connections
 
 Count of current connections to the load balancer server, labeled by the load balancer name and server address.
@@ -51,6 +55,7 @@ Count of current connections to the load balancer server, labeled by the load ba
 * Type: Gauge
 * Labels: `*name*`, `*server*`
 
+[#_rke2loadbalancerserverhealth]
 === rke2_loadbalancer_server_health
 
 Current health state of the load balancer backend servers, labeled by the load balancer name and server address.
@@ -60,6 +65,7 @@ State is enum of 0=INVALID, 1=FAILED, 2=STANDBY, 3=UNCHECKED, 4=RECOVERING, 5=HE
 * Type: Gauge
 * Labels: `*name*`, `*server*`
 
+[#_rke2loadbalancerdialdurationseconds]
 === rke2_loadbalancer_dial_duration_seconds
 
 Time in seconds taken to dial a connection to a backend server, labeled by the load balancer name and success/failure status.
@@ -67,6 +73,7 @@ Time in seconds taken to dial a connection to a backend server, labeled by the l
 * Type: Histogram
 * Labels: `*name*`, `*status*`
 
+[#_rke2etcdsnapshotsavedurationseconds]
 === rke2_etcd_snapshot_save_duration_seconds
 
 Total time in seconds taken to complete the etcd snapshot process, labeled by success/failure status.
@@ -74,6 +81,7 @@ Total time in seconds taken to complete the etcd snapshot process, labeled by su
 * Type: Histrogram
 * Labels: `*status*`
 
+[#_rke2etcdsnapshotsavelocaldurationseconds]
 === rke2_etcd_snapshot_save_local_duration_seconds
 
 Total time in seconds taken to save a local snapshot file, labeled by success/failure status.
@@ -81,6 +89,7 @@ Total time in seconds taken to save a local snapshot file, labeled by success/fa
 * Type: Histrogram
 * Labels: `*status*`
 
+[#_rke2etcdsnapshotsaves3durationseconds]
 === rke2_etcd_snapshot_save_s3_duration_seconds
 
 Total time in seconds taken to upload a snapshot file to S3, labeled by success/failure status.
@@ -88,6 +97,7 @@ Total time in seconds taken to upload a snapshot file to S3, labeled by success/
 * Type: Histrogram
 * Labels: `*status*`
 
+[#_rke2etcdsnapshotreconciledurationseconds]
 === rke2_etcd_snapshot_reconcile_duration_seconds
 
 Total time in seconds taken to sync the list of etcd snapshots, labeled by success/failure status.
@@ -95,6 +105,7 @@ Total time in seconds taken to sync the list of etcd snapshots, labeled by succe
 * Type: Histrogram
 * Labels: `*status*`
 
+[#_rke2etcdsnapshotreconcilelocaldurationseconds]
 === rke2_etcd_snapshot_reconcile_local_duration_seconds
 
 Total time in seconds taken to list local snapshot files, labeled by success/failure status.
@@ -102,6 +113,7 @@ Total time in seconds taken to list local snapshot files, labeled by success/fai
 * Type: Histrogram
 * Labels: `*status*`
 
+[#_rke2etcdsnapshotreconciles3durationseconds]
 === rke2_etcd_snapshot_reconcile_s3_duration_seconds
 
 Total time in seconds taken to list S3 snapshot files, labeled by success/failure status.

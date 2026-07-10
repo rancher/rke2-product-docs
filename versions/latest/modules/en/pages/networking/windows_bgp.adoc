@@ -3,6 +3,7 @@
 :revdate: 2025-10-29
 :page-revdate: {revdate}
 
+[#_enabling_bgp_on_calico_with_windows]
 == Enabling BGP on Calico with Windows
 
 To enable BGP mode for routing traffic with RKE2 using both Linux and Windows nodes, the Calico CNI should be selected in the Server configuration.
@@ -31,6 +32,7 @@ spec:
       backend: "None"
 ----
 
+[#_starting_windows_node]
 == Starting Windows node
 
 Configure RKE2 on the Windows node as described xref:install/quickstart.adoc#_windows_agent_worker_node_installation[here].

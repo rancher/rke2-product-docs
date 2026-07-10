@@ -27,6 +27,7 @@ kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods --all-namespaces
 helm --kubeconfig /etc/rancher/rke2/rke2.yaml ls --all-namespaces
 ----
 
+[#_accessing_the_cluster_from_outside_with_kubectl]
 == Accessing the Cluster from Outside with kubectl
 
 Copy `/etc/rancher/rke2/rke2.yaml` on your machine located outside the cluster as `~/.kube/config`. Then replace `127.0.0.1` with the IP or hostname of your RKE2 server. `kubectl` can now manage your RKE2 cluster.

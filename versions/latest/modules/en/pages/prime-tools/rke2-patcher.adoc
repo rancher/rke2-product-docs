@@ -14,6 +14,7 @@ The primary use case for `rke2-patcher` is to consume component images that incl
 
 The tool can be used to inspect the images that are currently running in an RKE2 cluster, review newer tags that are available for supported packaged components, patch a component to a newer eligible image, and reconcile those changes after an RKE2 upgrade.
 
+[#_supported_components]
 == Supported components
 
 * `rke2-traefik`
@@ -27,6 +28,7 @@ The tool can be used to inspect the images that are currently running in an RKE2
 * `rke2-coredns-cluster-autoscaler`
 * `rke2-snapshot-controller`
 
+[#_requirements_1]
 == Requirements
 
 * Kubernetes API access (in-cluster service account or kubeconfig).
@@ -34,6 +36,7 @@ The tool can be used to inspect the images that are currently running in an RKE2
 * Permissions to create scanner Jobs and read logs for CVE scans.
 * Permissions to create or update `HelmChartConfig` objects for patch and reconcile operations.
 
+[#_limitations]
 == Limitations
 
 * `rke2-patcher` supports Prime clusters only and requires `prime: true` in the RKE2 configuration.
@@ -46,12 +49,14 @@ The tool can be used to inspect the images that are currently running in an RKE2
 
 
 
+[#_installation_3]
 == Installation
 
 You can use `rke2-patcher` either as a locally built CLI binary or as a pod running inside the cluster.
 
 `rke2-patcher` can be found in the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL].
 
+[#_rke2_patcher_cli]
 == rke2-patcher CLI
 
 [,bash]
@@ -64,6 +69,7 @@ rke2-patcher image-patch <component> [--dry-run] [--yes|-y]
 rke2-patcher image-reconcile <component> [--yes|-y]
 ----
 
+[#_rke2_patcher_version]
 == `rke2-patcher --version`
 
 Print the `rke2-patcher` version. When Kubernetes access is available, this command also reports the connected cluster version.
@@ -73,6 +79,7 @@ Print the `rke2-patcher` version. When Kubernetes access is available, this comm
 rke2-patcher --version
 ----
 
+[#_rke2_patcher_config]
 == `rke2-patcher --config`
 
 Show the effective runtime configuration used by `rke2-patcher`, including the configured registry, scanner mode, scanner image, scanner namespace, scanner timeout, and patch state ConfigMap.
@@ -82,6 +89,7 @@ Show the effective runtime configuration used by `rke2-patcher`, including the c
 rke2-patcher --config
 ----
 
+[#_rke2_patcher_image_cve_component]
 == `rke2-patcher image-cve <component>`
 
 Show the CVEs for the image currently running for the selected component.
@@ -94,6 +102,7 @@ Use this command when you want to inspect the current risk profile of a deployed
 [.demo-wide]
 image::rke2-patcher-image-cve.gif[rke2-patcher image-cve demo, width=1000]
 
+[#_rke2_patcher_image_list_component]
 == `rke2-patcher image-list <component>`
 
 List the image tags available for a supported component.
@@ -109,6 +118,7 @@ Use this command to compare the currently running tag with newer eligible tags b
 [.demo-wide]
 image::rke2-patcher-image-list.gif[rke2-patcher image-list demo, width=1000]
 
+[#_rke2_patcher_image_patch_component]
 == `rke2-patcher image-patch <component>`
 
 Patch a supported component to the next eligible image tag.
@@ -126,6 +136,7 @@ The command enforces the patch window rules for the target component. If a targe
 [.demo-wide]
 image::rke2-patcher-image-patch.gif[rke2-patcher image-patch demo, width=1000]
 
+[#_rke2_patcher_image_reconcile_component]
 == `rke2-patcher image-reconcile <component>`
 
 Reconcile or revert a previously applied patch for a supported component.
@@ -143,6 +154,7 @@ When reconciliation succeeds, `rke2-patcher` removes the patcher-managed image o
 image::rke2-patcher-image-reconcile.gif[rke2-patcher image-reconcile demo, width=1000]
 
 
+[#_typical_workflow]
 == Typical workflow
 
 1. Check current status and available tags.
@@ -152,6 +164,7 @@ image::rke2-patcher-image-reconcile.gif[rke2-patcher image-reconcile demo, width
 
 For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rancher-rke2-patcher.
 
+[#_airgap_support]
 == Airgap support
 
 `rke2-patcher` can be used in airgapped environments when required artifacts are mirrored and reachable inside your private network.
