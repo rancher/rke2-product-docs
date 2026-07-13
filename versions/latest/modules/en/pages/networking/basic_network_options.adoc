@@ -357,7 +357,7 @@ Support for `nftables` in RKE2 is considered experimental.
 [NOTE]
 .Version Gate
 ====
-nftables support is available as of the July 2026 releases v1.36.3+rke2r1, v1.35.7+rke2r1, v1.34.10+rke2r1.
+Support for `nftables` is available as of the July 2026 releases v1.36.3+rke2r1, v1.35.7+rke2r1, and v1.34.10+rke2r1.
 ====
 
 **nftables** is a modern replacement for iptables, introduced in Linux 3.13. It consolidates all rule management into a single interface, supports atomic batch updates (all rule changes commit together or not at all), and offers improved performance for complex rule sets due to better kernel integration and support for set-based matching.
