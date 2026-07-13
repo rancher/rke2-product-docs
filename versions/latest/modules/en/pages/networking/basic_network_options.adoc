@@ -351,7 +351,7 @@ Some cloud providers, such as Linode, will create machines with "localhost" as t
 [WARNING]
 .Experimental
 ====
-nftables support in rke2 is considered experimental.
+Support for `nftables` in RKE2 is considered experimental.
 ====
 
 [NOTE]
