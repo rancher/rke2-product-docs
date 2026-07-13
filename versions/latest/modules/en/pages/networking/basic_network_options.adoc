@@ -368,7 +368,7 @@ Linux 3.13 introduced `nftables` as a modern replacement for `iptables`. Key fea
 
 Using nftables is now supported by kube-proxy and most CNIs currently bundled with rke2.
 
-To use nftables with kube-proxy, set the following parameter in `config.yaml`:
+To use `nftables` with `kube-proxy`, set the following parameter in `config.yaml`:
 
 [,yaml]
 ----
