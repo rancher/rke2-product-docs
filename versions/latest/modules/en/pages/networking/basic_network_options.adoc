@@ -366,7 +366,7 @@ Linux 3.13 introduced `nftables` as a modern replacement for `iptables`. Key fea
 * Supports atomic batch updates (all rule changes commit together or not at all).
 * Offers improved performance for complex rule sets due to better kernel integration and support for set-based matching.
 
-Using nftables is now supported by kube-proxy and most CNIs currently bundled with rke2.
+Using nftables is now supported by kube-proxy and all CNI plugins currently bundled with rke2.
 
 To use `nftables` with `kube-proxy`, set the following parameter in `config.yaml`:
 
@@ -376,14 +376,14 @@ kube-proxy-arg:
   - proxy-mode=nftables
 ----
 
-Each CNI needs to be configured through its HelmChartConfig.
+Each CNI needs to be configured through its `HelmChartConfig`.
 
 [tabs]
 ====
 Canal CNI Plugin::
 +
 --
-For Canal, set the following HelmChartConfig:
+For Canal, set the following `HelmChartConfig`:
 
 [,yaml]
 ----
@@ -406,13 +406,13 @@ spec:
 Cilium CNI Plugin::
 +
 --
-Cilium uses eBPF as its filtering mechanism instead of iptables/nftables so there is nothing to configure.
+There is nothing to configure. Cilium uses eBPF as its filtering mechanism instead of `iptables` or `nftables`.
 --
 
 Calico CNI Plugin::
 +
 --
-For Calico, set the following HelmChartConfig:
+For Calico, set the following `HelmChartConfig`:
 
 [,yaml]
 ----
@@ -434,7 +434,7 @@ spec:
 Flannel CNI Plugin::
 +
 --
-For Flannel, set the following HelmChartConfig:
+For Flannel, set the following `HelmChartConfig`:
 
 [,yaml]
 ----
