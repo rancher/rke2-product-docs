@@ -1,11 +1,11 @@
 = FIPS 140-3 Enablement
 :page-languages: [en, zh]
-:revdate: 2026-02-05
+:revdate: 2026-07-08
 :page-revdate: {revdate}
 
 FIPS 140-3 is a U.S. Federal Government security standard used to approve cryptographic modules. This document explains how RKE2 is built with FIPS validated cryptographic libraries.
 
-Verification of compliance is avaliable in: xref:attachment$RKE2_FIPS3_Verified.pdf[FIPS 140-3 Verifed].
+Verification of compliance is available in xref:attachment$RKE2_FIPS3_Verified.pdf[RKE2 FIPS 140-3 Verified] and the cryptographic module validation can be found in this https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4968[Cryptographic Module Validation Program (CMVP) certificate]. 
 
 == Use of FIPS Compatible Go compiler
 
