@@ -1,5 +1,5 @@
 = Espelho de Registro Embutido
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-10-29
 :page-revdate: {revdate}
 

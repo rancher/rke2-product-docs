@@ -1,6 +1,6 @@
 
 = Backup e restauração
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-02-27
 :page-revdate: {revdate}
 :page-aliases: backup_restore.adoc

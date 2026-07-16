@@ -1,5 +1,5 @@
 = 高级选项和配置
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-03-10
 :page-revdate: {revdate}
 

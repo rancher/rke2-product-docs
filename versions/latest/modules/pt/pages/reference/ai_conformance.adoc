@@ -1,5 +1,5 @@
 = Conformidade de IA do CNCF
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 06-11-2025
 :page-revdate: {revdate}
 

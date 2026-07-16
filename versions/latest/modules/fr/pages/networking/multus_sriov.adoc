@@ -1,5 +1,5 @@
 = Multus et SR-IOV
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-01-08
 :page-revdate: {revdate}
 

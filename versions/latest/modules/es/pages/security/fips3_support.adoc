@@ -1,5 +1,5 @@
 = Habilitación de FIPS 140-3
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-02-05
 :page-revdate: {revdate}
 

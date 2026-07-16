@@ -1,5 +1,5 @@
 = 网络选项
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-10
 :page-revdate: {revdate}
 

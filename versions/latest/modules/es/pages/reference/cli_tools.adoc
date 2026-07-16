@@ -1,5 +1,5 @@
 = Herramientas CLI
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 21/08/2025
 :page-revdate: {revdate}
 

@@ -1,5 +1,5 @@
 = Profilage des ressources
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-21
 :page-revdate: {revdate}
 
