@@ -1,12 +1,14 @@
 = GPU Operators
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-25
 :page-revdate: {revdate}
 
+[#_deploy_nvidia_operator]
 == Deploy NVIDIA operator
 
 The https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html[NVIDIA operator] allows administrators of Kubernetes clusters to manage GPUs just like CPUs. It includes everything needed for pods to operate GPUs.
 
+[#_host_os_requirements]
 === Host OS requirements
 
 To expose the GPU to the pod correctly, the NVIDIA kernel drivers and the `libnvidia-ml` library must be correctly installed in the host OS (Operating System). The NVIDIA Operator can automatically install drivers and libraries on some operating systems. Refer to the NVIDIA documentation for information on https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html#supported-operating-systems-and-kubernetes-platforms[supported operating system releases].
@@ -50,6 +52,7 @@ GCC version:  gcc version 7.5.0 (SUSE Linux)
 This library is used by Kubernetes components to interact with the kernel driver.
 ====
 
+[#_operator_installation]
 === Operator installation
 
 Once the OS is ready and RKE2 is running, install the GPU Operator with the following yaml manifest.

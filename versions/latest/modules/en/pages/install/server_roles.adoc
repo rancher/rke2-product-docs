@@ -1,10 +1,11 @@
 = Managing Server Roles
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2024-09-11
 :page-revdate: {revdate}
 
 By default, starting the RKE2 will run all control-plane components, including the apiserver, controller-manager, scheduler, and etcd. It is possible to disable specific components in order to split the control-plane and etcd roles on to separate nodes.
 
+[#_dedicated_etcd_nodes]
 == Dedicated `etcd` Nodes
 
 To create a server with only the `etcd` role, deploy a config with all the control-plane components disabled:
@@ -19,6 +20,7 @@ disable-scheduler: true
 
 This first node will start etcd, and wait for additional `etcd` and/or `control-plane` nodes to join. The cluster will not be usable until you join an additional server with the `control-plane` components enabled.
 
+[#_dedicated_control_plane_nodes]
 == Dedicated `control-plane` Nodes
 
 [TIP]
@@ -45,6 +47,7 @@ rke2-server-1   Ready    etcd                        5h39m   v1.26.4+rke2r1
 rke2-server-2   Ready    control-plane,master        5h39m   v1.26.4+rke2r1
 ----
 
+[#_adding_roles_to_existing_servers]
 == Adding Roles To Existing Servers
 
 Roles can be added to existing dedicated nodes by restarting RKE2 with the disable flags removed. For example, if you want to add the `control-plane` role to a dedicated `etcd` node, you can remove the `disable-apiserver disable-controller-manager disable-scheduler` lines from the config file, and restart the service.

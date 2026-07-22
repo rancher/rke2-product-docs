@@ -1,5 +1,5 @@
 = CNCF AI Conformance
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-25
 :page-revdate: {revdate}
 
@@ -7,6 +7,7 @@ The https://docs.google.com/document/d/1hXoSdh9FEs13Yde8DivCYjjXyxa7j4J8erjZPEGW
 
 This page shows how to meet these requirements using RKE2 v1.35.5+rke2r2 and NVIDIA GPU operator v26.3.2. The operator is installed following the xref:add-ons/gpu_operators.adoc#_deploy_nvidia_operator[GPU Operators documentation]
 
+[#_support_dynamic_resource_allocation_dra]
 == Support Dynamic Resource Allocation (DRA)
 
 https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/[DRA] is a new API that enables more flexible, fine-grained resource requests beyond simple counts and has been generally available (GA) since v1.34.
@@ -29,10 +30,12 @@ resourceclaimtemplates                resource.k8s.io/v1   true         Resource
 resourceslices                        resource.k8s.io/v1   false        ResourceSlice
 ----
 
+[#_driver_runtime_management]
 == Driver Runtime Management
 
 DRA is the ideal API to verify that GPU drivers and container runtime configurations are correctly installed and maintained on nodes with accelerators. However, because DRA features are still evolving into the Kubernetes core ecosystem, platforms utilize Node Feature Discovery (NFD) and GPU Feature Discovery (GFD) to fulfill this requirement via node metadata attestation. 
 
+[#_1_verifying_base_container_runtime_version]
 === 1. Verifying Base Container Runtime Version
 To confirm the base engine handling the container lifecycle, the platform exposes the underlying `containerd` runtime via the core Node API:
 
@@ -46,6 +49,7 @@ Expected output:
 containerd://2.2.3-k3s1
 ----
 
+[#_2_verifying_accelerator_drivers_and_runtime_configurations]
 === 2. Verifying Accelerator Drivers and Runtime Configurations
 By querying the node labels, administrators can programmatically verify both the driver installation and the specialized container runtime configuration patch applied to `containerd`:
 
@@ -66,6 +70,7 @@ nvidia.com/gpu-driver-upgrade-state: "upgrade-done"
 * `gpu-driver-upgrade-state: "upgrade-done"` confirms the operator is actively maintaining the lifecycle of these components.
 
 
+[#_gpu_sharing_support]
 == GPU Sharing support
 
 There are different strategies to share a GPU. We are going to use time-slicing because it is a pure software trick handled by the NVIDIA driver and container runtime. Therefore, it is compatible with almost every GPU.
@@ -94,12 +99,14 @@ Allocatable:
   nvidia.com/gpu:     4
 ----
 
+[#_maintain_api_consistency_when_using_vgpus_and_gpus]
 == Maintain API consistency when using vGPUs and GPUs
 
 Maintaining consistency with the API and request mechanisms of physical fractional GPUs ensures that workloads, scheduling, policies, and user expectations remain the same across both physical and virtual backends, enabling portability and avoiding fragmented, vendor-specific resource models.
 
 The NVIDIA GPU operator supports vGPUs and maintain the required API consistency. Please refer to the https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/install-gpu-operator-vgpu.html[NVIDIA documentation] for details about how to configure the NVIDIA GPU operator to support vGPU.
 
+[#_support_the_gateway_api]
 == Support the Gateway API
 
 https://gateway-api.sigs.k8s.io/[Gateway API] represents the next generation of Kubernetes ingress, load balancing and service mesh APIs.
@@ -153,6 +160,7 @@ Expected Output:
 "message":"Handled by Traefik controller","observedGeneration":1,"reason":"Handled","status":"True","type":"Accepted"
 ----
 
+[#_gang_scheduling]
 == Gang Scheduling
 
 A gang scheduling solution (e.g., Kueue or Volcano) must be available for installation to ensure all-or-nothing scheduling for distributed AI workloads.
@@ -254,6 +262,7 @@ default          gpu-nbody-gang-job-nbody-task-2-0                             0
 default          gpu-nbody-gang-job-nbody-task-3-0                             0/1     Pending     0          50s
 ----
 
+[#_cluster_autoscaler]
 == Cluster autoscaler
 
 If the platform provides a cluster autoscaler or an equivalent mechanism, it must be capable of scaling accelerator-specific node groups based on pending pods. Since RKE2 is as a Kubernetes distribution, it does not provide an integrated cluster autoscaler.
@@ -312,6 +321,7 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler -f values.yaml
 
 . When correctly deployed, the autoscaler monitors for pods requesting a GPU resource. If the cluster cannot satisfy the request, the autoscaler contacts Azure to automatically provision and add a new GPU node to the cluster.
 
+[#_horizontal_pod_autoscaler]
 == Horizontal pod autoscaler
 
 The ability to scale Pods based custom metrics relevant to AI/ML workloads, is achieved using the https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/[HorizontalPodAutoscaler (HPA)], which is included by default in Kubernetes.
@@ -347,6 +357,7 @@ spec:
 
 Increasing the load on Ollama will raise the GPU utilization to 70%, triggering the deployment of new Ollama pods.
 
+[#_accelerator_performance_metrics]
 == Accelerator Performance Metrics
 
 This requirement mandates a functional accelerator metrics solution that exposes fine-grained performance metrics via a standardized, machine-readable metrics endpoint. This solution must include a core set of metrics for per-accelerator utilization and memory usage.
@@ -365,6 +376,7 @@ svcPort=$(kubectl get svc nvidia-dcgm-exporter -n gpu-operator -o jsonpath='{.sp
 curl -sL http://${svcIP}:${svcPort}/metrics
 ----
 
+[#_ai_job_inference_service_metrics]
 == AI Job & Inference Service Metrics
 
 This requirement mandates a system capable of discovering and collecting metrics exposed by workloads in a standardized format.
@@ -406,6 +418,7 @@ spec:
 
 After a few minutes, the Grafana dashboard will show the DCGM metrics, such as `DCGM_FI_DEV_GPU_UTIL`.
 
+[#_secure_accelerator_access]
 == Secure accelerator access
 
 This requirement mandates access to accelerators from within containers must be properly isolated and mediated by Kubernetes
@@ -471,6 +484,7 @@ Expected Results (Isolation Confirmed):
 
 This outcome demonstrates that accelerator isolation is working correctly.
 
+[#_robust_crd_and_controller_operation]
 == Robust CRD and Controller Operation
 
 This requirement mandates the installation and reliable function of at least one complex AI Operator with CRDs. Verification requires confirming that CRDs are registered and that an Admission Webhook rejects invalid configurations.

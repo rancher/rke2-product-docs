@@ -1,0 +1,179 @@
+= Armazenamento de Dados Externo
+:page-languages: [en, de, es, fr, ja, pt, zh]
+:revdate: 2025-08-08
+:page-revdate: {revdate}
+
+Usar um armazenamento de dados externo significa aproveitar um banco de dados que reside fora do cluster Kubernetes. Em vez de estar contido dentro do cluster, o Kubernetes acessa o armazenamento de dados externo pela rede. Essa abordagem pode ser comum para organizações com infraestrutura de banco de dados existente ou aquelas que têm mais experiência em operar um banco de dados SQL de nível empresarial, como MySQL ou PostgreSQL. O projeto https://github.com/k3s-io/kine[kine] é usado para bancos de dados SQL. A alternativa ao armazenamento de dados externo é xref:datastore/embedded.adoc[armazenamento de dados embutido].
+
+== Opções de Armazenamento de Dados
+
+* *Armazenamento Externo*
+** https://etcd.io/[etcd] (certificado contra a versão 3.5.4)
+** https://www.mysql.com[MySQL] (certificado contra as versões 5.7 e 8.0)
+** https://mariadb.org/[MariaDB] (certificado contra a versão 10.6.8)
+** https://www.postgresql.org/[PostgreSQL] (certificado contra as versões 12.16, 13.12, 14.9 e 15.4)
+
+[WARNING]
+.Suporte a Declarações Preparadas
+====
+O RKE2 requer suporte a declarações preparadas do banco de dados. Isso significa que gerenciadores de conexão como https://www.pgbouncer.org/faq.html#how-to-use-prepared-statements-with-transaction-pooling[PgBouncer] podem exigir configuração adicional para funcionar com o RKE2.
+====
+
+=== Parâmetros de Configuração de Armazenamento Externo
+
+Se você deseja usar um armazenamento de dados externo, como PostgreSQL, MySQL ou etcd, deve definir a configuração `datastore-endpoint` para que o RKE2 saiba como se conectar a ele. Você também pode especificar parâmetros para configurar a autenticação e a criptografia da conexão. A tabela abaixo resume essas opções:
+
+|===
+| Opções | Variável de ambiente | Descrição
+
+| `datastore-endpoint`
+| `RKE2_DATASTORE_ENDPOINT`
+| Especifique uma string de conexão para PostgreSQL, MySQL ou etcd. Esta é uma string usada para descrever a conexão com o armazenamento. A estrutura desta string é específica para cada backend e está detalhada abaixo.
+
+| `datastore-cafile`
+| `RKE2_DATASTORE_CAFILE`
+| Arquivo de Autoridade Certificadora (CA) TLS usado para ajudar a proteger a comunicação com o armazenamento. Se o seu armazenamento de dados atende a solicitações via TLS usando um certificado assinado por uma autoridade certificadora personalizada, você pode especificar essa CA usando este parâmetro para que o cliente RKE2 possa verificar corretamente o certificado.
+
+| `datastore-certfile`
+| `RKE2_DATASTORE_CERTFILE`
+| Arquivo de certificado TLS usado para autenticação baseada em certificado de cliente no seu armazenamento. Para usar este recurso, seu armazenamento deve estar configurado para suportar autenticação baseada em certificado de cliente. Se você especificar este parâmetro, também deve especificar o parâmetro `datastore-keyfile`.
+
+| `datastore-keyfile`
+| `RKE2_DATASTORE_KEYFILE`
+| Arquivo de chave TLS usado para autenticação baseada em certificado de cliente no seu armazenamento. Consulte o parâmetro `datastore-certfile` anterior para mais detalhes.
+|===
+
+=== Formato e Funcionalidade do Endpoint do Armazenamento
+
+Como mencionado, o formato do valor passado para o parâmetro `datastore-endpoint` depende do backend do armazenamento. Os seguintes detalhes descrevem este formato e funcionalidade para cada armazenamento externo suportado.
+
+[tabs]
+======
+
+PostgreSQL::
++
+--
+Uma opção típica `datastore-endpoint` para PostgreSQL tem o seguinte formato: 
+
+`postgres://username:password@hostname:port/database-name`
+
+Parâmetros de configuração mais avançados estão disponíveis. Para mais informações sobre estes, consulte https://godoc.org/github.com/lib/pq.. 
+
+Se você especificar um nome de banco de dados e ele não existir, o servidor tentará criá-lo. 
+
+Se você fornecer apenas `postgres://` como o endpoint, o RKE2 tentará fazer o seguinte:
+
+* Conectar ao host local usando `postgres` como nome de usuário e senha. 
+* Criar um banco de dados chamado `kubernetes`.
+--
+
+MySQL / MariaDB::
++
+--
+Uma opção típica de `datastore-endpoint` para MySQL e MariaDB tem o seguinte formato: 
+
+`mysql://username:password@tcp(hostname:3306)/database-name`
+
+Parâmetros de configuração mais avançados estão disponíveis. Para mais informações, consulte https://github.com/go-sql-driver/mysql#dsn-data-source-name..
+
+Se você especificar um nome de banco de dados e ele não existir, o servidor tentará criá-lo.
+
+Se você fornecer apenas `mysql://` como o endpoint, o RKE2 tentará fazer o seguinte:
+
+* Conectar ao socket MySQL em `/var/run/mysqld/mysqld.sock` usando o usuário `root` e sem senha. 
+* Criar um banco de dados com o nome `kubernetes`.
+--
+
+etcd::
++
+--
+Uma opção típica de `datastore-endpoint` para etcd tem o seguinte formato: 
+
+`\https://etcd-host-1:2379,https://etcd-host-2:2379,https://etcd-host-3:2379`
+
+O acima assume um cluster etcd típico de três nós. O parâmetro aceita URLs etcd separadas por vírgula.
+--
+======
+
+== Banco de Dados Externo
+
+=== 1. Criar um Banco de Dados Externo
+
+Você precisará primeiro criar um banco de dados externo para o cluster. Consulte a seção <<Datastore Options>> para mais detalhes.
+
+=== 2. Iniciar Nós de Servidor
+
+O RKE2 requer dois ou mais nós de servidor para esta configuração de HA. Consulte o guia de xref:install/requirements.adoc[Requisitos] para os requisitos mínimos da máquina.
+
+Ao iniciar o serviço `rke2-server` nesses nós com `systemctl start rke2-server`, você deve definir a opção `datastore-endpoint` na configuração para que o RKE2 saiba como se conectar ao armazenamento de dados externo. A opção `token` também pode ser usada para definir um token determinístico ao adicionar nós. Quando vazio, esse token será gerado automaticamente para uso posterior.
+
+Por exemplo, um `config.yaml` como o seguinte pode ser usado para configurar o RKE2 com um banco de dados MySQL como o banco de dados externo e definir um token:
+
+[NOTE]
+====
+O arquivo de configuração do RKE2 precisa ser criado manualmente. Você pode fazer isso executando touch /etc/rancher/rke2/config.yaml como um usuário privilegiado.
+====
+
+[,yaml]
+----
+datastore-endpoint: "mysql://username:password@tcp(hostname:3306)/database-name"
+token: SECRET
+----
+
+O formato do endpoint do banco de dados difere com base no tipo de banco de dados. Para detalhes, consulte a seção sobre <<Datastore Endpoint Format and Functionality,formatos de endpoint do datastore>>.
+
+Para configurar certificados TLS ao iniciar nós de servidor, consulte a <<External Datastore Configuration Parameters,seção de configuração do datastore>>.
+
+Por padrão, os nós de servidor serão agendáveis e, portanto, suas cargas de trabalho podem ser iniciadas neles. Se você deseja ter um plano de controle dedicado onde nenhuma carga de trabalho de usuário será executada, pode usar xref:advanced.adoc#_node_labels_and_taints[taints].
+
+Uma vez que você tenha iniciado o processo `rke2-server` em todos os nós de servidor, certifique-se de que o cluster foi iniciado corretamente com `kubectl get nodes`. Você deve ver seus nós de servidor no estado `Ready`.
+
+=== 3. Opcional: Adicionar nós de servidor adicionais
+
+O mesmo arquivo de configuração especificado no passo 2 pode ser usado para adicionar nós de servidor adicionais e o mesmo token do primeiro nó deve ser adicionado à configuração.
+
+Se o primeiro nó de servidor foi iniciado sem a opção `token`, o valor do token pode ser recuperado de qualquer servidor já adicionado ao cluster:
+
+[,bash]
+----
+cat /var/lib/rancher/rke2/server/token
+----
+
+Então você pode adicionar um servidor adicional adicionando o endereço `server` à configuração e iniciando o processo `rke2-server` com `systemctl start rke2-server`.
+
+[,yaml]
+----
+server: https://you-first-server-node-address:9345
+datastore-endpoint: "mysql://username:password@tcp(hostname:3306)/database-name"
+token: SECRET
+----
+
+Existem algumas flags de configuração que devem ser as mesmas em todos os nós de servidor:
+
+* Flags relacionadas à rede: `cluster-dns`, `cluster-domain`, `cluster-cidr`, `service-cidr`
+* Flags que controlam a implantação de certos componentes: `disable-helm-controller` e qualquer componente passado para `disable`
+* Flags relacionadas a recursos: `secrets-encryption`
+
+[NOTE]
+====
+Certifique-se de manter uma cópia deste token, pois ele é necessário ao restaurar de um backup e adicionar nós.
+====
+
+=== 4. Opcional: Adicionar nós agentes
+
+Como os nós do servidor RKE2 são agendáveis por padrão, os nós agentes não são necessários para um cluster RKE2. No entanto, você pode desejar ter nós agentes dedicados para executar seus aplicativos e serviços.
+
+Você só precisa especificar a URL à qual o agente deve se registrar (seja um dos IPs dos nós de servidor ou um endereço de registro fixo) e o token que deve usar no arquivo `config`.
+
+[,yaml]
+----
+server: https://you-first-server-node-address:9345
+token: SECRET
+----
+
+Então você pode instalar o agente:
+
+[,bash]
+----
+curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
+----

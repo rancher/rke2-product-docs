@@ -1,10 +1,11 @@
 = Agent Configuration Reference
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-19
 :page-revdate: {revdate}
 
 This is a reference to all parameters that can be used to configure the rke2 agent. Note that while this is a reference to the command line arguments, the best way to configure RKE2 is using the xref:install/configuration.adoc#_configuration_file[configuration file].
 
+[#_common_1]
 == Common
 
 |===
@@ -27,6 +28,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_cluster_1]
 == Cluster
 
 |===
@@ -46,6 +48,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_listener_1]
 == Listener
 
 |===
@@ -57,6 +60,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_image_1]
 == Image
 
 |===
@@ -96,6 +100,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_cloud_provider_1]
 == Cloud Provider
 
 |===
@@ -118,6 +123,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_security_4]
 == Security
 
 |===
@@ -137,6 +143,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_components_1]
 == Components
 
 |===
@@ -204,6 +211,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_node]
 == Node
 
 |===
@@ -256,6 +264,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_runtime_1]
 == Runtime
 
 |===
@@ -279,6 +288,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_containerd_1]
 == Containerd
 
 |===
@@ -294,6 +304,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_networking_2]
 == Networking
 
 |===
@@ -321,6 +332,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_flags_1]
 == Flags
 
 |===
@@ -334,6 +346,7 @@ This is a reference to all parameters that can be used to configure the rke2 age
 
 |===
 
+[#_experimental_1]
 == Experimental
 
 |===

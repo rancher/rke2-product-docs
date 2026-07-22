@@ -1,10 +1,11 @@
 = Server Configuration Reference
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-19
 :page-revdate: {revdate}
 
 This is a reference to all parameters that can be used to configure the rke2 server. Note that while this is a reference to the command line arguments, the best way to configure RKE2 is using the xref:install/configuration.adoc#_configuration_file[configuration file].
 
+[#_critical_configuration_values]
 == Critical Configuration Values
 
 The following options must be set to the same value on all servers in the cluster. Failure to do so will cause new servers to fail to join the cluster.
@@ -18,6 +19,7 @@ The following options must be set to the same value on all servers in the cluste
 * `egress-selector-mode`
 * `service-cidr`
 
+[#_common]
 == Common
 
 |===
@@ -40,6 +42,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_listener]
 == Listener
 
 |===
@@ -63,6 +66,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_networking_1]
 == Networking
 
 |===
@@ -115,6 +119,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_client]
 == Client
 
 |===
@@ -134,6 +139,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_helm]
 == Helm
 
 |===
@@ -144,6 +150,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_cluster]
 == Cluster
 
 |===
@@ -175,6 +182,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_database]
 == Database
 
 |===
@@ -247,6 +255,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_s3_etcd_snapshot_storage]
 == S3 etcd Snapshot Storage
 
 |===
@@ -334,6 +343,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_flags]
 == Flags
 
 |===
@@ -356,6 +366,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_components]
 == Components
 
 |===
@@ -468,6 +479,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_image]
 == Image
 
 |===
@@ -507,6 +519,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_cloud_provider]
 == Cloud Provider
 
 |===
@@ -529,6 +542,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_security_3]
 == Security
 
 |===
@@ -548,6 +562,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_experimental]
 == Experimental
 
 |===
@@ -575,6 +590,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_agentnode]
 == Agent/Node
 
 |===
@@ -627,6 +643,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_agentruntime]
 == Agent/Runtime
 
 |===
@@ -659,6 +676,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_agentcontainerd]
 == Agent/Containerd
 
 |===
@@ -674,6 +692,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_agentnetworking]
 == Agent/Networking
 
 |===
@@ -701,6 +720,7 @@ The following options must be set to the same value on all servers in the cluste
 
 |===
 
+[#_agentflags]
 == Agent/Flags
 
 |===

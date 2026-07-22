@@ -1,5 +1,5 @@
 = v1.31.X
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-05-29
 :page-revdate: {revdate}
 
@@ -269,6 +269,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.28[Calico v3.28.1]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.0.2[v4.0.2]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv13114rke2r2v13114rke2r2]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.14+rke2r2[v1.31.14+rke2r2]
 
 // v1.31.14+rke2r2
@@ -288,6 +289,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v13114rke2r1]
 === Changes since v1.31.14+rke2r1:
 
 * Update CNI to the latest versions https://github.com/rancher/rke2/pull/9356[(#9356)]
@@ -299,6 +301,7 @@ cat /var/lib/rancher/rke2/server/token
 * Add Prime only changes to release workflow https://github.com/rancher/rke2/pull/9961[(#9961)]
 * Update K8s to `v1.31.14-rke2r2-build20260317` https://github.com/rancher/rke2/pull/9978[(#9978)]
 
+[#_charts_versions_63]
 == Charts Versions
 
 | Component | Version |
@@ -320,6 +323,7 @@ cat /var/lib/rancher/rke2/server/token
 | rke2-traefik-crd | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-traefik/rke2-traefik-crd-27.0.204.tgz[27.0.204] |
 
 
+[#_release_httpsgithubcomrancherrke2releasestagv13114rke2r1v13114rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.14+rke2r1[v1.31.14+rke2r1]
 
 // v1.31.14+rke2r1
@@ -337,6 +341,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v13113rke2r1]
 === Changes since v1.31.13+rke2r1:
 
 * Bump harvester-cloud-provider chart to v0.2.11 with app image tag v0.2.5 https://github.com/rancher/rke2/pull/8960[(#8960)]
@@ -374,6 +379,7 @@ cat /var/lib/rancher/rke2/server/token
 * Fix race condition with Calico startup on Windows https://github.com/rancher/rke2/pull/9282[(#9282)]
 * Release race condition https://github.com/rancher/rke2/pull/9295[(#9295)]
 
+[#_charts_versions_64]
 == Charts Versions
 
 | Component | Version |
@@ -394,6 +400,7 @@ cat /var/lib/rancher/rke2/server/token
 | rke2-snapshot-validation-webhook | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0] |
 
 
+[#_release_httpsgithubcomrancherrke2releasestagv13113rke2r1v13113rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.13+rke2r1[v1.31.13+rke2r1]
 
 // v1.31.13+rke2r1
@@ -411,6 +418,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v13112rke2r1]
 === Changes since v1.31.12+rke2r1:
 
 * Added Calico new images https://github.com/rancher/rke2/pull/8831[(#8831)]
@@ -426,6 +434,7 @@ cat /var/lib/rancher/rke2/server/token
 * Update to v1.31.13 and Go v1.23.12 https://github.com/rancher/rke2/pull/8916[(#8916)]
 * Bump vsphere charts https://github.com/rancher/rke2/pull/8941[(#8941)]
 
+[#_charts_versions_65]
 == Charts Versions
 
 | Component | Version |
@@ -445,6 +454,7 @@ cat /var/lib/rancher/rke2/server/token
 | rke2-snapshot-controller-crd | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-controller/rke2-snapshot-controller-crd-4.0.003.tgz[4.0.003] |
 | rke2-snapshot-validation-webhook | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0] |
 
+[#_release_httpsgithubcomrancherrke2releasestagv13112rke2r1v13112rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.12+rke2r1[v1.31.12+rke2r1]
 
 // v1.31.12+rke2r1
@@ -462,6 +472,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v13111rke2r1]
 === Changes since v1.31.11+rke2r1
 
 * Add.utils test (#8651) - backport 1.31 https://github.com/rancher/rke2/pull/8660[(#8660)]
@@ -483,6 +494,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump coredns chart and image (#8736) https://github.com/rancher/rke2/pull/8797[(#8797)]
 * Fix static pod cleanup https://github.com/rancher/rke2/pull/8808[(#8808)]
 
+[#_charts_versions_66]
 === Charts Versions
 
 |===
@@ -531,6 +543,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv13111rke2r1v13111rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.11+rke2r1[v1.31.11+rke2r1]
 
 // v1.31.11+rke2r1
@@ -548,6 +561,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v13110rke2r1]
 === Changes since v1.31.10+rke2r1
 
 * Use custom golang setup for integration tests https://github.com/rancher/rke2/pull/8464[(#8464)]
@@ -568,6 +582,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump ingress-nginx to hardened2 https://github.com/rancher/rke2/pull/8634[(#8634)]
 * Update to cilium `v1.17.6` https://github.com/rancher/rke2/pull/8645[(#8645)]
 
+[#_charts_versions_67]
 === Charts Versions
 
 |===
@@ -616,6 +631,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv13110rke2r1v13110rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.10+rke2r1[v1.31.10+rke2r1]
 
 // v1.31.10+rke2r1
@@ -633,6 +649,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1319rke2r1]
 === Changes since v1.31.9+rke2r1
 
 * June 2025 CNI bumps https://github.com/rancher/rke2/pull/8324[(#8324)]
@@ -650,6 +667,7 @@ cat /var/lib/rancher/rke2/server/token
 * June K8s `v1.31.10` patch https://github.com/rancher/rke2/pull/8444[(#8444)]
 * Update runc to the newest image https://github.com/rancher/rke2/pull/8469[(#8469)]
 
+[#_charts_versions_68]
 === Charts Versions
 
 |===
@@ -698,6 +716,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1319rke2r1v1319rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.9+rke2r1[v1.31.9+rke2r1]
 
 // v1.31.9+rke2r1
@@ -715,6 +734,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1318rke2r1]
 === Changes since v1.31.8+rke2r1
 
 * Upload prime ribs assets https://github.com/rancher/rke2/pull/8170[(#8170)]
@@ -732,6 +752,7 @@ cat /var/lib/rancher/rke2/server/token
 * Fix race conditions in startup readiness checks https://github.com/rancher/rke2/pull/8277[(#8277)]
 * Fix secrets syntax https://github.com/rancher/rke2/pull/8281[(#8281)]
 
+[#_charts_versions_69]
 === Charts Versions
 
 |===
@@ -780,6 +801,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1318rke2r1v1318rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.8+rke2r1[v1.31.8+rke2r1]
 
 // v1.31.8+rke2r1
@@ -797,6 +819,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1317rke2r1]
 === Changes since v1.31.7+rke2r1
 
 * Bump multus version https://github.com/rancher/rke2/pull/7990[(#7990)]
@@ -813,6 +836,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump traefik to v2.11.24 https://github.com/rancher/rke2/pull/8109[(#8109)]
 * Update k8s to v1.31.8 https://github.com/rancher/rke2/pull/8115[(#8115)]
 
+[#_charts_versions_70]
 === Charts Versions
 
 |===
@@ -861,6 +885,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1317rke2r1v1317rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.7+rke2r1[v1.31.7+rke2r1]
 
 // v1.31.7+rke2r1
@@ -878,6 +903,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1316rke2r1]
 === Changes since v1.31.6+rke2r1
 
 * Update to cilium `v1.17.1` https://github.com/rancher/rke2/pull/7850[(#7850)]
@@ -891,6 +917,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump containerd to v2.0.4 https://github.com/rancher/rke2/pull/7949[(#7949)]
 * Bump ingress-nginx to v1.12.1-hardened1, chart to 4.12.1 https://github.com/rancher/rke2/pull/7959[(#7959)]
 
+[#_charts_versions_71]
 === Charts Versions
 
 |===
@@ -939,6 +966,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1316rke2r1v1316rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.6+rke2r1[v1.31.6+rke2r1]
 
 // v1.31.6+rke2r1
@@ -956,6 +984,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1315rke2r1]
 === Changes since v1.31.5+rke2r1
 
 * Update to cilium `v1.16.6` https://github.com/rancher/rke2/pull/7681[(#7681)]
@@ -979,6 +1008,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump K3s version for release-1.31 https://github.com/rancher/rke2/pull/7805[(#7805)]
 * Bump containerd for go-cni deadlock fix https://github.com/rancher/rke2/pull/7812[(#7812)]
 
+[#_charts_versions_72]
 === Charts Versions
 
 |===
@@ -1027,6 +1057,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1315rke2r1v1315rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.5+rke2r1[v1.31.5+rke2r1]
 
 // v1.31.5+rke2r1
@@ -1044,6 +1075,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1314rke2r1]
 === Changes since v1.31.4+rke2r1
 
 * Charts: bump harvester csi driver v0.1.22 https://github.com/rancher/rke2/pull/7471[(#7471)]
@@ -1066,6 +1098,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump ingress-nginx to v1.12.0-hardened2 https://github.com/rancher/rke2/pull/7620[(#7620)]
 * Bump K3s version for split-role fix https://github.com/rancher/rke2/pull/7636[(#7636)]
 
+[#_charts_versions_73]
 === Charts Versions
 
 |===
@@ -1114,6 +1147,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-0.0.0.tgz[0.0.0]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1314rke2r1v1314rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.4+rke2r1[v1.31.4+rke2r1]
 
 // v1.31.4+rke2r1
@@ -1131,6 +1165,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1313rke2r1]
 === Changes since v1.31.3+rke2r1
 
 * Update to Cilium v1.16.4 https://github.com/rancher/rke2/pull/7325[(#7325)]
@@ -1143,6 +1178,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump dns-node-cache to 1.24.0 https://github.com/rancher/rke2/pull/7418[(#7418)]
 * Bump hardened k8s and build base https://github.com/rancher/rke2/pull/7424[(#7424)]
 
+[#_charts_versions_74]
 === Charts Versions
 
 |===
@@ -1191,6 +1227,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-1.9.001.tgz[1.9.001]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1313rke2r1v1313rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.3+rke2r1[v1.31.3+rke2r1]
 
 // v1.31.3+rke2r1
@@ -1208,6 +1245,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1312rke2r1]
 === Changes since v1.31.2+rke2r1
 
 * Backport E2E GHA fixes https://github.com/rancher/rke2/pull/7179[(#7179)]
@@ -1233,6 +1271,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump containerd for image rewrite fix https://github.com/rancher/rke2/pull/7377[(#7377)]
  ** Bump containerd to v1.7.23-k3s2
 
+[#_charts_versions_75]
 === Charts Versions
 
 |===
@@ -1281,6 +1320,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-1.9.001.tgz[1.9.001]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1312rke2r1v1312rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.2+rke2r1[v1.31.2+rke2r1]
 
 // v1.31.2+rke2r1
@@ -1298,6 +1338,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1311rke2r1]
 === Changes since v1.31.1+rke2r1
 
 * Fixed windows CNI setup in case cni none is configured https://github.com/rancher/rke2/pull/6831[(#6831)]
@@ -1332,6 +1373,7 @@ cat /var/lib/rancher/rke2/server/token
 * Use buildkit https://github.com/rancher/rke2/pull/7133[(#7133)]
 * Fix publish windows runtime https://github.com/rancher/rke2/pull/7147[(#7147)]
 
+[#_charts_versions_76]
 === Charts Versions
 
 |===
@@ -1380,6 +1422,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-1.9.001.tgz[1.9.001]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1311rke2r1v1311rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.1+rke2r1[v1.31.1+rke2r1]
 
 // v1.31.1+rke2r1
@@ -1397,6 +1440,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1310rke2r1]
 === Changes since v1.31.0+rke2r1
 
 * Bump canal to v3.28.1-build20240830 https://github.com/rancher/rke2/pull/6687[(#6687)]
@@ -1414,6 +1458,7 @@ cat /var/lib/rancher/rke2/server/token
 * September K8s patch https://github.com/rancher/rke2/pull/6812[(#6812)]
 * Update cilium e2e test https://github.com/rancher/rke2/pull/6817[(#6817)]
 
+[#_charts_versions_77]
 === Charts Versions
 
 |===
@@ -1462,6 +1507,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-snapshot-validation-webhook/rke2-snapshot-validation-webhook-1.7.302.tgz[1.7.302]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1310rke2r1v1310rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.31.0+rke2r1[v1.31.0+rke2r1]
 
 // v1.31.0+rke2r1
@@ -1479,6 +1525,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1304rke2r1]
 === Changes since v1.30.4+rke2r1
 
 * Fix RoleBinding/ClusterRoleBinding subject growth https://github.com/rancher/rke2/pull/6273[(#6273)]
@@ -1537,6 +1584,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump K8s to v1.31.0-k3s3 https://github.com/rancher/rke2/pull/6665[(#6665)]
 * Feat: bump harvester-cloud-provider to v0.2.6 https://github.com/rancher/rke2/pull/6667[(#6667)]
 
+[#_charts_versions_78]
 === Charts Versions
 
 |===

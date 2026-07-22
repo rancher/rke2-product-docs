@@ -1,5 +1,5 @@
 = Ingress NGINX to Traefik Migration Guide
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-03
 :page-revdate: {revdate}
 
@@ -17,6 +17,7 @@ If you are a SUSE Rancher Prime customer and need assistance, please contact SUS
 SUSE Rancher Prime LTS customers will receive Ingress NGINX https://www.suse.com/c/trade-the-ingress-nginx-retirement-for-up-to-2-years-of-rke2-support-stability/[support through November 2027].
 ====
 
+[#_prerequisites_3]
 == Prerequisites
 
 * A RKE2 cluster that is using Ingress NGINX as the ingress controller. The RKE2 version must be one of the following:
@@ -26,6 +27,7 @@ SUSE Rancher Prime LTS customers will receive Ingress NGINX https://www.suse.com
 ** Any release > v1.35
 * While Traefik includes a compatibility layer for interpreting Ingress NGINX annotations, not all annotations are supported. Review the https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/ingress-nginx/#annotations-support[Traefik & Ingresses with NGINX Annotations documentation] to ensure your existing Ingress resources are compatible. You can also use the https://github.com/traefik/ingress-nginx-migration?tab=readme-ov-file#installation[Traefik Ingress NGINX Annotations Discovery Tool] to help identify any unsupported annotations in your cluster.
 
+[#_migration_overview]
 == Migration Overview
 
 The migration process involves four main phases on your RKE2 cluster:
@@ -35,10 +37,12 @@ The migration process involves four main phases on your RKE2 cluster:
 * **Phase 3:** Once the testing using Traefik is complete, remove Ingress NGINX.
 * **Phase 4:** Cleanup and removal of duplicated ingress resources.
 
+[#_phase_1_dual_ingress_controller_setup]
 == Phase 1: Dual ingress controller setup
 
 In this phase, you enable Traefik as a secondary Ingress Controller and configure it to use temporary ports to avoid conflict with the existing Ingress NGINX controller. You also enable the Ingress NGINX provider that allows Traefik to interpret Ingress NGINX annotations.
 
+[#_1_assign_ingressclassname_nginx_to_existing_ingresses]
 === 1. Assign `ingressClassName: nginx` to existing ingresses
 
 First, ensure all existing Ingress resources are explicitly bound to the Ingress NGINX controller to prevent any race conditions when Traefik is deployed.
@@ -66,6 +70,7 @@ kubectl get ingress --all-namespaces -o custom-columns='NAMESPACE:.metadata.name
 If any Ingress resource shows `none` or a different class in the `ICLASS`` column, you must investigate and manually patch those resources before proceeding to the next step.
 ======
 
+[#_2_update_rke2_configuration]
 === 2. Update RKE2 configuration
 
 Edit the RKE2 server configuration file (`/etc/rancher/rke2/config.yaml`) to enable both controllers:
@@ -84,6 +89,7 @@ ingress-controller:
 If you are using the Image Tarball, note that Traefik is not included in the default `rke2-images.linux-amd64.tar.zst` asset (example assuming amd64), and you will need to download the additional `rke2-images-traefik.linux-amd64.tar.zst` tarball, and place it in the corresponding folder on the air gap node.
 ====
 
+[#_3_configure_traefik_ports_and_compatibility_settings]
 === 3. Configure Traefik ports and compatibility settings
 
 Create the HelmChartConfig manifest on your server node (e.g. `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml`). This manifest performs three functions:
@@ -121,6 +127,7 @@ spec:
 Starting with the RKE2 June releases: v1.36.2+rke2r1, v1.35.6+rke2r1, v1.34.9+rke2r1, v1.33.13+rke2r1, Traefik chart changes the provider name from `kubernetesIngressNginx` to `kubernetesIngressNGINX`
 ====
 
+[#_4_restart_rke2]
 === 4. Restart RKE2
 
 Restart the rke2-server service in all CP nodes to apply the configuration changes:
@@ -137,6 +144,7 @@ Wait for the cluster to become ready. Verify that both `rke2-ingress-nginx-contr
 kubectl get daemonset -n kube-system
 ----
 
+[#_5_verify_functionality]
 === 5. Verify Functionality
 
 * **Existing Ingress NGINX Ingresses:** Verify that your existing Ingresses are still reachable on the standard ports (80/443).
@@ -149,6 +157,7 @@ kubectl get daemonset -n kube-system
 INF Starting provider *ingressnginx.Provider
 ----
 
+[#_phase_2_parallel_migration_and_validation]
 == Phase 2: Parallel migration and validation
 
 The goal is to validate that Traefik can correctly handle traffic and NGINX annotations by processing duplicated Ingress resources.
@@ -159,6 +168,7 @@ The goal is to validate that Traefik can correctly handle traffic and NGINX anno
 RKE2 clusters with Rancher installed include the Rancher Ingress resource. Please see SUSE Rancher Support for guidance on specific steps to migrate the Rancher Ingress resource.
 ====
 
+[#_1_duplicate_and_reclassify_ingresses]
 === 1. Duplicate and reclassify Ingresses
 
 For every critical Ingress resource (currently using `ingressClassName: nginx`), create a copy of the manifest with only one change: set the class name to `rke2-ingress-nginx-migration`.
@@ -210,6 +220,7 @@ echo "Ingress duplication complete."
 ----
 ======
 
+[#_2_test_services_via_both_controllers]
 === 2. Test services via both controllers
 
 Your services should now be accessible via two separate routes (hostPorts):
@@ -221,6 +232,7 @@ Note that Traefik provides also a ClusterIP service by default.
 
 Thoroughly test all services accessed via the Traefik port (8000/8443), ensuring all Nginx-specific features (annotations) are handled correctly by Traefik's compatibility layer.
 
+[#_3_optional_configure_external_load_balancer]
 === 3. (Optional) Configure external load balancer
 
 If you use an external load balancer (LB) to route traffic to your Kubernetes cluster, add Traefik as a backend using the Traefik node route (`\http://<Node_IP>:8000`).
@@ -236,10 +248,12 @@ Ingress NGINX and Traefik use different health check endpoints. Ensure your LB c
 * **Traefik:** `/ping`
 ====
 
+[#_phase_3_final_switchover_and_port_reassignment]
 == Phase 3: Final switchover and port reassignment
 
 Once validation is complete, you will uninstall Ingress NGINX and switch Traefik to the standard ports. Note that uninstalling Ingress NGINX might take a while because of how Kubernetes handles the teardown of resources and webhooks. If downtime is very important for you, you should consider splitting this phase in two: first uninstall Ingress NGINX while keeping Traefik listening on the 8000/8443 ports and then, once Ingress NGINX is removed, change Traefik ports.
 
+[#_1_uninstall_ingress_nginx]
 === 1. Uninstall Ingress NGINX
 
 Edit the RKE2 server configuration file (`/etc/rancher/rke2/config.yaml`) to set Traefik as the only Ingress Controller:
@@ -253,6 +267,7 @@ ingress-controller:
 
 If downtime is important and you’d like to split this phase, you should restart RKE2 at this point and don’t move to the next step (configure Traefik for Standard Ports) until Ingress NGINX is completely removed.
 
+[#_2_configure_traefik_for_standard_ports]
 === 2. Configure Traefik for Standard Ports
 
 Update the HelmChartConfig manifest (`/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml`) to remove the custom port configuration.
@@ -282,6 +297,7 @@ spec:
 Starting with the RKE2 June releases: v1.36.2+rke2r1, v1.35.6+rke2r1, v1.34.9+rke2r1, v1.33.13+rke2r1, Traefik chart changes the provider name from `kubernetesIngressNginx` to `kubernetesIngressNGINX`
 ====
 
+[#_3_restart_rke2]
 === 3. Restart RKE2
 
 Restart the rke2-server service in all CP nodes:
@@ -293,14 +309,17 @@ sudo systemctl restart rke2-server
 
 After a few seconds, helm-controller will detect the new configurations for both Ingress NGINX controller (remove) and Traefik (redeploy).
 
+[#_4_final_verification_on_standard_ports]
 === 4. Final verification on standard ports
 
 Verify that the Ingress NGINX DaemonSet is gone.
 
 Verify that your services are now accessible via the duplicated Traefik Ingresses on the standard ports (80/443).
 
+[#_phase_4_cleanup]
 == Phase 4: Cleanup
 
+[#_1_remove_ingress_nginx_objects]
 === 1. Remove Ingress NGINX Objects
 
 Delete the legacy Ingress objects that were bound to `ingressClassName: nginx`. For example, you can use the following script which removes all ingress objects which do not include the word traefik in their class:
@@ -313,6 +332,7 @@ kubectl get ingress --all-namespaces -o custom-columns='NAMESPACE:.metadata.name
 done
 ----
 
+[#_additional_notes]
 == Additional Notes
 
 * By default the Ingress NGINX provider reads `ingressClassName = nginx`. We decided to change this and use a “bridge” ingressClass (`rke2-ingress-nginx-migration`) to avoid two problems:

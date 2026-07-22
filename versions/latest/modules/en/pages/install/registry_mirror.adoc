@@ -1,5 +1,5 @@
 = Embedded Registry Mirror
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-05-11
 :page-revdate: {revdate}
 
@@ -11,16 +11,19 @@ The Embedded Registry Mirror is available as an experimental feature as of Janua
 
 RKE2 embeds https://github.com/spegel-org/spegel[Spegel], a stateless distributed OCI registry mirror that allows peer-to-peer sharing of container images between nodes in a Kubernetes cluster. The distributed registry mirror is disabled by default. For RKE2 to leverage it, you must enable both the <<Enabling The Distributed OCI Registry Mirror,Distributed OCI Registry Mirror>> and the <<Enabling Registry Mirroring,Registry mirroring>> as explained in the following subsections.
 
+[#_enabling_the_distributed_oci_registry_mirror]
 == Enabling The Distributed OCI Registry Mirror
 
 In order to enable the embedded registry mirror, server nodes must be configured with `embedded-registry: true`. This option enables the embedded mirror for use on all nodes in the cluster.
 
 When enabled at a cluster level, all nodes will host a local OCI registry on port 9345, and publish a list of available images via a peer to peer network on port 5001. Any image available in the containerd image store on any node, can be pulled by other cluster members without access to an external registry. Images imported via xref:install/airgap.adoc#_tarball_method[air-gap image tar files] or xref:add-ons/import_images.adoc#_pre_import_images[pre-imported] are pinned in containerd to ensure that they remain available and are not pruned by Kubelet garbage collection.
 
+[#_requirements]
 === Requirements
 
 When the embedded registry mirror is enabled, all nodes must be able to reach each other via their internal IP addresses, on TCP ports 5001 and 9345. If nodes cannot reach each other, it may take longer for images to be pulled, as the distributed registry will be tried first by containerd, before it falls back to other endpoints.
 
+[#_metrics]
 === Metrics
 
 Spegel provides a few metrics that can be helpful to track its activity and can be queried in the supervisor. However, the supervisor metrics are disabled by default. To enable them, server nodes must be started with `supervisor-metrics: true` in the configuration file.
@@ -31,6 +34,7 @@ Once enabled, query:
 kubectl get --server https://$SERVER_NAME:9345 --raw /metrics | grep spegel
 ----
 
+[#_enabling_registry_mirroring]
 == Enabling Registry Mirroring
 
 Enabling mirroring for a registry allows a node to both pull images from that registry from other nodes, and share the registry's images with other nodes. If a registry is enabled for mirroring on some nodes, but not on others, only the nodes with the registry enabled will exchange images from that registry.
@@ -80,9 +84,10 @@ If no registries are enabled for mirroring on a node, that node does not partici
 
 For more information on the structure of the `registries.yaml` file, see xref:install/private_registry.adoc[Private Registry Configuration].
 
+[#_default_endpoint_fallback]
 === Default Endpoint Fallback
 
-By default, containerd will fall back to the default endpoint when pulling from registries with mirror endpoints configured. If you want to disable this, and only pull images from the configured mirrors and/or the embedded mirror, see the xref:install/private_registry.adoc#_default_endpoint_fallback[Default Endpoint Fallback] section of the Private Registry Configuration documentation.
+By default, containerd will fall back to the default endpoint when pulling from registries with mirror endpoints configured. If you want to disable this, and only pull images from the configured mirrors and/or the embedded mirror, see the xref:install/private_registry.adoc#_default_endpoint_fallback_1[Default Endpoint Fallback] section of the Private Registry Configuration documentation.
 
 Note that if you are using the `disable-default-endpoint` option and want to allow pulling directly from a particular registry, while disallowing the rest, you can explicitly provide an endpoint in order to allow the image pull to fall back to the registry itself:
 
@@ -96,20 +101,24 @@ mirrors:
       - https://mirror.example.com
 ----
 
+[#_latest_tag]
 === Latest Tag
 
 When no tag is specified for a container image, the implicit default tag is `latest`. This tag is frequently updated to point at the most recent version of the image. Because this tag will point at a different revisions of an image depending on when it is pulled, the distributed registry *will not* pull the `latest` tag from other nodes. This forces containerd go out to an upstream registry or registry mirror to ensure a consistent view of what the `latest` tag refers to.
 
 This aligns with the https://kubernetes.io/docs/concepts/containers/images/#imagepullpolicy-defaulting[special `imagePullPolicy` defaulting] observed by Kubernetes when using the `latest` tag for a container image.
 
+[#_security_2]
 == Security
 
+[#_authentication]
 === Authentication
 
 Access to the embedded mirror's registry API requires a valid client certificate, signed by the cluster's client certificate authority.
 
 Access to the distributed hash table's peer-to-peer network requires a preshared key that is controlled by server nodes. Nodes authenticate each other using both the preshared key, and a certificate signed by the cluster certificate authority.
 
+[#_potential_concerns]
 === Potential Concerns
 
 [WARNING]
@@ -121,12 +130,14 @@ The embedded registry may make available images that a node may not otherwise ha
 
 Users with access to push images into the containerd image store on one node may be able to use this to 'poison' the image for other cluster nodes, as other nodes will trust the tag advertised by the node, and use it without checking with the upstream registry. If image integrity is important, you should use image digests instead of tags, as the digest cannot be poisoned in this manner.
 
+[#_sharing_air_gap_or_manually_loaded_images]
 == Sharing Air-gap or Manually Loaded Images
 
 Images sharing is controlled based on the source registry. Images loaded directly into containerd via xref:install/airgap.adoc#_tarball_method[air-gap tarballs], xref:add-ons/import_images.adoc#_pre_import_images[pre-imported] or loaded directly into containerd's image store using the `ctr` command line tool, will be shared between nodes if they are tagged as being from a registry that is enabled for mirroring.
 
 Note that the upstream registry that the images appear to come from does not actually have to exist or be reachable. For example, you could tag images as being from a fictitious upstream registry, and import those images into containerd's image store. You would then be able to pull those images from all cluster members, as long as that registry is listed in `registries.yaml`.
 
+[#_pushing_images]
 == Pushing Images
 
 The embedded registry is read-only, and cannot be pushed to directly using `docker push` or other common tools that interact with OCI registries.

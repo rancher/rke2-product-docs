@@ -1,6 +1,6 @@
 
 = Backup and Restore
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-02-27
 :page-revdate: {revdate}
 :page-aliases: backup_restore.adoc
@@ -27,6 +27,7 @@ RKE2 etcd snapshots are stored on the node file system, and may optionally be up
 
 For additional information on the etcd snapshot subcommands, run `rke2 etcd-snapshot --help`.
 
+[#_creating_snapshots]
 == Creating Snapshots
 
 [tabs,sync-group-id=snapshots]
@@ -52,7 +53,7 @@ The following options control the operation of scheduled snapshots:
 | Compress etcd snapshots
 
 | `--etcd-snapshot-dir`
-| Directory to save db snapshots. (Default location: `+${data-dir}/db/snapshots+`)
+| Directory to save db snapshots. (Default location: `+$<data-dir>/db/snapshots+`)
 
 | `--etcd-snapshot-retention`
 | Number of snapshots to retain (default: 5)
@@ -85,7 +86,7 @@ The following options control the operation of on-demand snapshots:
 | Compress etcd snapshots
 
 | `--etcd-snapshot-dir`
-| Directory to save db snapshots. (Default location: `+${data-dir}/db/snapshots+`)
+| Directory to save db snapshots. (Default location: `+$<data-dir>/db/snapshots+`)
 |===
 
 The data-dir value defaults to `/var/lib/rancher/rke2` and can be changed independently by setting the `--data-dir` flag.
@@ -98,6 +99,7 @@ On-demand snapshots are saved to the path set by the server's `--etcd-snapshot-d
 
 =====
 
+[#_deleting_snapshots]
 == Deleting Snapshots
 
 Scheduled snapshots are deleted automatically when the number of snapshots exceeds the configured retention count (5 by default). The oldest snapshots are removed first.
@@ -125,6 +127,7 @@ Prune "scheduled" snapshots down to a smaller amount:
 rke2 etcd-snapshot prune --name etcd-snapshot --etcd-snapshot-retention <NUM-OF-SNAPSHOTS-TO-RETAIN>
 ----
 
+[#_s3_compatible_object_store_support]
 == S3 Compatible Object Store Support
 
 RKE2 supports replicating etcd snapshots to and restoring etcd snapshots from S3-compatible object stores. S3 support is available for both on-demand and scheduled snapshots.
@@ -200,6 +203,7 @@ $ rke2 etcd-snapshot --s3 --s3-bucket=test-bucket --s3-access-key=test --s3-secr
 Name                              Location                                                                          Size    Created
 ----
 
+[#_s3_retention]
 === S3 Retention
 
 [IMPORTANT]
@@ -215,6 +219,7 @@ Starting in versions v1.34.0+rke2r1, v1.33.4+rke2r1, v1.32.8+rke2r1, v1.31.12+rk
 | Number of snapshots in S3 to retain (default: `5`)
 |===
 
+[#_s3_configuration_secret_support]
 === S3 Configuration Secret Support
 
 [IMPORTANT]
@@ -263,13 +268,14 @@ stringData:
   etcd-s3-proxy: ""
 ----
 
+[#_restoring_snapshots]
 == Restoring Snapshots
 
 RKE2 runs through several steps when restoring a snapshot:
 
 . If the snapshot is stored on S3, the file is downloaded into the snapshot directory.
 . If the snapshot is compressed, it is decompressed.
-. If present, the current etcd database files are moved to `+${data-dir}/server/db/etcd-old-$TIMESTAMP/+`.
+. If present, the current etcd database files are moved to `+$<data-dir>/server/db/etcd-old-$TIMESTAMP/+`.
 . The snapshot's contents are extracted out to disk, and the checksum is verified.
 . Etcd is started, and all etcd cluster members except the current node are removed from the cluster.
 . CA Certificates and other confidential data are extracted from the datastore and written to disk, for later use.
@@ -279,6 +285,7 @@ RKE2 runs through several steps when restoring a snapshot:
 
 When restoring a snapshot, you don't need to use the same RKE2 version that created it; a higher minor version is also acceptable.
 
+[#_snapshot_restore_steps]
 === Snapshot Restore Steps
 
 Select the tab below that matches your cluster configuration.
@@ -357,7 +364,7 @@ rke2 server \
 +
 *Result:* RKE2 restores the snapshot and resets cluster membership, then prints a message indicating that it is ready to be restarted: +
  `Managed etcd cluster membership has been reset, restart without --cluster-reset flag now.` +
- `+Backup and delete ${datadir}/server/db on each peer etcd server and rejoin the nodes.+`
+ `+Backup and delete $<datadir>/server/db on each peer etcd server and rejoin the nodes.+`
 
 . On S1, start RKE2 again:
 +
@@ -388,6 +395,7 @@ As a safety mechanism, when RKE2 resets the cluster, it creates an empty file at
 
 =====
 
+[#_restoring_to_new_hosts]
 ==== Restoring To New Hosts
 
 It is possible to restore an etcd snapshot to a different host than it was taken on. When doing so, you must pass the xref:security/token.adoc#_server[server token] that was originally used when taking the snapshot, as it is used to decrypt the bootstrap data inside the snapshot. The process is the same as above but changing step 2 by:
@@ -412,6 +420,7 @@ The token value can also be set in the RKE2 config file.
 . If there is a token set in the RKE2 config file, make sure it is the same as the `<BACKED-UP-TOKEN-VALUE>`, otherwise RKE2 will fail to start.
 ====
 
+[#_etcdsnapshotfile_custom_resources]
 == ETCDSnapshotFile Custom Resources
 
 Snapshots can be viewed remotely using any Kubernetes client by listing or describing cluster-scoped `ETCDSnapshotFile` resources.
@@ -469,6 +478,7 @@ Events:
 $ kubectl describe etcdsnapshotfile s3-on-demand-k3s-server-1-1730308816-79b15c
 ----
 
+[#_external_db_backups_experimental]
 == External DB Backups (Experimental)
 
 [CAUTION]
@@ -478,6 +488,7 @@ You must restore this file, or pass its value into the `token` option, when rest
 If you do not use the same token value when restoring, the snapshot will be unusable, as the token is used to encrypt confidential data within the datastore itself.
 ====
 
+[#_backup_and_restore_with_sqlite]
 === Backup and Restore with SQLite
 
 No special commands are required to back up or restore the SQLite datastore.
@@ -485,6 +496,7 @@ No special commands are required to back up or restore the SQLite datastore.
 * To back up the SQLite datastore, take a copy of `/var/lib/rancher/rke2/server/db/`.
 * To restore the SQLite datastore, restore the contents of `/var/lib/rancher/rke2/server/db` (and the token, as discussed above).
 
+[#_backup_and_restore_with_external_datastore]
 === Backup and Restore with External Datastore
 
 When an external datastore is used, backup and restore operations are handled outside of RKE2. The database administrator will need to back up the external database, or restore it from a snapshot or dump.

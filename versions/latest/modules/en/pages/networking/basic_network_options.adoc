@@ -1,5 +1,5 @@
 = Network Options
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-10
 :page-revdate: {revdate}
 
@@ -7,6 +7,7 @@ Kubernetes requires installation of one or more CNI Plugins to provide Pod netwo
 
 Canal is the default CNI Plugin, but all bundled plugins are supported.  Bundled CNI Plugins are installed via Helm chart, and can be customized by deploying a HelmChartConfig with additional chart values. For more information on using HelmChartConfig resources, see the xref:add-ons/helm.adoc[Helm Integration] documentation, and the CNI-specific examples provided below.
 
+[#_select_a_cni_plugin]
 == Select a CNI Plugin
 
 Use the `cni` xref:install/configuration.adoc[configuration file key] to select the CNI Plugin you wish to use. If you do not want to use any of the bundled CNI Plugins, you can set `cni` to `none`. Note that nodes will remain NotReady and be tainted unschedulable until a CNI Plugin is installed.
@@ -282,6 +283,7 @@ Flannel does not support network policies. Therefore, it is not recommended for 
 --
 =====
 
+[#_dual_stack_configuration]
 == Dual-stack configuration
 
 IPv4/IPv6 dual-stack networking enables the allocation of both IPv4 and IPv6 addresses to Pods and Services. To configure RKE2 in dual-stack mode, in the control-plane nodes, you must set a valid IPv4/IPv6 dual-stack cidr for pods and services. To do so, use the `cluster-cidr` and `service-cidr` configuration file keys:
@@ -317,6 +319,7 @@ Flannel automatically detects the RKE2 configuration for dual-stack and does not
 
 ====
 
+[#_ipv6_setup]
 == IPv6 setup
 
 In case of IPv6 only configuration RKE2 needs to use `localhost` to access the liveness URL of the ETCD pod; check that your operating system configures `/etc/hosts` file correctly:
@@ -347,6 +350,7 @@ spec:
     autoDirectNodeRoutes: true
 ----
 
+[#_nodes_without_a_hostname]
 == Nodes Without a Hostname
 
 Some cloud providers, such as Linode, will create machines with "localhost" as the hostname and others may not have a hostname set at all. This can cause problems with domain name resolution. You can run RKE2 with the `node-name` parameter and this will pass the node name to resolve this issue.

@@ -1,5 +1,5 @@
 = Windows Air-Gap Install
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-19
 :page-revdate: {revdate}
 
@@ -20,6 +20,7 @@ Download the air-gap images tarballs for your RKE2 version or by using a private
 
 All files mentioned in the steps can be obtained from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] for your desired RKE2 version.
 
+[#_prepare_the_windows_agent_node]
 == Prepare the Windows Agent Node
 
 [NOTE]
@@ -43,6 +44,7 @@ Enable-WindowsOptionalFeature -Online -FeatureName containers –All
 
 . Reboot the node for the `Containers` feature to function correctly.
 
+[#_windows_tarball_method]
 == Windows Tarball Method
 
 . Download the Windows images tarballs and binary from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] for the version of RKE2 you are using.
@@ -103,6 +105,7 @@ Invoke-WebRequest <PRIME-Artifacts-URL>/rke2/<VERSION>/rke2-windows-ltsc2022-amd
 . Copy the compressed archive to `/var/lib/rancher/rke2/agent/images/` on the node, ensuring that the file extension is retained.
 . <<Install Windows RKE2>>.
 
+[#_private_registry_method_1]
 == Private Registry Method
 
 Private registry support honors all settings from the xref:install/containerd_registry_configuration.adoc[containerd registry configuration], including endpoint override, transport protocol (HTTP/HTTPS), authentication, certificate verification, and more.
@@ -110,6 +113,7 @@ Private registry support honors all settings from the xref:install/containerd_re
 . Add all the required system images to your private registry. A list of images can be obtained from the `.txt` file corresponding to each tarball referenced above. Alternatively, you can `docker load` the airgap image tarballs, then tag and push the loaded images.
 . <<Install Windows RKE2>> using the `system-default-registry` parameter, or use the xref:install/containerd_registry_configuration.adoc[containerd registry configuration] to use your registry as a mirror for docker.io.
 
+[#_install_windows_rke2]
 == Install Windows RKE2
 
 These steps should only be performed after completing one of either the <<Windows Tarball Method,Tarball Method>> or <<Private Registry Method>>.

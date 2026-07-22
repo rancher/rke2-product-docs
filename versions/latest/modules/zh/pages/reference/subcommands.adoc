@@ -1,5 +1,5 @@
 = 子命令
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2024-09-11
 :page-revdate: {revdate}
 
@@ -30,7 +30,7 @@ OPTIONS:
    --alsologtostderr                                    (logging) Log to standard error as well as file (if set)
    --node-name value                                    (agent/node) Node name [$RKE2_NODE_NAME]
    --data-dir value, -d value                           (data) Folder to hold state (default: "/var/lib/rancher/rke2")
-   --dir value, --etcd-snapshot-dir value               (db) Directory to save etcd on-demand snapshot. (default: ${data-dir}/db/snapshots)
+   --dir value, --etcd-snapshot-dir value               (db) Directory to save etcd on-demand snapshot. (default: $<data-dir>/db/snapshots)
    --name value                                         (db) Set the base name of the etcd on-demand snapshot (appended with UNIX timestamp). (default: "on-demand")
    --snapshot-compress, --etcd-snapshot-compress        (db) Compress etcd snapshot
    --s3, --etcd-s3                                      (db) Enable backup to S3

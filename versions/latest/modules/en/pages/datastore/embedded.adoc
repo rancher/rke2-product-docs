@@ -1,10 +1,11 @@
 = Embedded datastore
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-08
 :page-revdate: {revdate}
 
 Using an embedded datastore means leveraging a database that runs within the Kubernetes cluster, typically as a containerized service, e.g. etcd. This option simplifies deployment and could improve performance and security. The alternative is xref:datastore/external.adoc[external databases].
 
+[#_datastore_options]
 == Datastore options
 
 [WARNING]
@@ -16,14 +17,17 @@ RKE2 officially supports Embedded etcd, embedded SQLite is considered experiment
 * *Embedded https://etcd.io/[etcd]*: Embedded etcd is the default datastore, and will be used if no other datastore configuration is present.
 * *Embedded https://www.sqlite.org/index.html[SQLite]*: SQLite cannot be used on clusters with multiple servers. It uses project https://github.com/k3s-io/kine[kine].
 
+[#_embedded_etcd]
 == Embedded etcd
 
 Embedded https://etcd.io/[etcd]is the default datastore, and will be used if no other datastore configuration is present.  It is the only embedded option that allows to deploy RKE2 in xref:install/ha.adoc[HA mode]. Unless explicitly unset, one etcd pod will be deployed per RKE2 server and all the etcd instances will maintain a quorum. RKE2 includes tools to easily create snapshots when using this datastore as explained in the xref:datastore/backup_restore.adoc[Backup and Restore] instructions.
 
+[#_embedded_sqlite]
 == Embedded SQLite
 
 This embedded option is not recommended for production but can be useful if you need to run a simple, short-lived cluster, for example in a CI/CD environment. HA mode is not supported when deploying with https://www.sqlite.org/index.html[SQLite].
 
+[#_single_server_with_sqlite]
 === Single Server with SQLite
 
 . Set `disable-etcd` without the `server` parameter in the config file.

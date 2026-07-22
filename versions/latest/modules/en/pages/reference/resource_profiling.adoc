@@ -1,10 +1,11 @@
 = Resource Profiling
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-21
 :page-revdate: {revdate}
 
 This section captures the results of tests to determine minimum resource requirements for RKE2.
 
+[#_scope_of_resource_testing]
 == Scope of Resource Testing
 
 The resource tests were intended to address the following problem statements:
@@ -12,6 +13,7 @@ The resource tests were intended to address the following problem statements:
 * On a single-node cluster, determine the legitimate minimum amount of CPU and memory entire RKE2 server stack, assuming that a real workload will be deployed on the cluster.
 * On an agent node, determine the legitimate minimum amount of CPU and memory that should be set aside for the kubelet and RKE2 agent components.
 
+[#_environment_and_components]
 === Environment and Components
 
 |===
@@ -30,6 +32,7 @@ The tested components are:
 * RKE2 v1.27.12 with all packaged components enabled, Canal as the CNI
 * https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[Kubernetes Example Nginx Deployment]
 
+[#_methodology]
 === Methodology
 
 `systemd-cgtop` was used to track systemd cgroup-level CPU and memory utilization.
@@ -39,6 +42,7 @@ The tested components are:
 
 Utilization figures were based on 95th percentile readings from steady state operation on nodes running the described workloads, giving an upper bounds on typical resource usage.
 
+[#_rke2_server_with_a_workload]
 === RKE2 Server with a Workload
 
 These are the requirements for a single-node cluster in which the RKE2 server shares resources with a https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[simple workload].
@@ -51,6 +55,7 @@ These are the requirements for a single-node cluster in which the RKE2 server sh
 | 4977 MB
 |===
 
+[#_rke2_cluster_with_a_single_agent]
 === RKE2 Cluster with a Single Agent
 
 These are the baseline requirements for a RKE2 cluster with a RKE2 server node and a RKE2 agent, but no workload.

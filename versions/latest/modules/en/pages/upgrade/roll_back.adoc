@@ -1,5 +1,5 @@
 = Rolling Back RKE2
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-12-04
 :page-revdate: {revdate}
 
@@ -10,12 +10,14 @@ You can roll back the RKE2 Kubernetes version after an upgrade, using a combinat
 If you cannot restore the database, you cannot roll back to a previous minor version.
 ====
 
+[#_important_considerations]
 == Important Considerations
 
 * *Backups:* Before upgrading, ensure you have a valid database or etcd snapshot from your cluster running the older version of RKE2. Without a backup, a rollback is impossible.
 * *Potential Data Loss:* The `rke2-killall.sh` script forcefully terminates RKE2 processes and may result in data loss if applications are not properly shut down.
 * *Version Specifics:* Always verify RKE2 and component versions before and after the rollback.
 
+[#_rolling_back_an_rke2_cluster]
 == Rolling Back an RKE2 Cluster
 
 [tabs]
@@ -171,6 +173,7 @@ curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=vX.Y.Zrke2r1 INSTALL_RKE2_T
 
 =====
 
+[#_verification]
 == Verification
 
 After the rollback, verify the following:

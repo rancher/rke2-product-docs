@@ -1,0 +1,50 @@
+= Gestionar roles de servidor
+:page-languages: Por defecto, iniciar RKE2 ejecutará todos los componentes del plano de control, incluyendo el apiserver, controller-manager, scheduler y etcd.
+:revdate: 2024-09-11
+:page-revdate: {revdate}
+
+Por defecto, iniciar RKE2 ejecutará todos los componentes del plano de control, incluyendo el apiserver, controller-manager, scheduler y etcd. Es posible deshabilitar componentes específicos para dividir los roles del plano de control y etcd en nodos separados.
+
+== Nodos dedicados `etcd`
+
+Para crear un servidor con solo el rol de `etcd`, despliega una configuración con todos los componentes del plano de control deshabilitados:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable-apiserver: true
+disable-controller-manager: true
+disable-scheduler: true
+----
+
+Este primer nodo iniciará etcd y esperará a que se unan nodos adicionales `etcd` y/o `control-plane`. El clúster no será utilizable hasta que se una un servidor adicional con los componentes `control-plane` habilitados.
+
+== Nodos dedicados `control-plane`
+
+[TIP]
+====
+Un nodo dedicado `control-plane` no puede ser el primer servidor en el clúster; debe haber un nodo existente con el rol de `etcd` antes de unir nodos dedicados `control-plane`.
+====
+
+Para crear un servidor con solo el rol de `control-plane`, despliega una configuración con etcd deshabilitado:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+server: https://<etcd-only-node>:9345
+disable-etcd: true
+----
+
+Después de crear nodos de servidor dedicados, los roles seleccionados serán visibles en `kubectl get node`:
+
+[,bash]
+----
+$ kubectl get nodes
+NAME           STATUS   ROLES                       AGE     VERSION
+rke2-server-1   Ready    etcd                        5h39m   v1.26.4+rke2r1
+rke2-server-2   Ready    control-plane,master        5h39m   v1.26.4+rke2r1
+----
+
+== Añadiendo roles a servidores existentes
+
+Se pueden añadir roles a los nodos dedicados existentes reiniciando RKE2 tras eliminar las banderas de deshabilitación. Por ejemplo, si deseas añadir el rol de `control-plane` a un nodo dedicado `etcd`, puedes eliminar las líneas `disable-apiserver disable-controller-manager disable-scheduler` del archivo de configuración y reiniciar el servicio.

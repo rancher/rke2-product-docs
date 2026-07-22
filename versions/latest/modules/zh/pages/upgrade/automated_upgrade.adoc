@@ -1,63 +1,63 @@
 = 自动升级
-:page-languages: [en, zh]
+:page-languages: 您可以使用Rancher的Upgrade Controller管理RKE2集群的升级。
 :revdate: 2026-01-09
 :page-revdate: {revdate}
 
 == 概述
 
-You can manage RKE2 cluster upgrades using Rancher's system-upgrade-controller. This is a Kubernetes-native approach to cluster upgrades. It leverages a https://github.com/rancher/system-upgrade-controller/blob/master/doc/plan.md#planspec[`Plan`] Custom Resource to declaratively describe what nodes to upgrade, and to what version.
+您可以使用Rancher的system-upgrade-controller来管理RKE2集群的升级。这是一种Kubernetes原生的集群升级方法。它利用一个 https://github.com/rancher/system-upgrade-controller/blob/master/doc/plan.md#planspec[`Plan`]自定义资源来声明性地描述要升级的节点及其版本。
 
-The plan defines upgrade policies and requirements. It also defines which nodes should be upgraded through a https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/[label selector]. See below for plans with defaults appropriate for upgrading a RKE2 cluster. For more advanced plan configuration options, see the Plan documentation linked above.
+该计划定义了升级策略和要求。它还通过 https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/[标签选择器]定义了哪些节点应该被升级。请参见下方适用于升级RKE2集群的默认计划。有关更高级的计划配置选项，请参见上面链接的计划文档。
 
-The System Upgrade controller schedules upgrades by monitoring plans and selecting nodes to run upgrade https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/[Jobs] on. When a Job has run to completion successfully, the controller will label the node on which it ran accordingly.
+Upgrade Controller通过监控计划并选择节点来调度升级，在这些节点上运行升级 https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/[作业]。当作业成功完成后，控制器将相应地标记运行该作业的节点。
 
 [CAUTION]
 ====
-If the RKE2 cluster is managed by Rancher, you should use the Rancher UI to manage upgrades.
+如果RKE2集群由Rancher管理，则应使用Rancher的用户界面来管理升级。
 
-* If the RKE2 cluster was imported (registered) into Rancher, Rancher will by default manage the system-upgrade-controller deployment and plans. Do not follow the steps on this page unless you have disabled version management in Rancher. See https://documentation.suse.com/cloudnative/rancher-manager/v2.13/en/cluster-deployment/register-existing-clusters.html#_configuring_version_management_for_suse_rancher_prime_rke2_and_suse_rancher_prime_k3s_clusters[Configuring Version Management for SUSE® Rancher Prime: RKE2 and SUSE® Rancher Prime: K3s Clusters] for more information.
-* If the RKE2 cluster was provisioned by Rancher, Rancher will use system agent to manage version upgrades. Do not follow the steps on this page.
-* If the RKE2 cluster is _not_ managed by Rancher, you may follow the steps below.
+* 如果RKE2集群已导入（注册）到Rancher，则Rancher默认管理system-upgrade-controller的部署和计划。除非您已在Rancher中禁用版本管理，否则请勿按照此页面上的步骤操作。有关更多信息，请参见 https://documentation.suse.com/cloudnative/rancher-manager/v2.13/en/cluster-deployment/register-existing-clusters.html#_configuring_version_management_for_suse_rancher_prime_rke2_and_suse_rancher_prime_k3s_clusters[Configuring Version Management for SUSE® Rancher Prime: RKE2 and SUSE® Rancher Prime: K3s Clusters]。
+* 如果RKE2集群由Rancher部署，Rancher将使用system agent来管理版本升级。请勿按照此页面上的步骤操作。
+* 如果RKE2集群_未_由Rancher管理，您可以按照以下步骤操作。
 ====
 
-== Using the System Upgrade Controller
+== 使用Upgrade Controller
 
-To automate upgrades , you must do the following:
+要实现自动升级，您必须执行以下操作：
 
-. Install the system-upgrade-controller into your cluster.
-. Create plans describing which groups of nodes to upgrade, and how.
+. 将system-upgrade-controller安装到您的集群中。
+. 创建描述要升级的节点组及其方式的计划。
 
-For more details on the design and architecture of the system-upgrade-controller or its integration with RKE2, see the following Git repositories:
+有关system-upgrade-controller的设计和架构或其与RKE2集成的更多详细信息，请参见以下Git仓库：
 
 * https://github.com/rancher/system-upgrade-controller[system-upgrade-controller]
 * https://github.com/rancher/rke2-upgrade[rke2-upgrade]
 
 [TIP]
 ====
-When attempting to upgrade to a new version of RKE2, the https://kubernetes.io/releases/version-skew-policy/[Kubernetes version skew policy] applies. Ensure that your plan does not skip intermediate minor versions when upgrading. The system-upgrade-controller itself will not protect against unsupported changes to the Kubernetes version.
+在尝试升级到新版本的RKE2时，适用 https://kubernetes.io/releases/version-skew-policy/[Kubernetes版本偏差策略]。确保您的计划在升级时不会跳过中间的次要版本。系统升级控制器本身不会保护不支持的 Kubernetes 版本更改。
 ====
 
-=== Installation
+=== 安装
 
-The system-upgrade-controller manifest installs a custom resource definition, deployment, service account, cluster role binding, and configmap. To install these components, run the following command:
+Upgrade Controller清单安装了自定义资源定义、部署、服务帐户、集群角色绑定和配置映射。要安装这些组件，请运行以下命令：
 
 [,bash]
 ----
 kubectl apply -f https://github.com/rancher/system-upgrade-controller/releases/latest/download/crd.yaml -f https://github.com/rancher/system-upgrade-controller/releases/latest/download/system-upgrade-controller.yaml
 ----
 
-The controller can be configured and customized via the previously mentioned configmap, but the controller pod must be deleted for the changes to be applied.
+可以通过前面提到的配置映射来配置和自定义Upgrade Controller，但必须删除控制器 Pod 才能应用更改。
 
-=== Configuration
+=== 配置
 
-Server nodes should always be upgraded before agent nodes.
+服务器节点应始终在代理节点之前升级。
 
-For this reason, it is recommended you create at least two plans: a plan for upgrading server (control-plane) nodes, and a plan for upgrading agent nodes.
+因此，建议您创建至少两个计划：一个用于升级服务器（控制平面）节点，另一个用于升级代理节点。
 
-You can create additional plans as needed to control the rollout of the upgrade across nodes.
-Once the plans are created, the controller will pick them up and begin to upgrade your cluster.
+您可以根据需要创建其他计划，以控制升级在节点之间的推出。
+一旦创建计划，控制器将拾取这些计划并开始升级您的集群。
 
-The following two example plans will continuously keep your your cluster upgraded to the current stable release, by targeting the stable xref:upgrade/manual_upgrade.adoc#_release_channels[release channel]:
+以下两个示例计划将通过针对稳定的xref:upgrade/manual_upgrade.adoc#_release_channels[发布通道]，持续保持您的集群升级到当前稳定版本：
 
 [,yaml]
 ----
@@ -104,13 +104,13 @@ spec:
   channel: https://update.rke2.io/v1-release/channels/stable
 ----
 
-There are a few important things to call out regarding these plans:
+关于这些计划，有几个重要事项需要指出：
 
-. The plans must be created in the same namespace where the controller was deployed.
-. The `concurrency` field indicates how many nodes can be upgraded at the same time.
-. The server-plan targets server nodes by specifying a label selector that selects nodes with the `node-role.kubernetes.io/control-plane` label. The agent-plan targets agent nodes by specifying a label selector that select nodes without that label.
-. The `prepare` step in the agent-plan will cause upgrade jobs for that plan to wait for the server-plan to complete before they execute. This logic is built into the image used for the prepare step, and is not part of system-upgrade-controller itself.
-. Both plans have the `channel` field set to the stable release channel URL. This will cause the controller to monitor that URL and upgrade the cluster any time it resolves to a new release. This works well with the xref:upgrade/manual_upgrade.adoc#_release_channels[release channels]. Thus, you can configure your plans with the following channel to ensure your cluster is always automatically upgraded to the newest stable release of RKE2. Alternatively, you can omit the `channel` field and set the `version` field to a specific release of RKE2:
+. 计划必须在控制器部署的同一名称空间中创建。
+. `concurrency` 字段指示可以同时升级多少个节点。
+. 服务器计划通过指定选择具有 `node-role.kubernetes.io/control-plane` 标签的节点的标签选择器来针对服务器节点。代理计划通过指定选择没有该标签的节点的标签选择器来针对代理节点。
+. 代理计划中的`prepare`步骤将导致该计划的升级作业在执行之前等待服务器计划完成。此逻辑内置于用于准备步骤的映像中，并不是Upgrade Controller本身的一部分。
+. 两个计划的 `channel` 字段都设置为稳定版本通道的 URL。这将导致控制器监控该URL，并在其解析为新版本时升级集群。这与xref:upgrade/manual_upgrade.adoc#_release_channels[发布通道]配合良好。因此，您可以使用以下通道配置您的计划，以确保您的集群始终自动升级到最新稳定版本的RKE2。或者，您可以省略 `channel` 字段，并将 `version` 字段设置为 RKE2 的特定版本：
 +
 [,yaml]
 ----
@@ -122,13 +122,13 @@ spec:
   version: v1.33.4+rke2r1
 ----
 
-The upgrade will begin as soon as the controller detects the target version for a plan has been resolved, either from the version field, or by polling the channel server.
+一旦控制器检测到计划的目标版本已被解析，无论是通过版本字段还是通过轮询通道服务器，升级将开始。
 
-Modifying a plan will cause the controller to re-evaluate the plan and determine if another upgrade is needed.
+修改计划会导致控制器重新评估该计划，并确定是否需要另一次升级。
 
-If a channel has been configured, the URL is also polled periodically to check for new versions.
+如果已配置通道，URL 也会定期轮询以检查新版本。
 
-You can monitor the progress of an upgrade by viewing the plan and jobs via kubectl:
+您可以通过 kubectl 查看计划和作业来监控升级的进度：
 
 [,bash]
 ----
@@ -136,13 +136,13 @@ kubectl -n system-upgrade get plans -o wide
 kubectl -n system-upgrade get jobs
 ----
 
-=== Scheduling Upgrades
+=== 调度升级
 
-Plans can be restricted to occurring within a specific time window by setting the `window` field within the plan spec.
+通过在计划规范中设置 `window` 字段，可以限制计划在特定时间窗口内进行。
 
-The time window fields are compatible with and take the same format as https://kured.dev/docs/configuration/#setting-a-schedule[kured schedule options].
+时间窗口字段与 https://kured.dev/docs/configuration/#setting-a-schedule[kured 调度选项] 兼容，并采用相同的格式。
 
-For example:
+例如：
 
 [,yaml]
 ----
@@ -163,20 +163,20 @@ spec:
     timeZone: UTC
 ----
 
-Jobs to execute upgrades for a plan will not be created outside the time window. Once the jobs are created, they may continue running once the window has closed.
+用于执行计划升级的作业不会在时间窗口外创建。一旦作业被创建，它们可能会在窗口关闭后继续运行。
 
-== Downgrade Prevention
+== 防止降级
 
-Kubernetes does not support downgrades of control-plane components. The rke2-upgrade image used by upgrade plans does not currently include any checks to prevent a Plan from downgrading the Kubernetes version.
+Kubernetes 不支持控制平面组件的降级。升级计划使用的 rke2-upgrade 镜像目前不包括任何检查，以防止计划将 Kubernetes 版本降级。
 
-Clusters provisioned by Rancher may be downgraded alongside restoration of an etcd snapshot that contains data that is guaranteed to be usable by the target version of Kubernetes. For more information, see the Rancher docs.
+由 Rancher 提供的集群可以在恢复包含保证可被目标版本 Kubernetes 使用的数据的 etcd 快照时降级。有关更多信息，请参见 Rancher 文档。
 
-Clusters not provisioned by Rancher may be manually rolled back to a prior release accompanied by restoration of an etcd snapshot. For more information, see xref:upgrade/roll_back.adoc[Rolling Back RKE2].
+未由 Rancher 提供的集群可以通过恢复 etcd 快照，手动回滚到先前的版本。有关更多信息，请参见 xref:upgrade/roll_back.adoc[回滚 RKE2]。
 
-== Security
+== 安全性
 
-The upgrade job that is launched must be highly privileged in order to effect change to the underlying nodes. By default, it is configured with the following:
+启动的升级作业必须具有高度权限，以便对底层节点进行更改。默认情况下，它配置如下：
 
-* Host `IPC`, `NET`, and `PID` namespaces
-* The `CAP_SYS_BOOT` capability
-* Host root mounted at `/host` with read and write permissions
+* 主机 `IPC`、`NET` 和 `PID` 名称空间
+* `CAP_SYS_BOOT` 功能
+* 主机 root 挂载在 `/host`，具有读写权限

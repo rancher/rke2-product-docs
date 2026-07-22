@@ -1,5 +1,5 @@
 = v1.36.X
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-03
 :page-revdate: {revdate}
 
@@ -81,6 +81,7 @@ https://docs.tigera.io/calico/latest/release-notes/#v3.32[Calico v3.32.0]
 | https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.2.4[v4.2.4]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1361rke2r2v1361rke2r2]
 == Release https://github.com/rancher/rke2/releases/tag/v1.36.2+rke2r1[v1.36.2+rke2r1]
 
 // v1.36.2+rke2r1
@@ -197,6 +198,7 @@ cat /var/lib/rancher/rke2/server/token
 
 Starting with v1.36, Traefik is the default ingress controller for new clusters. The ingress-nginx chart was retired upstream in March 2026 and will be removed entirely in v1.37. For airgapped setups, the core tarball now includes Traefik instead of ingress-nginx. Users continuing with ingress-nginx need the separate rke2-images-ingress-nginx tarball.
 
+[#_changes_since_v1361rke2r1]
 === Changes since v1.36.1+rke2r1:
 
 * Set klipper-helm registry correctly when prime https://github.com/rancher/rke2/pull/10437[(#10437)]
@@ -206,6 +208,7 @@ Starting with v1.36, Traefik is the default ingress controller for new clusters.
 * Bump ingress-nginx to address CVE-2026-9256 https://github.com/rancher/rke2/pull/10462[(#10462)]
 * Update rke2-calico chart to fix network-unavailable toleration https://github.com/rancher/rke2/pull/10490[(#10490)]
 
+[#_release_httpsgithubcomrancherrke2releasestagv1361rke2r1v1361rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.36.1+rke2r1[v1.36.1+rke2r1]
 
 // v1.36.1+rke2r1
@@ -233,6 +236,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1360rke2r1]
 === Changes since v1.36.0+rke2r1:
 
 * Update Kubernetes Metrics Server chart 3.13.010 https://github.com/rancher/rke2/pull/10379[(#10379)]
@@ -242,6 +246,7 @@ cat /var/lib/rancher/rke2/server/token
 * Bump images for CVE reasons: Part Deux https://github.com/rancher/rke2/pull/10408[(#10408)]
 * Bump ingress-nginx for prime https://github.com/rancher/rke2/pull/10415[(#10415)]
 
+[#_charts_versions_33]
 == Charts Versions
 
 |===
@@ -293,6 +298,7 @@ cat /var/lib/rancher/rke2/server/token
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-traefik/rke2-traefik-crd-39.0.702.tgz[39.0.702]
 |===
 
+[#_release_httpsgithubcomrancherrke2releasestagv1360rke2r1v1360rke2r1]
 == Release https://github.com/rancher/rke2/releases/tag/v1.36.0+rke2r1[v1.36.0+rke2r1]
 
 // v1.36.0+rke2r1
@@ -320,6 +326,7 @@ You may retrieve the token value from any server already joined to the cluster:
 cat /var/lib/rancher/rke2/server/token
 ----
 
+[#_changes_since_v1353rke2r1_1]
 === Changes since v1.35.3+rke2r1:
 
 * Add restorecon for /var/lib/rancher/rke2 when installing with tarball https://github.com/rancher/rke2/pull/10039[(#10039)]
@@ -366,6 +373,7 @@ cat /var/lib/rancher/rke2/server/token
 * Update CNIs for 2026-05 Release Cycle https://github.com/rancher/rke2/pull/10384[(#10384)]
 * Update CoreDNS chart 1.45.212 https://github.com/rancher/rke2/pull/10371[(#10371)]
 
+[#_charts_versions_34]
 == Charts Versions
 
 
