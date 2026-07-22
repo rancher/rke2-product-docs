@@ -92,9 +92,14 @@ spec:
         kubeProxyManagement: Enabled
         linuxDataplane: BPF
     kubernetesServiceEndpoint:
-      host: "localhost"
+      host: "<control_node_ip>"
       port: "6443"
 ----
+
+[NOTE]
+====
+If you want to use Calico's eBPF dataplane with an HA control plane, refer to the xref:networking/cluster_loadbalancer.adoc[load balancer page].
+====
 
 有关Calico的eBPF数据平面的更多信息，请参考 https://docs.tigera.io/calico/latest/operations/ebpf/[Calico的文档]。
 ======
