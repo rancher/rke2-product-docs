@@ -50,6 +50,7 @@
 ** xref:networking/multus_sriov.adoc[]
 ** xref:networking/networking_services.adoc[]
 ** xref:networking/windows_bgp.adoc[]
+** xref:networking/cluster_loadbalancer.adoc[]
 
 * Add-ons
 ** xref:add-ons/helm.adoc[]
