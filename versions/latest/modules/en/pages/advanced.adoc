@@ -1,6 +1,6 @@
 = Advanced Options and Configuration
 :page-languages: [en, zh]
-:revdate: 2026-03-10
+:revdate: 2026-07-24
 :page-revdate: {revdate}
 
 This section contains advanced information describing the different ways you can run and manage RKE2.
@@ -289,12 +289,6 @@ The following options are available under the `server` sub-command for RKE2. The
 In order to mount a volume as read only, append `:ro` to the end of the volume mount: `/source/volume/path/on/host:/destination/volume/path/in/staticpod:ro`
 
 Multiple volume mounts can be specified for the same component by passing the flag values as an array in the config file.
-
-[IMPORTANT]
-.Version Gate
-====
-Prior to April 2024 releases (v1.27.13+rke2r1, v1.28.9+rke2r1, v1.29.4+rke2r1), only directories can be mounted.
-====
 
 [,yaml]
 ----
