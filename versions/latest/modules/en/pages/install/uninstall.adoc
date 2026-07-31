@@ -1,5 +1,5 @@
 = Uninstall
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-06
 :page-revdate: {revdate}
 
@@ -13,10 +13,12 @@ Uninstalling RKE2 deletes the cluster data and all of the scripts.
 For cleaning a {rancher-product-name} deployed {product-name} cluster see: https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-admin/manage-clusters/clean-cluster-nodes.html#_cleaning_up_nodes[Clean Cluster Nodes].
 ====
 
+[#_linux_uninstall]
 == Linux Uninstall
 
 Depending on the method used to install RKE2, the uninstallation process varies.
 
+[#_rpm_method]
 === RPM Method
 
 To uninstall RKE2 installed via the RPM method from your system, simply run the commands corresponding to the version of RKE2 you have installed, either as the root user or through `sudo`. This will shutdown RKE2 process, remove the RKE2 RPMs, and clean up files used by RKE2.
@@ -26,6 +28,7 @@ To uninstall RKE2 installed via the RPM method from your system, simply run the 
 /usr/bin/rke2-uninstall.sh
 ----
 
+[#_tarball_method_1]
 === Tarball Method
 
 To uninstall RKE2 installed via the Tarball method from your system, simply run the command below. This will terminate the process, remove the RKE2 binary, and clean up files used by RKE2.
@@ -35,6 +38,7 @@ To uninstall RKE2 installed via the Tarball method from your system, simply run 
 /usr/local/bin/rke2-uninstall.sh
 ----
 
+[#_nodes_with_read_only_or_btrfs_root_file_systems]
 === Nodes with read-only or btrfs root file systems
 
 [,bash]
@@ -42,6 +46,7 @@ To uninstall RKE2 installed via the Tarball method from your system, simply run 
 /opt/rke2/bin/rke2-uninstall.sh
 ----
 
+[#_windows_uninstall]
 == Windows Uninstall
 
 To uninstall the RKE2 Windows Agent installed via the tarball method from your system, simply run the command below. This will shutdown all RKE2 Windows processes, remove the RKE2 Windows binary, and clean up the files used by RKE2.

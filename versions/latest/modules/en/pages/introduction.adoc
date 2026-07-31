@@ -1,5 +1,5 @@
 = Introduction
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-07-10
 :page-revdate: {revdate}
 
@@ -15,6 +15,7 @@ To meet these goals, {product-name} does the following:
 * Enables xref:security/fips3_support.adoc[FIPS 140-3 compliance].
 * Regularly scans components for CVEs using https://github.com/aquasecurity/trivy[trivy] in our build pipeline.
 
+[#_how_is_this_different_from_rke_or_k3s_product_name]
 == How is this different from RKE or {k3s-product-name}?
 
 {product-name} combines the best-of-both-worlds from the 1.x version of RKE (hereafter referred to as RKE1) and {k3s-product-name}.
@@ -25,12 +26,14 @@ From RKE1, it inherits close alignment with upstream Kubernetes. In places {k3s-
 
 Importantly, {product-name} does not rely on Docker as RKE1 does. RKE1 leveraged Docker for deploying and managing the control plane components as well as the container runtime for Kubernetes. RKE2 launches control plane components as static pods, managed by the kubelet. The embedded container runtime is containerd.
 
+[#_why_two_names]
 == Why two names?
 
 It is known as {product-name} as it is the next iteration of the Rancher Kubernetes Engine for datacenter use cases. The distribution runs standalone or integrated into Rancher. Automated provisioning of new {product-name} clusters is available in Rancher v2.6+.
 
 It has also been known as RKE Government as it was designed to target sectors with heightened security requirements.
 
+[#_security]
 == Security
 
 Rancher Labs supports responsible disclosure and endeavors to resolve security issues in a reasonable timeframe. To report a security vulnerability, email link:mailto:security@rancher.com[security@rancher.com].

@@ -1,0 +1,182 @@
+= 自動アップグレード
+:page-languages: RancherのUpgrade Controllerを使用してRKE2クラスターのアップグレードを管理できます。
+:revdate: 2026-01-09
+:page-revdate: {revdate}
+
+== 概要
+
+Rancherのsystem-upgrade-controllerを使用してRKE2クラスターのアップグレードを管理できます。これはクラスターアップグレードのためのKubernetesネイティブなアプローチです。 https://github.com/rancher/system-upgrade-controller/blob/master/doc/plan.md#planspec[`Plan`]カスタムリソースを利用して、どのノードをアップグレードし、どのバージョンにするかを宣言的に記述します。
+
+プランはアップグレードポリシーと要件を定義します。また、 https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/[ラベルセレクター]を通じてどのノードをアップグレードすべきかを定義します。RKE2クラスターのアップグレードに適したデフォルトのプランについては、以下を参照してください。より高度なプラン設定オプションについては、上記のプランのドキュメントを参照してください。
+
+システムアップグレードコントローラーは、プランを監視し、アップグレード https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/[ジョブ]を実行するノードを選択することによってアップグレードをスケジュールします。ジョブが正常に完了すると、コントローラーはそれが実行されたノードに適切なラベルを付けます。
+
+[CAUTION]
+====
+RKE2クラスターがRancherによって管理されている場合、アップグレードを管理するためにRancher UIを使用する必要があります。
+
+* RKE2クラスターがRancherにインポート（登録）されている場合、Rancherはデフォルトでsystem-upgrade-controllerのデプロイメントとプランを管理します。Rancherでバージョン管理を無効にしていない限り、このページの手順に従わないでください。詳細については、 https://documentation.suse.com/cloudnative/rancher-manager/v2.13/en/cluster-deployment/register-existing-clusters.html#_configuring_version_management_for_suse_rancher_prime_rke2_and_suse_rancher_prime_k3s_clusters[Configuring Version Management for SUSE® Rancher Prime: RKE2 and SUSE® Rancher Prime: K3s Clusters]を参照してください。
+* RKE2クラスターがRancherによってプロビジョニングされている場合、Rancherはsystem agentを使用してバージョンアップグレードを管理します。このページの手順に従わないでください。
+* RKE2クラスターがRancherによって管理されていない場合は、以下の手順に従うことができます。
+====
+
+== システムアップグレードコントローラーの使用
+
+アップグレードを自動化するには、次のことを行う必要があります：
+
+. system-upgrade-controllerをクラスターにインストールします。
+. どのノードグループをアップグレードし、どのようにアップグレードするかを説明するプランを作成します。
+
+system-upgrade-controllerの設計やアーキテクチャ、またはRKE2との統合に関する詳細については、以下のGitリポジトリを参照してください：
+
+* https://github.com/rancher/system-upgrade-controller[system-upgrade-controller]
+* https://github.com/rancher/rke2-upgrade[rke2-upgrade]
+
+[TIP]
+====
+新しいバージョンのRKE2にアップグレードしようとする際には、 https://kubernetes.io/releases/version-skew-policy/[Kubernetesバージョンスキューポリシー]が適用されます。アップグレード時に中間のマイナーバージョンをスキップしないように、プランを確認してください。システムアップグレードコントローラー自体は、Kubernetesバージョンへのサポートされていない変更から保護しません。
+====
+
+=== インストール
+
+システムアップグレードコントローラーのマニフェストは、カスタムリソース定義、デプロイメント、サービスアカウント、クラスター役割バインディング、およびコンフィグマップをインストールします。これらのコンポーネントをインストールするには、次のコマンドを実行します：
+
+[,bash]
+----
+kubectl apply -f https://github.com/rancher/system-upgrade-controller/releases/latest/download/crd.yaml -f https://github.com/rancher/system-upgrade-controller/releases/latest/download/system-upgrade-controller.yaml
+----
+
+コントローラーは、前述のコンフィグマップを介して設定およびカスタマイズできますが、変更を適用するにはコントローラーポッドを削除する必要があります。
+
+=== 設定
+
+サーバーノードは常にエージェントノードの前にアップグレードする必要があります。
+
+この理由から、サーバー（コントロールプレーン）ノードをアップグレードするための計画と、エージェントノードをアップグレードするための計画の少なくとも2つを作成することをお勧めします。
+
+ノード全体でのアップグレードの展開を制御するために、必要に応じて追加の計画を作成できます。
+プランが作成されると、コントローラーはそれらを取得し、クラスターのアップグレードを開始します。
+
+以下の2つの例のプランは、xref:upgrade/manual_upgrade.adoc#_release_channels[安定したリリースチャネル]をターゲットにして、クラスターを現在の安定リリースに継続的にアップグレードします：
+
+[,yaml]
+----
+# Server plan
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: server-plan
+  namespace: system-upgrade
+spec:
+  concurrency: 1
+  cordon: true
+  nodeSelector:
+    matchExpressions:
+    - key: node-role.kubernetes.io/control-plane
+      operator: In
+      values:
+      - "true"
+  serviceAccountName: system-upgrade
+  upgrade:
+    image: rancher/rke2-upgrade
+  channel: https://update.rke2.io/v1-release/channels/stable
+# Agent plan
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: agent-plan
+  namespace: system-upgrade
+spec:
+  concurrency: 1
+  cordon: true
+  nodeSelector:
+    matchExpressions:
+    - key: node-role.kubernetes.io/control-plane
+      operator: DoesNotExist
+  prepare:
+    args:
+    - prepare
+    - server-plan
+    image: rancher/rke2-upgrade
+  serviceAccountName: system-upgrade
+  upgrade:
+    image: rancher/rke2-upgrade
+  channel: https://update.rke2.io/v1-release/channels/stable
+----
+
+これらのプランに関して重要な点がいくつかあります：
+
+. プランは、コントローラーがデプロイされているのと同じネームスペースで作成する必要があります。
+. `concurrency`フィールドは、同時にアップグレードできるノードの数を示します。
+. サーバープランは、`node-role.kubernetes.io/control-plane`ラベルを持つノードを選択するラベルセレクターを指定することによってサーバーノードをターゲットにします。エージェントプランは、ラベルを指定するセレクターを使用して、ラベルのないノードを選択することによってエージェントノードをターゲットにします。
+. エージェントプランの`prepare`ステップは、そのプランのアップグレードジョブがサーバープランの完了を待つようにします。このロジックは、準備ステップで使用されるイメージに組み込まれており、システムアップグレードコントローラー自体の一部ではありません。
+. 両方のプランは、`channel`フィールドが安定版リリースチャネルのURLに設定されています。これにより、コントローラーはそのURLを監視し、URLが新しいリリースを示すたびにクラスターのアップグレードを開始します。これは、xref:upgrade/manual_upgrade.adoc#_release_channels[リリースチャネル]とよく機能します。したがって、次のチャネルでプランを構成することで、クラスターが常に最新の安定版RKE2に自動的にアップグレードされることを保証できます。または、`channel`フィールドを省略し、`version`フィールドを特定のRKE2リリースに設定することもできます：
++
+[,yaml]
+----
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+# ...
+spec:
+  # ...
+  version: v1.33.4+rke2r1
+----
+
+アップグレードは、コントローラーがプランのターゲットバージョンが確定されたことを検知すると直ちに開始されます。これは、バージョンフィールドまたはチャネルサーバーをポーリングすることで行われます。
+
+プランを変更すると、コントローラーはプランを再評価し、別のアップグレードが必要かどうかを判断します。
+
+チャネルが構成されている場合、URLも定期的にポーリングされて新しいバージョンをチェックします。
+
+アップグレードの進行状況は、kubectlを介してプランとジョブを表示することで監視できます：
+
+[,bash]
+----
+kubectl -n system-upgrade get plans -o wide
+kubectl -n system-upgrade get jobs
+----
+
+=== アップグレードのスケジューリング
+
+プラン仕様内の`window`フィールドを設定することにより、プランが特定の時間ウィンドウ内で発生するように制限できます。
+
+時間ウィンドウフィールドは、 https://kured.dev/docs/configuration/#setting-a-schedule[kuredスケジュールオプション]と互換性があり、同じ形式を取ります。
+
+次に例を示します。
+
+[,yaml]
+----
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+# ...
+spec:
+  # ...
+  window:
+    days:
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+      - friday
+    startTime: 19:00
+    endTime: 21:00
+    timeZone: UTC
+----
+
+プランのアップグレードを実行するためのジョブは、時間ウィンドウの外では作成されません。ジョブが作成されると、ウィンドウが閉じた後も実行が継続される場合があります。
+
+== ダウングレード防止
+
+Kubernetesはコントロールプレーンコンポーネントのダウングレードをサポートしていません。アップグレードプランで使用されるrke2-upgradeイメージには、プランがKubernetesのバージョンをダウングレードするのを防ぐためのチェックは現在含まれていません。
+
+Rancherによってプロビジョニングされたクラスターは、ターゲットバージョンのKubernetesで使用可能であることが保証されたデータを含むetcdスナップショットの復元とともにダウングレードされる可能性があります。詳細については、Rancherのドキュメントを参照してください。
+
+Rancherによってプロビジョニングされていないクラスターは、etcdスナップショットの復元に伴って以前のリリースに手動でロールバックすることができます。詳細については、xref:upgrade/roll_back.adoc[RKE2のロールバック]を参照してください。
+
+== セキュリティ
+
+起動されるアップグレードジョブは、基盤となるノードに変更を加えるために高い特権を持っている必要があります。デフォルトでは、次のように設定されています：
+
+* ホスト`IPC`、`NET`、および`PID`のネームスペース
+* `CAP_SYS_BOOT`の機能
+* 読み取りおよび書き込み権限を持つ`/host`にマウントされたホストのルート

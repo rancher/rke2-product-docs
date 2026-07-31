@@ -1,5 +1,5 @@
 = CIS Hardening Guide
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-05
 :page-revdate: {revdate}
 
@@ -22,10 +22,12 @@ RKE2 is designed to be "hardened by default" and pass the majority of the Kubern
 This guide assumes that RKE2 has been installed, but is not yet running. If you have already started RKE2, you will need to stop the RKE2 service.
 ====
 
+[#_host_level_requirements]
 == Host-level requirements
 
 There are three areas of host-level requirements: kernel parameters, kubelet's protect-kernel-defaults and etcd process/directory configuration. These are outlined in this section.
 
+[#_kernel_parameters_1]
 === Kernel parameters
 
 CIS benchmark requires some specific kernel parameters configuration to be set. When RKE2 is installed, it creates a sysctl config file to set the required parameters appropriately. However, it does not automatically configure the host to use this configuration. You must do this manually. The location of the config file depends on the installation method used.
@@ -55,6 +57,7 @@ sudo sysctl -p /usr/local/share/rke2/rke2-cis-sysctl.conf
 
 Please perform this step only on fresh installations, before actually using RKE2 to deploy Kubernetes. Many Kubernetes components, including CNI plugins, set up their own sysctls. Restarting the `systemd-sysctl` service on a running Kubernetes cluster can result in unexpected side-effects.
 
+[#_kubelet_parameter_protect_kernel_defaults_is_set_to_true]
 === Kubelet parameter `protect-kernel-defaults` is set to `true`
 
 This is a kubelet flag that will cause the kubelet to exit if the required kernel parameters are unset or are set to values that are different from the kubelet's defaults.
@@ -68,6 +71,7 @@ RKE2 will automatically set the flag to `true` when the `profile` flag is set.
 
 RKE2 will also check the same kernel parameters that the kubelet does and exit with an error following the same rules as the kubelet. This is done as a convenience to help the operator more quickly and easily identify what kernel parameters are violating the kubelet defaults.
 
+[#_etcd_is_configured_properly]
 === etcd is configured properly
 
 The CIS Benchmark requires that the etcd data directory be owned by the `etcd` user and group. This implicitly requires the etcd process run as the host-level `etcd` user. To achieve this, RKE2 takes several steps when started with a valid `cis` or `cis-1.XX` profile:
@@ -88,6 +92,7 @@ sudo useradd -r -c "etcd user" -s /sbin/nologin -M etcd -U
 The `etcd` user and group must be defined in the traditional database files at /etc/passwd and /etc/group. Golang's stdlib `os/user` package does not support external user databases such as NSS or systemd userdb (varlink).
 ====
 
+[#_rke2_configuration]
 == RKE2 Configuration
 
 [tabs]
@@ -186,10 +191,12 @@ v1.24 and Older::
 --
 ======
 
+[#_kubernetes_runtime_requirements]
 == Kubernetes runtime requirements
 
 The runtime requirements to pass the CIS Benchmark are centered around pod security and network policies. Most of this is automatically handled by RKE2 when using a valid `cis-1.XX` profile, but some additional operator intervention is required.
 
+[#_pod_security]
 === Pod Security
 
 RKE2 always runs with some amount of pod security.
@@ -230,6 +237,7 @@ Without the `cis-1.6` profile:
 The Kubernetes control plane components and critical additions such as CNI, DNS, and Ingress are ran as pods in the `kube-system` namespace. Therefore, this namespace will have a policy that is less restrictive so that these components can run properly.
 ====
 
+[#_network_policies_1]
 === Network Policies
 
 When ran with a valid "cis-1.XX" profile, RKE2 will put `NetworkPolicies` in place that passes the CIS Benchmark for Kubernetes' built-in namespaces. These namespaces are: `kube-system`, `kube-public`, and `default`.
@@ -248,6 +256,7 @@ The `NetworkPolicy` used will only allow pods within the same namespace to talk 
 Operators must manage network policies as normal for additional namespaces that are created.
 ====
 
+[#_configure_default_service_account]
 === Configure `default` service account
 
 [NOTE] 
@@ -298,6 +307,7 @@ done
 Execute this script to apply the `account_update.yaml` configuration to `default` service account in all namespaces.
 ====
 
+[#_api_server_audit_configuration]
 === API Server audit configuration
 
 CIS requirements 1.2.22 to 1.2.25 are related to configuring audit logs for the API Server. When RKE2 is started with the `profile` flag set, it will automatically configure hardened `--audit-log-` parameters in the API Server to pass those CIS checks.
@@ -331,26 +341,32 @@ sudo systemctl restart rke2-server.service
 
 API Server audit logs will be written to `/var/lib/rancher/rke2/server/logs/audit.log`.
 
+[#_known_issues]
 == Known issues
 
 The following are controls that default RKE2 currently does not pass. Each gap will be explained and how it is addressed.
 
+[#_control_1112]
 === Control 1.1.12
 
 Ensure that the etcd data directory ownership is set to `etcd:etcd`.
 
+[#_rationale]
 ==== Rationale
 
 etcd is a highly-available key-value store used by Kubernetes deployments for persistent storage of all of its REST API objects. This data directory should be protected from any unauthorized reads or writes. It should be owned by `etcd:etcd`.
 
+[#_remediation]
 ==== Remediation
 
 This can be remediated by creating an `etcd` user and group as described <<etcd is configured properly,above>>.
 
+[#_control_515]
 === Control 5.1.5
 
 Ensure that default service accounts are not actively used
 
+[#_rationale_1]
 ==== Rationale
 Kubernetes provides a `default` service account which is used by cluster workloads where no specific service account is assigned to the pod.
 
@@ -360,6 +376,7 @@ The `default` service account should be configured such that it does not provide
 
 This can be remediated by updating the `automountServiceAccountToken` field to `false` for the `default` service account in each namespace.
 
+[#_conclusion]
 == Conclusion
 
 If you have followed this guide, your RKE2 cluster will be configured to pass the CIS Kubernetes Benchmark. You can review our CIS Self-Assessment Guides to understand how we verified each of the benchmarks and how you can do the same on your cluster.

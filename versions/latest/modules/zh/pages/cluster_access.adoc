@@ -1,16 +1,16 @@
 = 集群访问
-:page-languages: [en, zh]
-:revdate: 2024-09-11
+:page-languages: 存储在  的 kubeconfig 文件用于配置对 Kubernetes 集群的访问。
+:revdate: 2025-07-10
 :page-revdate: {revdate}
 
-`/etc/rancher/rke2/rke2.yaml` 中存储的 kubeconfig 文件用于配置对 Kubernetes 集群的访问。 如果你已经安装了上游的 Kubernetes 命令行工具（如 kubectl 或 helm)，你需要用正确的 kubeconfig 路径配置它们。这可以通过导出 `KUBECONFIG` 环境变量或调用 `--kubeconfig` 命令行标志来完成。有关详细信息，请参阅以下示例。
+存储在 `/etc/rancher/rke2/rke2.yaml` 的 kubeconfig 文件用于配置对 Kubernetes 集群的访问。如果您已经安装了上游 Kubernetes 命令行工具（如 kubectl 或 helm），则需要为它们配置正确的 kubeconfig 路径。这可以通过导出 `KUBECONFIG` 环境变量或调用 `--kubeconfig` 命令行标志来完成。请参阅下面的示例以获取详细信息。
 
 [NOTE]
 ====
-请注意，某些工具（例如 kubectl）默认安装在 `/var/lib/rancher/rke2/bin` 中。
+某些工具（如 kubectl）默认安装在 `/var/lib/rancher/rke2/bin` 中。
 ====
 
-使用 KUBECONFIG 环境变量：
+利用 KUBECONFIG 环境变量：
 
 [,sh]
 ----
@@ -19,7 +19,7 @@ kubectl get pods --all-namespaces
 helm ls --all-namespaces
 ----
 
-或者在命令中指定 kubeconfig 文件的位置：
+或在命令中指定 kubeconfig 文件的位置：
 
 [,sh]
 ----
@@ -29,4 +29,4 @@ helm --kubeconfig /etc/rancher/rke2/rke2.yaml ls --all-namespaces
 
 == 使用 kubectl 从外部访问集群
 
-将 `/etc/rancher/rke2/rke2.yaml` 复制到位于集群外部的主机上的 `~/.kube/config`。然后将 `127.0.0.1` 替换为 RKE2 server 的 IP 或主机名。现在，你可以使用 `kubectl` 来管理 RKE2 集群。
+将位于集群外的机器上的 `/etc/rancher/rke2/rke2.yaml` 复制为 `~/.kube/config`。然后将 `127.0.0.1` 替换为您的 RKE2 服务器的 IP 或主机名。现在 `kubectl` 可以管理您的 RKE2 集群。

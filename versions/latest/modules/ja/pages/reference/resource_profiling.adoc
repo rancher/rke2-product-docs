@@ -1,0 +1,70 @@
+= リソースプロファイリング
+:page-languages: このセクションでは、RKE2の最小リソース要件を決定するためのテスト結果をまとめています。
+:revdate: 2025-08-21
+:page-revdate: {revdate}
+
+このセクションでは、RKE2の最小リソース要件を決定するためのテスト結果を示します。
+
+== リソーステストの範囲
+
+リソーステストは以下の問題点に対処することを目的としていました：
+
+* 単一ノードクラスターにおいて、本来のワークロードがデプロイされることを前提に、RKE2サーバースタック全体に必要な最小限のCPUおよびメモリ量を決定します。
+* エージェントノードにおいて、kubeletおよびRKE2エージェントコンポーネントのために確保すべき最小限のCPUとメモリの量を決定します。
+
+=== 環境とコンポーネント
+
+|===
+| アーチ | OS | システム | CPU | RAM | ディスク
+
+| x86_64
+| Ubuntu 22.04
+| AWS c6id.xlarge
+| Intel Xeon Platinum 8375C CPU、4コア 2.90 GHz
+| 8GB
+| NVME SSD
+|===
+
+テストされたコンポーネントは次のとおりです：
+
+* RKE2 v1.27.12では、すべてのパッケージ化されたコンポーネントが有効で、CNIとしてCanalを使用しています。
+* https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[Kubernetesの例 Nginxデプロイメント]
+
+=== 手法
+
+`systemd-cgtop`は、systemd cgroupレベルのCPUおよびメモリ使用量を追跡するために使用されました。
+
+* `system.slice/rke2-server.service`は、RKE2およびcontainerdコンポーネントのリソース使用量を追跡します。
+* `system.slice/rke2-agent.service`は、エージェントコンポーネントのリソース使用量を追跡します。
+
+リソース使用量の数値は、記載されたワークロードを実行しているノードの定常状態運転における95パーセンタイルの読み取り値に基づいており、一般的なリソース使用量の上限を示しています。
+
+=== ワークロードを伴うRKE2サーバー
+
+これは、RKE2サーバーが https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/[シンプルなワークロード]とリソースを共有する単一ノードクラスターの要件です。
+
+|===
+| システム | CPUコア使用率 | メモリ
+
+| Intel 8375C
+| コアの17%
+| 4977 MB
+|===
+
+=== 単一エージェントを持つRKE2クラスター
+
+これは、ワークロードを伴わないRKE2サーバーノードとRKE2エージェントを持つRKE2クラスターの基準要件です。
+
+|===
+| ノード | システム | CPUコア使用率 | メモリ
+
+| サーバ
+| Intel 8375C
+| コアの18%
+| 4804 MB
+
+| エージェント
+| Intel 8375C
+| コアの5%
+| 3590 MB
+|===

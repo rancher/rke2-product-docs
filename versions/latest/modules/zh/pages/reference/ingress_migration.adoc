@@ -1,5 +1,5 @@
 = Ingress NGINX to Traefik Migration Guide
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-03
 :page-revdate: {revdate}
 

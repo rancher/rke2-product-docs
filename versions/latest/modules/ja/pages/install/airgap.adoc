@@ -1,0 +1,124 @@
+= エアギャップインストール
+:page-languages: をインストールするには、エアギャップ環境に画像を最初にロードし、その後RKE2をインストールする必要があります。
+:revdate: 2025-08-06
+:page-revdate: {revdate}
+
+{product-name}をエアギャップ環境にインストールするには、まずイメージをエアギャップ環境にロードし、その後RKE2をインストールする必要があります。
+
+[IMPORTANT]
+====
+使用しているアセットに対して、Prime Artifacts URLに記載されている任意のRKE2 Primeバージョンを使用できます。Prime Artifacts URLの詳細については、 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime専用ドキュメント]をご覧ください。認証が必要です。ログインするには、 https://scc.suse.com/home[SUSEカスタマーセンター（SCC）]の資格情報を使用してください。
+====
+
+== 前提条件
+
+進行する前に、ご利用の環境に基づく以下の前提条件を満たしていることを確認してください。このページに記載されているすべての手順は、ルートユーザーとして、または`sudo`を通じて実行する必要があります。
+
+[CAUTION]
+====
+もしノードにNetworkManagerがインストールされ、有効になっている場合は、xref:known_issues.adoc#_networkmanager[NetworkManagerがCNI管理のインターフェースを無視するように構成]することを確認してください。
+====
+
+* SELinuxが有効なエアギャップノードで実行している場合は、これらの手順を実行する前に必要なSELinuxポリシーRPMを手動でインストールする必要があります。必要な内容を確認するには、xref:install/methods.adoc#_rpm[RPM Documentation]をご覧ください。
+* SELinuxが有効なエアギャップノードで実行している場合、SLES、CentOS、またはRHEL 8でxref:install/methods.adoc#_rpm[RPMインストール]を行う際に、以下の依存関係が必要です：`container-selinux iptables libnetfilter_conntrack libnfnetlink libnftnl policycoreutils-python-utils rke2-common rke2-selinux`
+* ノードにデフォルトルートを持つインターフェースがない場合、デフォルトルートを構成する必要があります。ダミーインターフェースを介したブラックホールルートでも構いません。 RKE2は、ノードのプライマリIPを自動検出し、kube-proxyのClusterIPルーティングが正しく機能するために、デフォルトルートが必要です。ダミールートを追加するには、次の手順を実行してください：
++
+[,bash]
+----
+ip link add dummy0 type dummy
+ip link set dummy0 up
+ip addr add 203.0.113.254/31 dev dummy0
+ip route add default via 203.0.113.255 dev dummy0 metric 1000
+----
+
+== 1.イメージをロードする
+
+イメージをロードするための2通りの方法があります。各イメージロード方法には異なる要件があり、異なるエアギャップ(された)シナリオに適しています。インフラストラクチャとセキュリティ要件に最も適した方法を選択してください。
+
+
+=== タールボール方式
+
+. 使用しているRKE2バージョン、CNI、およびプラットフォームに対応するエアギャップイメージのタールボールを、 https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL]からダウンロードしてください。
+ ** `rke2-images.linux-<ARCH>.tar.zst`、または`rke2-images-core.linux-<ARCH>.tar.gz`。このタールボールには、RKE2 Primeが機能するために必要なコアコンテナイメージが含まれています。Zstandardは、gzipと比較してより良い圧縮率と高速な解凍速度を提供します。
+ ** `rke2-images-<CNI>.linux-<ARCH>.tar.gz`:このタールボールには、あなたのコンテナネットワークインターフェース（CNI）用のコンテナイメージが含まれています。RKE2のデフォルトCNIはCanalです。
+ *** もしデフォルトCNIであるCanal（`--cni=canal`）を使用している場合は、上記で説明した`rke2-image`（レガシーアーカイブ）または`rke2-images-core`および`rke2-images-canal`のアーカイブのいずれかを使用できます。
+ *** もし代替CNIであるCilium（`--cni=cilium`）を使用している場合は、`rke2-images-core`および`rke2-images-cilium`のアーカイブをダウンロードする必要があります。
+ *** 独自のCNI（`--cni=none`）を使用する場合は、`rke2-images-core`アーカイブのみをダウンロードしてください。
+ ** vSphere CPI/CSIチャート（`--cloud-provider-name=rancher-vsphere`）を有効にする場合は、`rke2-images-vsphere`アーカイブもダウンロードする必要があります。
+. ノードに`/rke2-artifacts`という名前のディレクトリを作成し、以前にダウンロードしたファイルをそこに保存してください。
+. <<2. Install RKE2, RKE2をインストールします。>>
+
+
+=== プライベートレジストリ方式
+
+プライベートレジストリのサポートは、xref:install/containerd_registry_configuration.adoc[containerdレジストリ設定]のすべての設定（エンドポイントのオーバーライド、トランスポートプロトコル（HTTP/HTTPS）、認証、証明書の検証など）を尊重します。
+
+. 必要なすべてのシステムイメージをプライベートレジストリに追加してください。イメージのリストは、上記で参照されている各タールボールに対応する`.txt`ファイルから取得できます。または、`docker load`してエアギャップイメージのタールボールを処理し、ロードしたイメージにタグを付けてプッシュすることもできます。
+. <<2. Install RKE2,RKE2をインストールします>>。`system-default-registry`パラメータを使用するか、またはxref:install/containerd_registry_configuration.adoc[containerdレジストリ設定]を用いて、あなたのレジストリをdocker.ioのミラーとして利用してください。
+
+
+== 2.RKE2をインストールします。
+
+RKE2をインストールするための以下のオプションは、<<Tarball Method>>または<<Private Registry Method>>のいずれかを完了した後にのみ実行する必要があります。
+
+RKE2は、<<RKE2 Binary Install,バイナリ>>を直接実行するか、<<RKE2 Install.sh Script Install,install.shスクリプト>>を使用してインストールできます。
+
+=== RKE2バイナリインストール
+
+. RKE2バイナリファイル`rke2.linux-<ARCH>.tar.gz`を取得してください。
+. バイナリの名前が`rke2`であることを確認し、`/usr/local/bin`に配置してください。実行可能であることを確認してください。
+. 希望するパラメータでバイナリを実行してください。
+* Rancher Primeレジストリを使用している場合は、`config.yaml`に次の値を設定してください：
+.. `system-default-registry: registry.rancher.com`を設定してください。
+.. デフォルトのCNIであるCanalを使用していない場合は、`cni: <CNI>`を設定してください。
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+cni: <CNI>
+----
+* プライベートレジストリメソッドを使用する場合は、`config.yaml`に次の値を設定してください。
++
+[,yaml]
+----
+system-default-registry: "registry.example.com:5000"
+----
++
+[NOTE]
+====
+`system-default-registry`パラメータは、有効なRFC 3986 URI権限、すなわちホストとオプションのポートのみを指定する必要があります。
+====
+
+=== RKE2 Install.sh Script Install
+
+`install.sh`は、`INSTALL_RKE2_ARTIFACT_PATH`変数を事前にダウンロードしたアーティファクトを含むパスに設定することで、オフラインモードで利用できます。これにより、systemdユニットの作成を含む標準的なインストールが実行されます。
+
+. インストールスクリプト、RKE2バイナリ、RKE2イメージ、およびSHA256チェックサムアーカイブを https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL]から`/rke2-artifacts`ディレクトリにダウンロードします。例は以下の通りです：
++
+[,bash]
+----
+mkdir /rke2-artifacts && cd /rke2-artifacts/
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2-images.linux-<ARCH>.tar.zst
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/rke2.linux-<ARCH>.tar.gz
+curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/sha256sum-<ARCH>.txt
+curl -sfL https://get.rke2.io --output install.sh
+----
+
+. 以下の例のように、ディレクトリを使用して`install.sh`を実行します。
++
+[,bash]
+----
+INSTALL_RKE2_ARTIFACT_PATH=/rke2-artifacts sh install.sh
+----
+
+. Rancher Primeレジストリを使用している場合は、`config.yaml`に次の値を設定してください：
+.. `system-default-registry: registry.rancher.com`を設定してください。
+.. デフォルトのCNIであるCanalを使用していない場合は、`cni: <CNI>`を設定してください。
++
+[,yaml]
+----
+system-default-registry: registry.rancher.com
+cni: <CNI>
+----
+
+. サービスを有効にし、xref:install/quickstart.adoc[こちら]に示されているように実行します。

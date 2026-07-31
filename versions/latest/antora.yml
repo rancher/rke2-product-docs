@@ -9,5 +9,10 @@ asciidoc:
     k3s-product-name: "SUSE® Rancher Prime: K3s"
     rancher-product-name: SUSE® Rancher Prime
 nav:
+- modules/de/nav.adoc
 - modules/en/nav.adoc
+- modules/es/nav.adoc
+- modules/fr/nav.adoc
+- modules/ja/nav.adoc
+- modules/pt/nav.adoc
 - modules/zh/nav.adoc

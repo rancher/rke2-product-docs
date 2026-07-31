@@ -1,0 +1,32 @@
+= Acceso al clúster
+:page-languages: El archivo kubeconfig almacenado en se utiliza para configurar el acceso al clúster de Kubernetes.
+:revdate: 2025-07-10
+:page-revdate: {revdate}
+
+El archivo kubeconfig almacenado en `/etc/rancher/rke2/rke2.yaml` se utiliza para configurar el acceso al clúster de Kubernetes. Si has instalado herramientas shell de Kubernetes en sentido ascendente, como kubectl o helm, necesitarás configurarlas con la vía kubeconfig correcta. Esto se puede hacer exportando la variable de entorno `KUBECONFIG` o invocando la bandera de línea de comandos `--kubeconfig`. Consulta los ejemplos a continuación para más detalles.
+
+[NOTE]
+====
+Algunas herramientas, como kubectl, se instalan por defecto en `/var/lib/rancher/rke2/bin`.
+====
+
+Aprovecha la variable de entorno KUBECONFIG:
+
+[,sh]
+----
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+kubectl get pods --all-namespaces
+helm ls --all-namespaces
+----
+
+O especifica la ubicación del archivo kubeconfig en el comando:
+
+[,sh]
+----
+kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods --all-namespaces
+helm --kubeconfig /etc/rancher/rke2/rke2.yaml ls --all-namespaces
+----
+
+== Accediendo al clúster desde fuera con kubectl
+
+Copia `/etc/rancher/rke2/rke2.yaml` en tu máquina, ubicada fuera del clúster, como `~/.kube/config`. Luego, reemplaza `127.0.0.1` con la IP o el nombre de host de tu servidor RKE2. `kubectl` ahora puede gestionar tu clúster RKE2.

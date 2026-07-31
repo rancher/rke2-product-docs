@@ -1,5 +1,5 @@
 = Manual Upgrades
-:page-languages: [en, zh]
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-01-08
 :page-revdate: {revdate}
 
@@ -10,6 +10,7 @@ You can upgrade RKE2 by using the installation script, by manually installing th
 Upgrade the server nodes first, one at a time. Once all servers have been upgraded, you may then upgrade agent nodes.
 ====
 
+[#_release_channels]
 == Release Channels
 
 Upgrades performed via the installation script or using our xref:upgrade/automated_upgrade.adoc[automated upgrades] feature can be tied to different release channels. The following channels are available:
@@ -34,6 +35,7 @@ For an exhaustive and up-to-date list of channels, you can visit the https://upd
 When attempting to upgrade to a new version of RKE2, the https://kubernetes.io/docs/setup/release/version-skew-policy/[Kubernetes version skew policy] applies. Ensure that your plan does not skip intermediate minor versions when upgrading. Nothing in the upgrade process will protect against unsupported changes to the Kubernetes version.
 ====
 
+[#_upgrade_rke2_using_the_installation_script]
 == Upgrade RKE2 Using the Installation Script
 
 To upgrade RKE2 from an older version you can re-run the installation script using the same flags, for example:
@@ -77,6 +79,7 @@ systemctl restart rke2-server
 systemctl restart rke2-agent
 ----
 
+[#_manually_upgrade_rke2_using_the_binary]
 == Manually Upgrade RKE2 Using the Binary
 
 Or to manually upgrade RKE2:
@@ -86,6 +89,7 @@ Or to manually upgrade RKE2:
 . Stop the old RKE2 binary
 . Launch the new RKE2 binary
 
+[#_upgrade_rke2_using_the_rpm_upgrades]
 == Upgrade RKE2 Using the RPM upgrades
 
 In case of RPM installation, its expected to upgrade RKE2 from an older version using rpm upgrades, for example:
@@ -138,10 +142,12 @@ yum update rke2-selinux
 ----
 ====
 
+[#_restarting_rke2]
 == Restarting RKE2
 
 Restarting RKE2 is supported by the installation script for systemd.
 
+[#_systemd]
 === systemd
 
 To restart servers manually:

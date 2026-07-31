@@ -1,0 +1,50 @@
+= サーバの役割の管理
+:page-languages: デフォルトでは、RKE2を起動すると、apiserver、controller-manager、scheduler、etcdを含むすべてのコントロールプレーンコンポーネントが実行されます。
+:revdate: 2024-09-11
+:page-revdate: {revdate}
+
+デフォルトでは、RKE2を起動すると、apiserver、controller-manager、scheduler、etcdを含むすべてのコントロールプレーンコンポーネントが実行されます。コントロールプレーンとetcdの役割を別々のノードに分割するために、特定のコンポーネントを無効にすることが可能です。
+
+== 専用の`etcd`ノード
+
+`etcd`の役割のみを持つサーバを作成するには、すべてのコントロールプレーンコンポーネントを無効にした設定をデプロイします：
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+disable-apiserver: true
+disable-controller-manager: true
+disable-scheduler: true
+----
+
+この最初のノードはetcdを起動し、追加の`etcd`および/または`control-plane`ノードが参加するのを待ちます。追加のサーバが`control-plane`コンポーネントを有効にして参加するまで、クラスターは使用できません。
+
+== 専用の`control-plane`ノード
+
+[TIP]
+====
+専用の`control-plane`ノードはクラスター内の最初のサーバになることはできません；専用の`control-plane`ノードに参加する前に、`etcd`の役割を持つ既存のノードが必要です。
+====
+
+`control-plane`の役割のみを持つサーバを作成するには、etcdを無効にした設定をデプロイします：
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+server: https://<etcd-only-node>:9345
+disable-etcd: true
+----
+
+専用のサーバノードを作成した後、選択した役割は`kubectl get node`に表示されます：
+
+[,bash]
+----
+$ kubectl get nodes
+NAME           STATUS   ROLES                       AGE     VERSION
+rke2-server-1   Ready    etcd                        5h39m   v1.26.4+rke2r1
+rke2-server-2   Ready    control-plane,master        5h39m   v1.26.4+rke2r1
+----
+
+== 既存のサーバに役割を追加する
+
+役割は、無効フラグを削除してRKE2を再起動することで、既存の専用ノードに追加できます。たとえば、専用の`control-plane`ノードに`etcd`の役割を追加したい場合は、設定ファイルから`disable-apiserver disable-controller-manager disable-scheduler`行を削除して、サービスを再起動することができます。
