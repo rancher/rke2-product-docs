@@ -1,7 +1,7 @@
-
 = 备份和恢复
-:page-languages: RKE2 使用 etcd 快照备份集群信息。
+:page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-02-27
+:revdate: 2026-07-24
 :page-revdate: {revdate}
 :page-aliases: backup_restore.adoc
 

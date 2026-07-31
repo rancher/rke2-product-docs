@@ -1,6 +1,6 @@
 = 私有注册表配置
-:page-languages: 在启动时，RKE2 会检查 是否存在。
-:revdate: 2025-08-06
+:page-languages: [en, de, es, fr, ja, pt, zh]
+:revdate: 2026-07-24
 :page-revdate: {revdate}
 
 Containerd 可以配置为连接到私有注册表，并根据 kubelet 的需要使用它们来拉取镜像。
@@ -21,13 +21,7 @@ Containerd 对所有注册表都有一个隐式的 "默认端点"。即使在 `r
 
 为了被识别为注册表，镜像名称的第一个组件必须包含至少一个句点或冒号。出于历史原因，名称中未指定注册表的镜像被隐式识别为来自 `docker.io`。
 
-[NOTE]
-.版本门控
-====
-`disable-default-registry-endpoint` 选项作为实验性功能在 2024 年 2 月的版本中可用：v1.26.13+rke2r1，v1.27.10+rke2r1，v1.28.6+rke2r1，v1.29.1+rke2r1。
-====
-
-节点可以配置 `disable-default-registry-endpoint: true` 选项。设置此选项后，containerd 将不会回退到默认的注册表端点，而只会从已配置的镜像端点拉取镜像，同时如果启用了分布式注册表，也将从中拉取。
+Nodes may be configured with the `disable-default-registry-endpoint: true` option. When this is set, containerd will not fall back to the default registry endpoint, and will only pull from configured mirror endpoints, along with the distributed registry if it is enabled.
 
 如果您的集群处于真正的隔离环境中，上游注册表不可用，或者您希望只有某些节点从上游注册表拉取，则可能需要这样做。
 
@@ -107,13 +101,7 @@ mirrors:
       "^rancher/(.*)": "mirrorproject/rancher-images/$1"
 ----
 
-[NOTE]
-.版本门控
-====
-从 2024 年 2 月发布的版本开始，重写不再应用于默认端点：v1.26.13+rke2r1，v1.27.10+rke2r1，v1.28.6+rke2r1，v1.29.1+rke2r1。在这些版本之前，重写也应用于默认端点；如果镜像无法从镜像端点拉取，并且上游注册表中没有以修改后的名称提供该镜像，这会阻止 RKE2 从上游注册表拉取。
-====
-
-如果您希望在直接从注册表拉取时应用重写 - 当它不作为不同上游注册表的镜像使用时 - 您必须提供一个与默认端点不匹配的镜像端点。在 `registries.yaml` 中与默认端点匹配的镜像端点将被忽略；如果未禁用回退，默认端点总是最后尝试且不进行重写。
+If you want to apply rewrites when pulling directly from a registry - when it is not being used as a mirror for a different upstream registry - you must provide a mirror endpoint that does not match the default endpoint. Mirror endpoints in `registries.yaml` that match the default endpoint are ignored; the default endpoint is always tried last with no rewrites, if fallback has not been disabled.
 
 例如，如果您在 `\https://registry.example.com/` 处有一个注册表，并希望在明确拉取 `registry.example.com/rancher/rke2-runtime:v1.30.1-rke2r1` 时应用重写，您可以添加一个带有指定端口的镜像端点。由于镜像端点与默认端点不匹配 - *`"\https://registry.example.com:443/v2" != "\https://registry.example.com/v2"`* - 因此该端点被视为镜像，并会应用重写规则，尽管它实际上与默认端点相同。
 
@@ -170,13 +158,7 @@ configs 部分定义了每个镜像端点的 TLS 和凭证配置。对于每个�
 
 === 通配符支持
 
-[NOTE]
-.版本门控
-====
-通配符支持自 2024 年 3 月发布的以下版本起可用：v1.26.15+rke2r1、v1.27.12+rke2r1、v1.28.8+rke2r1、v1.29.3+rke2r1。
-====
-
-`"*"` 通配符条目可以在 `mirrors` 和 `configs` 部分中使用，以为所有注册表提供默认配置。默认配置仅在该注册表没有特定条目时使用。请注意，星号必须用引号括起来。
+The `"*"` wildcard entry can be used in the `mirrors` and `configs` sections to provide default configuration for all registries. The default configuration will only be used if there is no specific entry for that registry. Note that the asterisk MUST be quoted.
 
 在以下示例中，将为所有注册表使用本地注册表镜像。对于所有注册表，TLS 验证将被禁用，除了 `docker.io`。
 

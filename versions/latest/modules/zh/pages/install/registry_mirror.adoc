@@ -1,15 +1,9 @@
-= 嵌入式注册表镜像
-:page-languages: 嵌入式注册表镜像作为实验性功能可在 2024 年 1 月的版本中使用：v1.26.13+rke2r1、v1.27.10+rke2r1、v1.28.6+rke2r1、v1.29.1+rke2r1，并在 2024 年 12 月的版本中正式发布：v1.29.12+rke2r1、v1.30.8+rke2r1、v1.31.4+rke2r1。
-:revdate: 2025-10-29
+= Embedded Registry Mirror
+:page-languages: [en, de, es, fr, ja, pt, zh]
+:revdate: 2026-07-24
 :page-revdate: {revdate}
 
-[NOTE]
-.版本门控
-====
-嵌入式注册表镜像作为实验性功能可在 2024 年 1 月的版本中使用：v1.26.13+rke2r1、v1.27.10+rke2r1、v1.28.6+rke2r1、v1.29.1+rke2r1，并在 2024 年 12 月的版本中正式发布：v1.29.12+rke2r1、v1.30.8+rke2r1、v1.31.4+rke2r1。
-====
-
-RKE2 嵌入了 https://github.com/spegel-org/spegel[Spegel]，这是一个无状态的分布式 OCI 注册表镜像，允许 Kubernetes 集群中的节点之间进行点对点的容器镜像共享。分布式注册表镜像默认是禁用的。要让 RKE2 利用该功能，您必须按照以下小节中的说明，同时启用<<Enabling The Distributed OCI Registry Mirror,分布式 OCI 注册表镜像>>和<<Enabling Registry Mirroring,注册表镜像>>。
+RKE2 embeds https://github.com/spegel-org/spegel[Spegel], a stateless distributed OCI registry mirror that allows peer-to-peer sharing of container images between nodes in a Kubernetes cluster. The distributed registry mirror is disabled by default. For RKE2 to leverage it, you must enable both the <<Enabling The Distributed OCI Registry Mirror,Distributed OCI Registry Mirror>> and the <<Enabling Registry Mirroring,Registry mirroring>> as explained in the following subsections.
 
 == 启用分布式 OCI 注册表镜像
 
@@ -62,13 +56,7 @@ mirrors:
   mirror.example.com:
 ----
 
-[NOTE]
-.版本门控
-====
-通配符支持自 2024 年 3 月的版本开始可用：v1.26.15+rke2r1、v1.27.12+rke2r1、v1.28.8+rke2r1、v1.29.3+rke2r1。
-====
-
-`"*"` 通配符镜像条目可用于启用所有注册表的分布式镜像。请注意，星号必须被引号引起来：
+The `"*"` wildcard mirror entry can be used to enable distributed mirroring of all registries. Note that the asterisk MUST be quoted:
 
 [,yaml]
 ----

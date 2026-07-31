@@ -1,6 +1,6 @@
 = Helm
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-05-11
+:revdate: 2026-07-24
 :page-revdate: {revdate}
 
 Helm是Kubernetes的首选软件包管理工具。Helm图表为Kubernetes YAML清单文档提供模板语法。使用 Helm，我们可以创建可配置的部署，而不仅仅是使用静态文件。有关创建您自己的部署目录的更多信息，请查看 https://helm.sh/docs/intro/quickstart/. 中的文档。
@@ -46,6 +46,26 @@ disable:
 == 使用 Helm CRD
 
 https://github.com/k3s-io/helm-controller#helm-controller[HelmChart资源定义]捕获您通常会传递给`helm`命令行工具的大部分选项。以下是如何从默认图表储存库部署 Grafana 的示例，覆盖一些默认的图表值。请注意，HelmChart资源本身位于 `kube-system`名称空间，但图表的资源将被部署到 `monitoring`名称空间。
+
+RKE2 also supports passing arguments directly to the `helm-controller` process with `helm-controller-arg`.
+This is useful when you want to tune controller behavior globally.
+
+For example, to customize the CPU and memory resources allocated to Helm job pods:
+
+[,yaml]
+----
+# /etc/rancher/rke2/config.yaml
+helm-controller-arg:
+  - 'job-resources={"requests": {"cpu": "0.2", "memory": "64M"}, "limits": {"cpu": "1", "memory": "256M"}}'
+----
+
+You can specify `helm-controller-arg` multiple times in CLI form, or as a YAML list in the configuration file.
+
+[IMPORTANT]
+.Version Gate
+====
+The `helm-controller-arg` flag is available since the RKE2 July 2026 releases: v1.36.3+rke2r1, v1.35.7+rke2r1, v1.34.10+rke2r1, v1.33.13+rke2r2
+====
 
 [,yaml]
 ----

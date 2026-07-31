@@ -1,6 +1,6 @@
 = 服务器配置参考
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-06-19
+:revdate: 2026-07-24
 :page-revdate: {revdate}
 
 这是一个关于可以用于配置 rke2 服务器的所有参数的参考。请注意，虽然这是命令行参数的参考，但配置 RKE2 的最佳方式是使用 xref:install/configuration.adoc#_configuration_file[配置文件]。
@@ -139,8 +139,9 @@
 |===
 | 标志 | 说明
 
-| helm-job-image
-| 用于 helm 作业的默认镜像
+| helm-controller-arg
+| Customized flag for helm-controller process
+
 |===
 
 === 群集
