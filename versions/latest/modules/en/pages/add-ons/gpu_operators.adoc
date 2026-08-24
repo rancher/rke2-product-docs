@@ -403,8 +403,8 @@ kubectl get pods -n kube-amd-gpu
 The `DeviceConfig` resource tells the operator how to build and load the driver.
 On SLES, set `imageBuild.baseImageRegistry: "registry.suse.com"`.
 This tells the operator to fetch the pre-built AMD GPU driver image for your SLES codestream's GA kernel.
-The operator then relocates the modules to the node's running kernel path using SUSE's stable kABI guarantee.
-As a result, a single driver image works for any kernel update within the same codestream without requiring driver recompilation.
+The operator then relocates the modules into the node's running kernel path using SUSE's stable kABI guarantee. 
+As a result, no recompilation is needed across kernel updates within the same codestream. 
 
 [,sh]
 ----
