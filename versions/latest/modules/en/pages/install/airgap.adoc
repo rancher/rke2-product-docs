@@ -1,6 +1,6 @@
 = Air-Gap Install
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-05-25
+:revdate: 2026-08-24
 :page-revdate: {revdate}
 
 To install {product-name} can be installed in an air-gapped environment, you must first load the images into the air-gapped environment and then install RKE2.
@@ -21,6 +21,8 @@ If your node has NetworkManager installed and enabled, xref:known_issues.adoc#_n
 ====
 
 * If running on an air-gapped node with SELinux enabled, you must manually install the necessary SELinux policy RPM before performing these steps. See our xref:install/methods.adoc#_rpm[RPM Documentation] to determine what you need.
++
+The xref:install/methods.adoc#_rpm[RPM install method] assumes network access to the package repository. On an air-gapped host, you must obtain the RPM and its dependencies on a machine that can reach the repository, copy the packages to the offline node, then install them with `rpm`, `dnf`, or `yum` from the local files.
 * If running on an air-gapped node with SELinux enabled, the following are required dependencies for SLES, CentOS, or RHEL 8 when doing an xref:install/methods.adoc#_rpm[RPM install]: `container-selinux iptables libnetfilter_conntrack libnfnetlink libnftnl policycoreutils-python-utils rke2-common rke2-selinux`
 * If your nodes do not have an interface with a default route, a default route must be configured; even a black-hole route via a dummy interface will suffice.  RKE2 requires a default route to auto-detect the node's primary IP and for kube-proxy ClusterIP routing to function correctly. To add a dummy route, do the following:
 +
@@ -178,7 +180,9 @@ The `system-default-registry` parameter must specify only valid RFC 3986 URI aut
 
 `install.sh` may be used in an offline mode by setting the `INSTALL_RKE2_ARTIFACT_PATH` variable to a path containing pre-downloaded artifacts. This will run through a standard install, including creating systemd units.
 
-. Download the install script, RKE2 binaries, RKE2 images, and SHA256 checksums archives from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] into the `/rke2-artifacts` directory, as in the example below:
+Run the download steps on a machine with internet access, then copy the whole directory to each air-gapped node before running `install.sh` there. Do not run the `curl` commands on the offline hosts.
+
+. On a networked machine, download the install script, RKE2 binaries, RKE2 images, and SHA256 checksums archives from the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL] into the `/rke2-artifacts` directory, as in the example below:
 +
 [,bash]
 ----
@@ -189,7 +193,9 @@ curl -OLs <PRIME-ARTIFACTS-URL>/rke2/<VERSION>/sha256sum-<ARCH>.txt
 curl -sfL https://get.rke2.io --output install.sh
 ----
 
-. Run `install.sh` using the directory, as in the example below:
+. Copy `/rke2-artifacts` (or your chosen directory) to each air-gapped node, for example with `scp`, USB media, or your approved offline transfer path. Keep the same relative file names.
+
+. On each air-gapped node, run `install.sh` using the directory, as in the example below:
 +
 [,bash]
 ----
