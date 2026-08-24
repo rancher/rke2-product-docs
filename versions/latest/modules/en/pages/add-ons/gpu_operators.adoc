@@ -337,6 +337,7 @@ The prebuild driver images for specific SLES versions are available from the fol
 .Official AMD documentation
 ====
 Find the official documentation for precompiled drivers at the following links:
+
 * link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/installation/kubernetes-helm.html[]
 * link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/drivers/precompiled-driver.html[]
 ====
