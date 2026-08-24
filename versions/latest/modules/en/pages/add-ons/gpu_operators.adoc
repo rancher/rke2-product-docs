@@ -328,6 +328,7 @@ registry of choice.
 .Driver images for SLES
 ====
 The prebuild driver images for specific SLES versions are available from the following links:
+
 * SLES 16: link:https://registry.suse.com/repositories/third-party-amd-amdgpu-driver-sles16[]
 * SLES 15: link:https://registry.suse.com/repositories/third-party-amd-amdgpu-driver-sles15[]
 ====
