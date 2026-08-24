@@ -1,7 +1,10 @@
 = GPU Operators
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-07-24
+:revdate: 2026-08-24
 :page-revdate: {revdate}
+
+This guide shows how to deploy, manage and verify GPU resources in RKE2 clusters.
+It covers installation, host requirements, and validation for both NVIDIA and AMD GPU operators.
 
 [#_deploy_nvidia_operator]
 == Deploy NVIDIA operator
@@ -307,4 +310,268 @@ This example will add the `PATH` in `/etc/default/rke2-server`:
 [,bash]
 ----
 echo PATH=$PATH >> /etc/default/rke2-server
+----
+
+
+[#_deploy_amd_operator]
+== Deploy AMD operator on SLES
+
+The AMD GPU Operator allows administrators of Kubernetes clusters to manage AMD GPUs just like CPUs.
+
+On SLES, the operator uses precompiled `amdgpu` driver images from the link:http://registry.suse.com[Trusted container images repository]
+built against the codestream's GA kernel. KMM relocates the modules to the node's
+running kernel using SUSE's stable kABI guarantee--no recompilation needed across
+kernel updates within the same codestream. The resulting image is pushed to your
+registry of choice.
+
+[TIP]
+.Driver images for SLES
+====
+The prebuild driver images for specific SLES versions are available from the following links:
+* SLES 16: link:https://registry.suse.com/repositories/third-party-amd-amdgpu-driver-sles16[]
+* SLES 15: link:https://registry.suse.com/repositories/third-party-amd-amdgpu-driver-sles15[]
+====
+
+[TIP]
+.Official AMD documentation
+====
+Find the official documentation for precompiled drivers at the following links:
+* link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/installation/kubernetes-helm.html[]
+* link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/drivers/precompiled-driver.html[]
+====
+
+[#_deploy_amd_operator_prerequisites]
+=== Prerequisites
+
+* Verify that an AMD GPU PCI device is present.
++
+[,sh]
+----
+lspci -nn | grep -i "amd\|ati\|display\|vga"
+----
+
+* Verify that the RKE2 cluster is up and running.
++
+[,sh]
+----
+kubectl get nodes
+----
+
+* Install link:https://documentation.suse.com/cloudnative/rancher-manager/v2.14/en/installation-and-upgrade/other-installation-methods/http-proxy/install-rancher.html#_install_cert_manager[cert-manager].
+It is required for webhook TLS certificates.
+
+[#_deploy_amd_operator_installing]
+=== Installing AMD GPU Operator
+
+. Add the operator repository and update it.
++
+[,sh]
+----
+helm repo add rocm https://rocm.github.io/gpu-operator
+helm repo update
+----
+
+. Install the operator.
++
+[,sh]
+----
+helm install amd-gpu-operator rocm/gpu-operator-charts \
+  --namespace kube-amd-gpu \
+  --create-namespace \
+  --version v1.5.1 \
+  --set crds.defaultCR.install=false
+----
+
+. Wait for the operator's controller-manager pod to become ready.
++
+[,sh]
+----
+kubectl wait --for=condition=ready pod \
+  -l control-plane=controller-manager \
+  -n kube-amd-gpu --timeout=300s
+----
+
+. Verify that the operator pods are running successfully.
++
+[,sh]
+----
+kubectl get pods -n kube-amd-gpu
+----
+
+[#_deploy_amd_operator_deviceconfig]
+=== Create DeviceConfig
+The `DeviceConfig` resource tells the operator how to build and load the driver.
+On SLES, set `imageBuild.baseImageRegistry: "registry.suse.com"`.
+This tells the operator to fetch the pre-built AMD GPU driver image for your SLES codestream's GA kernel.
+The operator then relocates the modules to the node's running kernel path using SUSE's stable kABI guarantee.
+As a result, a single driver image works for any kernel update within the same codestream without requiring driver recompilation.
+
+[,sh]
+----
+NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+
+kubectl apply -f - <<EOF
+apiVersion: amd.com/v1alpha1
+kind: DeviceConfig
+metadata:
+  name: amdgpu-sles
+  namespace: kube-amd-gpu
+spec:
+  driver:
+    enable: true
+    blacklist: true
+    image: ${NODE_IP}:${REGISTRY_PORT}/amdgpu-driver
+    version: "31.40"
+    imageBuild:
+      baseImageRegistry: "registry.suse.com"
+      baseImageRegistryTLS:
+        insecure: true
+        insecureSkipTLSVerify: true
+  devicePlugin:
+    devicePluginImage: rocm/k8s-device-plugin:latest
+    nodeLabellerImage: rocm/k8s-device-plugin:labeller-latest
+    enableNodeLabeller: true
+  metricsExporter:
+    enable: true
+    serviceType: "NodePort"
+    nodePort: 32500
+    image: docker.io/rocm/device-metrics-exporter:v1.5.1
+  selector:
+    feature.node.kubernetes.io/amd-gpu: "true"
+EOF
+----
+
+[TIP]
+====
+Refer to link:https://instinct.docs.amd.com/projects/amdgpu-docs/en/latest/release/versions.html[AMD GPU Driver release history] for available driver versions.
+====
+
+[#_deploy_amd_operator_verify]
+== Verify the installation
+
+After a few minutes, perform the following checks:
+
+. Check that the kernel module was loaded on the node.
++
+[,sh]
+----
+lsmod | grep amdgpu
+----
+
+. Check that the GPU was added as an allocatable resource.
++
+[,sh]
+----
+kubectl get nodes -o custom-columns="NAME:.metadata.name,GPU:.status.allocatable.amd\.com/gpu"
+----
++
+You should see `1` or more for multi-GPU nodes in the `GPU` column.
+
+. Check that the node labeller applied GPU hardware labels.
++
+[,sh]
+----
+kubectl get node -o jsonpath='{.items[0].metadata.labels.amd\.com/gpu\.driver-version}{"\n"}'
+kubectl get node -o jsonpath='{.items[0].metadata.labels.amd\.com/gpu\.product-name}{"\n"}'
+kubectl get node -o jsonpath='{.items[0].metadata.labels.kmm\.node\.kubernetes\.io/version-module\.kube-amd-gpu\.amdgpu-sles}{"\n"}'
+----
+
+. Run a pod to verify the GPU can be scheduled and detected.
++
+[,sh]
+----
+kubectl apply -f - <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: amd-smi
+  namespace: default
+spec:
+  restartPolicy: Never
+  containers:
+  - name: amd-smi
+    image: docker.io/rocm/pytorch:latest
+    command: ["/bin/bash"]
+    args: ["-c", "amd-smi version && amd-smi monitor -ptum"]
+    resources:
+      limits:
+        amd.com/gpu: 1
+      requests:
+        amd.com/gpu: 1
+EOF
+
+kubectl wait --for=condition=ready pod/amd-smi --timeout=300s
+kubectl logs amd-smi
+kubectl delete pod amd-smi
+----
+
+[#_deploy_amd_operator_troublshoot]
+== Troubleshooting
+
+For troubleshooting issues with the AMD GPU operator, perform the following checks:
+
+. View the operator controller-manager logs.
++
+[,sh]
+----
+kubectl logs -n kube-amd-gpu -l control-plane=controller-manager --tail=50
+----
+
+. View the KMM build job logs (active while the image is being built).
++
+[,sh]
+----
+kubectl logs -n kube-amd-gpu -l kmm.node.kubernetes.io/job-type=build --tail=100
+----
+
+. View the KMM worker logs to monitor module loading.
++
+[,sh]
+----
+kubectl logs -n kube-amd-gpu \
+  -l kmm.node.kubernetes.io/job-type=device-config --all-containers --tail=50
+----
+
+. Check the details and status of the DeviceConfig and Module resources.
++
+[,sh]
+----
+kubectl describe deviceconfig amdgpu-sles -n kube-amd-gpu
+kubectl describe module amdgpu-sles -n kube-amd-gpu
+----
+
+. Inspect kernel messages related to the AMD GPU modules.
++
+[,sh]
+----
+dmesg | grep -i "amdgpu\|amdkcl\|amdttm" | tail -30
+----
+
+For more details, refer to the link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/troubleshooting.html[AMD GPU Operator Troubleshooting documentation].
+
+[#_deploy_amd_operator_uninstall]
+== Cleanup
+
+To uninstall the AMD GPU operator and its associated components, perform the following steps:
+
+. Delete the custom `DeviceConfig` resource.
++
+[,sh]
+----
+kubectl delete deviceconfig amdgpu-sles -n kube-amd-gpu
+----
+
+. Uninstall the AMD GPU operator and cert-manager Helm charts.
++
+[,sh]
+----
+helm uninstall amd-gpu-operator -n kube-amd-gpu
+helm uninstall cert-manager -n cert-manager
+----
+
+. Delete the `kube-amd-gpu` and `cert-manager` namespaces.
++
+[,sh]
+----
+kubectl delete namespace kube-amd-gpu cert-manager
 ----
