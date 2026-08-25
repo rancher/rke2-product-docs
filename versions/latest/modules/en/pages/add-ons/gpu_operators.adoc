@@ -363,7 +363,7 @@ lspci -nn | grep -i "amd\|ati\|display\|vga"
 kubectl get nodes
 ----
 
-* Install link:https://documentation.suse.com/cloudnative/rancher-manager/v2.14/en/installation-and-upgrade/other-installation-methods/http-proxy/install-rancher.html#_install_cert_manager[cert-manager].
+* Install link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/installation/kubernetes-helm.html?utm_source=chatgpt.com#install-cert-manager[cert-manager].
 It is required for webhook TLS certificates.
 
 [#_deploy_amd_operator_installing]
