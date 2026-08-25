@@ -451,3 +451,4 @@ link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/troubleshooti
 
 [#_deploy_amd_operator_uninstall]
 == Cleanup
+For steps to uninstall the AMD GPU Operator and its dependencies, refer to the link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/uninstallation/uninstallation.html[official documentaion].
