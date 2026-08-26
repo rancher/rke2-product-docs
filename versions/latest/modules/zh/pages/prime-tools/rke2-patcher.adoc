@@ -1,6 +1,6 @@
 = rke2-patcher
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-06-15
+:revdate: 2026-08-26
 :page-revdate: {revdate}
 
 `rke2-patcher` is a CLI tool for SUSE Rancher Prime: RKE2 that helps operators inspect and patch packaged component images.
@@ -162,4 +162,4 @@ image::rke2-patcher-image-reconcile.gif[rke2-patcher image-reconcile demo, width
 * Permissions to create scanner Jobs and read logs for CVE scans.
 * Permissions to create or update `HelmChartConfig` objects for patch and reconcile operations.
 
-For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rancher-rke2-patcher.
+For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rke2-patcher.

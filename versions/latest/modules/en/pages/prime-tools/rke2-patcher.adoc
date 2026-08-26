@@ -1,6 +1,6 @@
 = rke2-patcher
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-06-26
+:revdate: 2026-08-26
 :page-revdate: {revdate}
 
 `rke2-patcher` is a CLI tool for SUSE Rancher Prime: RKE2 that helps operators inspect and patch packaged component images.
@@ -162,7 +162,7 @@ image::rke2-patcher-image-reconcile.gif[rke2-patcher image-reconcile demo, width
 3. Upgrade RKE2 when needed.
 4. Run `image-reconcile` for previously patched components.
 
-For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rancher-rke2-patcher.
+For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rke2-patcher.
 
 [#_airgap_support]
 == Airgap support
