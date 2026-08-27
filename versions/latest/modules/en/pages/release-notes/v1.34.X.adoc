@@ -421,6 +421,9 @@ cat /var/lib/rancher/rke2/server/token
 | rke2-metrics-server
 | https://github.com/rancher/rke2-charts/raw/main/assets/rke2-metrics-server/rke2-metrics-server-3.13.100.tgz[3.13.100]
 
+| rke2-multus
+| https://github.com/rancher/rke2-charts/raw/main/assets/rke2-multus/rke2-multus-v4.2.418.tgz[v4.2.418]
+
 | rancher-vsphere-csi
 | https://github.com/rancher/rke2-charts/raw/main/assets/rancher-vsphere-csi/rancher-vsphere-csi-3.5.0-rancher200.tgz[3.5.0-rancher200]
 
