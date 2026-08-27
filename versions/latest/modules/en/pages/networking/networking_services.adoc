@@ -234,6 +234,7 @@ When looking at the K3s documentation, use the label `svccontroller.rke2.cattle.
 
 To enable serviceLB, use the flag `--enable-servicelb` when deploying RKE2.
 
+[#_deploying_an_external_cloud_controller_manager]
 == Deploying an External Cloud Controller Manager
 
 RKE2 ships an embedded Cloud Controller Manager (CCM) that:
