@@ -1,7 +1,10 @@
 = GPU Operators
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-07-24
+:revdate: 2026-08-24
 :page-revdate: {revdate}
+
+This guide shows how to deploy, manage and verify GPU resources in RKE2 clusters.
+It covers installation, host requirements, and validation for both NVIDIA and AMD GPU operators.
 
 [#_deploy_nvidia_operator]
 == Deploy NVIDIA operator
@@ -59,86 +62,6 @@ Once the OS is ready and RKE2 is running, install the GPU Operator with the foll
 
 [tabs,sync-group-id=GPUoperator]
 =====
-v25.3.x::
-+
---
-
-[,yaml]
-----
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: gpu-operator
-  namespace: kube-system
-spec:
-  repo: https://helm.ngc.nvidia.com/nvidia
-  chart: gpu-operator
-  version: v25.3.4
-  targetNamespace: gpu-operator
-  createNamespace: true
-  valuesContent: |-
-    toolkit:
-      env:
-      - name: CONTAINERD_SOCKET
-        value: /run/k3s/containerd/containerd.sock
-      - name: ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED
-        value: "false"
-      - name: ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS
-        value: "true"
-    devicePlugin:
-      env:
-      - name: DEVICE_LIST_STRATEGY
-        value: volume-mounts
-----
-
-[NOTE]
-====
-The envvars `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`, `ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` and `DEVICE_LIST_STRATEGY` are required to properly isolate GPU resources as explained in this nvidia https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[doc]
-====
-
-[CAUTION]
-====
-The NVIDIA operator restarts containerd with a hangup call which restarts RKE2
-====
-
---
-
-v25.10.x::
-+
---
-
-[,yaml]
-----
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: gpu-operator
-  namespace: kube-system
-spec:
-  repo: https://helm.ngc.nvidia.com/nvidia
-  chart: gpu-operator
-  version: v25.10.1
-  targetNamespace: gpu-operator
-  createNamespace: true
-  valuesContent: |-
-    toolkit:
-      env:
-      - name: CONTAINERD_SOCKET
-        value: /run/k3s/containerd/containerd.sock
-----
-
-[NOTE]
-====
-NVIDIA GPU Operator v25.10.x uses https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[Container Device Interface (CDI) specification] and that simplifies operations: we don't need to pass extra envvars to comply with the security requirements and the workloads do not need to pass the `runtimeClassName: nvidia` anymore. It requires containerd 2.0.
-====
-
-[CAUTION]
-====
-The NVIDIA operator restarts containerd with a hangup call which restarts RKE2
-====
-
---
-
 v26.3.x::
 +
 --
@@ -233,6 +156,85 @@ NRI requires containerd 2.1. Containerd 2.1 is available as of September 2025 re
 ====
 
 --
+v25.3.x::
++
+--
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: gpu-operator
+  namespace: kube-system
+spec:
+  repo: https://helm.ngc.nvidia.com/nvidia
+  chart: gpu-operator
+  version: v25.3.4
+  targetNamespace: gpu-operator
+  createNamespace: true
+  valuesContent: |-
+    toolkit:
+      env:
+      - name: CONTAINERD_SOCKET
+        value: /run/k3s/containerd/containerd.sock
+      - name: ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED
+        value: "false"
+      - name: ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS
+        value: "true"
+    devicePlugin:
+      env:
+      - name: DEVICE_LIST_STRATEGY
+        value: volume-mounts
+----
+
+[NOTE]
+====
+The envvars `ACCEPT_NVIDIA_VISIBLE_DEVICES_ENVVAR_WHEN_UNPRIVILEGED`, `ACCEPT_NVIDIA_VISIBLE_DEVICES_AS_VOLUME_MOUNTS` and `DEVICE_LIST_STRATEGY` are required to properly isolate GPU resources as explained in this nvidia https://docs.google.com/document/d/1zy0key-EL6JH50MZgwg96RPYxxXXnVUdxLZwGiyqLd8/edit?tab=t.0[doc]
+====
+
+[CAUTION]
+====
+The NVIDIA operator restarts containerd with a hangup call which restarts RKE2
+====
+
+--
+
+v25.10.x::
++
+--
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: gpu-operator
+  namespace: kube-system
+spec:
+  repo: https://helm.ngc.nvidia.com/nvidia
+  chart: gpu-operator
+  version: v25.10.1
+  targetNamespace: gpu-operator
+  createNamespace: true
+  valuesContent: |-
+    toolkit:
+      env:
+      - name: CONTAINERD_SOCKET
+        value: /run/k3s/containerd/containerd.sock
+----
+
+[NOTE]
+====
+NVIDIA GPU Operator v25.10.x uses https://github.com/cncf-tags/container-device-interface/blob/main/SPEC.md[Container Device Interface (CDI) specification] and that simplifies operations: we don't need to pass extra envvars to comply with the security requirements and the workloads do not need to pass the `runtimeClassName: nvidia` anymore. It requires containerd 2.0.
+====
+
+[CAUTION]
+====
+The NVIDIA operator restarts containerd with a hangup call which restarts RKE2
+====
+
+--
 =====
 
 After a few minutes, you can perform the following checks to verify that everything is working as expected:
@@ -308,3 +310,144 @@ This example will add the `PATH` in `/etc/default/rke2-server`:
 ----
 echo PATH=$PATH >> /etc/default/rke2-server
 ----
+
+
+[#_deploy_amd_operator]
+== Deploy AMD operator on SLES
+
+The link:https://github.com/ROCm/gpu-operator[AMD GPU Operator] allows administrators of Kubernetes clusters to manage AMD GPUs just like CPUs.
+
+On SLES, the operator uses precompiled `amdgpu` driver images from the link:http://registry.suse.com[Trusted container images repository]
+built against the codestream's GA kernel. KMM relocates the modules to the node's
+running kernel using SUSE's stable kABI guarantee--no recompilation needed across
+kernel updates within the same codestream. The resulting image is pushed to your
+registry of choice.
+
+[TIP]
+.Driver images for SLES
+====
+The prebuild driver images for specific SLES versions are available from the following links:
+
+* SLES 16: link:https://registry.suse.com/repositories/third-party-amd-amdgpu-driver-sles16[]
+* SLES 15: link:https://registry.suse.com/repositories/third-party-amd-amdgpu-driver-sles15[]
+====
+
+[TIP]
+.Official AMD documentation
+====
+For full installation instructions, DeviceConfig reference, and troubleshooting, refer to the
+link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/installation/kubernetes-helm.html[AMD GPU Operator official documentation].
+====
+
+[#_deploy_amd_operator_prerequisites]
+=== Prerequisites
+
+* Verify that a link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/index.html#supported-hardware[supported AMD GPU] PCI device is present.
++
+[,sh]
+----
+lspci -nn | grep -i "amd\|ati\|display\|vga"
+----
+
+* Verify that the RKE2 cluster is up and running.
++
+[,sh]
+----
+kubectl get nodes
+----
+
+* Install link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/installation/kubernetes-helm.html#install-cert-manager[cert-manager].
+It is required for webhook TLS certificates.
+
+[#_deploy_amd_operator_installing]
+=== Installing AMD GPU Operator
+
+Once the prerequisites are met and RKE2 is running, install the AMD GPU Operator:
+
+[,sh]
+----
+helm repo add rocm https://rocm.github.io/gpu-operator
+helm repo update
+
+helm install amd-gpu-operator rocm/gpu-operator-charts \
+  --namespace kube-amd-gpu \
+  --create-namespace \
+  --version <gpu-operator-version> \
+  --set crds.defaultCR.install=false
+----
+
+For the latest release version, see the
+link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/installation/kubernetes-helm.html[AMD GPU Operator Helm installation documentation].
+
+[NOTE]
+====
+If using a local plain-HTTP registry for driver images during testing, configure
+containerd before applying the `DeviceConfig`. See
+link:https://documentation.suse.com/cloudnative/rke2/latest/en/install/containerd_registry_configuration.html[RKE2 containerd registry configuration].
+====
+
+
+[#_deploy_amd_operator_deviceconfig]
+=== Create DeviceConfig
+
+Follow the
+link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/drivers/installation.html[AMD GPU Operator driver installation documentation]
+to create a `DeviceConfig` resource. On SLES, set the following field to use prebuilt driver images from `registry.suse.com`:
+
+[,yaml]
+----
+spec:
+  driver:
+    imageBuild:
+      baseImageRegistry: "registry.suse.com"
+----
+
+For the full `DeviceConfig` spec reference, see the
+link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/drivers/installation.html#configuration-reference[configuration reference].
+
+
+[TIP]
+====
+Refer to link:https://instinct.docs.amd.com/projects/amdgpu-docs/en/latest/release/versions.html[AMD GPU Driver release history] for available driver versions.
+====
+
+[#_deploy_amd_operator_verify]
+== Verify the installation
+
+After a few minutes, perform the following checks:
+
+. Check that the kernel module was loaded on the node.
++
+[,sh]
+----
+lsmod | grep amdgpu
+----
+
+. Check that the GPU was added as an allocatable resource.
++
+[,sh]
+----
+kubectl get nodes -o custom-columns="NAME:.metadata.name,GPU:.status.allocatable.amd\.com/gpu"
+----
++
+You should see `1` or more for multi-GPU nodes in the `GPU` column.
+
+. Check that the node labeller applied GPU hardware labels.
++
+[,sh]
+----
+kubectl get node -o jsonpath='{.items[0].metadata.labels.amd\.com/gpu\.driver-version}{"\n"}'
+kubectl get node -o jsonpath='{.items[0].metadata.labels.amd\.com/gpu\.product-name}{"\n"}'
+kubectl get node -o jsonpath='{.items[0].metadata.labels.kmm\.node\.kubernetes\.io/version-module\.kube-amd-gpu\.amdgpu-sles}{"\n"}'
+----
+
+
+[#_deploy_amd_operator_troublshoot]
+== Troubleshooting
+
+For troubleshooting, refer to the
+link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/troubleshooting.html[AMD GPU Operator Troubleshooting documentation].
+
+[#_deploy_amd_operator_uninstall]
+== Cleanup
+For steps to uninstall the AMD GPU Operator and its dependencies, refer to the link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/uninstallation/uninstallation.html[official documentaion].
