@@ -1,6 +1,6 @@
 = Server Configuration Reference
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-06-19
+:revdate: 2026-09-03
 :page-revdate: {revdate}
 
 This is a reference to all parameters that can be used to configure the rke2 server. Note that while this is a reference to the command line arguments, the best way to configure RKE2 is using the xref:install/configuration.adoc#_configuration_file[configuration file].
@@ -373,7 +373,7 @@ The following options must be set to the same value on all servers in the cluste
 | Flag | Description | Default | Environment Variable
 
 | disable
-| Do not deploy packaged components and delete any deployed components (valid items: rke2-coredns, rke2-metrics-server, rke2-snapshot-controller, rke2-snapshot-controller-crd, rke2-snapshot-validation-webhook)
+| Do not deploy packaged components and delete any deployed components (valid items: rke2-coredns, rke2-metrics-server, rke2-snapshot-controller, rke2-snapshot-controller-crd, rke2-snapshot-validation-webhook, rke2-security-responder, rke2-gateway-api-crd)
 | 
 | 
 
