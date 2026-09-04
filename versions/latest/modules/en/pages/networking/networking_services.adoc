@@ -245,7 +245,7 @@ ingress-nginx::
 
 [WARNING]
 ====
-The ingress-nginx controller reaches End of Life (EOL) in March 2026 and is deprecated in RKE2 v1.36.
+The ingress-nginx controller reaches End of Life (EOL) in March 2026 and is deprecated in RKE2 v1.36. In RKE2 v1.37 ingress-nginx is removed and unavailable for new clusters.
 
 {rke2-product-name} users will continue to receive support and CVE fixes (8+) for the entire lifecycle of RKE2 v1.32, v1.33, v1.34, v1.35 and v1.36. We recommend switching to Traefik by following the https://support.scc.suse.com/s/kb/Migrating-from-Ingress-NGINX-to-Traefik-in-a-standalone-RKE2-cluster[Migrating from Ingress-NGINX to Traefik in a standalone RKE2 cluster] guide.
 ====
@@ -253,6 +253,12 @@ The ingress-nginx controller reaches End of Life (EOL) in March 2026 and is depr
 https://github.com/kubernetes/ingress-nginx[ingress-nginx] is an Ingress controller powered by NGINX that uses a ConfigMap to store the NGINX configuration.
 
 `ingress-nginx` is deployed by default when starting the server. Ports 80 and 443 will be bound by the ingress controller in its default configuration, making these unusable for HostPort or NodePort services in the cluster.
+
+[NOTE]
+.Version Gate
+====
+In RKE2 v1.36, Traefik is deployed by default. To deploy ingress-nginx use `ingress-controller: ingress-nginx`.
+====
 
 Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-ingress-nginx` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml` with the following contents sets `use-forwarded-headers` to `"true"` in the ConfigMap storing the NGINX config:
 
@@ -281,6 +287,12 @@ Traefik::
 https://doc.traefik.io/traefik/[Traefik] is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease. It simplifies networking complexity while designing, deploying, and running applications.
 
 To use Traefik, start each server with the `ingress-controller: traefik` option in your configuration file.
+
+[NOTE]
+.Version Gate
+====
+Starting with RKE2 v1.36, Traefik is deployed by default.
+====
 
 Configuration options can be specified by creating a xref:add-ons/helm.adoc#_customizing_packaged_components_with_helmchartconfig[HelmChartConfig manifest] to customize the `rke2-traefik` HelmChart values. For example, a HelmChartConfig at `/var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml` with the following contents changes the log level to "DEBUG":
 
