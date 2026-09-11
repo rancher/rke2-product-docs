@@ -1,6 +1,6 @@
 = Ingress NGINX to Traefik Migration Guide
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-07-03
+:revdate: 2026-09-11
 :page-revdate: {revdate}
 
 The Kubernetes Ingress NGINX project has announced its https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/[retirement in March 2026]. As a result, RKE2 is transitioning to Traefik as the default ingress controller for new clusters starting with RKE2 v1.36.
@@ -150,7 +150,7 @@ kubectl get daemonset -n kube-system
 * **Existing Ingress NGINX Ingresses:** Verify that your existing Ingresses are still reachable on the standard ports (80/443).
 * **New Traefik Ingresses:** You can now deploy new Ingress resources specifying the traefik class to test your new controller, using the temporary ports (8000/8443) for access.
 * **Verify Traefik DaemonSet manifest:** The DaemonSet includes `hostPort: 8000`, and `hostPort: 8443`.
-* There is a new ingressClass with name “rke2-ingress-nginx-migration”.
+* There is a new ingressClass with name "rke2-ingress-nginx-migration".
 * **Verify that the Ingressnginx provider is started.** In the traefik logs:
 +
 ----
@@ -265,7 +265,7 @@ ingress-controller:
 - traefik
 ----
 
-If downtime is important and you’d like to split this phase, you should restart RKE2 at this point and don’t move to the next step (configure Traefik for Standard Ports) until Ingress NGINX is completely removed.
+If downtime is important and you'd like to split this phase, you should restart RKE2 at this point and don't move to the next step (configure Traefik for Standard Ports) until Ingress NGINX is completely removed.
 
 [#_2_configure_traefik_for_standard_ports]
 === 2. Configure Traefik for Standard Ports
@@ -335,7 +335,7 @@ done
 [#_additional_notes]
 == Additional Notes
 
-* By default the Ingress NGINX provider reads `ingressClassName = nginx`. We decided to change this and use a “bridge” ingressClass (`rke2-ingress-nginx-migration`) to avoid two problems:
+* By default the Ingress NGINX provider reads `ingressClassName = nginx`. We decided to change this and use a "bridge" ingressClass (`rke2-ingress-nginx-migration`) to avoid two problems:
 . Potential race conditions as both ingress controllers would read the same ingress resource and could try to update the status at the same time.
 . The ingressClass nginx gets removed automatically when Ingress NGINX is uninstalled in Phase 3.
 * Ingress NGINX might take a long time to be removed.
