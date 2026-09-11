@@ -1,6 +1,6 @@
 = Requirements
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-05-29
+:revdate: 2026-09-11
 :page-revdate: {revdate}
 
 RKE2 is very lightweight, but has some minimum requirements as outlined below.
@@ -29,7 +29,12 @@ RKE2 is available for x86_64 and arm64/aarch64.
 [#_linux]
 === Linux
 
-See the https://www.suse.com/suse-rke2/support-matrix/all-supported-versions[RKE2 Support Matrix] for all the OS versions that have been validated with RKE2. In general, RKE2 should work on any Linux distribution that uses systemd and iptables.
+See the https://www.suse.com/suse-rke2/support-matrix/all-supported-versions/rke2-v1-36[RKE2 Support Matrix] for all the OS versions that have been validated with RKE2. In general, RKE2 should work on any Linux distribution that uses systemd and iptables/nftables.
+
+[#_sles_16]
+==== SLES 16
+
+Nothing additional is needed.
 
 [#_rhel_10]
 ==== RHEL 10
@@ -40,6 +45,11 @@ On RHEL 10 (and its derivatives like Rocky Linux) an additional package is requi
 ----
 sudo dnf install kernel-modules-extra -y
 ----
+
+[#_ubuntu]
+==== Ubuntu
+
+Nothing additional is needed.
 
 [#_windows]
 === Windows
@@ -56,7 +66,6 @@ The Windows Server Containers feature needs to be enabled for the RKE2 Windows a
 
 The RKE2 Windows Node (Worker) agent has been tested and validated on the following operating systems, and their subsequent non-major releases:
 
-* Windows Server 2019 LTSC (amd64) (OS Build 17763.2061)
 * Windows Server 2022 LTSC (amd64) (OS Build 20348.169)
 
 Open a new Powershell window with Administrator privileges.
