@@ -1,6 +1,6 @@
 = Conformidad de IA de CNCF
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 6/11/2025
+:revdate: 2025-06-11
 :page-revdate: {revdate}
 
 La https://docs.google.com/document/d/1hXoSdh9FEs13Yde8DivCYjjXyxa7j4J8erjZPEGWuzc/edit?tab=t.0[Conformidad de IA de CNCF Kubernetes] define un conjunto de capacidades adicionales, APIs y configuraciones que un clúster de Kubernetes DEBE ofrecer, además de la conformidad estándar de CNCF Kubernetes, para ejecutar cargas de trabajo de IA/ML de manera fiable y eficiente.
