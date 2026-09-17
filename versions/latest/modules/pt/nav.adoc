@@ -68,11 +68,12 @@
 ** xref:reference/windows_agent_config.adoc[]
 
 * Notas de versão
+** xref:release-notes/v1.36.X.adoc[]
 ** xref:release-notes/v1.35.X.adoc[]
 ** xref:release-notes/v1.34.X.adoc[]
 ** xref:release-notes/v1.33.X.adoc[]
-** xref:release-notes/v1.32.X.adoc[]
 ** Mais antigo...
+*** xref:release-notes-old/v1.32.X.adoc[]
 *** xref:release-notes-old/v1.31.X.adoc[]
 *** xref:release-notes-old/v1.30.X.adoc[]
 *** xref:release-notes-old/v1.29.X.adoc[]
