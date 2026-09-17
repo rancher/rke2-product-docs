@@ -1,4 +1,5 @@
 = v1.35.X
+:description: Upgrade to version v1.35.X and review the changes, upgrade notice, and important token information for Kubernetes v1.35.7+rke2r1
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-08-24
 :page-revdate: {revdate}

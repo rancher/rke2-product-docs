@@ -1,4 +1,5 @@
 = Default Pod Security Standards
+:description: Learn how RKE2 configures PodSecurityStandards and NetworkPolicies for secure-by-default operation with flexible settings
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-24
 :page-revdate: {revdate}

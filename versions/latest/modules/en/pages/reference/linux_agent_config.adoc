@@ -1,4 +1,5 @@
 = Agent Configuration Reference
+:description: Configure the rke2 agent using parameters defined in the Agent Configuration Reference, which includes cluster, security, networking, and components settings
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-19
 :page-revdate: {revdate}

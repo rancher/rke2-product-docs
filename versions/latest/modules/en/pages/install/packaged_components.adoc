@@ -1,4 +1,5 @@
 = Managing Packaged Components
+:description: Managing packaged components lets you deploy, modify, and disable Kubernetes add-ons using manifests in the /var/lib/rancher/rke2/server/manifests directory
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-06
 :page-revdate: {revdate}

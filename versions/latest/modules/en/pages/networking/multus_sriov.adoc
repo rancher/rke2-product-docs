@@ -1,4 +1,5 @@
 = Multus
+:description: Learn how to use Multus to attach multiple network interfaces to Kubernetes pods by configuring a primary CNI plugin
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-05-29
 :page-revdate: {revdate}

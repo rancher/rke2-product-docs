@@ -1,4 +1,5 @@
 = CNCF AI Conformance
+:description: Verify that a Kubernetes cluster meets CNCF AI Conformance requirements by checking GPU drivers, container runtime configurations, and API consistency,
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-25
 :page-revdate: {revdate}

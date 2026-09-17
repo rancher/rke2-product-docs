@@ -1,4 +1,5 @@
 = Windows Air-Gap Install
+:description: Install Windows RKE2 on air-gapped nodes by preparing the agent, downloading required tarballs or private registry images, and configuring the agent
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-19
 :page-revdate: {revdate}

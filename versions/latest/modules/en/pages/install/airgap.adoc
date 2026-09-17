@@ -1,4 +1,5 @@
 = Air-Gap Install
+:description: Install RKE2 in an air-gapped environment by loading required images, meeting prerequisites, and following steps to configure SELinux and install RPM dependencies
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-08-24
 :page-revdate: {revdate}

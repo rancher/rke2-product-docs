@@ -1,4 +1,5 @@
 = Ingress NGINX to Traefik Migration Guide
+:description: Migrate from Ingress NGINX to Traefik as the default ingress controller in RKE2 clusters using step-by-step instructions
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-03
 :page-revdate: {revdate}

@@ -1,4 +1,5 @@
 = Requirements
+:description: Find the minimum system requirements for RKE2, including hardware specifications, supported operating systems, and network configurations
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-05-29
 :page-revdate: {revdate}

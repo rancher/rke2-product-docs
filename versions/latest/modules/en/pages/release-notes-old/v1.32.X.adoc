@@ -1,4 +1,5 @@
 = v1.32.X
+:description: Find details about the v1.32.X release, including Kubernetes updates, component versions, and important notes about the cluster token
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-05-29
 :page-revdate: {revdate}

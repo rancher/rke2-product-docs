@@ -1,4 +1,5 @@
 = v1.34.X
+:description: Upgrade to v1.34.10+rke2r1 updates Kubernetes to v1.34.10, requires retaining the cluster token for joining nodes and restoring backups, and includes changes
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-08-24
 :page-revdate: {revdate}

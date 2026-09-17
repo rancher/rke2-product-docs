@@ -1,4 +1,5 @@
 = Installation Methods
+:description: Choose between tarball or RPM installation methods for RKE2, download the install script, and run it with options like INSTALLRKE2CHANNEL
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-08-24
 :page-revdate: {revdate}

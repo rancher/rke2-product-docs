@@ -1,4 +1,5 @@
 = Server Configuration Reference
+:description: Configure the rke2 server using parameters and critical values listed in this reference to ensure consistent cluster settings on all nodes
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-09-03
 :page-revdate: {revdate}

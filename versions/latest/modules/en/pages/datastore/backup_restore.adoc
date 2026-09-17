@@ -1,5 +1,6 @@
 
 = Backup and Restore
+:description: Learn how to use the RKE2 etcd-snapshot CLI tool to create, delete, and manage etcd snapshots for backup and restore
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-09-03
 :page-revdate: {revdate}
