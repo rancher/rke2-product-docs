@@ -1,4 +1,5 @@
 = CIS 1.11 Self-Assessment Guide
+:description: Assess the security of your RKE2 cluster against CIS 1.11 benchmark controls using this self-assessment guide
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-01-15
 :page-revdate: {revdate}

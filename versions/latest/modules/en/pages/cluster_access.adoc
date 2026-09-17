@@ -1,4 +1,5 @@
 = Cluster Access
+:description: Configure access to the Kubernetes cluster using the kubeconfig file stored at /etc/rancher/rke2/rke2.yaml
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-07-10
 :page-revdate: {revdate}

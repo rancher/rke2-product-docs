@@ -1,4 +1,5 @@
 = v1.29.X
+:description: Find updates for v1.29.X, including Kubernetes version changes, security fixes, and cluster setup details
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-09-08
 :page-revdate: {revdate}

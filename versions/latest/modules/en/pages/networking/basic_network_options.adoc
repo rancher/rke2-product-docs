@@ -1,4 +1,5 @@
 = Network Options
+:description: Choose a CNI plugin for Kubernetes networking, install it via Helm chart, customize with HelmChartConfig, and select from Canal, Calico, Flannel, or Cilium
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-08-24
 :page-revdate: {revdate}

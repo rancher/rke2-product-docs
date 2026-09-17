@@ -1,4 +1,5 @@
 = Private Registry Configuration
+:description: Configure registries.yaml to set up private registry connections for containerd in RKE2 clusters and specify mirrors, authentication, and custom TLS settings
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-24
 :page-revdate: {revdate}

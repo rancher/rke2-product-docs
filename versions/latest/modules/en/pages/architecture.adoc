@@ -1,4 +1,5 @@
 = Anatomy of a Next Generation Kubernetes Distribution
+:description: Learn the components and processes that make up a Next Generation Kubernetes Distribution, including RKE2's architecture, container runtime, cluster
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-10-29
 :page-revdate: {revdate}

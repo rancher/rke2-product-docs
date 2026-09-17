@@ -1,4 +1,5 @@
 = SELinux
+:description: Learn how to configure SELinux for RKE2 on CentOS/RHEL systems including required policies and Calico support
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-07-17
 :page-revdate: {revdate}

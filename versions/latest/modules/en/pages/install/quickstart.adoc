@@ -1,4 +1,5 @@
 = Quick Start
+:description: Launch a cluster with default options by installing RKE2 on server and agent nodes using the provided installation script and configuration steps
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-06
 :page-revdate: {revdate}

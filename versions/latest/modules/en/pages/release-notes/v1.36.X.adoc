@@ -1,4 +1,5 @@
 = v1.36.X
+:description: Find information about the v1.36.X release including upgrades and changes to Kubernetes components and security token management
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-08-24
 :page-revdate: {revdate}

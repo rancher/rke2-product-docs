@@ -1,4 +1,5 @@
 = Managing Server Roles
+:description: Manage server roles by configuring RKE2 to enable or disable control-plane and etcd components on separate nodes
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2024-09-11
 :page-revdate: {revdate}

@@ -1,4 +1,5 @@
 = CIS 1.10 Self-Assessment Guide
+:description: Evaluate the security of a hardened RKE2 cluster against each control in the CIS Kubernetes benchmark with the CIS 1.10 Self-Assessment Guide
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-01-15
 :page-revdate: {revdate}

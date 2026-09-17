@@ -1,4 +1,5 @@
 = Cluster Load Balancer
+:description: Configure a cluster load balancer using HAProxy and Keepalived to manage traffic between server and agent nodes
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-26
 :page-revdate: {revdate}
