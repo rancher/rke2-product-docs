@@ -1,6 +1,6 @@
 = Introduction
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2025-07-10
+:revdate: 2026-09-11
 :page-revdate: {revdate}
 
 image::logo-horizontal-rke2.svg[RKE2 Logo, 346,111]
@@ -36,4 +36,4 @@ It has also been known as RKE Government as it was designed to target sectors wi
 [#_security]
 == Security
 
-Rancher Labs supports responsible disclosure and endeavors to resolve security issues in a reasonable timeframe. To report a security vulnerability, email link:mailto:security@rancher.com[security@rancher.com].
+SUSE supports responsible disclosure and endeavors to resolve security issues in a reasonable timeframe. To report a security vulnerability, please refer to our https://github.com/rancher/rke2/security/policy[Security Policy].
