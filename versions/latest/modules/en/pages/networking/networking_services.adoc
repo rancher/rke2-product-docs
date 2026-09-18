@@ -1,6 +1,6 @@
 = Networking Services
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-09-03
+:revdate: 2026-09-18
 :page-revdate: {revdate}
 
 This page explains how CoreDNS and the Nginx-Ingress controller work within RKE2.
@@ -352,6 +352,8 @@ Prior to the April 2026 releases (v1.33.11+rke2r1, v1.34.7+rke2r1 and v1.35.4+rk
 ====
 If you need support for experimental Gateway API resources, you must install them separately. For example, for Gateway API v1.4, install the https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml[v1.4 experimental-install.yaml] from the official https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0[gateway-api releases] and use the option `providers.kubernetesGateway.experimentalChannel=true` in the rke2-traefik chart values.
 ====
+
+For more information, refer to https://github.com/rancher/rke2/blob/master/docs/adrs/011-bundle-gatewayAPI.md#standalone-gateway-api-crd-management[Standalone Gateway API CRD Management].
 
 [#_service_load_balancer]
 == Service Load Balancer
