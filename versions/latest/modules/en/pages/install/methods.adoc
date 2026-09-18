@@ -1,6 +1,6 @@
 = Installation Methods
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-08-24
+:revdate: 2026-09-18
 :page-revdate: {revdate}
 
 [IMPORTANT] 
@@ -60,6 +60,11 @@ This will install the `rke2-server` service and the `rke2` binary onto your mach
 When the install script is executed, it makes a determination of what type of system it is. If it's an OS that uses RPMs (such as CentOS or RHEL), it will perform an RPM based installation, otherwise the script defaults to tarball. RPM based installation is covered below.
 
 Next, the installation script downloads the tarball, verifies it by comparing SHA256 hashes, and lastly, extracts the contents to `/usr/local`. An operator is free to move the files after installation if desired. This operation simply extracts the tarball and no other system modifications are made.
+
+[WARNING]
+====
+Because no other system modifications are made, the tarball method does not install the `rke2-selinux` policy and does not enable SELinux support in RKE2. On a node running SELinux in `Enforcing` mode, xref:security/selinux.adoc#_installing_rke2_selinux_on_its_own[install `rke2-selinux` first], then install RKE2 and set `selinux: true` in the config file.
+====
 
 Tarball structure / contents:
 
@@ -202,7 +207,7 @@ reboot
 Replace `rke2-server` with `rke2-agent` on agent nodes.
 --
 
-Enterprise Linux 8/9/10::
+RHEL 8/9/10::
 +
 --
 In order to use the RPM repository, on a CentOS or RHEL system, run the following bash snippet:
