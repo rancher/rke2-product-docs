@@ -1,6 +1,6 @@
 = Herramientas CLI
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 21/08/2025
+:revdate: 2025-08-21
 :page-revdate: {revdate}
 
 RKE2 envía varias herramientas CLI para ayudar a acceder y depurar el clúster. Al iniciar, se extraen a `/var/lib/rancher/rke2/bin`.
