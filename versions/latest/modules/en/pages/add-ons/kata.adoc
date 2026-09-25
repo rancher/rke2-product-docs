@@ -1,0 +1,510 @@
+= Kata Containers
+:page-languages: [en, de, es, fr, ja, pt, zh]
+:revdate: 2026-09-24
+:page-revdate: {revdate}
+
+Kata Containers is an open-source container runtime that runs pods inside lightweight micro-VMs instead of sharing the host kernel. It combines the strong hardware-level security isolation of virtual machines with the speed, low footprint, and standard tooling of traditional containers.
+
+[NOTE]
+====
+Kata Containers is considered a Technology Preview.
+====
+
+== Running standard Kata Containers
+
+In a standard (non-confidential) Kata Containers deployment, pods run in isolated micro-VMs to protect the host and other tenants from untrusted workloads. Unlike Confidential Containers (CoCo), the host infrastructure and hypervisor remain fully trusted, requiring no specialized hardware Trusted Execution Environments (TEEs) or memory encryption.
+
+=== Prerequisites
+
+* amd64 (other architectures are currently not supported)
+* September RKE2 versions (1.37.1+rke2r1, 1.36.5+rke2r1, 1.35.9+rke2r1, 1.34.12+rke2r1)
+* Hardware virtualization enabled on at least one node. If the node itself is a VM, nested virtualization must be enabled.
+* KVM enabled on the host (`/dev/kvm`)
+
+To check whether hardware virtualization is supported on your node (or passed through via nested virtualization if the node is a VM), run:
+
+[,sh]
+----
+grep -E 'vmx|svm' /proc/cpuinfo
+----
+
+The command should return a result (`vmx` for Intel or `svm` for AMD). If there is no output, your node does not support virtualization.
+
+Also verify that KVM is available:
+
+[,sh]
+----
+ls -l /dev/kvm
+----
+
+=== Installing Kata Containers
+
+To enable Kata Containers in RKE2, deploy the upstream `kata-deploy` chart. It installs the binaries, configures containerd, and creates `RuntimeClass` resources.
+
+Deploy the chart using an RKE2 `HelmChart` manifest, for example by saving it to `/var/lib/rancher/rke2/server/manifests/kata-deploy.yaml`:
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kata-deploy
+  namespace: kube-system
+spec:
+  chart: oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy
+  version: "4.2.0"
+  targetNamespace: kata-system
+  createNamespace: true
+  valuesContent: |
+    k8sDistribution: rke2
+    runtimeClasses:
+      createDefault: true
+    shims:
+      disableAll: true
+      qemu-runtime-rs:
+        enabled: true
+        supportedArches:
+          - amd64
+----
+
+After a couple of seconds, you should be able to see a kata-deploy daemonset in namespace kata-system:
+
+[,console]
+----
+NAME          DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+kata-deploy   3         3         0       3            0           <none>          2m6s
+----
+
+If you prefer kata-deploy to only run on selected nodes, please check the following section:
+
+.Installing Kata Containers on selected nodes
+[%collapsible]
+======
+You can limit Kata Containers installation to selected nodes by using Node Feature Discovery (NFD) or Kubernetes scheduling rules.
+
+*Using Node Feature Discovery*
+
+Node Feature Discovery (NFD) detects hardware features, including virtualization support, and labels nodes accordingly so the Kubernetes scheduler can use them.
+When enabled, kata-deploy manages NFD as a subchart and enforces virtualization checks:
+
+* x86_64: Requires Intel VT-x (`VMX`) or AMD-V (`SVM`) CPU features
+* aarch64, s390x, ppc64le, riscv64: Always allowed (specific virtualization detection not yet implemented)
+
+NFD uses its default configuration, which detects CPU features like VMX and SVM.
+
+Use the following configuration to enable `node-feature-discovery`:
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kata-deploy
+  namespace: kube-system
+spec:
+  chart: oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy
+  version: "4.2.0"
+  targetNamespace: kata-system
+  createNamespace: true
+  valuesContent: |
+    k8sDistribution: rke2
+    runtimeClasses:
+      createDefault: true
+    shims:
+      disableAll: true
+      qemu-runtime-rs:
+        enabled: true
+        supportedArches:
+          - amd64
+    node-feature-discovery:
+      enabled: true
+----
+
+Kata-deploy adds required node affinity for the NFD virtualization labels. On amd64, a node must have either `feature.node.kubernetes.io/cpu-cpuid.VMX=true` (Intel VT-x) or `feature.node.kubernetes.io/cpu-cpuid.SVM=true` (AMD-V).
+
+[CAUTION]
+====
+If you already have Node Feature Discovery installed independently in your cluster, keep this setting disabled.
+When disabled, no virtualization checks are enforced. Use node selector or affinity rules to limit installation to suitable nodes.
+====
+
+*Using Kubernetes scheduling rules*
+
+Use the top-level `nodeSelector` and `affinity.nodeAffinity` values in `valuesContent` to select installation nodes. Both rules are combined when supplied. Use `tolerations` when the selected nodes have taints that would otherwise prevent the kata-deploy pod from scheduling.
+
+For example, to install Kata Containers only on nodes labeled `example.com/kata-enabled=true`, set `nodeSelector` under `valuesContent`:
+
+[,yaml]
+----
+    nodeSelector:
+      example.com/kata-enabled: "true"
+----
+======
+
+=== Verifying the installation
+
+On nodes selected by kata-deploy, the QEMU binary and runtime-rs shim should be installed:
+
+[,sh]
+----
+ls -l /opt/kata/bin/qemu-system-x86_64
+ls -l /opt/kata/runtime-rs/bin/containerd-shim-kata-v2
+----
+
+`qemu-runtime-rs` uses the Rust implementation of the Kata shim. The legacy Go runtime binary, `/opt/kata/bin/kata-runtime`, is not installed by this configuration.
+
+The containerd configuration for kata should also be in place:
+
+[,sh]
+----
+cat /var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.d/kata-deploy.toml
+----
+
+Verify that the `RuntimeClass` resources were created:
+
+[,console]
+----
+$ kubectl get runtimeClass
+NAME                   HANDLER                AGE
+kata                   kata-qemu-runtime-rs   13m
+kata-qemu-runtime-rs   kata-qemu-runtime-rs   13m
+----
+
+If the previous steps succeeded, you can test the installation by running a sample pod, which uses kata as the runtimeClass:
+
+[,yaml]
+----
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kata-test-pod
+spec:
+  runtimeClassName: kata
+  containers:
+    - name: test-container
+      image: alpine:latest
+      command: ["/bin/sh", "-c", "sleep 3600"]
+----
+
+The Kata Containers runtime includes a node selector for the label `katacontainers.io/kata-runtime=true`, which kata-deploy sets automatically on supported nodes. 
+Kubernetes uses this label to schedule the pod in the node that fulfills the prerequisites.
+
+On the node where the pod was scheduled, verify that a QEMU VM is running:
+
+[,sh]
+----
+ps aux | grep qemu-system-x86_64
+----
+
+You can also confirm that the pod sandbox and workload container use the Kata runtime:
+
+[,sh]
+----
+sudo /var/lib/rancher/rke2/bin/ctr --namespace k8s.io --address /run/k3s/containerd/containerd.sock containers list | grep kata-qemu-runtime-rs
+----
+
+The expected output consists of two lines: one for the pod and one for the pause image:
+
+[,console]
+----
+5dba74b7a3b7f0a75f905fee681e80512b202a32e478bc3a7deebb01af64cfd2    docker.io/library/alpine:latest                     io.containerd.kata-qemu-runtime-rs.v2
+898343a9cdf243d787a9dabe1462ffb9f71c158c9314d5935d03b977b8f230c2    registry.rancher.com/rancher/mirrored-pause:3.10.2  io.containerd.kata-qemu-runtime-rs.v2
+----
+
+== Running non-confidential Kata with NVIDIA GPU passthrough
+
+This deployment runs non-confidential GPU workloads inside isolated Kata micro-VMs. It leverages the sandboxed GPU architecture, which replaces standard `virtiofs` shared host filesystems with `erofs` and `nydus` block-based image storage.
+
+=== Prerequisites
+
+* amd64 (other architectures are currently not supported)
+* September RKE2 versions (1.37.1+rke2r1, 1.36.5+rke2r1, 1.35.9+rke2r1, 1.34.12+rke2r1)
+* At least one node must have:
+  * Hardware virtualization enabled. If the node itself is a VM, nested virtualization must be enabled.
+  * KVM enabled on the host (`/dev/kvm`)
+  * `erofs` and `dm-verity` kernel modules enabled
+  * `erofs-utils` package installed
+  * A GPU supported by the NVIDIA GPU Operator
+
+The `qemu-nvidia-gpu-runtime-rs` runtime passes through an entire NVIDIA GPU to the Kata VM. Before installing it, deploy and verify the NVIDIA GPU Operator as described in xref:add-ons/gpu_operators.adoc[GPU Operators]. The GPU Operator must be configured for NVIDIA GPU VM passthrough: it provides the VFIO device binding and the `nvidia.com/pgpu` resource consumed by Kata workloads.
+
+=== Deploying the NVIDIA GPU Operator
+
+Deploy the NVIDIA GPU Operator with workload sandboxing enabled:
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: gpu-operator
+  namespace: kube-system
+spec:
+  repo: https://helm.ngc.nvidia.com/nvidia
+  chart: gpu-operator
+  version: v26.3.3
+  targetNamespace: gpu-operator
+  createNamespace: true
+  valuesContent: |-
+    toolkit:
+      env:
+      - name: CONTAINERD_SOCKET
+        value: /run/k3s/containerd/containerd.sock
+    sandboxWorkloads:
+      enabled: true
+      defaultWorkload: vm-passthrough
+      mode: kata
+----
+
+Verify that the GPU Operator advertises the required resource before deploying the pod:
+
+[,sh]
+----
+kubectl get nodes -o custom-columns=NAME:.metadata.name,PGPU:.status.allocatable.nvidia\\.com/pgpu
+----
+
+=== Installing the GPU runtime shim
+
+The following configuration installs only the NVIDIA GPU runtime-rs shim. It uses the EROFS snapshotter required by this runtime and limits kata-deploy to GPU passthrough nodes where the GPU Operator deployed the sandbox device plugin. The `RuntimeClass` is also restricted to nodes that the GPU Operator marks as ready in non-confidential-computing mode:
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kata-deploy
+  namespace: kube-system
+spec:
+  chart: oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy
+  version: "4.2.0"
+  targetNamespace: kata-system
+  createNamespace: true
+  valuesContent: |
+    k8sDistribution: rke2
+    nodeSelector:
+      nvidia.com/gpu.deploy.kata-sandbox-device-plugin: "true"
+    snapshotter:
+      setup: ["nydus", "erofs"]
+      erofsSnapshotterMode: "memory"
+      erofsDmverity: true
+    defaultShim:
+      amd64: qemu-nvidia-gpu-runtime-rs
+    runtimeClasses:
+      createDefault: true
+    shims:
+      disableAll: true
+      qemu-nvidia-gpu-runtime-rs:
+        enabled: true
+        supportedArches:
+          - amd64
+        containerd:
+          snapshotter: erofs
+        runtimeClass:
+          nodeSelector:
+            nvidia.com/cc.ready.state: "false"
+----
+
+Because confidential computing boundaries and direct hardware passthrough require isolated storage, host and guest cannot share directories via `9p` or `virtiofs`. Therefore, the standard `overlayfs` snapshotter cannot be used. Instead, `erofs` and `nydus` are required to expose container image filesystems via block devices.
+
+After a couple of seconds, you should be able to see a kata-deploy daemonset in namespace kata-system:
+
+[,console]
+----
+NAME          DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                          AGE
+kata-deploy   1         1         1       1            1           nvidia.com/gpu.deploy.kata-sandbox-device-plugin=true  2m6s
+----
+
+=== Verifying the installation
+
+On nodes selected by kata-deploy, the QEMU binary and runtime-rs shim should be installed:
+
+[,sh]
+----
+ls -l /opt/kata/bin/qemu-system-x86_64-no-shared-fs
+ls -l /opt/kata/runtime-rs/bin/containerd-shim-kata-v2
+----
+
+The containerd configuration for kata should also be in place:
+
+[,sh]
+----
+cat /var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.d/kata-deploy.toml
+----
+
+Verify that the `RuntimeClass` resources were created:
+
+[,console]
+----
+$ kubectl get runtimeClass
+NAME                              HANDLER                           AGE
+kata                              kata-qemu-nvidia-gpu-runtime-rs   122m
+kata-qemu-nvidia-gpu-runtime-rs   kata-qemu-nvidia-gpu-runtime-rs   122m
+----
+
+=== Running a GPU workload
+
+Run a test GPU workload by requesting a physical GPU resource and specifying the runtime class:
+
+[,yaml]
+----
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kata-nvidia-gpu-test
+spec:
+  runtimeClassName: kata-qemu-nvidia-gpu-runtime-rs
+  restartPolicy: Never
+  containers:
+    - name: cuda-vectoradd
+      image: nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda12.5.0-ubuntu22.04
+      resources:
+        limits:
+          nvidia.com/pgpu: 1
+          memory: 16Gi
+----
+
+Check the pod logs to verify that the workload executed on the GPU:
+
+[,sh]
+----
+kubectl logs pod/kata-nvidia-gpu-test
+----
+
+The output should confirm the CUDA kernel completed successfully:
+
+[,console]
+----
+[Vector addition of 50000 elements]
+Copy input data from the host memory to the CUDA device
+CUDA kernel launch with 196 blocks of 256 threads
+Copy output data from the CUDA device to the host memory
+Test PASSED
+Done
+----
+
+== Running confidential Kata with NVIDIA GPU passthrough
+
+Confidential Containers (CoCo) with NVIDIA GPU passthrough combines hardware-isolated Trusted Execution Environments (TEEs) on the host CPU (such as AMD SEV-SNP or Intel TDX) with Confidential Computing-capable NVIDIA GPUs (such as NVIDIA Hopper or Blackwell architectures). Memory inside the micro-VM and GPU memory are hardware-encrypted, protecting workloads from a privileged host, hypervisor, and neighboring tenants.
+
+[NOTE]
+====
+Setting up end-to-end attestation infrastructure—including Trustee Key Broker Service (KBS), Attestation Agent (AA), confidential policy generation with `genpolicy`, and secure key or secret release—is out of the scope of this document. 
+This section covers deploying the confidential Kata GPU shims and running GPU workloads on a cluster already configured with CC-capable hardware.
+====
+
+=== Prerequisites
+
+* All prerequisites listed in <<_running_non_confidential_kata_with_nvidia_gpu_passthrough,Running non-confidential Kata with NVIDIA GPU passthrough>>.
+* AMD SEV-SNP or Intel TDX enabled on the CPU and in the BIOS/UEFI.
+* For hardware, firmware, and host prerequisites specific to Confidential Containers, refer to the https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/prerequisites.html[NVIDIA Confidential Containers prerequisites].
+
+=== Enabling Confidential Computing mode in the GPU Operator
+
+To transition GPUs on the node into Confidential Computing (CC) mode, set the `nvidia.com/cc.mode` label on the node:
+
+[,sh]
+----
+kubectl label nodes <node-name> nvidia.com/cc.mode=on --overwrite
+----
+
+The `nvidia-cc-manager` operand transitions the GPU into CC mode and automatically sets the `nvidia.com/cc.ready.state="true"` node label. Verify the node status:
+
+[,sh]
+----
+kubectl get nodes -L nvidia.com/cc.mode,nvidia.com/cc.ready.state
+----
+
+=== Installing the confidential GPU runtime shim
+
+Deploy the `kata-deploy` chart with the confidential GPU shims enabled. For AMD SEV-SNP, enable `qemu-nvidia-gpu-snp-runtime-rs`; for Intel TDX, enable `qemu-nvidia-gpu-tdx-runtime-rs`:
+
+[,yaml]
+----
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kata-deploy
+  namespace: kube-system
+spec:
+  chart: oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy
+  version: "4.2.0"
+  targetNamespace: kata-system
+  createNamespace: true
+  valuesContent: |
+    k8sDistribution: rke2
+    nodeSelector:
+      nvidia.com/gpu.deploy.kata-sandbox-device-plugin: "true"
+    snapshotter:
+      setup: ["nydus", "erofs"]
+      erofsSnapshotterMode: "memory"
+      erofsDmverity: true
+    shims:
+      disableAll: true
+      qemu-nvidia-gpu-snp-runtime-rs:
+        enabled: true
+        supportedArches:
+          - amd64
+        containerd:
+          snapshotter: nydus
+          forceGuestPull: false
+        runtimeClass:
+          nodeSelector:
+            nvidia.com/cc.ready.state: "true"
+            amd.feature.node.kubernetes.io/snp: "true"
+      qemu-nvidia-gpu-tdx-runtime-rs:
+        enabled: true
+        supportedArches:
+          - amd64
+        containerd:
+          snapshotter: nydus
+          forceGuestPull: false
+        runtimeClass:
+          nodeSelector:
+            nvidia.com/cc.ready.state: "true"
+            intel.feature.node.kubernetes.io/tdx: "true"
+----
+
+This creates the `kata-qemu-nvidia-gpu-snp-runtime-rs` and `kata-qemu-nvidia-gpu-tdx-runtime-rs` `RuntimeClass` resources.
+
+=== Running a confidential GPU workload
+
+Deploy a sample pod using the appropriate confidential GPU runtime class (`kata-qemu-nvidia-gpu-snp-runtime-rs` on an AMD SEV-SNP node, or `kata-qemu-nvidia-gpu-tdx-runtime-rs` on an Intel TDX node):
+
+[,yaml]
+----
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kata-nvidia-gpu-coco-test
+spec:
+  runtimeClassName: kata-qemu-nvidia-gpu-snp-runtime-rs
+  restartPolicy: Never
+  containers:
+    - name: cuda-vectoradd
+      image: nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda12.5.0-ubuntu22.04
+      resources:
+        limits:
+          nvidia.com/pgpu: 1
+          memory: 16Gi
+----
+
+Check the pod logs to verify that the workload executed on the GPU:
+
+[,sh]
+----
+kubectl logs pod/kata-nvidia-gpu-coco-test
+----
+
+The output should confirm the CUDA kernel completed successfully:
+
+[,console]
+----
+[Vector addition of 50000 elements]
+Copy input data from the host memory to the CUDA device
+CUDA kernel launch with 196 blocks of 256 threads
+Copy output data from the CUDA device to the host memory
+Test PASSED
+Done
+----
+
+The GPU passthrough flow, TEE modes, and GPU Operator configuration are documented upstream in https://github.com/kata-containers/kata-containers/blob/4.2.0/docs/use-cases/NVIDIA-GPU-passthrough-and-Kata-QEMU.md[Enabling NVIDIA GPU workloads using GPU passthrough with Kata Containers].
