@@ -1,4 +1,5 @@
 = v1.26.X
+:description: Learn about the v1.26.X release, including Kubernetes updates and known issues with Canal and Flannel
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-05-06
 :page-revdate: {revdate}

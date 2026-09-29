@@ -1,4 +1,5 @@
 = Embedded datastore
+:description: Learn about using embedded etcd or SQLite as datastores in Kubernetes clusters to simplify deployment and improve performance and security
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-08
 :page-revdate: {revdate}

@@ -1,4 +1,5 @@
 = v1.24.X
+:description: Upgrade to v1.24.17+rke2r1 to update Kubernetes to v1.24.17, fix security issues including CVE-2023-32186, and ensure you retain or retrieve the cluster token
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-05-06
 :page-revdate: {revdate}

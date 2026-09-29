@@ -1,4 +1,5 @@
 = Windows Agent Configuration Reference
+:description: Configure the Windows RKE2 agent using parameters, set Calico environment variables, and customize settings via the CLI
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-21
 :page-revdate: {revdate}

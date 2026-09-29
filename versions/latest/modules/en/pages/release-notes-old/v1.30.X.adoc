@@ -1,4 +1,5 @@
 = v1.30.X
+:description: Upgrade to v1.30.14+rke2r2 and keep the cluster token generated during setup for joining nodes and encrypting data, then review the chart changes for updates
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2024-09-08
 :page-revdate: {revdate}

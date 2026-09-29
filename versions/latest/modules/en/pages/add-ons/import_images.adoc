@@ -1,4 +1,5 @@
 = Import Images
+:description: Import images from a tarball to the containerd image store, pre-import images for Kubernetes imagePullPolicy Never to speed up node startup or enhance
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-12-04
 :page-revdate: {revdate}

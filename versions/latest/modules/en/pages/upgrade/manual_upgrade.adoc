@@ -1,4 +1,5 @@
 = Manual Upgrades
+:description: Upgrade RKE2 manually using the installation script, downloading and replacing the binary, or running RPM commands to update the server or agent packages
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-01-08
 :page-revdate: {revdate}

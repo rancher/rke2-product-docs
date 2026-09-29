@@ -1,4 +1,5 @@
 = rke2-patcher
+:description: Use rke2-patcher to inspect and patch RKE2 component images with CVE fixes before the next monthly release
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-08-26
 :page-revdate: {revdate}

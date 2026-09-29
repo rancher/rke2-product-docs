@@ -1,4 +1,5 @@
 = External Datastore
+:description: Configure an external datastore for Kubernetes using MySQL, PostgreSQL, or etcd with the datastore-endpoint parameter
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-05-29
 :page-revdate: {revdate}

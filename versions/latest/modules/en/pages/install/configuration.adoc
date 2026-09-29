@@ -1,4 +1,5 @@
 = Configuration Options
+:description: Configure RKE2 using a YAML config file located at /etc/rancher/rke2/config.yaml, command line arguments, or environment variables
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-24
 :page-revdate: {revdate}

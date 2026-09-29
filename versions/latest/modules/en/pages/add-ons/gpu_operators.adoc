@@ -1,4 +1,5 @@
 = GPU Operators
+:description: Deploy, manage, and verify GPU resources in RKE2 clusters using NVIDIA and AMD operators by installing required drivers and checking host OS compatibility
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-08-24
 :page-revdate: {revdate}

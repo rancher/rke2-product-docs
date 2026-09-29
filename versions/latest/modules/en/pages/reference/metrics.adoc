@@ -1,4 +1,5 @@
 = Metrics
+:description: Access metrics to monitor RKE2 cluster health and performance using component documentation and the /metrics endpoint
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-07-22
 :page-revdate: {revdate}

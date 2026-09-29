@@ -1,4 +1,5 @@
 = Upgrading {product-name} Clusters
+:description: Upgrade your SUSE® Rancher Prime: RKE2 clusters using manual techniques or automated Kubernetes-native methods described in this section
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-01-08
 :page-revdate: {revdate}

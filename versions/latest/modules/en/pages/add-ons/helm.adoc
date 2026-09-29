@@ -1,4 +1,5 @@
 = Helm
+:description: Use Helm to manage Kubernetes deployments by creating configurable Helm charts with RKE2, which automatically deploys manifests
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-24
 :page-revdate: {revdate}

@@ -1,4 +1,5 @@
 = Token Management
+:description: Manage RKE2 tokens to secure node joins, encrypt data, and authenticate cluster connections using secure or short formats
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-02-27
 :page-revdate: {revdate}

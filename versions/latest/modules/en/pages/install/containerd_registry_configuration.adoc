@@ -1,4 +1,5 @@
 = Containerd Registry Configuration
+:description: Learn how to configure Containerd to connect to private registries using the registries.yaml file to set up TLS or authentication
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-06
 :page-revdate: {revdate}

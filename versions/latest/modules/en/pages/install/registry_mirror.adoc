@@ -1,4 +1,5 @@
 = Embedded Registry Mirror
+:description: Enable the embedded registry mirror to allow peer-to-peer sharing of container images between nodes in a Kubernetes cluster
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-07-24
 :page-revdate: {revdate}

@@ -1,4 +1,5 @@
 = CLI Tools
+:description: Find CLI tools for accessing and debugging the cluster, including kubectl, ctr, and crictl, found in /var/lib/rancher/rke2/bin
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-21
 :page-revdate: {revdate}

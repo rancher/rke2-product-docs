@@ -1,4 +1,5 @@
 = Logging
+:description: Find logs from RKE2, Containerd, kubelet, and Kubernetes components in specific locations on the system or use commands like journalctl, kubectl, or crictl to access logs
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-21
 :page-revdate: {revdate}

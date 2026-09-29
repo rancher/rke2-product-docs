@@ -1,4 +1,5 @@
 = Uninstall
+:description: Uninstall RKE2 using the RPM, Tarball, or Windows method to terminate processes and clean up files
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-08-06
 :page-revdate: {revdate}

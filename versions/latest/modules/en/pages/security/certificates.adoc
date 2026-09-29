@@ -1,4 +1,5 @@
 = Certificate Management
+:description: Manage client and server certificates to renew, rotate, and check expiration dates, ensuring proper Kubernetes operation
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-02-27
 :page-revdate: {revdate}

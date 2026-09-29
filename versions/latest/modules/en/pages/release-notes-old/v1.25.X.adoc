@@ -1,4 +1,5 @@
 = v1.25.X
+:description: Upgrade to v1.25.X to fix the runc security issue by updating to v1.1.12 and save the cluster token used for joining new nodes and encrypting backups
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2025-05-06
 :page-revdate: {revdate}

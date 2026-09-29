@@ -1,4 +1,5 @@
 = CIS 1.12 Self-Assessment Guide
+:description: Evaluate the security of your RKE2 cluster against the CIS Kubernetes benchmark controls using this self-assessment guide
 :page-languages: [en, de, es, fr, ja, pt, zh]
 :revdate: 2026-06-05
 :page-revdate: {revdate}
