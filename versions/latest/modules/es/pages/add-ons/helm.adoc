@@ -1,6 +1,6 @@
 = Helm
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 6/11/2025
+:revdate: 2025-06-11
 :page-revdate: {revdate}
 
 Helm es la herramienta de gestión de paquetes preferida para Kubernetes. Los Charts de Helm proporcionan una sintaxis de plantillas para los documentos de manifiesto YAML de Kubernetes. Con Helm podemos crear despliegues configurables en lugar de utilizar solo archivos estáticos. Para más información sobre cómo crear tu propio catálogo de despliegues, consulta la documentación en https://helm.sh/docs/intro/quickstart/..
