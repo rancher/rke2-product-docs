@@ -1,7 +1,7 @@
 = Server Configuration Reference
 :description: Configure the rke2 server using parameters and critical values listed in this reference to ensure consistent cluster settings on all nodes
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-09-03
+:revdate: 2026-10-02
 :page-revdate: {revdate}
 
 This is a reference to all parameters that can be used to configure the rke2 server. Note that while this is a reference to the command line arguments, the best way to configure RKE2 is using the xref:install/configuration.adoc#_configuration_file[configuration file].
@@ -240,7 +240,7 @@ The following options must be set to the same value on all servers in the cluste
 | 
 
 | etcd-snapshot-retention
-| Number of snapshots to retain
+| Number of local snapshots to retain on each server node
 | 5
 | 
 
@@ -318,7 +318,7 @@ The following options must be set to the same value on all servers in the cluste
 | 
 
 | etcd-s3-retention
-| S3 retention limit
+| Number of S3 snapshots to retain in the configured region, bucket, and prefix
 | 5
 | 
 
