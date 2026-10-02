@@ -22,7 +22,6 @@ jobs:
       - name: Generate Site
         run: |
           npx antora --stacktrace \
-            --log-file local-build.log \
             --log-format=pretty \
             --log-level=info \
             playbook-local.yml 2>&1
