@@ -1,0 +1,245 @@
+= rke2-patcher
+:description: Use rke2-patcher to inspect and patch RKE2 component images with CVE fixes before the next monthly release
+:page-languages: [en, de, es, fr, ja, pt, zh]
+:revdate: 2026-10-06
+:page-revdate: {revdate}
+
+`rke2-patcher` is a CLI tool for SUSE Rancher Prime: RKE2 that helps operators inspect and patch packaged component images.
+
+The primary use case for `rke2-patcher` is to consume component images that include serious CVE fixes before the next monthly RKE2 release is available. The built-in patching limitations are intentional and are designed to encourage timely RKE2 upgrades, rather than carrying `rke2-patcher` overrides indefinitely on the same RKE2 version.
+
+[IMPORTANT]
+====
+`rke2-patcher` supports Prime clusters only and requires `prime: true` in the RKE2 configuration.
+====
+
+Each component command (`image-cve`, `image-list`, `image-patch`, and `image-reconcile`) checks the HelmChart for the selected component and requires `global.prime.enabled` to be `true`.
+
+The tool can be used to inspect the images that are currently running in an RKE2 cluster, review newer tags that are available for supported packaged components, patch a component to a newer eligible image, and reconcile those changes after an RKE2 upgrade.
+
+[#_supported_components]
+== Supported components
+
+* `rke2-traefik`
+* `rke2-ingress-nginx`
+* `rke2-coredns`
+* `rke2-dns-node-cache`
+* `rke2-metrics-server`
+* `rke2-flannel`
+* `rke2-canal-calico`
+* `rke2-canal-flannel`
+* `rke2-coredns-cluster-autoscaler`
+* `rke2-snapshot-controller`
+
+[#_requirements_1]
+== Requirements
+
+* Kubernetes API access (in-cluster service account or kubeconfig).
+* Permissions to list `HelmChart` resources for Prime-cluster checks.
+* Access to the configured image registry endpoint.
+* Permissions to create scanner Jobs and read logs for CVE scans.
+* Permissions to create or update `HelmChartConfig` objects for patch and reconcile operations.
+
+[#_limitations]
+== Limitations
+
+* `rke2-patcher` supports Prime clusters only and requires `prime: true` in the RKE2 configuration.
+* Patching is limited to the supported component list shown on this page.
+* For most components, `image-patch` enforces a 45-day patch window from the RKE2 release date. Tags outside that window are blocked until you upgrade RKE2.
+* `rke2-ingress-nginx` is exempt from the 45-day patch window check.
+* If stale patch state exists from a previous RKE2 version, new patch operations are blocked until you run `image-reconcile`.
+* After an RKE2 upgrade, all previously patched components must be reconciled before applying new patches.
+* Patching and reconciliation require Kubernetes API access and permissions to update `HelmChartConfig` resources.
+
+
+
+[#_installation_3]
+== Installation
+
+You can use `rke2-patcher` either as a locally built CLI binary or as a pod running inside the cluster.
+
+`rke2-patcher` can be found in the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL].
+
+[#_rke2_patcher_cli]
+== rke2-patcher CLI
+
+[,bash]
+----
+rke2-patcher --version
+rke2-patcher --config
+rke2-patcher image-cve <component> [--json]
+rke2-patcher image-list <component> [--with-cves] [--verbose] [--json]
+rke2-patcher image-patch <component> [--tag TAG] [--dry-run] [--yes|-y]
+rke2-patcher image-reconcile <component> [--yes|-y]
+----
+
+[#_rke2_patcher_version]
+== `rke2-patcher --version`
+
+Print the `rke2-patcher` version. When Kubernetes access is available, this command also reports the connected cluster version.
+
+[,bash]
+----
+rke2-patcher --version
+----
+
+[#_rke2_patcher_config]
+== `rke2-patcher --config`
+
+Show the effective runtime configuration used by `rke2-patcher`, including the configured registry, scanner mode, scanner image, scanner namespace, scanner timeout, and patch state ConfigMap.
+
+[,bash]
+----
+rke2-patcher --config
+----
+
+[#_rke2_patcher_image_cve_component]
+== `rke2-patcher image-cve <component>`
+
+Show the CVEs for the image currently running for the selected component.
+
+By default, `image-cve` starts an in-cluster scanner Job that runs Trivy. When `RKE2_PATCHER_SCANNER_MODE=local` is set, the command uses a local scanner instead.
+
+Text output lists each finding's CVE ID and severity, with `CRITICAL` findings first. The JSON output includes the same severity information.
+
+Use this command when you want to inspect the current risk profile of a deployed component image before deciding whether to patch.
+
+Add `--json` to return the component, scanned image, scanner, CVE count, and findings as JSON. Each finding includes its CVE ID and severity.
+
+[,bash]
+----
+rke2-patcher image-cve rke2-traefik --json
+----
+
+Scanner progress is written to stderr so standard output remains valid JSON for automation.
+
+// GIF placeholder:
+[.demo-wide]
+image::rke2-patcher-image-cve.gif[rke2-patcher image-cve demo, width=1000]
+
+[#_rke2_patcher_image_list_component]
+== `rke2-patcher image-list <component>`
+
+List the image tags available for a supported component.
+
+The `image-list` command can optionally scan selected tags for CVEs:
+
+* `--with-cves`: scan the current, previous, and eligible newer tags
+* `--verbose`: show the full CVE list for each scanned tag
+* `--json`: return component and repository details, running images, and selected tags as JSON; with `--with-cves`, include each scanned tag's CVE count and complete findings
+
+CVEs are limited to `CRITICAL` and `HIGH` severity and are displayed with `CRITICAL` findings first. JSON includes each finding's ID and severity, and always includes the complete list regardless of `--verbose`.
+
+Use this command to compare the currently running tag with newer eligible tags before applying a patch.
+
+[,bash]
+----
+rke2-patcher image-list rke2-traefik --with-cves --json
+----
+
+// GIF placeholder:
+[.demo-wide]
+image::rke2-patcher-image-list.gif[rke2-patcher image-list demo, width=1000]
+
+[#_rke2_patcher_image_patch_component]
+== `rke2-patcher image-patch <component>`
+
+Patch a supported component to the next eligible image tag.
+
+The command creates or updates a `HelmChartConfig` in the cluster and records patch state so the change can be reconciled later.
+
+`image-patch` supports the following options:
+
+* `--tag TAG`: patch to this exact tag instead of automatically selecting the next tag
+* `--dry-run`: print the generated `HelmChartConfig` without applying it
+* `--yes` or `-y`: automatically approve prompts
+
+For example, to preview an exact eligible tag from `image-list`:
+
+[,bash]
+----
+rke2-patcher image-patch rke2-traefik --tag TAG_FROM_IMAGE_LIST --dry-run
+----
+
+An explicitly selected tag must exist in the configured registry, be newer than the running tag, and be on the same major and minor release line. The command also enforces the patch window rules for the target component. If a target image falls outside the allowed window, `rke2-patcher` instructs you to upgrade RKE2 first.
+
+// GIF placeholder:
+[.demo-wide]
+image::rke2-patcher-image-patch.gif[rke2-patcher image-patch demo, width=1000]
+
+[#_rke2_patcher_image_reconcile_component]
+== `rke2-patcher image-reconcile <component>`
+
+Reconcile or revert a previously applied patch for a supported component.
+
+This command is typically used after an RKE2 upgrade, when an older patch state must be cleared before patching can be used again.
+
+`image-reconcile` supports the following option:
+
+* `--yes` or `-y`: automatically approve prompts
+
+When reconciliation succeeds, `rke2-patcher` removes the patcher-managed image override values and lets RKE2 return to the packaged chart defaults.
+
+// GIF placeholder:
+[.demo-wide]
+image::rke2-patcher-image-reconcile.gif[rke2-patcher image-reconcile demo, width=1000]
+
+
+[#_typical_workflow]
+== Typical workflow
+
+1. Check current status and available tags.
+2. Patch one or more supported components.
+3. Upgrade RKE2 when needed.
+4. Run `image-reconcile` for previously patched components.
+
+For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rke2-patcher.
+
+[#_airgap_support]
+== Airgap support
+
+`rke2-patcher` can be used in airgapped environments when required artifacts are mirrored and reachable inside your private network.
+
+To use `rke2-patcher` in airgap environments:
+
+* Mirror supported component images and eligible tags to an internal registry.
+* Set `RKE2_PATCHER_REGISTRY` to your internal registry endpoint.
+* Ensure the cluster can reach the internal registry endpoint.
+
+For CVE scanning in airgap environments, use one of these approaches:
+
+* Cluster scanning mode:
+** Mirror the scanner image used by the in-cluster scan job.
+** Ensure scan namespaces and required permissions are available.
+** The scanner Job downloads and decompresses the OpenVEX report from the Rancher VEXHub URL, so cluster-mode CVE scans require outbound access to that endpoint.
+* Local scanning mode (`RKE2_PATCHER_SCANNER_MODE=local`):
+** Install a supported local scanner binary (`trivy` or `grype`) on the host OS.
+** Pre-stage the Rancher OpenVEX file at `$HOME/rke2-patcher-cache/vex/rancher.openvex.json`.
+** The patcher downloads and decompresses the compressed report automatically when internet access is available. When pre-staging it for an air-gapped scan, store the decompressed JSON at the path above.
+** Compressed report source: https://github.com/rancher/vexhub/raw/refs/heads/main/reports/rancher.openvex.json.gz
+
+Example command to pre-stage the OpenVEX file:
+
+[,bash]
+----
+mkdir -p "$HOME/rke2-patcher-cache/vex"
+curl -fsSL https://github.com/rancher/vexhub/raw/refs/heads/main/reports/rancher.openvex.json.gz \
+	| gzip -dc > "$HOME/rke2-patcher-cache/vex/rancher.openvex.json"
+----
+
+Examples:
+
+[,bash]
+----
+RKE2_PATCHER_REGISTRY=registry.example.local:5000 \
+	rke2-patcher image-list rke2-traefik
+----
+
+[,bash]
+----
+RKE2_PATCHER_SCANNER_MODE=local \
+	RKE2_PATCHER_REGISTRY=registry.example.local:5000 \
+	rke2-patcher image-cve rke2-traefik
+----
+
+With these prerequisites in place, `image-patch`, `image-reconcile`, and `image-list` without `--with-cves` can run without direct internet access. Cluster-mode CVE scans require access to the VEX report URL.
