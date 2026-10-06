@@ -16,9 +16,10 @@ The security responder client runs as a Kubernetes `CronJob` in the `kube-system
 
 The default schedule is:
 
-```text
+[,text]
+----
 0 */8 * * *
-```
+----
 
 The security responder client retries a failed request up to three times. If the request cannot be completed, the failure does not affect the cluster and no data is queued for later delivery. The client also operates in disconnected and air-gapped environments without requiring a successful request.
 
@@ -26,12 +27,13 @@ The security responder client retries a failed request up to three times. If the
 
 You can view the security responder client's output in the logs of the Pod created for a scheduled run. A successful response can look like this:
 
-```text
+[,text]
+----
 time="2026-08-28T09:42:04Z" level=info msg="response received" intervalMinutes=60 newer=13 versions=34
 time="2026-08-28T09:42:04Z" level=warning msg="The RKE2 version v1.34.7+rke2r1 includes CVEs. These are the 5 most relevant: CVE-2026-27145, CVE-2026-29181, CVE-2026-33814, CVE-2026-33818, CVE-2026-35469. Please upgrade to a newer version to fix security vulnerabilities"
 time="2026-08-28T09:42:04Z" level=info msg="available version" releaseDate="2026-08-04T21:12:44Z" releaseNotesURL="https://github.com/rancher/rke2/releases/tag/v1.36.3%2Brke2r1" version=v1.36.3+rke2r1
 time="2026-08-28T09:42:04Z" level=info msg="available version" releaseDate="2026-08-04T20:04:30Z" releaseNotesURL="https://github.com/rancher/rke2/releases/tag/v1.34.10%2Brke2r1" version=v1.34.10+rke2r1
-```
+----
 
 The messages indicate the following:
 
