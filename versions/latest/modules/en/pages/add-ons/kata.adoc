@@ -409,6 +409,17 @@ Setting up end-to-end attestation infrastructure—including Trustee Key Broker 
 [#_enabling_confidential_computing_mode_in_the_gpu_operator]
 === Enabling Confidential Computing mode in the GPU Operator
 
+The prerequisites document specifies that the feature gate `RuntimeClassInImageCriApi` must be activated. This feature is alpha in Kubernetes 1.37 and to enable it in RKE2, you should pass the following in the RKE2 configuration:
+
+[,yaml]
+----
+kube-apiserver-arg:
+  - "feature-gates=RuntimeClassInImageCriApi=true"
+
+kubelet-arg:
+  - "feature-gates=RuntimeClassInImageCriApi=true"
+----
+
 To transition GPUs on a node into Confidential Computing (CC) mode, set the `nvidia.com/cc.mode` label on the node:
 
 [,sh]
