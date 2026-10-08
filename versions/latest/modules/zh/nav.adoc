@@ -56,8 +56,10 @@
 ** xref:add-ons/helm.adoc[]
 ** xref:add-ons/import_images.adoc[]
 ** xref:add-ons/gpu_operators.adoc[]
+** xref:add-ons/rke2-security-responder.adoc[]
 
 * xref:advanced.adoc[]
+** xref:prime-tools/rke2-patcher.adoc[]
 
 * 参考资料
 ** xref:reference/ai_conformance.adoc[]
