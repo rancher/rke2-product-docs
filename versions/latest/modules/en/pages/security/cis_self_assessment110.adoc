@@ -1,7 +1,7 @@
 = CIS 1.10 Self-Assessment Guide
 :description: Evaluate the security of a hardened RKE2 cluster against each control in the CIS Kubernetes benchmark with the CIS 1.10 Self-Assessment Guide
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-01-15
+:revdate: 2026-10-09
 :page-revdate: {revdate}
 
 [#_overview_3]
@@ -11,7 +11,7 @@ This document is a companion to the RKE2 security hardening guide. The hardening
 
 This guide is specific to the *v1.28-1.31* release line of RKE2 and the *v1.10* release of the CIS Kubernetes Benchmark.
 
-For more information about each control, including detailed rationales and descriptions checks, you can refer to the corresponding section of the CIS Kubernetes Benchmark v1.8. You can download the benchmark, after creating a free account, in https://www.cisecurity.org/benchmark/kubernetes/[Center for Internet Security (CIS)].
+For more information about each control, including detailed rationales and descriptions checks, you can refer to the corresponding section of the CIS Kubernetes Benchmark. You can download the benchmark, after creating a free account, in https://www.cisecurity.org/benchmark/kubernetes/[Center for Internet Security (CIS)].
 
 [#_testing_controls_methodology_2]
 === Testing controls methodology
