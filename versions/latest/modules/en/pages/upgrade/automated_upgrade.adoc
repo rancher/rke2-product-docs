@@ -1,7 +1,7 @@
 = Automated Upgrades
 :description: Manage RKE2 cluster upgrades using Rancher's system-upgrade-controller by creating plans to define upgrade policies and scheduling jobs based on node labels
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-01-09
+:revdate: 2026-10-09
 :page-revdate: {revdate}
 
 [#_overview]
@@ -20,6 +20,7 @@ If the RKE2 cluster is managed by Rancher, you should use the Rancher UI to mana
 * If the RKE2 cluster was imported (registered) into Rancher, Rancher will by default manage the system-upgrade-controller deployment and plans. Do not follow the steps on this page unless you have disabled version management in Rancher. See https://documentation.suse.com/cloudnative/rancher-manager/v2.13/en/cluster-deployment/register-existing-clusters.html#_configuring_version_management_for_suse_rancher_prime_rke2_and_suse_rancher_prime_k3s_clusters[Configuring Version Management for SUSE® Rancher Prime: RKE2 and SUSE® Rancher Prime: K3s Clusters] for more information.
 * If the RKE2 cluster was provisioned by Rancher, Rancher will use system agent to manage version upgrades. Do not follow the steps on this page.
 * If the RKE2 cluster is _not_ managed by Rancher, you may follow the steps below.
+* If RKE2 was installed using RPMs, please upgrade using the xref:upgrade/manual_upgrade.adoc#_upgrade_rke2_using_the_rpm_upgrades[package manager].
 ====
 
 [#_using_the_system_upgrade_controller]
