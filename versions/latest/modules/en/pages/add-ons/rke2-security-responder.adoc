@@ -1,6 +1,6 @@
 = RKE2 Security Responder
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-09-22
+:revdate: 2026-10-09
 :page-revdate: {revdate}
 
 The RKE2 security responder client is an optional component that helps identify security updates for the RKE2 version running in your cluster. It collects non-identifying cluster metadata and sends it to a service managed by SUSE. The service returns information about available versions and security advisories that may apply to the cluster. The source code for the security responder project is available in the link:https://github.com/rancher/rke2-security-responder[`rancher/rke2-security-responder` GitHub repository].
@@ -220,7 +220,7 @@ The security responder does not collect:
 
 It is possible to change the default behavior by using a `HelmChartConfig`. The `HelmChartConfig` must be named `rke2-security-responder` and be created in the `kube-system` namespace.
 
-The following example changes the schedule to once per day at midnight (`0 0 * * *`) and enables `minimal` collection mode:
+The following example enables `minimal` collection mode:
 
 [,yaml]
 ----
@@ -232,7 +232,6 @@ metadata:
 spec:
     valuesContent: |-
         mode: minimal
-        schedule: "0 0 * * *"
 ----
 
 == Disable the security responder
