@@ -19,7 +19,7 @@ To expose the GPU to the pod correctly, the NVIDIA kernel drivers and the `libnv
 
 Starting with GPU Operator v26.3.x, the operator can also manage driver and library installation on any operating system, provided the OS vendor or administrator supplies a compatible driver container image.
 
-Installation of the NVIDIA components on your host OS is out of the scope of this document; reference the NVIDIA documentation for instructions.
+Installation of NVIDIA components on the host OS is outside the scope of this document. Refer to the link:https://docs.nvidia.com/vgpu/latest/grid-vgpu-user-guide/installing-grid-vgpu-display-drivers.html#installing-vgpu-drivers-linux[NVIDIA documentation] for driver installation instructions if you are using an NVIDIA vGPU.
 
 .Checks for pre-installed NVIDIA drivers/libraries
 [%collapsible]
