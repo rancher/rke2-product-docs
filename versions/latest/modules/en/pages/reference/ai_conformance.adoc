@@ -1,12 +1,12 @@
 = CNCF AI Conformance
 :description: Verify that a Kubernetes cluster meets CNCF AI Conformance requirements by checking GPU drivers, container runtime configurations, and API consistency,
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-06-25
+:revdate: 2026-10-23
 :page-revdate: {revdate}
 
 The https://docs.google.com/document/d/1hXoSdh9FEs13Yde8DivCYjjXyxa7j4J8erjZPEGWuzc/edit?tab=t.0[CNCF Kubernetes AI Conformance] defines a set of additional capabilities, APIs and configurations that a Kubernetes cluster MUST offer, on top of standard CNCF Kubernetes Conformance, to reliably and efficiently run AI/ML workloads.
 
-This page shows how to meet these requirements using RKE2 v1.35.5+rke2r2 and NVIDIA GPU operator v26.3.2. The operator is installed following the xref:add-ons/gpu_operators.adoc#_deploy_nvidia_operator[GPU Operators documentation]
+This page shows how to meet these requirements using RKE2 and NVIDIA GPU operator v26.3.2. The operator is installed following the xref:add-ons/gpu_operators.adoc#_deploy_nvidia_operator[GPU Operators documentation]. Where a specific component version matters for a given requirement (e.g. a Gateway API implementation or CRD release), it is called out in that section.
 
 [#_support_dynamic_resource_allocation_dra]
 == Support Dynamic Resource Allocation (DRA)
@@ -160,6 +160,342 @@ Expected Output:
 ----
 "message":"Handled by Traefik controller","observedGeneration":1,"reason":"Handled","status":"True","type":"Accepted"
 ----
+
+[#_advanced_inference_ingress]
+== Advanced Inference Ingress
+
+We use the https://agentgateway.dev[agentgateway] controller to satisfy this requirement. RKE2 can install any Gateway API implementation, and multiple implementations can coexist in the same cluster, so there is no need to remove the default ingress controller (Traefik).
+
+Install agentgateway following its https://agentgateway.dev/docs/kubernetes/latest/documentation/install/helm/[Helm installation documentation], making sure to pass `--set inferenceExtension.enabled=true` so that the controller can resolve `InferencePool` backends. This test was performed with agentgateway v1.6.0.
+
+Install the Gateway API Inference Extension CRDs:
+
+[,bash]
+----
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/download/v1.6.0/manifests.yaml
+----
+
+If this was done correctly, the `inferencepools` CRD should be present:
+
+[,bash]
+----
+kubectl get crd | grep inference.networking.k8s.io
+----
+
+Expected output:
+
+[,bash]
+----
+inferencepools.inference.networking.k8s.io                 Namespaced   v1(storage)                   2026-10-23T11:31:42Z
+----
+
+The `agentgateway` GatewayClass should also be accepted:
+
+[,bash]
+----
+kubectl get gatewayclass
+----
+
+Expected output:
+
+[,bash]
+----
+NAME           CONTROLLER                      ACCEPTED   AGE
+agentgateway   agentgateway.dev/agentgateway   True       20m
+----
+
+Create a Gateway that points at the `agentgateway` GatewayClass. Note that `allowedRoutes.namespaces.from` is set to `All`, since the `HTTPRoute` created later lives in a different namespace than this `Gateway`:
+
+[,yaml]
+----
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: inference-gateway
+  namespace: agentgateway-system
+spec:
+  gatewayClassName: agentgateway
+  listeners:
+    - allowedRoutes:
+        namespaces:
+          from: All
+      name: http
+      protocol: HTTP
+      port: 80
+----
+
+If it worked, `kubectl describe gateway inference-gateway -n agentgateway-system` should show:
+
+[,bash]
+----
+Conditions:
+  Last Transition Time:  2026-10-23T11:50:58Z
+  Message:               No errors found
+  Observed Generation:   1
+  Reason:                Accepted
+  Status:                True
+  Type:                  Accepted
+----
+
+To verify end-to-end functional routing without requiring GPU hardware, we deploy two replicas of the upstream https://github.com/llm-d/llm-d-inference-sim[llm-d inference simulator] — the same tool referenced by agentgateway's own inference-routing documentation. It serves the real OpenAI-compatible API shape and emits real vLLM-format Prometheus metrics (`vllm:kv_cache_usage_perc`, `vllm:request_queue_time_seconds`, etc.) derived from genuine request concurrency, so the Endpoint Picker sees the same signal it would from a real vLLM deployment:
+
+[,yaml]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-sim-test
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vllm-sim-test
+  template:
+    metadata:
+      labels:
+        app: vllm-sim-test
+        inference.networking.k8s.io/engine-type: vllm
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: vllm-sim-test
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: vllm-sim
+          image: ghcr.io/llm-d/llm-d-inference-sim:v0.8.2
+          args:
+            - --model
+            - meta-llama/Llama-3.1-8B-Instruct
+            - --port
+            - "8000"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-sim-test
+  namespace: default
+spec:
+  selector:
+    app: vllm-sim-test
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+----
+
+Next, deploy the `InferencePool` and the Endpoint Picker (EPP) — the component that selects which backend pod a given request should go to, based on the live metrics advertised by the simulator pods above — and bind them to the `inference-gateway` Gateway via an `HTTPRoute`:
+
+[,bash]
+----
+helm upgrade -i vllm-sim-test \
+  oci://ghcr.io/llm-d/charts/llm-d-router-gateway \
+  --version v1.0.0 \
+  --set router.modelServers.matchLabels.app=vllm-sim-test \
+  --set provider.name=none \
+  --set httpRoute.create=true \
+  --set httpRoute.inferenceGatewayName=inference-gateway \
+  --set httpRoute.inferenceGatewayNamespace=agentgateway-system
+----
+
+This creates an `InferencePool` named `vllm-sim-test`, an EPP Deployment and Service, and an `HTTPRoute` named `vllm-sim-test`. Confirm the route is fully wired up:
+
+[,bash]
+----
+kubectl get httproute vllm-sim-test -n default -o yaml
+----
+
+Expected output (relevant section):
+
+[,yaml]
+----
+status:
+  parents:
+  - conditions:
+    - reason: Accepted
+      status: "True"
+      type: Accepted
+    - reason: ResolvedRefs
+      status: "True"
+      type: ResolvedRefs
+----
+
+Finally, send a request through the gateway to confirm the full path — Gateway -> HTTPRoute -> InferencePool -> EPP -> pod — works end to end:
+
+[,bash]
+----
+kubectl port-forward svc/inference-gateway -n agentgateway-system 8080:80 &
+
+curl -s -i -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"meta-llama/Llama-3.1-8B-Instruct","messages":[{"role":"user","content":"ping"}],"max_tokens":5}'
+----
+
+Expected output:
+
+[,bash]
+----
+HTTP/1.1 200 OK
+Server: fasthttp
+Content-Type: application/json
+X-Inference-Pod: vllm-sim-test-6b486c467b-jjtqw
+X-Inference-Port: 8000
+
+{"id":"chatcmpl-f87026bb-5c37-55f5-ba72-767f692ce105","created":1792763034,"model":"meta-llama/Llama-3.1-8B-Instruct","usage":{"prompt_tokens":6,"completion_tokens":4,"total_tokens":10},"object":"chat.completion","kv_transfer_params":null,"choices":[{"index":0,"finish_reason":"stop","message":{"role":"assistant","content":"Give a man a "}}]}
+----
+
+The `X-Inference-Pod` response header confirms the request was routed through the Endpoint Picker to a specific backend pod, demonstrating a working GAIE stack on RKE2.
+
+[#_high_performance_networking]
+== High Performance Networking
+
+This requirement calls for well-defined mechanisms to manage and expose specialized network resources (e.g. RDMA, RoCE, InfiniBand NICs) with discoverable characteristics, and to let pods attach to multiple network interfaces. The requirement text calls out DRA (e.g. DRANET) as the forward-looking mechanism for this, but does not mandate it; https://github.com/k8snetworkplumbingwg/sriov-network-operator[SR-IOV] combined with https://github.com/k8snetworkplumbingwg/multus-cni[Multus] is an established, production-proven mechanism that satisfies the same intent today, and is the approach RKE2 documents and supports.
+
+RKE2 has a dedicated, validated guide for this in the SUSE Telco documentation: https://documentation.suse.com/es-es/suse-telco/3.6/html/telco/sriov.html#option2-sriov-helm[Configuring SR-IOV with RKE2]. It covers two options:
+
+* *Option 1 — SR-IOV Network Device Plugin*: a ConfigMap-driven DaemonSet that discovers NICs (and vRAN accelerator cards) via PCI vendor/device/driver selectors and exposes them as allocatable Kubernetes resources (e.g. `rancher.io/intel_sriov_odu`).
+* *Option 2 — SR-IOV Network Operator* (recommended for network devices): installed via the `sriov-crd` and `sriov-network-operator` Helm charts. The operator labels SR-IOV-capable nodes, and a `SriovNetworkNodeState` resource exposes each discovered interface's PCI address, driver, vendor, device ID, and total VF count — satisfying the "characteristics discoverable" part of the requirement. A `SriovNetworkNodePolicy` configures how many VFs to carve out and under what resource name (e.g. `rancher.io/intelnicsDpdk`), and an optional `SriovNetwork` resource auto-generates a Multus `NetworkAttachmentDefinition`, which is how pods request and attach additional high-performance interfaces beyond the primary pod network.
+
+Verify the operator has discovered SR-IOV-capable interfaces on a node:
+
+[,bash]
+----
+kubectl get sriovnetworknodestates -n sriov-network-operator -o yaml
+----
+
+Expected output (relevant section, one entry per discovered interface):
+
+[,yaml]
+----
+status:
+  interfaces:
+    - pciAddress: "0000:3b:00.0"
+      driver: "mlx5_core"
+      vendor: "15b3"
+      deviceID: "1017"
+      totalvfs: 8
+----
+
+Once a `SriovNetworkNodePolicy` and `SriovNetwork` are applied, confirm the resulting `NetworkAttachmentDefinition` is available for pods to reference:
+
+[,bash]
+----
+kubectl get net-attach-def -A
+----
+
+A pod can then request the named SR-IOV resource directly in its spec (e.g. `rancher.io/intelnicsDpdk: 1`) and attach the corresponding `NetworkAttachmentDefinition` via the standard `k8s.v1.cni.cncf.io/networks` annotation, giving it a dedicated high-performance VF alongside its default pod network interface.
+
+See the full guide linked above for complete manifests, hardware discovery steps (`lspci`), and troubleshooting notes.
+
+[#_disaggregated_inference]
+== Disaggregated Inference
+
+Disaggregated serving (splitting the prefill and decode phases of LLM inference into separately scalable components) is an architecture implemented by the inference-serving framework itself (vLLM, SGLang, llm-d, Dynamo), not a feature of the Kubernetes distribution. What RKE2 needs to demonstrate is that nothing about the platform — scheduling, pod-to-pod networking, multi-container pods — prevents such a topology from being deployed and functioning correctly.
+
+To verify this without requiring GPU hardware, we use the official prefill/decode disaggregation example from the upstream https://github.com/llm-d/llm-d-inference-sim[llm-d inference simulator], the same no-GPU simulator used above for the Advanced Inference Ingress requirement. The example defines two Deployments — `vllm-sim-p` (Prefill) and `vllm-sim-d` (Decode) — plus a routing sidecar colocated with the decode Pod that forwards the prefill phase to the prefill Service before handling decode itself, modeling the KV-cache handoff that a real disaggregated deployment performs over NIXL/UCX.
+
+Apply the manifest:
+
+[,bash]
+----
+kubectl apply -f https://raw.githubusercontent.com/llm-d/llm-d-inference-sim/main/manifests/disaggregation/vllm-sim-pd.yaml
+----
+
+[NOTE]
+====
+At the time of writing, this manifest references a stale image, `ghcr.io/llm-d/llm-d-routing-sidecar:v0.3.1-rc.1`, for the routing sidecar container. That project has since been renamed/moved to `ghcr.io/llm-d/llm-d-router-disagg-sidecar`, and its CLI flags changed along with it. If the decode Pod's `routing-sidecar` container is stuck in `ImagePullBackOff`, patch it to the current image and flags:
+
+[,bash]
+----
+kubectl edit deployment vllm-sim-d
+----
+
+Replace the `routing-sidecar` container's `image` and `args` with:
+
+[,yaml]
+----
+image: ghcr.io/llm-d/llm-d-router-disagg-sidecar:v1.0.0
+args:
+  - --port=8000
+  - --model-server-port=8200
+  - --kv-connector=nixlv2
+  - --secure-serving=false
+----
+
+(`--vllm-port` became `--model-server-port`, `--connector` became `--kv-connector`, `--secure-proxy` became `--secure-serving`, and the old `--v=4` klog flag is no longer supported — the new binary uses `--zap-log-level` instead.)
+====
+
+Confirm both roles are running as separate Pods:
+
+[,bash]
+----
+kubectl get pods -l 'llm-d.ai/role in (prefill,decode)'
+----
+
+Expected output:
+
+[,bash]
+----
+NAME                          READY   STATUS    RESTARTS   AGE
+vllm-sim-d-666f9dd6bf-tpq55   3/3     Running   0          2m26s
+vllm-sim-p-84d6b65c49-nlww2   2/2     Running   0          22m
+----
+
+Port-forward to the decode Service and send a request, telling the sidecar where the prefill Service is via the `x-prefiller-host-port` header:
+
+[,bash]
+----
+kubectl port-forward svc/vllm-sim-d-service 8000:8000 &
+
+curl -s http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "x-prefiller-host-port: vllm-sim-p-service:8000" \
+  -d '{"model":"Qwen/Qwen2.5-0.5B-Instruct","messages":[{"role":"user","content":"Hello from P/D architecture!"}],"max_tokens":32}'
+----
+
+Expected output:
+
+[,json]
+----
+{"id":"chatcmpl-e2f5c223-cda7-5fd7-83dc-69b21eafc1ab","model":"Qwen/Qwen2.5-0.5B-Instruct","object":"chat.completion","created":1792765604,"usage":{"prompt_tokens":35,"completion_tokens":11,"total_tokens":46,"prompt_tokens_details":{"cached_tokens":0}},"choices":[{"index":0,"finish_reason":"stop","message":{"role":"assistant","content":"Alas, poor Yorick! I knew him, Horatio: "}}]}
+----
+
+Each Pod's own logs confirm it only handled its own phase, with distinct request IDs and durations consistent with the simulated prefill/decode workload:
+
+[,bash]
+----
+# Prefill pod (port 8000)
+I1023 14:26:34.304362 http.go:283 "Received" new HTTP="chat completion request (req id 5d0ef6c1-...)"
+I1023 14:26:42.848878 worker.go:74 "Finished processing request" id="5d0ef6c1-..."
+
+# Decode pod (port 8200)
+I1023 14:26:42.850396 http.go:283 "Received" new HTTP="chat completion request (req id e2f5c223-...)"
+I1023 14:26:44.388055 worker.go:74 "Finished processing request" id="e2f5c223-..."
+----
+
+The prefill phase alone took ~8.5s (consistent with the configured `--prefill-time-per-token=200ms` across the ~35 prompt tokens) while decode took ~1.5s for the 11 completion tokens, and each phase was served by a distinct Pod on a distinct port — confirming RKE2 can host a genuinely disaggregated prefill/decode topology end to end.
 
 [#_gang_scheduling]
 == Gang Scheduling
@@ -484,6 +820,82 @@ Expected Results (Isolation Confirmed):
 * Pod 3 runs but fails to find an available GPU, as seen in the logs.
 
 This outcome demonstrates that accelerator isolation is working correctly.
+
+[#_workload_sandboxing]
+== Workload Sandboxing
+
+This requirement (new in Kubernetes v1.37) calls for a mechanism to run workloads in a sandbox with strong isolation from the host node kernel — isolating process, memory, filesystem, and network access from the host and co-located pods. This is particularly relevant for AI agent workloads that may execute untrusted, model-generated code.
+
+RKE2 supports this via https://documentation.suse.com/cloudnative/rke2/latest/en/add-ons/kata.html[Kata Containers] (currently a Technology Preview), which runs pods inside lightweight microVMs instead of sharing the host kernel — providing hardware-level isolation rather than just a user-space syscall filter. The full guide covers three progressively stronger scenarios: standard (non-confidential) Kata, non-confidential GPU passthrough, and confidential computing (CoCo) with GPU passthrough using AMD SEV-SNP or Intel TDX for hardware-encrypted memory.
+
+Install Kata via the `kata-deploy` Helm chart, delivered as a HelmChart manifest:
+
+[,yaml]
+----
+# /var/lib/rancher/rke2/server/manifests/kata-deploy.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kata-deploy
+  namespace: kube-system
+spec:
+  chart: oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy
+  targetNamespace: kube-system
+----
+
+Confirm the `RuntimeClass` was created:
+
+[,bash]
+----
+kubectl get runtimeclass
+----
+
+Expected output (name may vary by shim selected, e.g. `qemu-runtime-rs`):
+
+[,bash]
+----
+NAME   HANDLER             AGE
+kata   kata-qemu-runtime-rs   2m
+----
+
+Verify the shim is actually running VMs, not falling back to the default runtime, on a node running a Kata pod:
+
+[,bash]
+----
+ps aux | grep qemu-system-x86_64
+----
+
+A running `qemu-system-x86_64` process confirms the pod is genuinely isolated in a microVM.
+
+Run a test pod with `runtimeClassName: kata`:
+
+[,yaml]
+----
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kata-test-pod
+spec:
+  runtimeClassName: kata
+  containers:
+    - name: test
+      image: alpine:latest
+      command: ["sh", "-c", "echo Test PASSED && sleep 3600"]
+----
+
+[,bash]
+----
+kubectl logs kata-test-pod
+----
+
+Expected output:
+
+[,bash]
+----
+Test PASSED
+----
+
+See the full guide linked above for the GPU passthrough and confidential computing (CoCo) scenarios, including NVIDIA GPU Operator integration with `sandboxWorkloads` enabled and attestation-related configuration.
 
 [#_robust_crd_and_controller_operation]
 == Robust CRD and Controller Operation
