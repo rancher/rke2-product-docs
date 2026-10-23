@@ -371,3 +371,19 @@ kube-apiserver-extra-env:
 kube-scheduler-extra-env: "TZ=America/Los_Angeles"
 ----
 
+[#_rancher_provisioning_in_prime_environments]
+== Rancher provisioning in Prime environments
+
+Starting with {rancher-product-name} v2.15.1, new RKE2 clusters provisioned in {rancher-product-name} environments use {rke2-product-name} by default. This integration configures the `--prime` server argument to pull Prime-specific container images and chart values from the Prime registry. 
+
+The `--prime` flag requires RKE2 May 2026 releases or newer (v1.36.1+rke2r2, v1.35.5+rke2r2, v1.34.8+rke2r2, or v1.33.11+rke2r2).
+
+Two mechanisms control this behavior:
+
+* `rke2-provisioning-prime-default`: A global setting in Rancher that defaults to `true` in Prime builds and `false` in standard builds. When enabled, Rancher automatically adds `prime=true` to the cluster server arguments in the back-end if the selected RKE2 version supports it.
+* `provisioning.cattle.io/rke2-prime-enabled`: A cluster annotation that provides per-cluster overrides. When set to `true` or `false` on a specific cluster, this annotation overrides the global setting. If this annotation is absent, the cluster inherits the global setting.
+
+[#_upgrade_behavior_for_existing_clusters]
+=== Upgrade behavior for existing clusters
+
+The new default does not affect existing RKE2 clusters. When you upgrade Rancher to v2.15.1, Rancher automatically applies the `provisioning.cattle.io/rke2-prime-enabled=false` annotation to all existing RKE2 clusters to preserve their existing configuration.

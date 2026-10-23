@@ -41,6 +41,11 @@ The following options must be set to the same value on all servers in the cluste
 | "/var/lib/rancher/rke2"
 | RKE2_DATA_DIR
 
+| prime
+| Configure the cluster to use Prime-specific images and chart values from the Prime registry. Supported on RKE2 May 2026 releases or newer: v1.36.1+rke2r2, v1.35.5+rke2r2, v1.34.8+rke2r2, and v1.33.11+rke2r2.
+| false
+| RKE2_PRIME
+
 |===
 
 [#_listener]
