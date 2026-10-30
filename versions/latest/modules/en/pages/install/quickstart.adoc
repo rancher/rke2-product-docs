@@ -1,7 +1,7 @@
 = Quick Start
 :description: Launch a cluster with default options by installing RKE2 on server and agent nodes using the provided installation script and configuration steps
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-07-06
+:revdate: 2026-10-30
 :page-revdate: {revdate}
 
 This guide will help you quickly launch a cluster with default options.
@@ -93,7 +93,7 @@ After running this installation:
 * Additional utilities will be installed at `/var/lib/rancher/rke2/bin/`. They include: `kubectl`, `crictl`, and `ctr`. Note that these are not on your path by default.
 * Two cleanup scripts, `rke2-killall.sh` and `rke2-uninstall.sh`, will be installed to the path at:
  ** `/usr/local/bin` for regular file systems
- ** `/opt/rke2/bin` for read-only and brtfs file systems
+ ** `/opt/rke2/bin` for read-only and btrfs file systems
  ** `INSTALL_RKE2_TAR_PREFIX/bin` if `INSTALL_RKE2_TAR_PREFIX` is set
 * A https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/[kubeconfig] file will be written to `/etc/rancher/rke2/rke2.yaml`.
 * A token that can be used to register other server or agent nodes will be created at `/var/lib/rancher/rke2/server/node-token`.
