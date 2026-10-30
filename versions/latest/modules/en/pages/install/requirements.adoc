@@ -1,7 +1,7 @@
 = Requirements
 :description: Find the minimum system requirements for RKE2, including hardware specifications, supported operating systems, and network configurations
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-09-11
+:revdate: 2026-10-30
 :page-revdate: {revdate}
 
 RKE2 is very lightweight, but has some minimum requirements as outlined below.
@@ -135,7 +135,7 @@ This data was retrieved under specific test conditions. It will vary depending u
 [#_disks]
 ==== Disks
 
-RKE2 performance depends on the performance of the database, and since RKE2 runs etcd embeddedly and it stores the data dir on disk, we recommend using an SSD when possible to ensure optimal performance.
+RKE2 performance depends on the performance of the database, and since RKE2 runs an embedded etcd and it stores the data dir on disk, we recommend using an SSD when possible to ensure optimal performance.
 
 [#_kernel_parameters]
 == Kernel Parameters

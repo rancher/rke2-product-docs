@@ -1,14 +1,13 @@
-
 = Backup and Restore
 :description: Learn how to use the RKE2 etcd-snapshot CLI tool to create, delete, and manage etcd snapshots for backup and restore
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-10-02
+:revdate: 2026-10-30
 :page-revdate: {revdate}
 :page-aliases: backup_restore.adoc
 
 RKE2 backups up the cluster information using etcd snapshots. This page describes how to use the rke2 etcd-snapshot CLI tool to manage etcd snapshots and how to restore from an etcd snapshot. Snapshots are for embedded etcd only, if you use another datastore with `datastore-endpoint` config go to xref:backup_restore.adoc#_external_db_backups_experimental[Experimental].
 
-RKE2 etcd snapshots are stored on the node file system, and may optionally be uploaded to an S3 compatible object store for disaster recovery scenarios. Snapshots can be both automated on a reoccurring schedule, and taken manually on-demand.  The `rke2 etcd-snapshot` CLI tool offers a set of subcommands that can be used to create, delete, and manage snapshots.
+RKE2 etcd snapshots are stored on the node file system, and may optionally be uploaded to an S3 compatible object store for disaster recovery scenarios. Snapshots can be both automated on a recurring schedule, and taken manually on-demand.  The `rke2 etcd-snapshot` CLI tool offers a set of subcommands that can be used to create, delete, and manage snapshots.
 
 |===
 | Subcommand | Description
@@ -173,7 +172,7 @@ RKE2 supports replicating etcd snapshots to and restoring etcd snapshots from S3
 | Number of S3 snapshots to retain in the configured region, bucket, and prefix (default: `5`)
 
 | `--etcd-s3-proxy`
-| Proxy server to use when connecting to S3, overriding any proxy-releated environment variables
+| Proxy server to use when connecting to S3, overriding any proxy-related environment variables
 
 | `--etcd-s3-insecure`
 | Disables S3 over HTTPS
@@ -279,7 +278,7 @@ S3 configuration must be passed via the CLI when restoring a snapshot stored on 
 
 [NOTE]
 ====
-Pass only the the `--etcd-s3` and `--etcd-s3-config-secret` flags to enable the Secret. +
+Pass only the `--etcd-s3` and `--etcd-s3-config-secret` flags to enable the Secret. +
 If any other S3 configuration flags are set, the Secret will be ignored.
 ====
 

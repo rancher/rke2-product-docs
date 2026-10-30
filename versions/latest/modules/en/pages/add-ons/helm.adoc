@@ -1,7 +1,7 @@
 = Helm
 :description: Use Helm to manage Kubernetes deployments by creating configurable Helm charts with RKE2, which automatically deploys manifests
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-07-24
+:revdate: 2026-10-30
 :page-revdate: {revdate}
 
 Helm is the package management tool of choice for Kubernetes. Helm charts provide templating syntax for Kubernetes YAML manifest documents. With Helm we can create configurable deployments instead of just using static files. For more information about creating your own catalog of deployments, check out the docs at https://helm.sh/docs/intro/quickstart/.
@@ -82,7 +82,7 @@ The `name` field should follow the Helm chart naming conventions, in addition to
 
 | spec.repoCAConfigMap
 |
-| Reference to a ConfigMap containing CA Certificates to be be trusted by Helm. Can be used along with or instead of `repoCA`
+| Reference to a ConfigMap containing CA Certificates to be trusted by Helm. Can be used along with or instead of `repoCA`
 | `--ca-file`
 
 | spec.plainHTTP
