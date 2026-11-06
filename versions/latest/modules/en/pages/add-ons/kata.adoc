@@ -68,7 +68,14 @@ spec:
         enabled: true
         supportedArches:
           - amd64
+#   selinux:
+#     enabled:
 ----
+
+[NOTE]
+====
+If you run Kata Containers on a system with SELinux enabled, set `selinux.enabled: true` in the Helm chart values. 
+====
 
 After a few seconds, verify that the `kata-deploy` DaemonSet is running in the `kata-system` namespace:
 
