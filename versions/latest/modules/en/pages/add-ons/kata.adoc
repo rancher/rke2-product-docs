@@ -1,6 +1,6 @@
 = Kata Containers
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-09-24
+:revdate: 2026-11-06
 :page-revdate: {revdate}
 
 Kata Containers is an open-source container runtime that runs pods inside lightweight microVMs instead of sharing the host kernel. It combines the strong hardware-level security isolation of virtual machines with the speed, low footprint, and standard tooling of traditional containers.
@@ -55,7 +55,7 @@ metadata:
   namespace: kube-system
 spec:
   chart: oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy
-  version: "4.2.0"
+  version: "4.3.1"
   targetNamespace: kata-system
   createNamespace: true
   valuesContent: |
@@ -70,12 +70,13 @@ spec:
           - amd64
 ----
 
-After a few seconds, verify that the `kata-deploy` DaemonSet is running in the `kata-system` namespace:
+After a few seconds, verify that the two `kata-deploy` jobs are running in the `kata-system` namespace:
 
 [,console]
 ----
-NAME          DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
-kata-deploy   3         3         0       3            0           <none>          2m6s
+NAME                                STATUS     COMPLETIONS   DURATION   AGE
+kata-deploy-install-dispatcher      Complete   1/1           2m29s      2m44s
+kata-deploy-install-ip-10-11-0-97   Complete   1/1           112s       2m24s
 ----
 
 To run `kata-deploy` only on specific nodes, see the following section:
@@ -105,7 +106,7 @@ metadata:
   namespace: kube-system
 spec:
   chart: oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy
-  version: "4.2.0"
+  version: "4.3.1"
   targetNamespace: kata-system
   createNamespace: true
   valuesContent: |
@@ -215,7 +216,9 @@ The expected output consists of two lines: one for the pod and one for the pause
 [#_running_non_confidential_kata_with_nvidia_gpu_passthrough]
 == Running non-confidential Kata with NVIDIA GPU passthrough
 
-This deployment runs non-confidential GPU workloads inside isolated Kata microVMs. It leverages the sandboxed GPU architecture, which replaces standard `virtiofs` shared host filesystems with `erofs` and `nydus` block-based image storage.
+This deployment runs non-confidential GPU workloads inside isolated Kata microVMs. It leverages the sandboxed GPU architecture, which replaces standard `virtiofs` shared host filesystems with `erofs` block-based image storage.
+
+There are multiple options to run this scenario. In this example, we are disabling dm-verity and fs-verity for simplicity. We are also disabling nydus, which is a great addition if you need lazy-pulling.
 
 [#_prerequisites]
 === Prerequisites
@@ -225,9 +228,10 @@ This deployment runs non-confidential GPU workloads inside isolated Kata microVM
 * At least one node must have:
 ** Hardware virtualization enabled. If the node itself is a VM, nested virtualization must be enabled.
 ** KVM enabled on the host (`/dev/kvm`).
-** `erofs` and `dm-verity` kernel modules enabled.
+** `erofs` kernel modules enabled.
 ** `erofs-utils` package installed.
 ** A GPU supported by the NVIDIA GPU Operator.
+
 
 The `qemu-nvidia-gpu-runtime-rs` runtime passes through an entire NVIDIA GPU to the Kata VM. Before installation, deploy and verify the NVIDIA GPU Operator as described in xref:add-ons/gpu_operators.adoc[GPU Operators]. The GPU Operator must be configured for NVIDIA GPU VM passthrough: it provides the VFIO device binding and the `nvidia.com/pgpu` resource consumed by Kata workloads.
 
@@ -246,7 +250,7 @@ metadata:
 spec:
   repo: https://helm.ngc.nvidia.com/nvidia
   chart: gpu-operator
-  version: v26.3.3
+  version: v26.7.2
   targetNamespace: gpu-operator
   createNamespace: true
   valuesContent: |-
@@ -281,7 +285,7 @@ metadata:
   namespace: kube-system
 spec:
   chart: oci://ghcr.io/kata-containers/kata-deploy-charts/kata-deploy
-  version: "4.2.0"
+  version: "4.3.1"
   targetNamespace: kata-system
   createNamespace: true
   valuesContent: |
@@ -289,13 +293,15 @@ spec:
     nodeSelector:
       nvidia.com/gpu.deploy.kata-sandbox-device-plugin: "true"
     snapshotter:
-      setup: ["nydus", "erofs"]
-      erofsSnapshotterMode: "memory"
-      erofsDmverity: true
+      setup: ["erofs"]
     defaultShim:
       amd64: qemu-nvidia-gpu-runtime-rs
     runtimeClasses:
       createDefault: true
+    containerd:
+      userDropIn: |
+        [plugins.'io.containerd.snapshotter.v1.erofs']
+          enable_fsverity = false
     shims:
       disableAll: true
       qemu-nvidia-gpu-runtime-rs:
@@ -309,14 +315,15 @@ spec:
             nvidia.com/cc.ready.state: "false"
 ----
 
-Because confidential computing boundaries and direct hardware passthrough require isolated storage, the host and the guest cannot share directories via `9p` or `virtiofs`. Therefore, the standard `overlayfs` snapshotter cannot be used. Instead, `erofs` and `nydus` are required to expose container image filesystems via block devices.
+By default, the `qemu-nvidia-gpu-runtime-rs` runtime forbids virtio-fs and requires isolated storage. Therefore, the standard `overlayfs` snapshotter cannot be used. Instead, `erofs` is required to expose container image filesystems via block devices.
 
-After a few seconds, verify that the `kata-deploy` DaemonSet is running in the `kata-system` namespace:
+After a few seconds, you should see two jobs. After completion, they will be removed after 10 minutes.
 
 [,console]
 ----
-NAME          DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                          AGE
-kata-deploy   1         1         1       1            1           nvidia.com/gpu.deploy.kata-sandbox-device-plugin=true  2m6s
+NAME                                STATUS    COMPLETIONS   DURATION   AGE
+kata-deploy-install-dispatcher      Running   0/1           44s        44s
+kata-deploy-install-ip-10-11-0-97   Running   0/1           24s        24s
 ----
 
 [#_verifying_the_installation]
@@ -336,6 +343,14 @@ Verify that the `containerd` configuration for Kata containers is in place:
 ----
 cat /var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.d/kata-deploy.toml
 ----
+
+Because we added a userDropIn configuration to disable fs-verity, there should also be an additional configuration file:
+
+[,sh]
+----
+cat /var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.d/zz-kata-deploy-user.toml
+----
+
 
 Verify that the `RuntimeClass` resources were created:
 
@@ -388,6 +403,18 @@ Copy output data from the CUDA device to the host memory
 Test PASSED
 Done
 ----
+
+[WARNING]
+====
+The script `rke2-uninstall.sh` may fail because cleaning up erofs snapshotter blobs requires one extra command:
+
+[,sh]
+----
+sudo chattr -R -i /var/lib/rancher/rke2/agent/containerd/io.containerd.snapshotter.v1.erofs/
+sudo rm -rf /var/lib/rancher/
+----
+====
+
 
 [#_running_confidential_kata_with_nvidia_gpu_passthrough]
 == Running confidential Kata with NVIDIA GPU passthrough
