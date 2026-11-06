@@ -1,7 +1,7 @@
 = GPU Operators
 :description: Deploy, manage, and verify GPU resources in RKE2 clusters using NVIDIA and AMD operators by installing required drivers and checking host OS compatibility
 :page-languages: [en, de, es, fr, ja, pt, zh]
-:revdate: 2026-10-30
+:revdate: 2026-11-06
 :page-revdate: {revdate}
 
 This guide shows how to deploy, manage and verify GPU resources in RKE2 clusters.
@@ -97,10 +97,10 @@ NVIDIA GPU Operator v25.10.x uses https://github.com/cncf-tags/container-device-
 The NVIDIA operator restarts containerd with a hangup call which restarts RKE2
 ====
 
-[WARNING]
-.End of Support
+[CAUTION]
 ====
-Per NVIDIA's https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html#nvidia-gpu-operator-life-cycle[GPU Operator life cycle policy], v25.10.x (and all older major versions) is now *End of Support* and no longer receives patch, bug fix, or CVE updates. Please upgrade to a currently supported major version.
+.End of Support
+Per NVIDIA's https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html#nvidia-gpu-operator-life-cycle[GPU Operator life cycle policy], v25.10.x (and all older major versions) is now **End of Support** and no longer receives patch, bug fix, or CVE updates. Please upgrade to a currently supported major version.
 ====
 
 --
@@ -447,7 +447,6 @@ spec:
         nvidia.com/gpu: 1
 ----
 
-
 [#_deploy_amd_operator]
 == Deploy AMD operator on SLES
 
@@ -548,7 +547,7 @@ Refer to link:https://instinct.docs.amd.com/projects/amdgpu-docs/en/latest/relea
 ====
 
 [#_deploy_amd_operator_verify]
-== Verify the installation
+=== Verify the installation
 
 After a few minutes, perform the following checks:
 
@@ -579,11 +578,11 @@ kubectl get node -o jsonpath='{.items[0].metadata.labels.kmm\.node\.kubernetes\.
 
 
 [#_deploy_amd_operator_troublshoot]
-== Troubleshooting
+=== Troubleshooting
 
 For troubleshooting, refer to the
 link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/troubleshooting.html[AMD GPU Operator Troubleshooting documentation].
 
 [#_deploy_amd_operator_uninstall]
-== Cleanup
+=== Cleanup
 For steps to uninstall the AMD GPU Operator and its dependencies, refer to the link:https://instinct.docs.amd.com/projects/gpu-operator/en/latest/uninstallation/uninstallation.html[official documentaion].
