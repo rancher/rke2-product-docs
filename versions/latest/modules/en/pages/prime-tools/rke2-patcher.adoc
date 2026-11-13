@@ -4,7 +4,7 @@
 :revdate: 2026-10-06
 :page-revdate: {revdate}
 
-`rke2-patcher` is a tool for SUSE Rancher Prime: RKE2 that helps operators inspect and patch packaged component images. It can be used two ways: as a CLI, run interactively or scripted; or as a Kubernetes controller that reconciles declarative `ImagePatch` objects, which suits fleets of clusters managed through GitOps.
+`rke2-patcher` is a tool for SUSE Rancher Prime: RKE2 that helps operators inspect and patch packaged component images. It can be used two ways: as a standalone binary with a CLI; or as a Kubernetes controller (with CLI) that reconciles declarative `ImagePatch` objects, which suits fleets of clusters managed through GitOps.
 
 The primary use case for `rke2-patcher` is to consume component images that include serious CVE fixes before the next monthly RKE2 release is available. The built-in patching limitations are intentional and are designed to encourage timely RKE2 upgrades, rather than carrying `rke2-patcher` overrides indefinitely on the same RKE2 version.
 
@@ -13,7 +13,7 @@ The primary use case for `rke2-patcher` is to consume component images that incl
 `rke2-patcher` supports Prime clusters only and requires `prime: true` in the RKE2 configuration.
 ====
 
-Each component command (`image-cve`, `image-list`, `image-patch`, and `image-reconcile`) checks the HelmChart for the selected component and requires `global.prime.enabled` to be `true`.
+Each component command (`image-cve`, `image-list`, `image-patch`, and `image-reconcile`) checks the HelmChart for the selected component.
 
 The tool can be used to inspect the images that are currently running in an RKE2 cluster, review newer tags that are available for supported packaged components, patch a component to a newer eligible image, and reconcile those changes after an RKE2 upgrade.
 
@@ -51,14 +51,57 @@ The tool can be used to inspect the images that are currently running in an RKE2
 * After an RKE2 upgrade, all previously patched components must be reconciled before applying new patches.
 * Patching and reconciliation require Kubernetes API access and permissions to update `HelmChartConfig` resources.
 
+[#_how_to_use_it]
+== How to use it
+
+The rke2-patcher tool has two different procedures: inspection and patching.
+
+=== Inspection
+
+The inspection step provides information about the available images for a component and the CVEs those image come with. This step applies no change to the cluster. This step uses the CLI flags `image-cve` and `image-list`. The latter can include `--with-cves`, which reqiures more time to process, but provides the list of CVEs per image.
+
+This step is very similar for both standalone binary and controller modes. When using the standalone binary, simply execute it with those flags. When using the controller, you must `kubectl exec` into the rke2-patcher pod and find the binary under `/usr/local/bin/rke2-patcher`. Then, simply execute it with those flags. 
+
+Example with binary mode:
+// GIF placeholder:
+[.demo-wide]
+image::inspection-binary.gif[rke2-patcher inspection-binary demo, width=1000]
+
+Example with controller mode:
+// GIF placeholder:
+[.demo-wide]
+image::inspection-controller.gif[rke2-patcher inspection-controller demo, width=1000]
+
+
+=== Patching
+
+The patching step replaces the image of a component with a newer one. Typically, this is done to use an image without CVEs. This step is applied differently when using the standalone binary or when using the controller. 
+
+When using the binary, you must execute the binary with the flag `image-patch`. See the <<_rke2_patcher_image_patch_component>> for details.
+
+When using the controller, you must apply a ImagePatch manifest. See the <<_using_imagepatch_objects>> for details.
+
+
+=== Clean up / Reverting
+
+Reverting the applied patches is possible and necessary after an RKE2 upgrade. New RKE2 versions are tested and shipped with newer images that typically fix all the CVEs included in the previous image. This step is applied differently when using the standalone binary or when using the controller.
+
+When using the binary, you must use the flag `image-reconcile`. See the <<_rke2_patcher_image_reconcile_component>> for details.
+
+When using the controller, you must remove the ImagePatch manifest. Note that it is also possible to automatically revert the patch after the RKE2 upgrade. See the <<_after_an_rke2_upgrade>>.
+
+For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rke2-patcher.
 
 
 [#_installation_3]
 == Installation
 
-You can use `rke2-patcher` as a locally built CLI binary or as a controller that reconciles `ImagePatch` objects; see <<_declarative_mode_imagepatch_controller,Declarative mode: ImagePatch controller>>.
+You can use `rke2-patcher` locally as a binary or as a controller that reconciles `ImagePatch` objects, please check <<_how_to_use_it>> for more information.
 
 The `rke2-patcher` binary can be found in the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL].
+
+The `rke2-patcher` controller is packaged as a Helm chart. Please check <<_installing_the_controller>> to learn how to install it in your RKE2 cluster. 
+
 
 [#_rke2_patcher_cli]
 == rke2-patcher CLI
@@ -74,7 +117,7 @@ rke2-patcher image-reconcile <component> [--yes|-y]
 ----
 
 [#_rke2_patcher_version]
-== `rke2-patcher --version`
+=== `rke2-patcher --version`
 
 Print the `rke2-patcher` version. When Kubernetes access is available, this command also reports the connected cluster version.
 
@@ -84,7 +127,7 @@ rke2-patcher --version
 ----
 
 [#_rke2_patcher_config]
-== `rke2-patcher --config`
+=== `rke2-patcher --config`
 
 Show the effective runtime configuration used by `rke2-patcher`, including the configured registry, scanner mode, scanner image, scanner namespace, scanner timeout, and patch state ConfigMap.
 
@@ -94,7 +137,7 @@ rke2-patcher --config
 ----
 
 [#_rke2_patcher_image_cve_component]
-== `rke2-patcher image-cve <component>`
+=== `rke2-patcher image-cve <component>`
 
 Show the CVEs for the image currently running for the selected component.
 
@@ -118,7 +161,7 @@ Scanner progress is written to stderr so standard output remains valid JSON for 
 image::rke2-patcher-image-cve.gif[rke2-patcher image-cve demo, width=1000]
 
 [#_rke2_patcher_image_list_component]
-== `rke2-patcher image-list <component>`
+=== `rke2-patcher image-list <component>`
 
 List the image tags available for a supported component.
 
@@ -142,7 +185,7 @@ rke2-patcher image-list rke2-traefik --with-cves --json
 image::rke2-patcher-image-list.gif[rke2-patcher image-list demo, width=1000]
 
 [#_rke2_patcher_image_patch_component]
-== `rke2-patcher image-patch <component>`
+=== `rke2-patcher image-patch <component>`
 
 Patch a supported component to the next eligible image tag.
 
@@ -168,7 +211,7 @@ An explicitly selected tag must exist in the configured registry, be newer than 
 image::rke2-patcher-image-patch.gif[rke2-patcher image-patch demo, width=1000]
 
 [#_rke2_patcher_image_reconcile_component]
-== `rke2-patcher image-reconcile <component>`
+=== `rke2-patcher image-reconcile <component>`
 
 Reconcile or revert a previously applied patch for a supported component.
 
@@ -185,20 +228,10 @@ When reconciliation succeeds, `rke2-patcher` removes the patcher-managed image o
 image::rke2-patcher-image-reconcile.gif[rke2-patcher image-reconcile demo, width=1000]
 
 
-[#_typical_workflow]
-== Typical workflow
-
-1. Check current status and available tags.
-2. Patch one or more supported components.
-3. Upgrade RKE2 when needed.
-4. Run `image-reconcile` for previously patched components.
-
-For complete behavior and command details, refer to the upstream project documentation: https://github.com/rancher/rke2-patcher.
-
 [#_declarative_mode_imagepatch_controller]
-== Declarative mode: ImagePatch controller
+== ImagePatch controller
 
-Besides the CLI, `rke2-patcher controller` runs a Kubernetes controller that reconciles `ImagePatch` objects (`patcher.rke2.cattle.io/v1alpha1`, cluster-scoped). This suits fleets of clusters: distribute `ImagePatch` objects (for example with Fleet) and every cluster enforces its own guardrails, with no CLI commands to run by hand.
+Besides the binary, `rke2-patcher controller` runs a Kubernetes controller that reconciles `ImagePatch` objects (`patcher.rke2.cattle.io/v1alpha1`, cluster-scoped). This suits fleets of clusters: distribute `ImagePatch` objects (for example with Fleet) and every cluster enforces its own guardrails, with no CLI commands to run by hand. The controller also includes the binary to be able to use the CLI for inspection as explained in <<_how_to_use_it>>
 
 [IMPORTANT]
 ====
@@ -253,6 +286,11 @@ spec:
 kubectl get imagepatches      # TAG, APPLIED, BASELINE, READY, REASON
 ----
 
+// GIF placeholder:
+[.demo-wide]
+image::imagepatch.gif[rke2-patcher image-patch demo, width=1000]
+
+
 The same guardrails as `image-patch` apply: Prime only, tag newer than the bundled tag, same minor release line, the 45-day patch window (`rke2-ingress-nginx` exempt), and no patches while stale patches from a previous RKE2 version exist. Violations surface as a `Blocked` condition with a reason, for example `OutsidePatchWindow`, `MinorVersionChange`, `TagNotFound`, `NotNewer`, `NotPrime`, `StalePatchesExist`, or `ConflictingOverride`; nothing is written to the cluster.
 
 * Setting `spec.tag` to the bundled tag reverts the patch but keeps the `ImagePatch` object (`Ready=True`, reason `AtBaseline`).
@@ -269,18 +307,32 @@ The same guardrails as `image-patch` apply: Prime only, tag newer than the bundl
 [#_airgap_support]
 == Airgap support
 
-[IMPORTANT]
-====
-Only the rke2-patcher CLI is supported in Airgap environments
-====
-
-`rke2-patcher` can be used in airgapped environments when required artifacts are mirrored and reachable inside your private network.
+`rke2-patcher` can be used in airgapped environments when required artifacts are mirrored and reachable inside your private network, both as the binary and as the controller.
 
 To use `rke2-patcher` in airgap environments:
 
 * Mirror supported component images and eligible tags to an internal registry.
 * Set `RKE2_PATCHER_REGISTRY` to your internal registry endpoint.
 * Ensure the cluster can reach the internal registry endpoint.
+
+[#_airgap_controller_mode]
+=== Controller mode
+
+The controller applies the same registry settings as the binary, but it reads them from its own environment rather than from a shell invocation, and it needs them available continuously: it calls out to the registry to validate `spec.tag` every time it applies a new `ImagePatch` or corrects drift on an existing one, not only once at startup.
+
+* Mirror the `rke2-patcher` image itself (the chart's `image.repository` / `image.tag`) to your internal registry, in addition to the component images above.
+* Set the registry variables through the chart's `env` value instead of as shell environment variables. `RKE2_PATCHER_REGISTRY_USERNAME` / `RKE2_PATCHER_REGISTRY_PASSWORD` and `RKE2_PATCHER_REGISTRY_CA_FILE` are supported the same way if the internal registry needs them:
++
+[,yaml]
+----
+env:
+  - name: RKE2_PATCHER_REGISTRY
+    value: registry.example.local:5000
+----
++
+See <<_installing_the_controller>> for how to pass chart values, and the chart values table there for the full list.
+
+CVE scanning (`image-cve`, `image-list --with-cves`) is never part of the controller's reconcile loop; it only runs when you invoke it through the bundled CLI (`kubectl exec` into the controller pod, see <<_how_to_use_it>>). The same airgap requirements below apply in that case, exactly as with the standalone binary.
 
 For CVE scanning in airgap environments, use one of these approaches:
 
@@ -318,4 +370,4 @@ RKE2_PATCHER_SCANNER_MODE=local \
 	rke2-patcher image-cve rke2-traefik
 ----
 
-With these prerequisites in place, `image-patch`, `image-reconcile`, and `image-list` without `--with-cves` can run without direct internet access. Cluster-mode CVE scans require access to the VEX report URL.
+With these prerequisites in place, `image-patch`, `image-reconcile`, `image-list` without `--with-cves`, and the ImagePatch controller can all run without direct internet access. Cluster-mode CVE scans require access to the VEX report URL, regardless of mode.
