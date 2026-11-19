@@ -151,7 +151,7 @@ Add `--json` to return the component, scanned image, scanner, CVE count, and fin
 
 [,bash]
 ----
-rke2-patcher image-cve rke2-traefik --json
+rke2-patcher image-cve --json rke2-traefik
 ----
 
 Scanner progress is written to stderr so standard output remains valid JSON for automation.
@@ -177,7 +177,7 @@ Use this command to compare the currently running tag with newer eligible tags b
 
 [,bash]
 ----
-rke2-patcher image-list rke2-traefik --with-cves --json
+rke2-patcher image-list --with-cves --json rke2-traefik
 ----
 
 // GIF placeholder:
@@ -201,7 +201,7 @@ For example, to preview an exact eligible tag from `image-list`:
 
 [,bash]
 ----
-rke2-patcher image-patch rke2-traefik --tag TAG_FROM_IMAGE_LIST --dry-run
+rke2-patcher image-patch --tag TAG_FROM_IMAGE_LIST --dry-run rke2-patcher
 ----
 
 An explicitly selected tag must exist in the configured registry, be newer than the running tag, and be on the same major and minor release line. The command also enforces the patch window rules for the target component. If a target image falls outside the allowed window, `rke2-patcher` instructs you to upgrade RKE2 first.
