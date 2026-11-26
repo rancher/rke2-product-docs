@@ -5,11 +5,6 @@
 
 Kata Containers is an open-source container runtime that runs pods inside lightweight microVMs instead of sharing the host kernel. It combines the strong hardware-level security isolation of virtual machines with the speed, low footprint, and standard tooling of traditional containers.
 
-[NOTE]
-====
-Kata Containers is considered a Technology Preview.
-====
-
 [#_running_standard_kata_containers]
 == Running standard Kata Containers
 
@@ -223,6 +218,11 @@ The expected output consists of two lines: one for the pod and one for the pause
 [#_running_non_confidential_kata_with_nvidia_gpu_passthrough]
 == Running non-confidential Kata with NVIDIA GPU passthrough
 
+[NOTE]
+====
+Kata Containers is considered a Technology Preview.
+====
+
 This deployment runs non-confidential GPU workloads inside isolated Kata microVMs. It leverages the sandboxed GPU architecture, which replaces standard `virtiofs` shared host filesystems with `erofs` block-based image storage.
 
 There are multiple options to run this scenario. In this example, we are disabling dm-verity and fs-verity for simplicity. We are also disabling nydus, which is a great addition if you need lazy-pulling.
@@ -425,6 +425,11 @@ sudo rm -rf /var/lib/rancher/
 
 [#_running_confidential_kata_with_nvidia_gpu_passthrough]
 == Running confidential Kata with NVIDIA GPU passthrough
+
+[NOTE]
+====
+Kata Containers is considered a Technology Preview.
+====
 
 Confidential Containers (CoCo) with NVIDIA GPU passthrough combines hardware-isolated Trusted Execution Environments (TEEs) on the host CPU (such as AMD SEV-SNP or Intel TDX) with Confidential Computing-capable NVIDIA GPUs (such as NVIDIA Hopper or Blackwell architectures). Memory inside the microVM and GPU memory are hardware-encrypted, protecting workloads from a privileged host, hypervisor, and neighboring tenants.
 
